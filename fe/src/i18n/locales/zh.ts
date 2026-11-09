@@ -77,4 +77,11 @@ export const zh: Dict = {
   "qs.all": "<kbd>Enter</kbd> — 全部结果（{total}）",
 
   "time.justNow": "刚刚",
+
+  "lightbox.title": "记录照片",
+  "lightbox.prev": "上一张",
+  "lightbox.next": "下一张",
+  "lightbox.counter": "{n} / {total}",
+  "lightbox.open": "打开此记录 →",
+  "lightbox.here": "当前已打开此记录",
 };

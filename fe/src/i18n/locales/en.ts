@@ -76,4 +76,11 @@ export const en: Dict = {
   "qs.all": "<kbd>Enter</kbd> — all results ({total})",
 
   "time.justNow": "just now",
+
+  "lightbox.title": "Sighting photos",
+  "lightbox.prev": "Previous photo",
+  "lightbox.next": "Next photo",
+  "lightbox.counter": "{n} / {total}",
+  "lightbox.open": "Open this sighting →",
+  "lightbox.here": "This sighting is open",
 };

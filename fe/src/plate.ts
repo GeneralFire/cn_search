@@ -5,6 +5,7 @@ import { plateHref } from "./router";
 import { escapeHtml, formatAgo, formatDate, formatShortDate, formatTime, icon, miniCardHtml, miniSkeletonHtml, photoAttrs, plateHtml } from "./ui";
 import { t, tp } from "./i18n/i18n";
 import { mountSettings } from "./settings";
+import { openLightbox } from "./lightbox";
 
 /** Сколько карточек показывать в «Свежих фиксациях» (ручка отдаёт не больше). */
 const SEE_ALSO_LIMIT = 21;
@@ -51,7 +52,7 @@ export async function renderPlatePage(root: HTMLElement, id: string, handlers: Q
     $main.innerHTML = pageHtml(items, id);
     void loadSeeAlso($main, id, my.signal);
     $main.querySelector<HTMLButtonElement>("[data-zoom]")?.addEventListener("click", (e) =>
-      openLightbox((e.currentTarget as HTMLElement).dataset.zoom!)
+      openLightbox(items, id, e.currentTarget as HTMLElement)
     );
     document.title = t("page.plateTitle", { plate: items[0].plate });
   } catch (e) {
@@ -141,23 +142,6 @@ function timelineItem(c: Car, current: boolean): string {
         ${current ? `<span class="tl__badge">${t("history.shownLeft")}</span>` : ""}
       </div>
     </li>`;
-}
-
-// Лайтбокс: фото на весь экран; закрывается кликом, Esc или кнопкой.
-let $lightbox: HTMLDialogElement | null = null;
-
-function openLightbox(src: string): void {
-  if (!$lightbox) {
-    $lightbox = document.createElement("dialog");
-    $lightbox.className = "lightbox";
-    $lightbox.innerHTML = `
-      <img class="lightbox__img" alt="${t("photo.alt")}" />
-      <button class="lightbox__x" type="button" aria-label="${t("modal.close")}">${icon.clear}</button>`;
-    $lightbox.addEventListener("click", () => $lightbox!.close());
-    document.body.append($lightbox);
-  }
-  $lightbox.querySelector<HTMLImageElement>(".lightbox__img")!.src = src;
-  $lightbox.showModal();
 }
 
 /** Блок «Свежие фиксации»: до 21 компактной карточки других номеров. */

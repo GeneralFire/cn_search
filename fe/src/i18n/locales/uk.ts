@@ -76,4 +76,11 @@ export const uk: Dict = {
   "qs.all": "<kbd>Enter</kbd> — усі результати ({total})",
 
   "time.justNow": "щойно",
+
+  "lightbox.title": "Фото фіксацій",
+  "lightbox.prev": "Попереднє фото",
+  "lightbox.next": "Наступне фото",
+  "lightbox.counter": "{n} / {total}",
+  "lightbox.open": "Відкрити цю фіксацію →",
+  "lightbox.here": "Цю фіксацію відкрито",
 };

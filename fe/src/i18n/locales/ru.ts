@@ -76,4 +76,11 @@ export const ru = {
   "qs.all": "<kbd>Enter</kbd> — все результаты ({total})",
 
   "time.justNow": "только что",
+
+  "lightbox.title": "Фото фиксаций",
+  "lightbox.prev": "Предыдущее фото",
+  "lightbox.next": "Следующее фото",
+  "lightbox.counter": "{n} / {total}",
+  "lightbox.open": "Открыть эту фиксацию →",
+  "lightbox.here": "Эта фиксация открыта",
 } as const;
