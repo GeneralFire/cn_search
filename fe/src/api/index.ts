@@ -8,8 +8,10 @@ import {
   type CarsearchSearchRequest,
   type CarsearchSearchResponse,
 } from "./generated";
+import { localizeAddress, t } from "../i18n/i18n";
 
-/** Фиксация номера: где и когда замечена машина. createdAt — ISO 8601 (RFC 3339). */
+/** Фиксация номера: где и когда замечена машина. createdAt — ISO 8601 (RFC 3339).
+ *  address — уже на языке интерфейса (localizeAddress), addressLocale — язык исходной записи. */
 export type Car = Required<Pick<CarsearchPlateSighting, "id" | "plate" | "address" | "createdAt">> &
   Pick<CarsearchPlateSighting, "photoUrl" | "thumbUrl" | "addressLocale" | "plateRegion"> & {
     /** Формат номера: "ru" | "eu" | "us" | "" (неизвестен). */
@@ -45,11 +47,12 @@ function toCar(c: CarsearchPlateSighting): Car {
   return {
     id: c.id ?? "",
     plate: c.plate ?? "",
-    address: c.address ?? "",
+    // Адрес показываем на языке интерфейса: совпадает с языком записи — как есть, иначе транслитерация.
+    address: localizeAddress(c.address ?? "", c.addressLocale ?? "ru"),
+    addressLocale: c.addressLocale ?? "ru",
     createdAt: c.createdAt ?? "",
     photoUrl: c.photoUrl,
     thumbUrl: c.thumbUrl,
-    addressLocale: c.addressLocale,
     plateType: plateTypes[c.plateType ?? ""] ?? "",
     plateRegion: c.plateRegion,
   };
@@ -113,5 +116,6 @@ async function errorMessage(e: unknown): Promise<string> {
     const body = (await e.json().catch(() => null)) as { error?: string; message?: string } | null;
     return body?.error || body?.message || `HTTP ${e.status}`;
   }
-  return e instanceof Error ? e.message : String(e);
+  // Не Response — сеть недоступна (fetch бросил TypeError).
+  return t("error.serverDown");
 }

@@ -2,6 +2,7 @@
 // и догрузкой страниц. Один номер — одна строка (последняя фиксация из выдачи).
 import { ApiError, search, type Car } from "./api";
 import { escapeHtml, formatAgo, icon, plateHtml } from "./ui";
+import { t, tp } from "./i18n/i18n";
 
 const PAGE_SIZE = 35;
 const DEBOUNCE_MS = 200;
@@ -16,7 +17,7 @@ export function mountQuickSearch(root: HTMLElement, h: QuickSearchHandlers): voi
     <div class="qs" role="combobox" aria-haspopup="listbox" aria-owns="qs-list" aria-expanded="false">
       <span class="qs__icon">${icon.search}</span>
       <input class="qs__input" type="search" autocomplete="off" spellcheck="false" maxlength="32"
-        placeholder="Новый поиск: У54, А123ВС 777…" aria-label="Поиск по номеру" aria-controls="qs-list" />
+        placeholder="${t("qs.placeholder")}" aria-label="${t("qs.aria")}" aria-controls="qs-list" />
       <div class="qs__panel" hidden>
         <ul class="qs__list" id="qs-list" role="listbox"></ul>
         <div class="qs__foot"></div>
@@ -49,10 +50,10 @@ export function mountQuickSearch(root: HTMLElement, h: QuickSearchHandlers): voi
     $foot.innerHTML = error
       ? `<span class="qs__err">${escapeHtml(error)}</span>`
       : st.loading
-        ? `<span class="qs__spinner"></span>Ищем…`
+        ? `<span class="qs__spinner"></span>${t("qs.searching")}`
         : st.plates.size === 0
-          ? "Ничего не найдено — ищется по началу серии и региона"
-          : `${st.plates.size} ${st.nextOffset === null ? "" : "+ "}номеров · <kbd>Enter</kbd> — все ${st.total} фиксаций`;
+          ? t("qs.empty")
+          : `${tp("qs.plates", st.plates.size)}${st.nextOffset === null ? "" : "+"} · ${t("qs.all", { total: st.total })}`;
   }
 
   function itemHtml(c: Car, i: number): string {
@@ -94,7 +95,7 @@ export function mountQuickSearch(root: HTMLElement, h: QuickSearchHandlers): voi
     } catch (e) {
       if (ctrl.signal.aborted || gen !== st.gen) return;
       st.loading = false;
-      renderFoot(e instanceof ApiError ? e.message : "Сервер недоступен");
+      renderFoot(e instanceof ApiError ? e.message : t("error.serverDown"));
     }
   }
 

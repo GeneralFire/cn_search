@@ -1,6 +1,7 @@
 import { plateHref } from "./router";
 
 // Общие куски разметки и форматирования для страниц поиска и номера.
+import { intlLocale, t } from "./i18n/i18n";
 
 export const icon = {
   back: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>`,
@@ -19,7 +20,10 @@ export function escapeHtml(s: string): string {
   );
 }
 
-const dateFmt = new Intl.DateTimeFormat("ru-RU", {
+// Даты и время — по языку интерфейса (он меняется только с перезагрузкой страницы).
+const LOCALE = intlLocale();
+
+const dateFmt = new Intl.DateTimeFormat(LOCALE, {
   day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit",
 });
 export const formatDate = (iso: string) => (iso ? dateFmt.format(new Date(iso)) : "");
@@ -38,7 +42,7 @@ const US_STATES: Record<string, string> = {
 /** Номерной знак в формате его страны: RU, EU (синяя полоса со звёздами), US (штат сверху), иначе — нейтральный. */
 export function plateHtml(c: PlateLike | string, size: "" | "xl" = ""): string {
   const { plate, plateType = "ru", plateRegion = "" } = typeof c === "string" ? { plate: c } : c;
-  const label = `aria-label="Госномер ${escapeHtml(plate)}"`;
+  const label = `aria-label="${escapeHtml(t("plate.aria", { plate }))}"`;
   const xl = size ? ` plate--${size}` : "";
   switch (plateType) {
     case "ru": {
@@ -54,8 +58,8 @@ export function plateHtml(c: PlateLike | string, size: "" | "xl" = ""): string {
   return `<span class="plate-any${xl}" ${label}>${escapeHtml(plate)}</span>`;
 }
 
-const dayMonthFmt = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" });
-const dayMonthYearFmt = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short", year: "numeric" });
+const dayMonthFmt = new Intl.DateTimeFormat(LOCALE, { day: "numeric", month: "short" });
+const dayMonthYearFmt = new Intl.DateTimeFormat(LOCALE, { day: "numeric", month: "short", year: "numeric" });
 /** «9 нояб.» в текущем году, «20 окт. 2025 г.» — в другом. */
 export function formatShortDate(iso: string): string {
   if (!iso) return "";
@@ -63,10 +67,10 @@ export function formatShortDate(iso: string): string {
   return (d.getFullYear() === new Date().getFullYear() ? dayMonthFmt : dayMonthYearFmt).format(d);
 }
 
-const timeFmt = new Intl.DateTimeFormat("ru-RU", { hour: "2-digit", minute: "2-digit" });
+const timeFmt = new Intl.DateTimeFormat(LOCALE, { hour: "2-digit", minute: "2-digit" });
 export const formatTime = (iso: string) => (iso ? timeFmt.format(new Date(iso)) : "");
 
-const rtf = new Intl.RelativeTimeFormat("ru", { numeric: "auto" });
+const rtf = new Intl.RelativeTimeFormat(LOCALE, { numeric: "auto" });
 /** «вчера», «3 дня назад», «2 месяца назад». */
 export function formatAgo(iso: string, now = Date.now()): string {
   const sec = (new Date(iso).getTime() - now) / 1000;
@@ -76,26 +80,19 @@ export function formatAgo(iso: string, now = Date.now()): string {
   for (const [unit, size] of units) {
     if (Math.abs(sec) >= size) return rtf.format(Math.round(sec / size), unit);
   }
-  return "только что";
+  return t("time.justNow");
 }
-
-export const plural = (n: number, one: string, few: string, many: string) => {
-  const m10 = n % 10, m100 = n % 100;
-  if (m10 === 1 && m100 !== 11) return one;
-  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
-  return many;
-};
 
 /** Миниатюра, при наведении — полное фото (data-full, см. hoverpreview.ts). */
 export function photoAttrs(c: { photoUrl?: string; thumbUrl?: string }): { src: string; full: string } {
   return { src: c.thumbUrl || c.photoUrl || "", full: c.photoUrl || "" };
 }
 
-/** Логотип — квадратный «мотоциклетный» номер: ПОИСК / НОМЕР + флаг. */
+/** Логотип — квадратный «мотоциклетный» номер: ПОИСК / НОМЕР + флаг (подписи — на языке интерфейса). */
 export const logoHtml = `
   <span class="logo" aria-hidden="true">
-    <span class="logo__top">ПОИСК</span>
-    <span class="logo__bottom">НОМЕР<i class="plate__flag"></i></span>
+    <span class="logo__top">${t("logo.top")}</span>
+    <span class="logo__bottom">${t("logo.bottom")}<i class="plate__flag"></i></span>
   </span>`;
 
 /** Карточка фиксации: вся — ссылка на страницу номера; clarify — кнопка «Уточнить» (модалка на главной). */
@@ -109,14 +106,14 @@ export function cardHtml(
   const photo = src ? `<img src="${escapeHtml(src)}" alt="" loading="lazy" />` : icon.car;
   return `
     <article class="card" style="animation-delay:${Math.min(i, 14) * 30}ms">
-      <a class="card__link" href="${plateHref(c.id)}" data-link aria-label="${escapeHtml(c.plate)}: все фиксации"></a>
+      <a class="card__link" href="${plateHref(c.id)}" data-link aria-label="${escapeHtml(t("card.allSightings", { plate: c.plate }))}"></a>
       <a class="card__photo" href="${plateHref(c.id)}" data-link tabindex="-1">${photo}<span class="card__badge">${escapeHtml(city)}</span></a>
       <div class="card__body">
         <p class="card__address">${icon.pin}${escapeHtml(c.address)}</p>
         <div class="card__row">${plateHtml(c)}</div>
         <div class="card__foot">
           <span class="card__date">${icon.cal}<time datetime="${escapeHtml(c.createdAt)}">${formatDate(c.createdAt)}</time></span>
-          ${opts.clarify ? `<button class="btn btn--ghost" type="button" data-clarify="${escapeHtml(c.id)}">Уточнить</button>` : ""}
+          ${opts.clarify ? `<button class="btn btn--ghost" type="button" data-clarify="${escapeHtml(c.id)}">${t("card.clarify")}</button>` : ""}
         </div>
       </div>
     </article>`;

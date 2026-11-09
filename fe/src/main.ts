@@ -2,7 +2,9 @@ import "./style.css";
 import { ApiError, clarify, search, type Car } from "./api";
 import { navigate, onRoute, plateHref } from "./router";
 import { renderPlatePage } from "./plate";
-import { cardHtml, escapeHtml, formatDate, icon, logoHtml, plateHtml, plural } from "./ui";
+import { cardHtml, escapeHtml, formatDate, icon, logoHtml, plateHtml } from "./ui";
+import { SWITCH_FLAG, t, tp } from "./i18n/i18n";
+import { mountSettings } from "./settings";
 import { initHoverPreview } from "./hoverpreview";
 
 const PAGE_SIZE = 35; // кратно 5 и 7 — по числу колонок сетки
@@ -21,7 +23,7 @@ function field(id: string, label: string, ico: string, placeholder: string): str
         <span class="field__label">${label}</span>
         <input class="field__input" id="${id}" type="search" autocomplete="off" spellcheck="false" maxlength="32" placeholder="${placeholder}" />
       </span>
-      <button class="field__clear" type="button" data-clear="${id}" aria-label="Очистить: ${label}" hidden>${icon.clear}</button>
+      <button class="field__clear" type="button" data-clear="${id}" aria-label="${t("search.clear", { label })}" hidden>${icon.clear}</button>
     </label>`;
 }
 
@@ -29,11 +31,12 @@ const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
   <div class="view" id="view-search">
   <header class="hero">
+    <div class="hero__settings"></div>
     <div class="hero__inner">
-      <h1 class="hero__title">${logoHtml}<span>Поиск по номеру</span></h1>
-      <p>Введите госномер или его начало: «У54», «А123ВС 777», регион «77»</p>
+      <h1 class="hero__title">${logoHtml}<span>${t("app.title")}</span></h1>
+      <p>${t("home.hint")}</p>
       <form class="searchbar" role="search" onsubmit="return false">
-        ${field("q-plate", "Номер", icon.plate, "А123ВС 777")}
+        ${field("q-plate", t("search.label"), icon.plate, "А123ВС 777")}
         <span class="searchbar__go" aria-hidden="true">${icon.search}</span>
       </form>
     </div>
@@ -41,12 +44,12 @@ app.innerHTML = `
 
   <main class="content">
     <div class="content__head">
-      <h2>Результаты</h2>
+      <h2>${t("results.title")}</h2>
       <span class="content__count" aria-live="polite"></span>
     </div>
     <section class="grid"></section>
     <div class="more" hidden>
-      <button class="more__btn" type="button">Загрузить ещё</button>
+      <button class="more__btn" type="button">${t("more.load")}</button>
       <span class="more__info"></span>
     </div>
   </main>
@@ -57,12 +60,12 @@ app.innerHTML = `
   <dialog class="modal" aria-labelledby="modal-title">
     <form method="dialog" class="modal__inner">
       <header class="modal__head">
-        <h3 id="modal-title">Уточнить номер</h3>
-        <button class="modal__x" value="close" formnovalidate aria-label="Закрыть">${icon.clear}</button>
+        <h3 id="modal-title">${t("modal.title")}</h3>
+        <button class="modal__x" value="close" formnovalidate aria-label="${t("modal.close")}">${icon.clear}</button>
       </header>
       <div class="modal__body"></div>
       <footer class="modal__foot">
-        <button class="btn btn--primary" value="close">Понятно</button>
+        <button class="btn btn--primary" value="close">${t("modal.ok")}</button>
       </footer>
     </form>
   </dialog>
@@ -78,6 +81,8 @@ const $modal = app.querySelector<HTMLDialogElement>(".modal")!;
 const $modalBody = app.querySelector<HTMLElement>(".modal__body")!;
 const $modalFoot = app.querySelector<HTMLElement>(".modal__foot")!;
 const $modalForm = app.querySelector<HTMLFormElement>(".modal__inner")!;
+
+mountSettings(app.querySelector<HTMLElement>(".hero__settings")!);
 
 
 
@@ -98,18 +103,18 @@ const state = {
 function render(): void {
   const shown = state.cars.size;
   $count.textContent = state.total
-    ? `Найдено ${state.total} ${plural(state.total, "машина", "машины", "машин")}`
+    ? tp("results.found", state.total)
     : "";
 
   const hasMore = state.nextOffset !== null;
   $more.hidden = !hasMore && !state.failed;
   $moreBtn.disabled = state.loading;
   $moreBtn.classList.toggle("is-loading", state.loading);
-  $moreBtn.textContent = state.loading ? "Загружаем…" : state.failed ? "Повторить" : "Загрузить ещё";
+  $moreBtn.textContent = t(state.loading ? "more.loading" : state.failed ? "more.retry" : "more.load");
   $moreInfo.textContent = state.failed
-    ? "Не удалось загрузить — проверьте соединение"
+    ? t("more.failed")
     : state.total
-      ? `Показано ${shown} из ${state.total}`
+      ? t("more.shown", { shown, total: state.total })
       : "";
 }
 
@@ -140,8 +145,8 @@ async function loadMore(): Promise<void> {
     if (ctrl.signal.aborted || gen !== state.generation) return;
     state.failed = true;
     if (state.cars.size === 0) {
-      $grid.innerHTML = `<div class="empty"><strong>Не удалось загрузить</strong>${escapeHtml(
-        e instanceof ApiError ? e.message : "Сервер недоступен"
+      $grid.innerHTML = `<div class="empty"><strong>${t("error.loadFailed")}</strong>${escapeHtml(
+        e instanceof ApiError ? e.message : t("error.serverDown")
       )}</div>`;
     }
   } finally {
@@ -155,7 +160,7 @@ async function loadMore(): Promise<void> {
 }
 
 function renderEmpty(): void {
-  $grid.innerHTML = `<div class="empty"><strong>Ничего не найдено</strong>Проверьте номер — ищется по началу серии и региона</div>`;
+  $grid.innerHTML = `<div class="empty"><strong>${t("empty.title")}</strong>${t("empty.hint")}</div>`;
 }
 
 function newSearch(): void {
@@ -199,15 +204,15 @@ function openClarify(car: Car): void {
       </div>
     </div>
     <label class="clarify">
-      <span class="clarify__label">Какой номер на самом деле?</span>
+      <span class="clarify__label">${t("clarify.question")}</span>
       <input class="clarify__input" name="plate" required maxlength="32" autocomplete="off" spellcheck="false"
         placeholder="${escapeHtml(car.plate)}" value="${escapeHtml(car.plate)}" />
-      <span class="clarify__hint">Уточнение уйдёт на проверку со статусом «не принят». Поиск будет находить машину и по нему.</span>
+      <span class="clarify__hint">${t("clarify.hint")}</span>
     </label>
     <p class="clarify__msg" role="status" hidden></p>`;
   $modalFoot.innerHTML = `
-    <button class="btn btn--ghost" value="close" formnovalidate>Отмена</button>
-    <button class="btn btn--primary" value="send" type="submit">Отправить</button>`;
+    <button class="btn btn--ghost" value="close" formnovalidate>${t("clarify.cancel")}</button>
+    <button class="btn btn--primary" value="send" type="submit">${t("clarify.send")}</button>`;
   clarifyFor = car;
   $modal.showModal();
   const $input = $modalBody.querySelector<HTMLInputElement>(".clarify__input")!;
@@ -223,20 +228,23 @@ $modalForm.addEventListener("submit", async (e) => {
   const $input = $modalBody.querySelector<HTMLInputElement>(".clarify__input")!;
   const $msg = $modalBody.querySelector<HTMLElement>(".clarify__msg")!;
   submitter.disabled = true;
-  submitter.textContent = "Отправляем…";
+  submitter.textContent = t("clarify.sending");
   try {
     const c = await clarify(clarifyFor.id, $input.value);
     $msg.hidden = false;
     $msg.className = "clarify__msg is-ok";
-    $msg.textContent = `Спасибо! Уточнение «${c.plate}» отправлено, статус: ${c.accepted ? "принят" : "не принят"}.`;
+    $msg.textContent = t("clarify.thanks", {
+      plate: c.plate,
+      status: t(c.accepted ? "clarify.accepted" : "clarify.notAccepted"),
+    });
     $input.disabled = true;
-    $modalFoot.innerHTML = `<button class="btn btn--primary" value="close">Готово</button>`;
+    $modalFoot.innerHTML = `<button class="btn btn--primary" value="close">${t("clarify.done")}</button>`;
   } catch (err) {
     $msg.hidden = false;
     $msg.className = "clarify__msg is-error";
-    $msg.textContent = err instanceof ApiError ? err.message : "Не удалось отправить — попробуйте ещё раз";
+    $msg.textContent = err instanceof ApiError ? err.message : t("clarify.failed");
     submitter.disabled = false;
-    submitter.textContent = "Отправить";
+    submitter.textContent = t("clarify.send");
   }
 });
 
@@ -286,6 +294,15 @@ $moreBtn.addEventListener("click", () => {
 
 initHoverPreview();
 
+// Смена языка перезагружает страницу — запрос поиска переносим через перезагрузку.
+const SEARCH_Q = "search-q";
+addEventListener("pagehide", () => sessionStorage.setItem(SEARCH_Q, $plate.value));
+if (sessionStorage.getItem(SWITCH_FLAG)) {
+  sessionStorage.removeItem(SWITCH_FLAG);
+  $plate.value = sessionStorage.getItem(SEARCH_Q) ?? "";
+  app.querySelector<HTMLButtonElement>(`[data-clear="${$plate.id}"]`)!.hidden = !$plate.value;
+}
+
 const $viewSearch = app.querySelector<HTMLElement>("#view-search")!;
 const $viewPlate = app.querySelector<HTMLElement>("#view-plate")!;
 let searchStarted = false;
@@ -313,7 +330,7 @@ onRoute((route) => {
   $viewPlate.hidden = true;
   $viewPlate.querySelector(".pp")?.replaceChildren(); // шапку с поиском оставляем
   $viewSearch.hidden = false;
-  document.title = "Поиск по номеру";
+  document.title = t("app.title");
   if (!searchStarted) {
     searchStarted = true;
     newSearch();
