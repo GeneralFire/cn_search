@@ -33,12 +33,33 @@ help: ## список команд
 
 # ---------------------------------------------------------------- запуск
 
-.PHONY: up
-up: ## собрать и поднять всё (db, s3, be, fe)
-	$(DC) up -d --build
+.PHONY: run
+run: etc run-be run-fe ## поднять всё: БД и S3 (+ миграции), бэк, фронт
+
+.PHONY: etc
+etc: ## поднять БД и S3 и применить миграции (goose)
+	$(DC) up -d --wait db s3
+	$(DC) run --rm migrate
+
+.PHONY: run-be
+run-be: ## собрать и поднять только бэк (нужен `make etc`)
+	@test -n "$$($(DC) ps -q --status running db 2>/dev/null)" || { echo "БД не запущена: сначала make etc"; exit 1; }
+	$(DC) up -d --build --no-deps --wait be
+
+.PHONY: run-fe
+run-fe: ## собрать и поднять только фронт (без бэка страница откроется, но поиск вернёт ошибку)
+	$(DC) up -d --build --no-deps --wait fe
+
+.PHONY: stop-fe stop-be stop-etc
+stop-fe: ## остановить фронт
+	$(DC) stop fe
+stop-be: ## остановить бэк
+	$(DC) stop be
+stop-etc: ## остановить БД и S3 (данные сохраняются)
+	$(DC) stop db s3
 
 .PHONY: down
-down: ## остановить (данные сохраняются в томах)
+down: ## остановить всё (данные сохраняются в ./.data)
 	$(DC) down
 
 .PHONY: reset
@@ -71,8 +92,7 @@ migration: ## создать миграцию: make migration NAME=add_vin
 
 .PHONY: seed
 seed: ## залить тестовые данные: машины в БД, картинки в S3 (SEED_TOTAL=600)
-	$(DC) up -d --wait db s3
-	$(DC) run --rm migrate
+	$(MAKE) --no-print-directory etc
 	$(DC) run --rm --build -e SEED_TOTAL=$(or $(SEED_TOTAL),600) be seed
 
 .PHONY: psql

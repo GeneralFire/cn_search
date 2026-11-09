@@ -13,8 +13,17 @@ TypeScript + Vite с TS-клиентом, сгенерированным по `s
 Нужны Docker (Docker Desktop / Colima / OrbStack), Docker Compose и `make`.
 
 ```bash
-make up     # собрать и поднять db, s3, be, fe
+make run    # поднять всё: db + s3 (+ миграции), be, fe
 make seed   # залить тестовые данные: 600 машин в Postgres, 5 картинок в S3
+```
+
+По отдельности:
+
+```bash
+make etc      # только БД и S3 + миграции goose
+make run-be   # только бэк (пересборка); требует make etc
+make run-fe   # только фронт; без бэка страница откроется, но поиск вернёт ошибку
+make stop-fe  # / stop-be / stop-etc — остановить часть; make down — всё
 ```
 
 Открыть: **http://localhost:7173** (из локальной сети — `http://<ваш-IP>:7173`).
@@ -25,7 +34,7 @@ make seed   # залить тестовые данные: 600 машин в Post
 | `be` | HTTP-ручки clay + gRPC | `127.0.0.1:8080` (HTTP), `127.0.0.1:8082` (gRPC) |
 | `db` | Postgres 17 | `127.0.0.1:5432`, БД `carsearch` |
 | `s3` | [RustFS](https://github.com/rustfs/rustfs) — S3-совместимое хранилище | `127.0.0.1:9000` (S3 API), `127.0.0.1:9001` (консоль) |
-| `migrate` | [goose](https://github.com/pressly/goose) (`kukymbr/goose-docker`): `goose up` при каждом `make up`, затем завершается; `be` стартует после него | — |
+| `migrate` | [goose](https://github.com/pressly/goose) (`kukymbr/goose-docker`): `goose up` при `make etc` / `make run`, затем завершается | — |
 
 Данные БД и S3 лежат на хосте в `./.data` (bind mount, в `.gitignore`): переживают перезапуск,
 `docker-compose down -v`, очистку томов и пересоздание VM Docker. Удаляет их только `make reset`.
@@ -68,7 +77,11 @@ car-search/
 
 | Команда | Что делает |
 |---|---|
-| `make up` / `down` | поднять (с миграциями) / остановить всё; данные остаются в `./.data` |
+| `make run` | поднять всё: `etc` → `run-be` → `run-fe` |
+| `make etc` | БД и S3 + миграции goose |
+| `make run-be` / `run-fe` | собрать и поднять только бэк / только фронт (`--no-deps`) |
+| `make stop-be` / `stop-fe` / `stop-etc` | остановить часть стека |
+| `make down` | остановить всё; данные остаются в `./.data` |
 | `make reset` | остановить и **удалить** данные БД и S3 (`./.data`) |
 | `make seed` | миграции + 600 тестовых машин + картинки в S3. Размер: `make seed SEED_TOTAL=5000` |
 | `make migrate` | миграции goose вручную; `CMD=status\|down\|redo\|version`, `CMD=up-to ARG=2` |
@@ -172,7 +185,7 @@ clay кладёт отдельный swagger в `<goclay_out>/<swagger_path>/<и
 
 Схема БД — только миграции [goose](https://github.com/pressly/goose) в `be/migrations`: файлы
 `NNNN_название.sql` (номера подряд с `0001`, секции `-- +goose Up` / `-- +goose Down`).
-Применяет их сервис `migrate` в docker-compose (`goose up` при каждом `make up` и перед `make seed`),
+Применяет их сервис `migrate` в docker-compose (`goose up` при `make etc`, `make run` и перед `make seed`),
 вручную — `make migrate [CMD=…]`; версии — в таблице `goose_db_version`. Код `be` миграции не знает.
 Применённую миграцию не меняем — добавляем следующую: `make migration NAME=…`.
 
@@ -194,7 +207,7 @@ RPC, по файлу на метод (`search.go`, `get.go`).
 Первые три записи фиксированные — для ручной проверки: `А123ВС 777`, `М456ОР 178`, `Т789УХ 116`.
 
 Картинки (седан, хэтчбек, внедорожник, пикап, минивэн; 1280×720) рисует
-`node fe/scripts/gen-car-images.mjs` → `be/assets/cars/`. После перегенерации — `make up && make seed`.
+`node fe/scripts/gen-car-images.mjs` → `be/assets/cars/`. После перегенерации — `make run-be && make seed`.
 
 ### Переменные окружения бэкенда
 

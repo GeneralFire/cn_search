@@ -29,7 +29,7 @@
   `internal/repository` — БД (строки таблиц — `repository_entities.go`; MemoryStore для тестов, генератор данных),
   `internal/s3` — клиент S3.
 - Миграции — только goose: `be/migrations/NNNN_название.sql` (подряд с 0001, `-- +goose Up/Down`).
-  Применяет сервис `migrate` в docker-compose (при `make up`), вручную — `make migrate [CMD=status|down|…]`.
+  Применяет сервис `migrate` в docker-compose (при `make etc` / `make run`), вручную — `make migrate [CMD=status|down|…]`.
   В коде `be` миграций нет. Применённые не менять, новая — `make migration NAME=…`.
 - БД: таблица `plate_sightings` (появления номеров); поиск — `to_tsvector('simple', plate) @@ plainto_tsquery('simple', <строка из rpc>)`
   с GIN-индексом, без pg_trgm и без обработки ввода в Go.
@@ -37,6 +37,7 @@
 - `fe/` — TypeScript + Vite. TS-клиент `fe/src/api/generated.ts` генерируется из swagger: `make gen-ts`.
   Поиск по частям номера, бесконечная прокрутка + «Загрузить ещё», модалка «Уточнить» (заглушка).
 - `docker-compose.yml`: db (Postgres), s3 (RustFS — minio/minio больше нет на Docker Hub), be, fe.
+  Запуск: `make run` (всё) или по частям `make etc` (db+s3+миграции), `make run-be`, `make run-fe`.
   Тестовые данные: `make seed`.
 - Порядок при изменении API: proto → `make gen` → `internal/implementation` → `fe/src/api/index.ts` → `make test`.
 - Подробности — в `README.md`, особенности локальной машины — в `CLAUDE.local.md`.
