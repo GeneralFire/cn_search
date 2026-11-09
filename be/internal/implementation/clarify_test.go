@@ -3,6 +3,7 @@ package implementation
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -67,13 +68,34 @@ func TestClarifyErrors(t *testing.T) {
 		err  error
 		want codes.Code
 	}{
-		"нет фиксации": {models.ErrNotFound, codes.NotFound},
-		"ошибка БД":    {errors.New("db down"), codes.Internal},
+		"нет фиксации":        {models.ErrNotFound, codes.NotFound},
+		"неверный формат":     {&models.ValidationError{Message: "номер РФ — в формате А123ВС 77"}, codes.InvalidArgument},
+		"совпадает с текущим": {fmt.Errorf("tx: %w", &models.ValidationError{Message: "совпадает"}), codes.InvalidArgument},
+		"ошибка БД":           {errors.New("db down"), codes.Internal},
 	} {
 		svc, uc := newSvc(t)
 		uc.ClarifyMock.Return(models.Clarification{}, tt.err)
 		if _, err := svc.Clarify(context.Background(), &pb.ClarifyRequest{SightingId: sighting.ID, Plate: "А1"}); status.Code(err) != tt.want {
 			t.Errorf("%s: %v, want %v", name, status.Code(err), tt.want)
 		}
+	}
+}
+
+// Текст ошибки проверки из usecase уходит клиенту как есть — фронт показывает его пользователю.
+func TestClarifyValidationMessage(t *testing.T) {
+	svc, uc := newSvc(t)
+	uc.ClarifyMock.Return(models.Clarification{}, &models.ValidationError{Message: "уточнение совпадает с текущим номером"})
+	_, err := svc.Clarify(context.Background(), &pb.ClarifyRequest{SightingId: sighting.ID, Plate: "А123ВС 777", PlateType: pb.PlateType_PLATE_TYPE_RU})
+	if st, _ := status.FromError(err); st.Code() != codes.InvalidArgument || st.Message() != "уточнение совпадает с текущим номером" {
+		t.Errorf("err = %v", err)
+	}
+}
+
+func TestClarifyAcceptedStatus(t *testing.T) {
+	svc, uc := newSvc(t)
+	uc.ClarifyMock.Return(models.Clarification{ID: "c3", Status: models.ClarificationAccepted, CreatedAt: sighting.CreatedAt}, nil)
+	resp, err := svc.Clarify(context.Background(), &pb.ClarifyRequest{SightingId: sighting.ID, Plate: "А124ВС 777"})
+	if err != nil || resp.GetClarification().GetStatus() != pb.ClarificationStatus_CLARIFICATION_STATUS_ACCEPTED {
+		t.Fatalf("%v %v", resp, err)
 	}
 }

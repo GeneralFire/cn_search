@@ -658,7 +658,7 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
   "paths": {
     "/carsearch.CarSearchService/Clarify": {
       "post": {
-        "summary": "Clarify — уточнение номера к фиксации («на самом деле номер такой»). Создаётся со статусом «не принят».",
+        "summary": "Clarify — уточнение номера к фиксации («на самом деле номер такой»). Номер нормализуется\n(пробелы, регистр; для RU — латинские двойники → кириллица, «0» в буквенных позициях → «О»)\nи проверяется по формату plate_type; ошибка формата или совпадение с текущим номером\nфиксации — INVALID_ARGUMENT с текстом для пользователя. Создаётся «не принят»; когда\n3 уточнения фиксации совпали (без учёта похожих символов), все они становятся «принят».",
         "operationId": "CarSearchService_Clarify",
         "responses": {
           "200": {
@@ -778,10 +778,11 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         },
         "plate": {
           "type": "string",
-          "description": "Предложенный номер, как ввели."
+          "description": "Предложенный номер в нормализованном виде: \"А123ВС 77\"."
         },
         "status": {
-          "$ref": "#/definitions/carsearchClarificationStatus"
+          "$ref": "#/definitions/carsearchClarificationStatus",
+          "description": "Актуальный статус: ACCEPTED, когда совпали 3 уточнения фиксации."
         },
         "createdAt": {
           "type": "string",
@@ -815,7 +816,7 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         },
         "plate": {
           "type": "string",
-          "description": "Номер, 1..32 символа."
+          "description": "Номер, 1..32 символа. RU: А123ВС 77 / А123ВС 777 (пробел перед регионом можно не ставить);\nEU/US: 2..12 символов — латиница, цифры, пробел, дефис; DEFAULT — формат не проверяется."
         },
         "plateType": {
           "$ref": "#/definitions/carsearchPlateType",

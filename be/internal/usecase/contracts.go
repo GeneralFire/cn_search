@@ -22,4 +22,7 @@ type repository interface {
 	ListSamePlate(ctx context.Context, tx db.Executor, o models.SamePlateOpts) ([]models.PlateSighting, error)
 	SeeAlso(ctx context.Context, tx db.Executor, o models.SeeAlsoOpts) ([]models.PlateSighting, error)
 	CreateClarification(ctx context.Context, tx db.Executor, o models.ClarifyOpts) (models.Clarification, error)
+	MatchesSightingPlate(ctx context.Context, tx db.Executor, sightingID, plate string) (bool, error)
+	CountMatchingClarifications(ctx context.Context, tx db.Executor, sightingID, plate string) (int, error)
+	AcceptMatchingClarifications(ctx context.Context, tx db.Executor, sightingID, plate string) error
 }

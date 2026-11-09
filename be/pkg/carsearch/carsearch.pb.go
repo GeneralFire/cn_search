@@ -563,8 +563,9 @@ type Clarification struct {
 	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// uuid фиксации, к которой уточнение.
 	SightingId string `protobuf:"bytes,2,opt,name=sighting_id,json=sightingId,proto3" json:"sighting_id,omitempty"`
-	// Предложенный номер, как ввели.
-	Plate         string                 `protobuf:"bytes,3,opt,name=plate,proto3" json:"plate,omitempty"`
+	// Предложенный номер в нормализованном виде: "А123ВС 77".
+	Plate string `protobuf:"bytes,3,opt,name=plate,proto3" json:"plate,omitempty"`
+	// Актуальный статус: ACCEPTED, когда совпали 3 уточнения фиксации.
 	Status        ClarificationStatus    `protobuf:"varint,4,opt,name=status,proto3,enum=carsearch.ClarificationStatus" json:"status,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	PlateType     PlateType              `protobuf:"varint,6,opt,name=plate_type,json=plateType,proto3,enum=carsearch.PlateType" json:"plate_type,omitempty"`
@@ -656,7 +657,8 @@ type ClarifyRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// uuid фиксации.
 	SightingId string `protobuf:"bytes,1,opt,name=sighting_id,json=sightingId,proto3" json:"sighting_id,omitempty"`
-	// Номер, 1..32 символа.
+	// Номер, 1..32 символа. RU: А123ВС 77 / А123ВС 777 (пробел перед регионом можно не ставить);
+	// EU/US: 2..12 символов — латиница, цифры, пробел, дефис; DEFAULT — формат не проверяется.
 	Plate string `protobuf:"bytes,2,opt,name=plate,proto3" json:"plate,omitempty"`
 	// Формат номера; DEFAULT — другой/неизвестен.
 	PlateType PlateType `protobuf:"varint,3,opt,name=plate_type,json=plateType,proto3,enum=carsearch.PlateType" json:"plate_type,omitempty"`

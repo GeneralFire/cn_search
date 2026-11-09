@@ -20,6 +20,20 @@ type RepositoryMock struct {
 	t          minimock.Tester
 	finishOnce sync.Once
 
+	funcAcceptMatchingClarifications          func(ctx context.Context, tx db.Executor, sightingID string, plate string) (err error)
+	funcAcceptMatchingClarificationsOrigin    string
+	inspectFuncAcceptMatchingClarifications   func(ctx context.Context, tx db.Executor, sightingID string, plate string)
+	afterAcceptMatchingClarificationsCounter  uint64
+	beforeAcceptMatchingClarificationsCounter uint64
+	AcceptMatchingClarificationsMock          mRepositoryMockAcceptMatchingClarifications
+
+	funcCountMatchingClarifications          func(ctx context.Context, tx db.Executor, sightingID string, plate string) (i1 int, err error)
+	funcCountMatchingClarificationsOrigin    string
+	inspectFuncCountMatchingClarifications   func(ctx context.Context, tx db.Executor, sightingID string, plate string)
+	afterCountMatchingClarificationsCounter  uint64
+	beforeCountMatchingClarificationsCounter uint64
+	CountMatchingClarificationsMock          mRepositoryMockCountMatchingClarifications
+
 	funcCreateClarification          func(ctx context.Context, tx db.Executor, o models.ClarifyOpts) (c2 models.Clarification, err error)
 	funcCreateClarificationOrigin    string
 	inspectFuncCreateClarification   func(ctx context.Context, tx db.Executor, o models.ClarifyOpts)
@@ -33,6 +47,13 @@ type RepositoryMock struct {
 	afterListSamePlateCounter  uint64
 	beforeListSamePlateCounter uint64
 	ListSamePlateMock          mRepositoryMockListSamePlate
+
+	funcMatchesSightingPlate          func(ctx context.Context, tx db.Executor, sightingID string, plate string) (b1 bool, err error)
+	funcMatchesSightingPlateOrigin    string
+	inspectFuncMatchesSightingPlate   func(ctx context.Context, tx db.Executor, sightingID string, plate string)
+	afterMatchesSightingPlateCounter  uint64
+	beforeMatchesSightingPlateCounter uint64
+	MatchesSightingPlateMock          mRepositoryMockMatchesSightingPlate
 
 	funcSearch          func(ctx context.Context, tx db.Executor, q models.SearchOpts) (s1 models.SearchPage, err error)
 	funcSearchOrigin    string
@@ -57,11 +78,20 @@ func NewRepositoryMock(t minimock.Tester) *RepositoryMock {
 		controller.RegisterMocker(m)
 	}
 
+	m.AcceptMatchingClarificationsMock = mRepositoryMockAcceptMatchingClarifications{mock: m}
+	m.AcceptMatchingClarificationsMock.callArgs = []*RepositoryMockAcceptMatchingClarificationsParams{}
+
+	m.CountMatchingClarificationsMock = mRepositoryMockCountMatchingClarifications{mock: m}
+	m.CountMatchingClarificationsMock.callArgs = []*RepositoryMockCountMatchingClarificationsParams{}
+
 	m.CreateClarificationMock = mRepositoryMockCreateClarification{mock: m}
 	m.CreateClarificationMock.callArgs = []*RepositoryMockCreateClarificationParams{}
 
 	m.ListSamePlateMock = mRepositoryMockListSamePlate{mock: m}
 	m.ListSamePlateMock.callArgs = []*RepositoryMockListSamePlateParams{}
+
+	m.MatchesSightingPlateMock = mRepositoryMockMatchesSightingPlate{mock: m}
+	m.MatchesSightingPlateMock.callArgs = []*RepositoryMockMatchesSightingPlateParams{}
 
 	m.SearchMock = mRepositoryMockSearch{mock: m}
 	m.SearchMock.callArgs = []*RepositoryMockSearchParams{}
@@ -72,6 +102,815 @@ func NewRepositoryMock(t minimock.Tester) *RepositoryMock {
 	t.Cleanup(m.MinimockFinish)
 
 	return m
+}
+
+type mRepositoryMockAcceptMatchingClarifications struct {
+	optional           bool
+	mock               *RepositoryMock
+	defaultExpectation *RepositoryMockAcceptMatchingClarificationsExpectation
+	expectations       []*RepositoryMockAcceptMatchingClarificationsExpectation
+
+	callArgs []*RepositoryMockAcceptMatchingClarificationsParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// RepositoryMockAcceptMatchingClarificationsExpectation specifies expectation struct of the repository.AcceptMatchingClarifications
+type RepositoryMockAcceptMatchingClarificationsExpectation struct {
+	mock               *RepositoryMock
+	params             *RepositoryMockAcceptMatchingClarificationsParams
+	paramPtrs          *RepositoryMockAcceptMatchingClarificationsParamPtrs
+	expectationOrigins RepositoryMockAcceptMatchingClarificationsExpectationOrigins
+	results            *RepositoryMockAcceptMatchingClarificationsResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// RepositoryMockAcceptMatchingClarificationsParams contains parameters of the repository.AcceptMatchingClarifications
+type RepositoryMockAcceptMatchingClarificationsParams struct {
+	ctx        context.Context
+	tx         db.Executor
+	sightingID string
+	plate      string
+}
+
+// RepositoryMockAcceptMatchingClarificationsParamPtrs contains pointers to parameters of the repository.AcceptMatchingClarifications
+type RepositoryMockAcceptMatchingClarificationsParamPtrs struct {
+	ctx        *context.Context
+	tx         *db.Executor
+	sightingID *string
+	plate      *string
+}
+
+// RepositoryMockAcceptMatchingClarificationsResults contains results of the repository.AcceptMatchingClarifications
+type RepositoryMockAcceptMatchingClarificationsResults struct {
+	err error
+}
+
+// RepositoryMockAcceptMatchingClarificationsOrigins contains origins of expectations of the repository.AcceptMatchingClarifications
+type RepositoryMockAcceptMatchingClarificationsExpectationOrigins struct {
+	origin           string
+	originCtx        string
+	originTx         string
+	originSightingID string
+	originPlate      string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmAcceptMatchingClarifications *mRepositoryMockAcceptMatchingClarifications) Optional() *mRepositoryMockAcceptMatchingClarifications {
+	mmAcceptMatchingClarifications.optional = true
+	return mmAcceptMatchingClarifications
+}
+
+// Expect sets up expected params for repository.AcceptMatchingClarifications
+func (mmAcceptMatchingClarifications *mRepositoryMockAcceptMatchingClarifications) Expect(ctx context.Context, tx db.Executor, sightingID string, plate string) *mRepositoryMockAcceptMatchingClarifications {
+	if mmAcceptMatchingClarifications.mock.funcAcceptMatchingClarifications != nil {
+		mmAcceptMatchingClarifications.mock.t.Fatalf("RepositoryMock.AcceptMatchingClarifications mock is already set by Set")
+	}
+
+	if mmAcceptMatchingClarifications.defaultExpectation == nil {
+		mmAcceptMatchingClarifications.defaultExpectation = &RepositoryMockAcceptMatchingClarificationsExpectation{}
+	}
+
+	if mmAcceptMatchingClarifications.defaultExpectation.paramPtrs != nil {
+		mmAcceptMatchingClarifications.mock.t.Fatalf("RepositoryMock.AcceptMatchingClarifications mock is already set by ExpectParams functions")
+	}
+
+	mmAcceptMatchingClarifications.defaultExpectation.params = &RepositoryMockAcceptMatchingClarificationsParams{ctx, tx, sightingID, plate}
+	mmAcceptMatchingClarifications.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmAcceptMatchingClarifications.expectations {
+		if minimock.Equal(e.params, mmAcceptMatchingClarifications.defaultExpectation.params) {
+			mmAcceptMatchingClarifications.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmAcceptMatchingClarifications.defaultExpectation.params)
+		}
+	}
+
+	return mmAcceptMatchingClarifications
+}
+
+// ExpectCtxParam1 sets up expected param ctx for repository.AcceptMatchingClarifications
+func (mmAcceptMatchingClarifications *mRepositoryMockAcceptMatchingClarifications) ExpectCtxParam1(ctx context.Context) *mRepositoryMockAcceptMatchingClarifications {
+	if mmAcceptMatchingClarifications.mock.funcAcceptMatchingClarifications != nil {
+		mmAcceptMatchingClarifications.mock.t.Fatalf("RepositoryMock.AcceptMatchingClarifications mock is already set by Set")
+	}
+
+	if mmAcceptMatchingClarifications.defaultExpectation == nil {
+		mmAcceptMatchingClarifications.defaultExpectation = &RepositoryMockAcceptMatchingClarificationsExpectation{}
+	}
+
+	if mmAcceptMatchingClarifications.defaultExpectation.params != nil {
+		mmAcceptMatchingClarifications.mock.t.Fatalf("RepositoryMock.AcceptMatchingClarifications mock is already set by Expect")
+	}
+
+	if mmAcceptMatchingClarifications.defaultExpectation.paramPtrs == nil {
+		mmAcceptMatchingClarifications.defaultExpectation.paramPtrs = &RepositoryMockAcceptMatchingClarificationsParamPtrs{}
+	}
+	mmAcceptMatchingClarifications.defaultExpectation.paramPtrs.ctx = &ctx
+	mmAcceptMatchingClarifications.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmAcceptMatchingClarifications
+}
+
+// ExpectTxParam2 sets up expected param tx for repository.AcceptMatchingClarifications
+func (mmAcceptMatchingClarifications *mRepositoryMockAcceptMatchingClarifications) ExpectTxParam2(tx db.Executor) *mRepositoryMockAcceptMatchingClarifications {
+	if mmAcceptMatchingClarifications.mock.funcAcceptMatchingClarifications != nil {
+		mmAcceptMatchingClarifications.mock.t.Fatalf("RepositoryMock.AcceptMatchingClarifications mock is already set by Set")
+	}
+
+	if mmAcceptMatchingClarifications.defaultExpectation == nil {
+		mmAcceptMatchingClarifications.defaultExpectation = &RepositoryMockAcceptMatchingClarificationsExpectation{}
+	}
+
+	if mmAcceptMatchingClarifications.defaultExpectation.params != nil {
+		mmAcceptMatchingClarifications.mock.t.Fatalf("RepositoryMock.AcceptMatchingClarifications mock is already set by Expect")
+	}
+
+	if mmAcceptMatchingClarifications.defaultExpectation.paramPtrs == nil {
+		mmAcceptMatchingClarifications.defaultExpectation.paramPtrs = &RepositoryMockAcceptMatchingClarificationsParamPtrs{}
+	}
+	mmAcceptMatchingClarifications.defaultExpectation.paramPtrs.tx = &tx
+	mmAcceptMatchingClarifications.defaultExpectation.expectationOrigins.originTx = minimock.CallerInfo(1)
+
+	return mmAcceptMatchingClarifications
+}
+
+// ExpectSightingIDParam3 sets up expected param sightingID for repository.AcceptMatchingClarifications
+func (mmAcceptMatchingClarifications *mRepositoryMockAcceptMatchingClarifications) ExpectSightingIDParam3(sightingID string) *mRepositoryMockAcceptMatchingClarifications {
+	if mmAcceptMatchingClarifications.mock.funcAcceptMatchingClarifications != nil {
+		mmAcceptMatchingClarifications.mock.t.Fatalf("RepositoryMock.AcceptMatchingClarifications mock is already set by Set")
+	}
+
+	if mmAcceptMatchingClarifications.defaultExpectation == nil {
+		mmAcceptMatchingClarifications.defaultExpectation = &RepositoryMockAcceptMatchingClarificationsExpectation{}
+	}
+
+	if mmAcceptMatchingClarifications.defaultExpectation.params != nil {
+		mmAcceptMatchingClarifications.mock.t.Fatalf("RepositoryMock.AcceptMatchingClarifications mock is already set by Expect")
+	}
+
+	if mmAcceptMatchingClarifications.defaultExpectation.paramPtrs == nil {
+		mmAcceptMatchingClarifications.defaultExpectation.paramPtrs = &RepositoryMockAcceptMatchingClarificationsParamPtrs{}
+	}
+	mmAcceptMatchingClarifications.defaultExpectation.paramPtrs.sightingID = &sightingID
+	mmAcceptMatchingClarifications.defaultExpectation.expectationOrigins.originSightingID = minimock.CallerInfo(1)
+
+	return mmAcceptMatchingClarifications
+}
+
+// ExpectPlateParam4 sets up expected param plate for repository.AcceptMatchingClarifications
+func (mmAcceptMatchingClarifications *mRepositoryMockAcceptMatchingClarifications) ExpectPlateParam4(plate string) *mRepositoryMockAcceptMatchingClarifications {
+	if mmAcceptMatchingClarifications.mock.funcAcceptMatchingClarifications != nil {
+		mmAcceptMatchingClarifications.mock.t.Fatalf("RepositoryMock.AcceptMatchingClarifications mock is already set by Set")
+	}
+
+	if mmAcceptMatchingClarifications.defaultExpectation == nil {
+		mmAcceptMatchingClarifications.defaultExpectation = &RepositoryMockAcceptMatchingClarificationsExpectation{}
+	}
+
+	if mmAcceptMatchingClarifications.defaultExpectation.params != nil {
+		mmAcceptMatchingClarifications.mock.t.Fatalf("RepositoryMock.AcceptMatchingClarifications mock is already set by Expect")
+	}
+
+	if mmAcceptMatchingClarifications.defaultExpectation.paramPtrs == nil {
+		mmAcceptMatchingClarifications.defaultExpectation.paramPtrs = &RepositoryMockAcceptMatchingClarificationsParamPtrs{}
+	}
+	mmAcceptMatchingClarifications.defaultExpectation.paramPtrs.plate = &plate
+	mmAcceptMatchingClarifications.defaultExpectation.expectationOrigins.originPlate = minimock.CallerInfo(1)
+
+	return mmAcceptMatchingClarifications
+}
+
+// Inspect accepts an inspector function that has same arguments as the repository.AcceptMatchingClarifications
+func (mmAcceptMatchingClarifications *mRepositoryMockAcceptMatchingClarifications) Inspect(f func(ctx context.Context, tx db.Executor, sightingID string, plate string)) *mRepositoryMockAcceptMatchingClarifications {
+	if mmAcceptMatchingClarifications.mock.inspectFuncAcceptMatchingClarifications != nil {
+		mmAcceptMatchingClarifications.mock.t.Fatalf("Inspect function is already set for RepositoryMock.AcceptMatchingClarifications")
+	}
+
+	mmAcceptMatchingClarifications.mock.inspectFuncAcceptMatchingClarifications = f
+
+	return mmAcceptMatchingClarifications
+}
+
+// Return sets up results that will be returned by repository.AcceptMatchingClarifications
+func (mmAcceptMatchingClarifications *mRepositoryMockAcceptMatchingClarifications) Return(err error) *RepositoryMock {
+	if mmAcceptMatchingClarifications.mock.funcAcceptMatchingClarifications != nil {
+		mmAcceptMatchingClarifications.mock.t.Fatalf("RepositoryMock.AcceptMatchingClarifications mock is already set by Set")
+	}
+
+	if mmAcceptMatchingClarifications.defaultExpectation == nil {
+		mmAcceptMatchingClarifications.defaultExpectation = &RepositoryMockAcceptMatchingClarificationsExpectation{mock: mmAcceptMatchingClarifications.mock}
+	}
+	mmAcceptMatchingClarifications.defaultExpectation.results = &RepositoryMockAcceptMatchingClarificationsResults{err}
+	mmAcceptMatchingClarifications.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmAcceptMatchingClarifications.mock
+}
+
+// Set uses given function f to mock the repository.AcceptMatchingClarifications method
+func (mmAcceptMatchingClarifications *mRepositoryMockAcceptMatchingClarifications) Set(f func(ctx context.Context, tx db.Executor, sightingID string, plate string) (err error)) *RepositoryMock {
+	if mmAcceptMatchingClarifications.defaultExpectation != nil {
+		mmAcceptMatchingClarifications.mock.t.Fatalf("Default expectation is already set for the repository.AcceptMatchingClarifications method")
+	}
+
+	if len(mmAcceptMatchingClarifications.expectations) > 0 {
+		mmAcceptMatchingClarifications.mock.t.Fatalf("Some expectations are already set for the repository.AcceptMatchingClarifications method")
+	}
+
+	mmAcceptMatchingClarifications.mock.funcAcceptMatchingClarifications = f
+	mmAcceptMatchingClarifications.mock.funcAcceptMatchingClarificationsOrigin = minimock.CallerInfo(1)
+	return mmAcceptMatchingClarifications.mock
+}
+
+// When sets expectation for the repository.AcceptMatchingClarifications which will trigger the result defined by the following
+// Then helper
+func (mmAcceptMatchingClarifications *mRepositoryMockAcceptMatchingClarifications) When(ctx context.Context, tx db.Executor, sightingID string, plate string) *RepositoryMockAcceptMatchingClarificationsExpectation {
+	if mmAcceptMatchingClarifications.mock.funcAcceptMatchingClarifications != nil {
+		mmAcceptMatchingClarifications.mock.t.Fatalf("RepositoryMock.AcceptMatchingClarifications mock is already set by Set")
+	}
+
+	expectation := &RepositoryMockAcceptMatchingClarificationsExpectation{
+		mock:               mmAcceptMatchingClarifications.mock,
+		params:             &RepositoryMockAcceptMatchingClarificationsParams{ctx, tx, sightingID, plate},
+		expectationOrigins: RepositoryMockAcceptMatchingClarificationsExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmAcceptMatchingClarifications.expectations = append(mmAcceptMatchingClarifications.expectations, expectation)
+	return expectation
+}
+
+// Then sets up repository.AcceptMatchingClarifications return parameters for the expectation previously defined by the When method
+func (e *RepositoryMockAcceptMatchingClarificationsExpectation) Then(err error) *RepositoryMock {
+	e.results = &RepositoryMockAcceptMatchingClarificationsResults{err}
+	return e.mock
+}
+
+// Times sets number of times repository.AcceptMatchingClarifications should be invoked
+func (mmAcceptMatchingClarifications *mRepositoryMockAcceptMatchingClarifications) Times(n uint64) *mRepositoryMockAcceptMatchingClarifications {
+	if n == 0 {
+		mmAcceptMatchingClarifications.mock.t.Fatalf("Times of RepositoryMock.AcceptMatchingClarifications mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmAcceptMatchingClarifications.expectedInvocations, n)
+	mmAcceptMatchingClarifications.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmAcceptMatchingClarifications
+}
+
+func (mmAcceptMatchingClarifications *mRepositoryMockAcceptMatchingClarifications) invocationsDone() bool {
+	if len(mmAcceptMatchingClarifications.expectations) == 0 && mmAcceptMatchingClarifications.defaultExpectation == nil && mmAcceptMatchingClarifications.mock.funcAcceptMatchingClarifications == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmAcceptMatchingClarifications.mock.afterAcceptMatchingClarificationsCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmAcceptMatchingClarifications.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// AcceptMatchingClarifications implements mm_usecase.repository
+func (mmAcceptMatchingClarifications *RepositoryMock) AcceptMatchingClarifications(ctx context.Context, tx db.Executor, sightingID string, plate string) (err error) {
+	mm_atomic.AddUint64(&mmAcceptMatchingClarifications.beforeAcceptMatchingClarificationsCounter, 1)
+	defer mm_atomic.AddUint64(&mmAcceptMatchingClarifications.afterAcceptMatchingClarificationsCounter, 1)
+
+	mmAcceptMatchingClarifications.t.Helper()
+
+	if mmAcceptMatchingClarifications.inspectFuncAcceptMatchingClarifications != nil {
+		mmAcceptMatchingClarifications.inspectFuncAcceptMatchingClarifications(ctx, tx, sightingID, plate)
+	}
+
+	mm_params := RepositoryMockAcceptMatchingClarificationsParams{ctx, tx, sightingID, plate}
+
+	// Record call args
+	mmAcceptMatchingClarifications.AcceptMatchingClarificationsMock.mutex.Lock()
+	mmAcceptMatchingClarifications.AcceptMatchingClarificationsMock.callArgs = append(mmAcceptMatchingClarifications.AcceptMatchingClarificationsMock.callArgs, &mm_params)
+	mmAcceptMatchingClarifications.AcceptMatchingClarificationsMock.mutex.Unlock()
+
+	for _, e := range mmAcceptMatchingClarifications.AcceptMatchingClarificationsMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.err
+		}
+	}
+
+	if mmAcceptMatchingClarifications.AcceptMatchingClarificationsMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmAcceptMatchingClarifications.AcceptMatchingClarificationsMock.defaultExpectation.Counter, 1)
+		mm_want := mmAcceptMatchingClarifications.AcceptMatchingClarificationsMock.defaultExpectation.params
+		mm_want_ptrs := mmAcceptMatchingClarifications.AcceptMatchingClarificationsMock.defaultExpectation.paramPtrs
+
+		mm_got := RepositoryMockAcceptMatchingClarificationsParams{ctx, tx, sightingID, plate}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmAcceptMatchingClarifications.t.Errorf("RepositoryMock.AcceptMatchingClarifications got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmAcceptMatchingClarifications.AcceptMatchingClarificationsMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.tx != nil && !minimock.Equal(*mm_want_ptrs.tx, mm_got.tx) {
+				mmAcceptMatchingClarifications.t.Errorf("RepositoryMock.AcceptMatchingClarifications got unexpected parameter tx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmAcceptMatchingClarifications.AcceptMatchingClarificationsMock.defaultExpectation.expectationOrigins.originTx, *mm_want_ptrs.tx, mm_got.tx, minimock.Diff(*mm_want_ptrs.tx, mm_got.tx))
+			}
+
+			if mm_want_ptrs.sightingID != nil && !minimock.Equal(*mm_want_ptrs.sightingID, mm_got.sightingID) {
+				mmAcceptMatchingClarifications.t.Errorf("RepositoryMock.AcceptMatchingClarifications got unexpected parameter sightingID, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmAcceptMatchingClarifications.AcceptMatchingClarificationsMock.defaultExpectation.expectationOrigins.originSightingID, *mm_want_ptrs.sightingID, mm_got.sightingID, minimock.Diff(*mm_want_ptrs.sightingID, mm_got.sightingID))
+			}
+
+			if mm_want_ptrs.plate != nil && !minimock.Equal(*mm_want_ptrs.plate, mm_got.plate) {
+				mmAcceptMatchingClarifications.t.Errorf("RepositoryMock.AcceptMatchingClarifications got unexpected parameter plate, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmAcceptMatchingClarifications.AcceptMatchingClarificationsMock.defaultExpectation.expectationOrigins.originPlate, *mm_want_ptrs.plate, mm_got.plate, minimock.Diff(*mm_want_ptrs.plate, mm_got.plate))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmAcceptMatchingClarifications.t.Errorf("RepositoryMock.AcceptMatchingClarifications got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmAcceptMatchingClarifications.AcceptMatchingClarificationsMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmAcceptMatchingClarifications.AcceptMatchingClarificationsMock.defaultExpectation.results
+		if mm_results == nil {
+			mmAcceptMatchingClarifications.t.Fatal("No results are set for the RepositoryMock.AcceptMatchingClarifications")
+		}
+		return (*mm_results).err
+	}
+	if mmAcceptMatchingClarifications.funcAcceptMatchingClarifications != nil {
+		return mmAcceptMatchingClarifications.funcAcceptMatchingClarifications(ctx, tx, sightingID, plate)
+	}
+	mmAcceptMatchingClarifications.t.Fatalf("Unexpected call to RepositoryMock.AcceptMatchingClarifications. %v %v %v %v", ctx, tx, sightingID, plate)
+	return
+}
+
+// AcceptMatchingClarificationsAfterCounter returns a count of finished RepositoryMock.AcceptMatchingClarifications invocations
+func (mmAcceptMatchingClarifications *RepositoryMock) AcceptMatchingClarificationsAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmAcceptMatchingClarifications.afterAcceptMatchingClarificationsCounter)
+}
+
+// AcceptMatchingClarificationsBeforeCounter returns a count of RepositoryMock.AcceptMatchingClarifications invocations
+func (mmAcceptMatchingClarifications *RepositoryMock) AcceptMatchingClarificationsBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmAcceptMatchingClarifications.beforeAcceptMatchingClarificationsCounter)
+}
+
+// Calls returns a list of arguments used in each call to RepositoryMock.AcceptMatchingClarifications.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmAcceptMatchingClarifications *mRepositoryMockAcceptMatchingClarifications) Calls() []*RepositoryMockAcceptMatchingClarificationsParams {
+	mmAcceptMatchingClarifications.mutex.RLock()
+
+	argCopy := make([]*RepositoryMockAcceptMatchingClarificationsParams, len(mmAcceptMatchingClarifications.callArgs))
+	copy(argCopy, mmAcceptMatchingClarifications.callArgs)
+
+	mmAcceptMatchingClarifications.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockAcceptMatchingClarificationsDone returns true if the count of the AcceptMatchingClarifications invocations corresponds
+// the number of defined expectations
+func (m *RepositoryMock) MinimockAcceptMatchingClarificationsDone() bool {
+	if m.AcceptMatchingClarificationsMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.AcceptMatchingClarificationsMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.AcceptMatchingClarificationsMock.invocationsDone()
+}
+
+// MinimockAcceptMatchingClarificationsInspect logs each unmet expectation
+func (m *RepositoryMock) MinimockAcceptMatchingClarificationsInspect() {
+	for _, e := range m.AcceptMatchingClarificationsMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to RepositoryMock.AcceptMatchingClarifications at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterAcceptMatchingClarificationsCounter := mm_atomic.LoadUint64(&m.afterAcceptMatchingClarificationsCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.AcceptMatchingClarificationsMock.defaultExpectation != nil && afterAcceptMatchingClarificationsCounter < 1 {
+		if m.AcceptMatchingClarificationsMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to RepositoryMock.AcceptMatchingClarifications at\n%s", m.AcceptMatchingClarificationsMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to RepositoryMock.AcceptMatchingClarifications at\n%s with params: %#v", m.AcceptMatchingClarificationsMock.defaultExpectation.expectationOrigins.origin, *m.AcceptMatchingClarificationsMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcAcceptMatchingClarifications != nil && afterAcceptMatchingClarificationsCounter < 1 {
+		m.t.Errorf("Expected call to RepositoryMock.AcceptMatchingClarifications at\n%s", m.funcAcceptMatchingClarificationsOrigin)
+	}
+
+	if !m.AcceptMatchingClarificationsMock.invocationsDone() && afterAcceptMatchingClarificationsCounter > 0 {
+		m.t.Errorf("Expected %d calls to RepositoryMock.AcceptMatchingClarifications at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.AcceptMatchingClarificationsMock.expectedInvocations), m.AcceptMatchingClarificationsMock.expectedInvocationsOrigin, afterAcceptMatchingClarificationsCounter)
+	}
+}
+
+type mRepositoryMockCountMatchingClarifications struct {
+	optional           bool
+	mock               *RepositoryMock
+	defaultExpectation *RepositoryMockCountMatchingClarificationsExpectation
+	expectations       []*RepositoryMockCountMatchingClarificationsExpectation
+
+	callArgs []*RepositoryMockCountMatchingClarificationsParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// RepositoryMockCountMatchingClarificationsExpectation specifies expectation struct of the repository.CountMatchingClarifications
+type RepositoryMockCountMatchingClarificationsExpectation struct {
+	mock               *RepositoryMock
+	params             *RepositoryMockCountMatchingClarificationsParams
+	paramPtrs          *RepositoryMockCountMatchingClarificationsParamPtrs
+	expectationOrigins RepositoryMockCountMatchingClarificationsExpectationOrigins
+	results            *RepositoryMockCountMatchingClarificationsResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// RepositoryMockCountMatchingClarificationsParams contains parameters of the repository.CountMatchingClarifications
+type RepositoryMockCountMatchingClarificationsParams struct {
+	ctx        context.Context
+	tx         db.Executor
+	sightingID string
+	plate      string
+}
+
+// RepositoryMockCountMatchingClarificationsParamPtrs contains pointers to parameters of the repository.CountMatchingClarifications
+type RepositoryMockCountMatchingClarificationsParamPtrs struct {
+	ctx        *context.Context
+	tx         *db.Executor
+	sightingID *string
+	plate      *string
+}
+
+// RepositoryMockCountMatchingClarificationsResults contains results of the repository.CountMatchingClarifications
+type RepositoryMockCountMatchingClarificationsResults struct {
+	i1  int
+	err error
+}
+
+// RepositoryMockCountMatchingClarificationsOrigins contains origins of expectations of the repository.CountMatchingClarifications
+type RepositoryMockCountMatchingClarificationsExpectationOrigins struct {
+	origin           string
+	originCtx        string
+	originTx         string
+	originSightingID string
+	originPlate      string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmCountMatchingClarifications *mRepositoryMockCountMatchingClarifications) Optional() *mRepositoryMockCountMatchingClarifications {
+	mmCountMatchingClarifications.optional = true
+	return mmCountMatchingClarifications
+}
+
+// Expect sets up expected params for repository.CountMatchingClarifications
+func (mmCountMatchingClarifications *mRepositoryMockCountMatchingClarifications) Expect(ctx context.Context, tx db.Executor, sightingID string, plate string) *mRepositoryMockCountMatchingClarifications {
+	if mmCountMatchingClarifications.mock.funcCountMatchingClarifications != nil {
+		mmCountMatchingClarifications.mock.t.Fatalf("RepositoryMock.CountMatchingClarifications mock is already set by Set")
+	}
+
+	if mmCountMatchingClarifications.defaultExpectation == nil {
+		mmCountMatchingClarifications.defaultExpectation = &RepositoryMockCountMatchingClarificationsExpectation{}
+	}
+
+	if mmCountMatchingClarifications.defaultExpectation.paramPtrs != nil {
+		mmCountMatchingClarifications.mock.t.Fatalf("RepositoryMock.CountMatchingClarifications mock is already set by ExpectParams functions")
+	}
+
+	mmCountMatchingClarifications.defaultExpectation.params = &RepositoryMockCountMatchingClarificationsParams{ctx, tx, sightingID, plate}
+	mmCountMatchingClarifications.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmCountMatchingClarifications.expectations {
+		if minimock.Equal(e.params, mmCountMatchingClarifications.defaultExpectation.params) {
+			mmCountMatchingClarifications.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmCountMatchingClarifications.defaultExpectation.params)
+		}
+	}
+
+	return mmCountMatchingClarifications
+}
+
+// ExpectCtxParam1 sets up expected param ctx for repository.CountMatchingClarifications
+func (mmCountMatchingClarifications *mRepositoryMockCountMatchingClarifications) ExpectCtxParam1(ctx context.Context) *mRepositoryMockCountMatchingClarifications {
+	if mmCountMatchingClarifications.mock.funcCountMatchingClarifications != nil {
+		mmCountMatchingClarifications.mock.t.Fatalf("RepositoryMock.CountMatchingClarifications mock is already set by Set")
+	}
+
+	if mmCountMatchingClarifications.defaultExpectation == nil {
+		mmCountMatchingClarifications.defaultExpectation = &RepositoryMockCountMatchingClarificationsExpectation{}
+	}
+
+	if mmCountMatchingClarifications.defaultExpectation.params != nil {
+		mmCountMatchingClarifications.mock.t.Fatalf("RepositoryMock.CountMatchingClarifications mock is already set by Expect")
+	}
+
+	if mmCountMatchingClarifications.defaultExpectation.paramPtrs == nil {
+		mmCountMatchingClarifications.defaultExpectation.paramPtrs = &RepositoryMockCountMatchingClarificationsParamPtrs{}
+	}
+	mmCountMatchingClarifications.defaultExpectation.paramPtrs.ctx = &ctx
+	mmCountMatchingClarifications.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmCountMatchingClarifications
+}
+
+// ExpectTxParam2 sets up expected param tx for repository.CountMatchingClarifications
+func (mmCountMatchingClarifications *mRepositoryMockCountMatchingClarifications) ExpectTxParam2(tx db.Executor) *mRepositoryMockCountMatchingClarifications {
+	if mmCountMatchingClarifications.mock.funcCountMatchingClarifications != nil {
+		mmCountMatchingClarifications.mock.t.Fatalf("RepositoryMock.CountMatchingClarifications mock is already set by Set")
+	}
+
+	if mmCountMatchingClarifications.defaultExpectation == nil {
+		mmCountMatchingClarifications.defaultExpectation = &RepositoryMockCountMatchingClarificationsExpectation{}
+	}
+
+	if mmCountMatchingClarifications.defaultExpectation.params != nil {
+		mmCountMatchingClarifications.mock.t.Fatalf("RepositoryMock.CountMatchingClarifications mock is already set by Expect")
+	}
+
+	if mmCountMatchingClarifications.defaultExpectation.paramPtrs == nil {
+		mmCountMatchingClarifications.defaultExpectation.paramPtrs = &RepositoryMockCountMatchingClarificationsParamPtrs{}
+	}
+	mmCountMatchingClarifications.defaultExpectation.paramPtrs.tx = &tx
+	mmCountMatchingClarifications.defaultExpectation.expectationOrigins.originTx = minimock.CallerInfo(1)
+
+	return mmCountMatchingClarifications
+}
+
+// ExpectSightingIDParam3 sets up expected param sightingID for repository.CountMatchingClarifications
+func (mmCountMatchingClarifications *mRepositoryMockCountMatchingClarifications) ExpectSightingIDParam3(sightingID string) *mRepositoryMockCountMatchingClarifications {
+	if mmCountMatchingClarifications.mock.funcCountMatchingClarifications != nil {
+		mmCountMatchingClarifications.mock.t.Fatalf("RepositoryMock.CountMatchingClarifications mock is already set by Set")
+	}
+
+	if mmCountMatchingClarifications.defaultExpectation == nil {
+		mmCountMatchingClarifications.defaultExpectation = &RepositoryMockCountMatchingClarificationsExpectation{}
+	}
+
+	if mmCountMatchingClarifications.defaultExpectation.params != nil {
+		mmCountMatchingClarifications.mock.t.Fatalf("RepositoryMock.CountMatchingClarifications mock is already set by Expect")
+	}
+
+	if mmCountMatchingClarifications.defaultExpectation.paramPtrs == nil {
+		mmCountMatchingClarifications.defaultExpectation.paramPtrs = &RepositoryMockCountMatchingClarificationsParamPtrs{}
+	}
+	mmCountMatchingClarifications.defaultExpectation.paramPtrs.sightingID = &sightingID
+	mmCountMatchingClarifications.defaultExpectation.expectationOrigins.originSightingID = minimock.CallerInfo(1)
+
+	return mmCountMatchingClarifications
+}
+
+// ExpectPlateParam4 sets up expected param plate for repository.CountMatchingClarifications
+func (mmCountMatchingClarifications *mRepositoryMockCountMatchingClarifications) ExpectPlateParam4(plate string) *mRepositoryMockCountMatchingClarifications {
+	if mmCountMatchingClarifications.mock.funcCountMatchingClarifications != nil {
+		mmCountMatchingClarifications.mock.t.Fatalf("RepositoryMock.CountMatchingClarifications mock is already set by Set")
+	}
+
+	if mmCountMatchingClarifications.defaultExpectation == nil {
+		mmCountMatchingClarifications.defaultExpectation = &RepositoryMockCountMatchingClarificationsExpectation{}
+	}
+
+	if mmCountMatchingClarifications.defaultExpectation.params != nil {
+		mmCountMatchingClarifications.mock.t.Fatalf("RepositoryMock.CountMatchingClarifications mock is already set by Expect")
+	}
+
+	if mmCountMatchingClarifications.defaultExpectation.paramPtrs == nil {
+		mmCountMatchingClarifications.defaultExpectation.paramPtrs = &RepositoryMockCountMatchingClarificationsParamPtrs{}
+	}
+	mmCountMatchingClarifications.defaultExpectation.paramPtrs.plate = &plate
+	mmCountMatchingClarifications.defaultExpectation.expectationOrigins.originPlate = minimock.CallerInfo(1)
+
+	return mmCountMatchingClarifications
+}
+
+// Inspect accepts an inspector function that has same arguments as the repository.CountMatchingClarifications
+func (mmCountMatchingClarifications *mRepositoryMockCountMatchingClarifications) Inspect(f func(ctx context.Context, tx db.Executor, sightingID string, plate string)) *mRepositoryMockCountMatchingClarifications {
+	if mmCountMatchingClarifications.mock.inspectFuncCountMatchingClarifications != nil {
+		mmCountMatchingClarifications.mock.t.Fatalf("Inspect function is already set for RepositoryMock.CountMatchingClarifications")
+	}
+
+	mmCountMatchingClarifications.mock.inspectFuncCountMatchingClarifications = f
+
+	return mmCountMatchingClarifications
+}
+
+// Return sets up results that will be returned by repository.CountMatchingClarifications
+func (mmCountMatchingClarifications *mRepositoryMockCountMatchingClarifications) Return(i1 int, err error) *RepositoryMock {
+	if mmCountMatchingClarifications.mock.funcCountMatchingClarifications != nil {
+		mmCountMatchingClarifications.mock.t.Fatalf("RepositoryMock.CountMatchingClarifications mock is already set by Set")
+	}
+
+	if mmCountMatchingClarifications.defaultExpectation == nil {
+		mmCountMatchingClarifications.defaultExpectation = &RepositoryMockCountMatchingClarificationsExpectation{mock: mmCountMatchingClarifications.mock}
+	}
+	mmCountMatchingClarifications.defaultExpectation.results = &RepositoryMockCountMatchingClarificationsResults{i1, err}
+	mmCountMatchingClarifications.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmCountMatchingClarifications.mock
+}
+
+// Set uses given function f to mock the repository.CountMatchingClarifications method
+func (mmCountMatchingClarifications *mRepositoryMockCountMatchingClarifications) Set(f func(ctx context.Context, tx db.Executor, sightingID string, plate string) (i1 int, err error)) *RepositoryMock {
+	if mmCountMatchingClarifications.defaultExpectation != nil {
+		mmCountMatchingClarifications.mock.t.Fatalf("Default expectation is already set for the repository.CountMatchingClarifications method")
+	}
+
+	if len(mmCountMatchingClarifications.expectations) > 0 {
+		mmCountMatchingClarifications.mock.t.Fatalf("Some expectations are already set for the repository.CountMatchingClarifications method")
+	}
+
+	mmCountMatchingClarifications.mock.funcCountMatchingClarifications = f
+	mmCountMatchingClarifications.mock.funcCountMatchingClarificationsOrigin = minimock.CallerInfo(1)
+	return mmCountMatchingClarifications.mock
+}
+
+// When sets expectation for the repository.CountMatchingClarifications which will trigger the result defined by the following
+// Then helper
+func (mmCountMatchingClarifications *mRepositoryMockCountMatchingClarifications) When(ctx context.Context, tx db.Executor, sightingID string, plate string) *RepositoryMockCountMatchingClarificationsExpectation {
+	if mmCountMatchingClarifications.mock.funcCountMatchingClarifications != nil {
+		mmCountMatchingClarifications.mock.t.Fatalf("RepositoryMock.CountMatchingClarifications mock is already set by Set")
+	}
+
+	expectation := &RepositoryMockCountMatchingClarificationsExpectation{
+		mock:               mmCountMatchingClarifications.mock,
+		params:             &RepositoryMockCountMatchingClarificationsParams{ctx, tx, sightingID, plate},
+		expectationOrigins: RepositoryMockCountMatchingClarificationsExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmCountMatchingClarifications.expectations = append(mmCountMatchingClarifications.expectations, expectation)
+	return expectation
+}
+
+// Then sets up repository.CountMatchingClarifications return parameters for the expectation previously defined by the When method
+func (e *RepositoryMockCountMatchingClarificationsExpectation) Then(i1 int, err error) *RepositoryMock {
+	e.results = &RepositoryMockCountMatchingClarificationsResults{i1, err}
+	return e.mock
+}
+
+// Times sets number of times repository.CountMatchingClarifications should be invoked
+func (mmCountMatchingClarifications *mRepositoryMockCountMatchingClarifications) Times(n uint64) *mRepositoryMockCountMatchingClarifications {
+	if n == 0 {
+		mmCountMatchingClarifications.mock.t.Fatalf("Times of RepositoryMock.CountMatchingClarifications mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmCountMatchingClarifications.expectedInvocations, n)
+	mmCountMatchingClarifications.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmCountMatchingClarifications
+}
+
+func (mmCountMatchingClarifications *mRepositoryMockCountMatchingClarifications) invocationsDone() bool {
+	if len(mmCountMatchingClarifications.expectations) == 0 && mmCountMatchingClarifications.defaultExpectation == nil && mmCountMatchingClarifications.mock.funcCountMatchingClarifications == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmCountMatchingClarifications.mock.afterCountMatchingClarificationsCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmCountMatchingClarifications.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// CountMatchingClarifications implements mm_usecase.repository
+func (mmCountMatchingClarifications *RepositoryMock) CountMatchingClarifications(ctx context.Context, tx db.Executor, sightingID string, plate string) (i1 int, err error) {
+	mm_atomic.AddUint64(&mmCountMatchingClarifications.beforeCountMatchingClarificationsCounter, 1)
+	defer mm_atomic.AddUint64(&mmCountMatchingClarifications.afterCountMatchingClarificationsCounter, 1)
+
+	mmCountMatchingClarifications.t.Helper()
+
+	if mmCountMatchingClarifications.inspectFuncCountMatchingClarifications != nil {
+		mmCountMatchingClarifications.inspectFuncCountMatchingClarifications(ctx, tx, sightingID, plate)
+	}
+
+	mm_params := RepositoryMockCountMatchingClarificationsParams{ctx, tx, sightingID, plate}
+
+	// Record call args
+	mmCountMatchingClarifications.CountMatchingClarificationsMock.mutex.Lock()
+	mmCountMatchingClarifications.CountMatchingClarificationsMock.callArgs = append(mmCountMatchingClarifications.CountMatchingClarificationsMock.callArgs, &mm_params)
+	mmCountMatchingClarifications.CountMatchingClarificationsMock.mutex.Unlock()
+
+	for _, e := range mmCountMatchingClarifications.CountMatchingClarificationsMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.i1, e.results.err
+		}
+	}
+
+	if mmCountMatchingClarifications.CountMatchingClarificationsMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmCountMatchingClarifications.CountMatchingClarificationsMock.defaultExpectation.Counter, 1)
+		mm_want := mmCountMatchingClarifications.CountMatchingClarificationsMock.defaultExpectation.params
+		mm_want_ptrs := mmCountMatchingClarifications.CountMatchingClarificationsMock.defaultExpectation.paramPtrs
+
+		mm_got := RepositoryMockCountMatchingClarificationsParams{ctx, tx, sightingID, plate}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmCountMatchingClarifications.t.Errorf("RepositoryMock.CountMatchingClarifications got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmCountMatchingClarifications.CountMatchingClarificationsMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.tx != nil && !minimock.Equal(*mm_want_ptrs.tx, mm_got.tx) {
+				mmCountMatchingClarifications.t.Errorf("RepositoryMock.CountMatchingClarifications got unexpected parameter tx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmCountMatchingClarifications.CountMatchingClarificationsMock.defaultExpectation.expectationOrigins.originTx, *mm_want_ptrs.tx, mm_got.tx, minimock.Diff(*mm_want_ptrs.tx, mm_got.tx))
+			}
+
+			if mm_want_ptrs.sightingID != nil && !minimock.Equal(*mm_want_ptrs.sightingID, mm_got.sightingID) {
+				mmCountMatchingClarifications.t.Errorf("RepositoryMock.CountMatchingClarifications got unexpected parameter sightingID, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmCountMatchingClarifications.CountMatchingClarificationsMock.defaultExpectation.expectationOrigins.originSightingID, *mm_want_ptrs.sightingID, mm_got.sightingID, minimock.Diff(*mm_want_ptrs.sightingID, mm_got.sightingID))
+			}
+
+			if mm_want_ptrs.plate != nil && !minimock.Equal(*mm_want_ptrs.plate, mm_got.plate) {
+				mmCountMatchingClarifications.t.Errorf("RepositoryMock.CountMatchingClarifications got unexpected parameter plate, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmCountMatchingClarifications.CountMatchingClarificationsMock.defaultExpectation.expectationOrigins.originPlate, *mm_want_ptrs.plate, mm_got.plate, minimock.Diff(*mm_want_ptrs.plate, mm_got.plate))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmCountMatchingClarifications.t.Errorf("RepositoryMock.CountMatchingClarifications got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmCountMatchingClarifications.CountMatchingClarificationsMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmCountMatchingClarifications.CountMatchingClarificationsMock.defaultExpectation.results
+		if mm_results == nil {
+			mmCountMatchingClarifications.t.Fatal("No results are set for the RepositoryMock.CountMatchingClarifications")
+		}
+		return (*mm_results).i1, (*mm_results).err
+	}
+	if mmCountMatchingClarifications.funcCountMatchingClarifications != nil {
+		return mmCountMatchingClarifications.funcCountMatchingClarifications(ctx, tx, sightingID, plate)
+	}
+	mmCountMatchingClarifications.t.Fatalf("Unexpected call to RepositoryMock.CountMatchingClarifications. %v %v %v %v", ctx, tx, sightingID, plate)
+	return
+}
+
+// CountMatchingClarificationsAfterCounter returns a count of finished RepositoryMock.CountMatchingClarifications invocations
+func (mmCountMatchingClarifications *RepositoryMock) CountMatchingClarificationsAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmCountMatchingClarifications.afterCountMatchingClarificationsCounter)
+}
+
+// CountMatchingClarificationsBeforeCounter returns a count of RepositoryMock.CountMatchingClarifications invocations
+func (mmCountMatchingClarifications *RepositoryMock) CountMatchingClarificationsBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmCountMatchingClarifications.beforeCountMatchingClarificationsCounter)
+}
+
+// Calls returns a list of arguments used in each call to RepositoryMock.CountMatchingClarifications.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmCountMatchingClarifications *mRepositoryMockCountMatchingClarifications) Calls() []*RepositoryMockCountMatchingClarificationsParams {
+	mmCountMatchingClarifications.mutex.RLock()
+
+	argCopy := make([]*RepositoryMockCountMatchingClarificationsParams, len(mmCountMatchingClarifications.callArgs))
+	copy(argCopy, mmCountMatchingClarifications.callArgs)
+
+	mmCountMatchingClarifications.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockCountMatchingClarificationsDone returns true if the count of the CountMatchingClarifications invocations corresponds
+// the number of defined expectations
+func (m *RepositoryMock) MinimockCountMatchingClarificationsDone() bool {
+	if m.CountMatchingClarificationsMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.CountMatchingClarificationsMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.CountMatchingClarificationsMock.invocationsDone()
+}
+
+// MinimockCountMatchingClarificationsInspect logs each unmet expectation
+func (m *RepositoryMock) MinimockCountMatchingClarificationsInspect() {
+	for _, e := range m.CountMatchingClarificationsMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to RepositoryMock.CountMatchingClarifications at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterCountMatchingClarificationsCounter := mm_atomic.LoadUint64(&m.afterCountMatchingClarificationsCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.CountMatchingClarificationsMock.defaultExpectation != nil && afterCountMatchingClarificationsCounter < 1 {
+		if m.CountMatchingClarificationsMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to RepositoryMock.CountMatchingClarifications at\n%s", m.CountMatchingClarificationsMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to RepositoryMock.CountMatchingClarifications at\n%s with params: %#v", m.CountMatchingClarificationsMock.defaultExpectation.expectationOrigins.origin, *m.CountMatchingClarificationsMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcCountMatchingClarifications != nil && afterCountMatchingClarificationsCounter < 1 {
+		m.t.Errorf("Expected call to RepositoryMock.CountMatchingClarifications at\n%s", m.funcCountMatchingClarificationsOrigin)
+	}
+
+	if !m.CountMatchingClarificationsMock.invocationsDone() && afterCountMatchingClarificationsCounter > 0 {
+		m.t.Errorf("Expected %d calls to RepositoryMock.CountMatchingClarifications at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.CountMatchingClarificationsMock.expectedInvocations), m.CountMatchingClarificationsMock.expectedInvocationsOrigin, afterCountMatchingClarificationsCounter)
+	}
 }
 
 type mRepositoryMockCreateClarification struct {
@@ -819,6 +1658,411 @@ func (m *RepositoryMock) MinimockListSamePlateInspect() {
 	if !m.ListSamePlateMock.invocationsDone() && afterListSamePlateCounter > 0 {
 		m.t.Errorf("Expected %d calls to RepositoryMock.ListSamePlate at\n%s but found %d calls",
 			mm_atomic.LoadUint64(&m.ListSamePlateMock.expectedInvocations), m.ListSamePlateMock.expectedInvocationsOrigin, afterListSamePlateCounter)
+	}
+}
+
+type mRepositoryMockMatchesSightingPlate struct {
+	optional           bool
+	mock               *RepositoryMock
+	defaultExpectation *RepositoryMockMatchesSightingPlateExpectation
+	expectations       []*RepositoryMockMatchesSightingPlateExpectation
+
+	callArgs []*RepositoryMockMatchesSightingPlateParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// RepositoryMockMatchesSightingPlateExpectation specifies expectation struct of the repository.MatchesSightingPlate
+type RepositoryMockMatchesSightingPlateExpectation struct {
+	mock               *RepositoryMock
+	params             *RepositoryMockMatchesSightingPlateParams
+	paramPtrs          *RepositoryMockMatchesSightingPlateParamPtrs
+	expectationOrigins RepositoryMockMatchesSightingPlateExpectationOrigins
+	results            *RepositoryMockMatchesSightingPlateResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// RepositoryMockMatchesSightingPlateParams contains parameters of the repository.MatchesSightingPlate
+type RepositoryMockMatchesSightingPlateParams struct {
+	ctx        context.Context
+	tx         db.Executor
+	sightingID string
+	plate      string
+}
+
+// RepositoryMockMatchesSightingPlateParamPtrs contains pointers to parameters of the repository.MatchesSightingPlate
+type RepositoryMockMatchesSightingPlateParamPtrs struct {
+	ctx        *context.Context
+	tx         *db.Executor
+	sightingID *string
+	plate      *string
+}
+
+// RepositoryMockMatchesSightingPlateResults contains results of the repository.MatchesSightingPlate
+type RepositoryMockMatchesSightingPlateResults struct {
+	b1  bool
+	err error
+}
+
+// RepositoryMockMatchesSightingPlateOrigins contains origins of expectations of the repository.MatchesSightingPlate
+type RepositoryMockMatchesSightingPlateExpectationOrigins struct {
+	origin           string
+	originCtx        string
+	originTx         string
+	originSightingID string
+	originPlate      string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmMatchesSightingPlate *mRepositoryMockMatchesSightingPlate) Optional() *mRepositoryMockMatchesSightingPlate {
+	mmMatchesSightingPlate.optional = true
+	return mmMatchesSightingPlate
+}
+
+// Expect sets up expected params for repository.MatchesSightingPlate
+func (mmMatchesSightingPlate *mRepositoryMockMatchesSightingPlate) Expect(ctx context.Context, tx db.Executor, sightingID string, plate string) *mRepositoryMockMatchesSightingPlate {
+	if mmMatchesSightingPlate.mock.funcMatchesSightingPlate != nil {
+		mmMatchesSightingPlate.mock.t.Fatalf("RepositoryMock.MatchesSightingPlate mock is already set by Set")
+	}
+
+	if mmMatchesSightingPlate.defaultExpectation == nil {
+		mmMatchesSightingPlate.defaultExpectation = &RepositoryMockMatchesSightingPlateExpectation{}
+	}
+
+	if mmMatchesSightingPlate.defaultExpectation.paramPtrs != nil {
+		mmMatchesSightingPlate.mock.t.Fatalf("RepositoryMock.MatchesSightingPlate mock is already set by ExpectParams functions")
+	}
+
+	mmMatchesSightingPlate.defaultExpectation.params = &RepositoryMockMatchesSightingPlateParams{ctx, tx, sightingID, plate}
+	mmMatchesSightingPlate.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmMatchesSightingPlate.expectations {
+		if minimock.Equal(e.params, mmMatchesSightingPlate.defaultExpectation.params) {
+			mmMatchesSightingPlate.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmMatchesSightingPlate.defaultExpectation.params)
+		}
+	}
+
+	return mmMatchesSightingPlate
+}
+
+// ExpectCtxParam1 sets up expected param ctx for repository.MatchesSightingPlate
+func (mmMatchesSightingPlate *mRepositoryMockMatchesSightingPlate) ExpectCtxParam1(ctx context.Context) *mRepositoryMockMatchesSightingPlate {
+	if mmMatchesSightingPlate.mock.funcMatchesSightingPlate != nil {
+		mmMatchesSightingPlate.mock.t.Fatalf("RepositoryMock.MatchesSightingPlate mock is already set by Set")
+	}
+
+	if mmMatchesSightingPlate.defaultExpectation == nil {
+		mmMatchesSightingPlate.defaultExpectation = &RepositoryMockMatchesSightingPlateExpectation{}
+	}
+
+	if mmMatchesSightingPlate.defaultExpectation.params != nil {
+		mmMatchesSightingPlate.mock.t.Fatalf("RepositoryMock.MatchesSightingPlate mock is already set by Expect")
+	}
+
+	if mmMatchesSightingPlate.defaultExpectation.paramPtrs == nil {
+		mmMatchesSightingPlate.defaultExpectation.paramPtrs = &RepositoryMockMatchesSightingPlateParamPtrs{}
+	}
+	mmMatchesSightingPlate.defaultExpectation.paramPtrs.ctx = &ctx
+	mmMatchesSightingPlate.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmMatchesSightingPlate
+}
+
+// ExpectTxParam2 sets up expected param tx for repository.MatchesSightingPlate
+func (mmMatchesSightingPlate *mRepositoryMockMatchesSightingPlate) ExpectTxParam2(tx db.Executor) *mRepositoryMockMatchesSightingPlate {
+	if mmMatchesSightingPlate.mock.funcMatchesSightingPlate != nil {
+		mmMatchesSightingPlate.mock.t.Fatalf("RepositoryMock.MatchesSightingPlate mock is already set by Set")
+	}
+
+	if mmMatchesSightingPlate.defaultExpectation == nil {
+		mmMatchesSightingPlate.defaultExpectation = &RepositoryMockMatchesSightingPlateExpectation{}
+	}
+
+	if mmMatchesSightingPlate.defaultExpectation.params != nil {
+		mmMatchesSightingPlate.mock.t.Fatalf("RepositoryMock.MatchesSightingPlate mock is already set by Expect")
+	}
+
+	if mmMatchesSightingPlate.defaultExpectation.paramPtrs == nil {
+		mmMatchesSightingPlate.defaultExpectation.paramPtrs = &RepositoryMockMatchesSightingPlateParamPtrs{}
+	}
+	mmMatchesSightingPlate.defaultExpectation.paramPtrs.tx = &tx
+	mmMatchesSightingPlate.defaultExpectation.expectationOrigins.originTx = minimock.CallerInfo(1)
+
+	return mmMatchesSightingPlate
+}
+
+// ExpectSightingIDParam3 sets up expected param sightingID for repository.MatchesSightingPlate
+func (mmMatchesSightingPlate *mRepositoryMockMatchesSightingPlate) ExpectSightingIDParam3(sightingID string) *mRepositoryMockMatchesSightingPlate {
+	if mmMatchesSightingPlate.mock.funcMatchesSightingPlate != nil {
+		mmMatchesSightingPlate.mock.t.Fatalf("RepositoryMock.MatchesSightingPlate mock is already set by Set")
+	}
+
+	if mmMatchesSightingPlate.defaultExpectation == nil {
+		mmMatchesSightingPlate.defaultExpectation = &RepositoryMockMatchesSightingPlateExpectation{}
+	}
+
+	if mmMatchesSightingPlate.defaultExpectation.params != nil {
+		mmMatchesSightingPlate.mock.t.Fatalf("RepositoryMock.MatchesSightingPlate mock is already set by Expect")
+	}
+
+	if mmMatchesSightingPlate.defaultExpectation.paramPtrs == nil {
+		mmMatchesSightingPlate.defaultExpectation.paramPtrs = &RepositoryMockMatchesSightingPlateParamPtrs{}
+	}
+	mmMatchesSightingPlate.defaultExpectation.paramPtrs.sightingID = &sightingID
+	mmMatchesSightingPlate.defaultExpectation.expectationOrigins.originSightingID = minimock.CallerInfo(1)
+
+	return mmMatchesSightingPlate
+}
+
+// ExpectPlateParam4 sets up expected param plate for repository.MatchesSightingPlate
+func (mmMatchesSightingPlate *mRepositoryMockMatchesSightingPlate) ExpectPlateParam4(plate string) *mRepositoryMockMatchesSightingPlate {
+	if mmMatchesSightingPlate.mock.funcMatchesSightingPlate != nil {
+		mmMatchesSightingPlate.mock.t.Fatalf("RepositoryMock.MatchesSightingPlate mock is already set by Set")
+	}
+
+	if mmMatchesSightingPlate.defaultExpectation == nil {
+		mmMatchesSightingPlate.defaultExpectation = &RepositoryMockMatchesSightingPlateExpectation{}
+	}
+
+	if mmMatchesSightingPlate.defaultExpectation.params != nil {
+		mmMatchesSightingPlate.mock.t.Fatalf("RepositoryMock.MatchesSightingPlate mock is already set by Expect")
+	}
+
+	if mmMatchesSightingPlate.defaultExpectation.paramPtrs == nil {
+		mmMatchesSightingPlate.defaultExpectation.paramPtrs = &RepositoryMockMatchesSightingPlateParamPtrs{}
+	}
+	mmMatchesSightingPlate.defaultExpectation.paramPtrs.plate = &plate
+	mmMatchesSightingPlate.defaultExpectation.expectationOrigins.originPlate = minimock.CallerInfo(1)
+
+	return mmMatchesSightingPlate
+}
+
+// Inspect accepts an inspector function that has same arguments as the repository.MatchesSightingPlate
+func (mmMatchesSightingPlate *mRepositoryMockMatchesSightingPlate) Inspect(f func(ctx context.Context, tx db.Executor, sightingID string, plate string)) *mRepositoryMockMatchesSightingPlate {
+	if mmMatchesSightingPlate.mock.inspectFuncMatchesSightingPlate != nil {
+		mmMatchesSightingPlate.mock.t.Fatalf("Inspect function is already set for RepositoryMock.MatchesSightingPlate")
+	}
+
+	mmMatchesSightingPlate.mock.inspectFuncMatchesSightingPlate = f
+
+	return mmMatchesSightingPlate
+}
+
+// Return sets up results that will be returned by repository.MatchesSightingPlate
+func (mmMatchesSightingPlate *mRepositoryMockMatchesSightingPlate) Return(b1 bool, err error) *RepositoryMock {
+	if mmMatchesSightingPlate.mock.funcMatchesSightingPlate != nil {
+		mmMatchesSightingPlate.mock.t.Fatalf("RepositoryMock.MatchesSightingPlate mock is already set by Set")
+	}
+
+	if mmMatchesSightingPlate.defaultExpectation == nil {
+		mmMatchesSightingPlate.defaultExpectation = &RepositoryMockMatchesSightingPlateExpectation{mock: mmMatchesSightingPlate.mock}
+	}
+	mmMatchesSightingPlate.defaultExpectation.results = &RepositoryMockMatchesSightingPlateResults{b1, err}
+	mmMatchesSightingPlate.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmMatchesSightingPlate.mock
+}
+
+// Set uses given function f to mock the repository.MatchesSightingPlate method
+func (mmMatchesSightingPlate *mRepositoryMockMatchesSightingPlate) Set(f func(ctx context.Context, tx db.Executor, sightingID string, plate string) (b1 bool, err error)) *RepositoryMock {
+	if mmMatchesSightingPlate.defaultExpectation != nil {
+		mmMatchesSightingPlate.mock.t.Fatalf("Default expectation is already set for the repository.MatchesSightingPlate method")
+	}
+
+	if len(mmMatchesSightingPlate.expectations) > 0 {
+		mmMatchesSightingPlate.mock.t.Fatalf("Some expectations are already set for the repository.MatchesSightingPlate method")
+	}
+
+	mmMatchesSightingPlate.mock.funcMatchesSightingPlate = f
+	mmMatchesSightingPlate.mock.funcMatchesSightingPlateOrigin = minimock.CallerInfo(1)
+	return mmMatchesSightingPlate.mock
+}
+
+// When sets expectation for the repository.MatchesSightingPlate which will trigger the result defined by the following
+// Then helper
+func (mmMatchesSightingPlate *mRepositoryMockMatchesSightingPlate) When(ctx context.Context, tx db.Executor, sightingID string, plate string) *RepositoryMockMatchesSightingPlateExpectation {
+	if mmMatchesSightingPlate.mock.funcMatchesSightingPlate != nil {
+		mmMatchesSightingPlate.mock.t.Fatalf("RepositoryMock.MatchesSightingPlate mock is already set by Set")
+	}
+
+	expectation := &RepositoryMockMatchesSightingPlateExpectation{
+		mock:               mmMatchesSightingPlate.mock,
+		params:             &RepositoryMockMatchesSightingPlateParams{ctx, tx, sightingID, plate},
+		expectationOrigins: RepositoryMockMatchesSightingPlateExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmMatchesSightingPlate.expectations = append(mmMatchesSightingPlate.expectations, expectation)
+	return expectation
+}
+
+// Then sets up repository.MatchesSightingPlate return parameters for the expectation previously defined by the When method
+func (e *RepositoryMockMatchesSightingPlateExpectation) Then(b1 bool, err error) *RepositoryMock {
+	e.results = &RepositoryMockMatchesSightingPlateResults{b1, err}
+	return e.mock
+}
+
+// Times sets number of times repository.MatchesSightingPlate should be invoked
+func (mmMatchesSightingPlate *mRepositoryMockMatchesSightingPlate) Times(n uint64) *mRepositoryMockMatchesSightingPlate {
+	if n == 0 {
+		mmMatchesSightingPlate.mock.t.Fatalf("Times of RepositoryMock.MatchesSightingPlate mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmMatchesSightingPlate.expectedInvocations, n)
+	mmMatchesSightingPlate.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmMatchesSightingPlate
+}
+
+func (mmMatchesSightingPlate *mRepositoryMockMatchesSightingPlate) invocationsDone() bool {
+	if len(mmMatchesSightingPlate.expectations) == 0 && mmMatchesSightingPlate.defaultExpectation == nil && mmMatchesSightingPlate.mock.funcMatchesSightingPlate == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmMatchesSightingPlate.mock.afterMatchesSightingPlateCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmMatchesSightingPlate.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// MatchesSightingPlate implements mm_usecase.repository
+func (mmMatchesSightingPlate *RepositoryMock) MatchesSightingPlate(ctx context.Context, tx db.Executor, sightingID string, plate string) (b1 bool, err error) {
+	mm_atomic.AddUint64(&mmMatchesSightingPlate.beforeMatchesSightingPlateCounter, 1)
+	defer mm_atomic.AddUint64(&mmMatchesSightingPlate.afterMatchesSightingPlateCounter, 1)
+
+	mmMatchesSightingPlate.t.Helper()
+
+	if mmMatchesSightingPlate.inspectFuncMatchesSightingPlate != nil {
+		mmMatchesSightingPlate.inspectFuncMatchesSightingPlate(ctx, tx, sightingID, plate)
+	}
+
+	mm_params := RepositoryMockMatchesSightingPlateParams{ctx, tx, sightingID, plate}
+
+	// Record call args
+	mmMatchesSightingPlate.MatchesSightingPlateMock.mutex.Lock()
+	mmMatchesSightingPlate.MatchesSightingPlateMock.callArgs = append(mmMatchesSightingPlate.MatchesSightingPlateMock.callArgs, &mm_params)
+	mmMatchesSightingPlate.MatchesSightingPlateMock.mutex.Unlock()
+
+	for _, e := range mmMatchesSightingPlate.MatchesSightingPlateMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.b1, e.results.err
+		}
+	}
+
+	if mmMatchesSightingPlate.MatchesSightingPlateMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmMatchesSightingPlate.MatchesSightingPlateMock.defaultExpectation.Counter, 1)
+		mm_want := mmMatchesSightingPlate.MatchesSightingPlateMock.defaultExpectation.params
+		mm_want_ptrs := mmMatchesSightingPlate.MatchesSightingPlateMock.defaultExpectation.paramPtrs
+
+		mm_got := RepositoryMockMatchesSightingPlateParams{ctx, tx, sightingID, plate}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmMatchesSightingPlate.t.Errorf("RepositoryMock.MatchesSightingPlate got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmMatchesSightingPlate.MatchesSightingPlateMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.tx != nil && !minimock.Equal(*mm_want_ptrs.tx, mm_got.tx) {
+				mmMatchesSightingPlate.t.Errorf("RepositoryMock.MatchesSightingPlate got unexpected parameter tx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmMatchesSightingPlate.MatchesSightingPlateMock.defaultExpectation.expectationOrigins.originTx, *mm_want_ptrs.tx, mm_got.tx, minimock.Diff(*mm_want_ptrs.tx, mm_got.tx))
+			}
+
+			if mm_want_ptrs.sightingID != nil && !minimock.Equal(*mm_want_ptrs.sightingID, mm_got.sightingID) {
+				mmMatchesSightingPlate.t.Errorf("RepositoryMock.MatchesSightingPlate got unexpected parameter sightingID, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmMatchesSightingPlate.MatchesSightingPlateMock.defaultExpectation.expectationOrigins.originSightingID, *mm_want_ptrs.sightingID, mm_got.sightingID, minimock.Diff(*mm_want_ptrs.sightingID, mm_got.sightingID))
+			}
+
+			if mm_want_ptrs.plate != nil && !minimock.Equal(*mm_want_ptrs.plate, mm_got.plate) {
+				mmMatchesSightingPlate.t.Errorf("RepositoryMock.MatchesSightingPlate got unexpected parameter plate, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmMatchesSightingPlate.MatchesSightingPlateMock.defaultExpectation.expectationOrigins.originPlate, *mm_want_ptrs.plate, mm_got.plate, minimock.Diff(*mm_want_ptrs.plate, mm_got.plate))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmMatchesSightingPlate.t.Errorf("RepositoryMock.MatchesSightingPlate got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmMatchesSightingPlate.MatchesSightingPlateMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmMatchesSightingPlate.MatchesSightingPlateMock.defaultExpectation.results
+		if mm_results == nil {
+			mmMatchesSightingPlate.t.Fatal("No results are set for the RepositoryMock.MatchesSightingPlate")
+		}
+		return (*mm_results).b1, (*mm_results).err
+	}
+	if mmMatchesSightingPlate.funcMatchesSightingPlate != nil {
+		return mmMatchesSightingPlate.funcMatchesSightingPlate(ctx, tx, sightingID, plate)
+	}
+	mmMatchesSightingPlate.t.Fatalf("Unexpected call to RepositoryMock.MatchesSightingPlate. %v %v %v %v", ctx, tx, sightingID, plate)
+	return
+}
+
+// MatchesSightingPlateAfterCounter returns a count of finished RepositoryMock.MatchesSightingPlate invocations
+func (mmMatchesSightingPlate *RepositoryMock) MatchesSightingPlateAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmMatchesSightingPlate.afterMatchesSightingPlateCounter)
+}
+
+// MatchesSightingPlateBeforeCounter returns a count of RepositoryMock.MatchesSightingPlate invocations
+func (mmMatchesSightingPlate *RepositoryMock) MatchesSightingPlateBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmMatchesSightingPlate.beforeMatchesSightingPlateCounter)
+}
+
+// Calls returns a list of arguments used in each call to RepositoryMock.MatchesSightingPlate.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmMatchesSightingPlate *mRepositoryMockMatchesSightingPlate) Calls() []*RepositoryMockMatchesSightingPlateParams {
+	mmMatchesSightingPlate.mutex.RLock()
+
+	argCopy := make([]*RepositoryMockMatchesSightingPlateParams, len(mmMatchesSightingPlate.callArgs))
+	copy(argCopy, mmMatchesSightingPlate.callArgs)
+
+	mmMatchesSightingPlate.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockMatchesSightingPlateDone returns true if the count of the MatchesSightingPlate invocations corresponds
+// the number of defined expectations
+func (m *RepositoryMock) MinimockMatchesSightingPlateDone() bool {
+	if m.MatchesSightingPlateMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.MatchesSightingPlateMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.MatchesSightingPlateMock.invocationsDone()
+}
+
+// MinimockMatchesSightingPlateInspect logs each unmet expectation
+func (m *RepositoryMock) MinimockMatchesSightingPlateInspect() {
+	for _, e := range m.MatchesSightingPlateMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to RepositoryMock.MatchesSightingPlate at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterMatchesSightingPlateCounter := mm_atomic.LoadUint64(&m.afterMatchesSightingPlateCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.MatchesSightingPlateMock.defaultExpectation != nil && afterMatchesSightingPlateCounter < 1 {
+		if m.MatchesSightingPlateMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to RepositoryMock.MatchesSightingPlate at\n%s", m.MatchesSightingPlateMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to RepositoryMock.MatchesSightingPlate at\n%s with params: %#v", m.MatchesSightingPlateMock.defaultExpectation.expectationOrigins.origin, *m.MatchesSightingPlateMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcMatchesSightingPlate != nil && afterMatchesSightingPlateCounter < 1 {
+		m.t.Errorf("Expected call to RepositoryMock.MatchesSightingPlate at\n%s", m.funcMatchesSightingPlateOrigin)
+	}
+
+	if !m.MatchesSightingPlateMock.invocationsDone() && afterMatchesSightingPlateCounter > 0 {
+		m.t.Errorf("Expected %d calls to RepositoryMock.MatchesSightingPlate at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.MatchesSightingPlateMock.expectedInvocations), m.MatchesSightingPlateMock.expectedInvocationsOrigin, afterMatchesSightingPlateCounter)
 	}
 }
 
@@ -1574,9 +2818,15 @@ func (m *RepositoryMock) MinimockSeeAlsoInspect() {
 func (m *RepositoryMock) MinimockFinish() {
 	m.finishOnce.Do(func() {
 		if !m.minimockDone() {
+			m.MinimockAcceptMatchingClarificationsInspect()
+
+			m.MinimockCountMatchingClarificationsInspect()
+
 			m.MinimockCreateClarificationInspect()
 
 			m.MinimockListSamePlateInspect()
+
+			m.MinimockMatchesSightingPlateInspect()
 
 			m.MinimockSearchInspect()
 
@@ -1604,8 +2854,11 @@ func (m *RepositoryMock) MinimockWait(timeout mm_time.Duration) {
 func (m *RepositoryMock) minimockDone() bool {
 	done := true
 	return done &&
+		m.MinimockAcceptMatchingClarificationsDone() &&
+		m.MinimockCountMatchingClarificationsDone() &&
 		m.MinimockCreateClarificationDone() &&
 		m.MinimockListSamePlateDone() &&
+		m.MinimockMatchesSightingPlateDone() &&
 		m.MinimockSearchDone() &&
 		m.MinimockSeeAlsoDone()
 }

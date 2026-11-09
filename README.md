@@ -106,6 +106,8 @@ clay генерирует ручки с флагом `generate_unbound_methods`:
 |---|---|
 | `Search` | `POST /api/carsearch.CarSearchService/Search` |
 | `Get` | `POST /api/carsearch.CarSearchService/Get` |
+| `SeeAlso` | `POST /api/carsearch.CarSearchService/SeeAlso` |
+| `Clarify` | `POST /api/carsearch.CarSearchService/Clarify` |
 | — | `GET /api/swagger.json` — спецификация |
 | — | `GET /api/health` |
 
@@ -155,6 +157,36 @@ clay генерирует ручки с флагом `generate_unbound_methods`:
 ] }
 ```
 
+### Clarify
+
+Уточнение номера к фиксации — «на самом деле номер такой» (модалка «Уточнить»):
+
+```jsonc
+// запрос; plateType: PLATE_TYPE_RU | PLATE_TYPE_EU | PLATE_TYPE_US | PLATE_TYPE_DEFAULT (не задан)
+{ "sightingId": "00000000-0000-0000-0000-000000000001", "plate": "x001xx99", "plateType": "PLATE_TYPE_RU" }
+
+// ответ: номер — в нормализованном виде, статус — актуальный
+{ "clarification": { "id": "…", "sightingId": "…0001", "plate": "Х001ХХ 99",
+                     "status": "CLARIFICATION_STATUS_NOT_ACCEPTED", "plateType": "PLATE_TYPE_RU", … } }
+```
+
+- **Нормализация** (usecase): пробелы по краям убираются, внутри схлопываются, верхний регистр.
+  Для RU ещё латинские двойники → кириллица (`A B E K M H O P C T Y X`), «0» в буквенных позициях → «О»,
+  пробел перед регионом дописывается: `x001xx99` → `Х001ХХ 99`, `0123вс 77` → `О123ВС 77`.
+- **Формат** по `plateType`: RU — `^[АВЕКМНОРСТУХ]\d{3}[АВЕКМНОРСТУХ]{2} \d{2,3}$`; EU/US — мягко:
+  2–12 символов, латиница, цифры, пробел, дефис (`plateRegion` — до 3 латинских букв); не задан — без проверки.
+  Неверный формат — `InvalidArgument` с текстом для пользователя (фронт показывает `message` как есть).
+- Уточнение, совпадающее с текущим номером фиксации (по `plate_search_key` — без учёта похожих символов),
+  — `InvalidArgument` «уточнение совпадает с текущим номером».
+- **Консенсус**: уточнение создаётся «не принят»; когда после вставки **3** (`usecase.ClarificationConsensus`)
+  уточнения одной фиксации совпали по `plate_search_key(plate)`, все они становятся `ACCEPTED` в той же
+  транзакции записи, и ответ возвращает уже `ACCEPTED`. Строка фиксации блокируется (`FOR UPDATE`) на время
+  транзакции — параллельные уточнения к ней не теряют друг друга при подсчёте.
+  Индекс `clarifications (sighting_id, plate_search_key(plate))`.
+- Уточнённые номера ищутся в `Search` наравне с номером фиксации.
+- SQL уточнений проверяет `go test ./internal/repository/` с `TEST_DATABASE_URL` — только на отдельной
+  временной базе с применёнными миграциями (тест вставляет строки); без переменной тест пропускается.
+
 ### Ошибки
 
 ```json
@@ -163,7 +195,7 @@ clay генерирует ручки с флагом `generate_unbound_methods`:
 
 | HTTP | gRPC-код | Когда |
 |---|---|---|
-| 400 | `InvalidArgument` | неверные параметры (`limit`, `offset`, не uuid в `Get`) |
+| 400 | `InvalidArgument` | неверные параметры (`limit`, `offset`, не uuid в `Get`), формат номера в `Clarify` |
 | 404 | `NotFound` | фиксации нет |
 | 500 | `Internal` | ошибка сервера |
 | 500 | — | битый JSON или неизвестное поле в запросе (ошибка разбора clay) |

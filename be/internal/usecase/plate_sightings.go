@@ -46,11 +46,42 @@ func (u *PlateSightings) SeeAlso(ctx context.Context, o models.SeeAlsoOpts) (ite
 	return items, err
 }
 
-// Clarify — новое уточнение номера к фиксации (транзакция на запись).
+// Clarify — новое уточнение номера к фиксации (транзакция на запись). Номер нормализуется и
+// проверяется по формату (normalizeClarifyPlate); совпадающее с текущим номером фиксации уточнение
+// отклоняется. Если после вставки ClarificationConsensus и больше уточнений фиксации совпали
+// (по plate_search_key) — все они принимаются; в ответе — актуальный статус.
 func (u *PlateSightings) Clarify(ctx context.Context, o models.ClarifyOpts) (c models.Clarification, err error) {
+	if o.Plate, err = normalizeClarifyPlate(o.Plate, o.PlateType); err != nil {
+		return models.Clarification{}, err
+	}
 	err = u.tx.InWriteTx(ctx, func(ctx context.Context, tx db.Executor) error {
-		c, err = u.repo.CreateClarification(ctx, tx, o)
-		return err
+		// Заодно блокирует фиксацию: уточнения к ней идут по очереди, и подсчёт ниже не теряет
+		// параллельно вставленные строки.
+		same, err := u.repo.MatchesSightingPlate(ctx, tx, o.SightingID, o.Plate)
+		if err != nil {
+			return err
+		}
+		if same {
+			return &models.ValidationError{Message: errSameAsCurrent}
+		}
+		if c, err = u.repo.CreateClarification(ctx, tx, o); err != nil {
+			return err
+		}
+		n, err := u.repo.CountMatchingClarifications(ctx, tx, o.SightingID, o.Plate)
+		if err != nil {
+			return err
+		}
+		if n < ClarificationConsensus {
+			return nil
+		}
+		if err := u.repo.AcceptMatchingClarifications(ctx, tx, o.SightingID, o.Plate); err != nil {
+			return err
+		}
+		c.Status = models.ClarificationAccepted
+		return nil
 	})
-	return c, err
+	if err != nil {
+		return models.Clarification{}, err
+	}
+	return c, nil
 }

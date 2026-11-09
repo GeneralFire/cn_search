@@ -16,7 +16,9 @@ import (
 	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch"
 )
 
-// Clarify — rpc Clarify: уточнение номера к фиксации, статус «не принят».
+// Clarify — rpc Clarify: уточнение номера к фиксации. Здесь — проверки запроса (uuid, длина, регион);
+// нормализация номера, формат по типу и консенсус — в usecase. В ответе — номер в нормализованном виде
+// и актуальный статус (уточнение принимается, когда совпали несколько уточнений фиксации).
 func (s *CarSearch) Clarify(ctx context.Context, req *pb.ClarifyRequest) (*pb.ClarifyResponse, error) {
 	plate := strings.TrimSpace(req.GetPlate())
 	switch {
@@ -37,7 +39,10 @@ func (s *CarSearch) Clarify(ctx context.Context, req *pb.ClarifyRequest) (*pb.Cl
 	c, err := s.uc.Clarify(ctx, models.ClarifyOpts{
 		SightingID: req.GetSightingId(), Plate: plate, PlateType: plateType, PlateRegion: region,
 	})
+	var invalid *models.ValidationError
 	switch {
+	case errors.As(err, &invalid):
+		return nil, status.Error(codes.InvalidArgument, invalid.Message)
 	case errors.Is(err, models.ErrNotFound):
 		return nil, status.Error(codes.NotFound, "фиксация не найдена")
 	case err != nil:

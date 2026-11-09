@@ -29,3 +29,11 @@ type ClarifyOpts struct {
 	PlateType   string // "ru" | "eu" | "us" | ""
 	PlateRegion string
 }
+
+// ValidationError — запрос не прошёл проверку бизнес-правил; Message — понятный пользователю текст
+// (implementation отдаёт его как InvalidArgument).
+type ValidationError struct {
+	Message string
+}
+
+func (e *ValidationError) Error() string { return e.Message }

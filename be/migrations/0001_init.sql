@@ -54,7 +54,9 @@ CREATE TABLE clarifications (
     is_test_data boolean              NOT NULL DEFAULT false
 );
 
-CREATE INDEX clarifications_sighting_id_idx ON clarifications (sighting_id);
+-- Уточнения фиксации (rpc Search — EXISTS по sighting_id) и совпадающие с номером (rpc Clarify —
+-- консенсус). Выражение должно совпадать с clarificationsMatching в internal/repository/postgres.go.
+CREATE INDEX clarifications_sighting_plate_key_idx ON clarifications (sighting_id, plate_search_key(plate));
 -- Поиск по уточнённым номерам (rpc Search) — то же выражение, что для plates.
 CREATE INDEX clarifications_plate_gin_idx ON clarifications USING gin (to_tsvector('simple', plate_search_key(plate)));
 

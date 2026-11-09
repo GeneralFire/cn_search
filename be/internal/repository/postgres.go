@@ -131,6 +131,44 @@ func (r *repository) CreateClarification(ctx context.Context, tx db.Executor, o 
 	return c, nil
 }
 
+// MatchesSightingPlate — совпадает ли plate с номером фиксации sightingID (по plate_search_key).
+// Блокирует строку фиксации (FOR UPDATE) до конца транзакции — уточнения к одной фиксации
+// записываются по очереди. models.ErrNotFound, если фиксации нет.
+func (r *repository) MatchesSightingPlate(ctx context.Context, tx db.Executor, sightingID, plate string) (bool, error) {
+	var same []bool
+	err := tx.Select(ctx, &same, `SELECT plate_search_key(p.plate) = plate_search_key($2)
+		FROM `+plateSightingFrom+` WHERE s.id = $1 FOR UPDATE OF s`, sightingID, plate)
+	if err != nil {
+		return false, fmt.Errorf("matches sighting plate: %w", err)
+	}
+	if len(same) == 0 {
+		return false, models.ErrNotFound
+	}
+	return same[0], nil
+}
+
+// clarificationsMatching — уточнения фиксации $1 с тем же номером, что $2 (по plate_search_key).
+// Индекс clarifications_sighting_plate_key_idx — выражение должно совпадать с миграцией.
+const clarificationsMatching = `sighting_id = $1 AND plate_search_key(plate) = plate_search_key($2)`
+
+// CountMatchingClarifications — сколько уточнений фиксации совпадают с plate (по plate_search_key).
+func (r *repository) CountMatchingClarifications(ctx context.Context, tx db.Executor, sightingID, plate string) (int, error) {
+	var n int
+	if err := tx.Get(ctx, &n, `SELECT count(*) FROM `+clarificationsTable+` WHERE `+clarificationsMatching, sightingID, plate); err != nil {
+		return 0, fmt.Errorf("count matching clarifications: %w", err)
+	}
+	return n, nil
+}
+
+// AcceptMatchingClarifications принимает все уточнения фиксации, совпадающие с plate (по plate_search_key).
+func (r *repository) AcceptMatchingClarifications(ctx context.Context, tx db.Executor, sightingID, plate string) error {
+	if _, err := tx.Exec(ctx, `UPDATE `+clarificationsTable+` SET status = 'accepted'
+		WHERE `+clarificationsMatching+` AND status <> 'accepted'`, sightingID, plate); err != nil {
+		return fmt.Errorf("accept matching clarifications: %w", err)
+	}
+	return nil
+}
+
 // ListSamePlate возвращает все фиксации номера, к которому относится фиксация o.ID, от новых
 // к старым; models.ErrNotFound, если такой фиксации нет (или она тестовая, а тестовые не нужны).
 // Индекс plate_sightings_plate_id_idx.
