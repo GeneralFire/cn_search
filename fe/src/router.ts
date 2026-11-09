@@ -1,9 +1,11 @@
-// Маршруты на History API: "/" — поиск, "/plate/<id фиксации>" — страница номера.
+// Маршруты на History API: "/" — поиск, "/plate/<id фиксации>" — страница номера,
+// "/admin" — админ-панель (жалобы на фото; ссылки в интерфейсе нет — вход по прямому адресу).
 // Vite (dev и preview) отдаёт index.html на любой путь, поэтому прямые ссылки работают.
 
-export type Route = { name: "search" } | { name: "plate"; id: string };
+export type Route = { name: "search" } | { name: "plate"; id: string } | { name: "admin" };
 
 export function parseRoute(path = location.pathname): Route {
+  if (/^\/admin\/?$/.test(path)) return { name: "admin" };
   const m = path.match(/^\/plate\/([^/]+)\/?$/);
   return m ? { name: "plate", id: decodeURIComponent(m[1]) } : { name: "search" };
 }

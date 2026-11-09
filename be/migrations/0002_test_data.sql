@@ -167,7 +167,17 @@ INSERT INTO clarifications (sighting_id, plate, status, created_at, is_test_data
   ('00000000-0000-0000-0000-000000000003', 'Т789УХ 716', 'accepted',     timestamptz '2026-11-08 13:00:00Z', true),
   ('00000000-0000-0000-0000-000000000002', 'М456ОР 198', 'not_accepted', timestamptz '2026-10-28 10:00:00Z', true);
 
+-- Жалобы на фото: к А123ВС 777 (…0001) — персональные данные в кадре (новая), к Казани (…0003) — плохое фото (решена).
+INSERT INTO complaints (id, sighting_id, reason, comment, status, created_at, is_test_data) VALUES
+  ('00000000-0000-0000-0000-0000000c0001', '00000000-0000-0000-0000-000000000001', 'personal_data',
+   'В кадре видно лицо пешехода', 'new', timestamptz '2026-11-09 10:00:00Z', true),
+  ('00000000-0000-0000-0000-0000000c0002', '00000000-0000-0000-0000-000000000003', 'bad_photo',
+   '', 'resolved', timestamptz '2026-11-08 15:30:00Z', true),
+  ('00000000-0000-0000-0000-0000000c0003', '00000000-0000-0000-0000-000000000004', 'wrong_plate',
+   'На фото другая машина', 'new', timestamptz '2026-11-06 09:00:00Z', true);
+
 -- +goose Down
+DELETE FROM complaints WHERE is_test_data;
 DELETE FROM clarifications WHERE is_test_data;
 DELETE FROM plate_sightings WHERE is_test_data;
 DELETE FROM plates WHERE is_test_data;

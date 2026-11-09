@@ -3,6 +3,7 @@ import "./theme";
 import { ApiError, clarify, search, type Car } from "./api";
 import { navigate, onRoute, plateHref } from "./router";
 import { renderPlatePage } from "./plate";
+import { renderAdminPage } from "./admin";
 import { cardHtml, escapeHtml, formatDate, icon, plateHtml } from "./ui";
 import { SWITCH_FLAG, t, tp } from "./i18n/i18n";
 import { mountSettings } from "./settings";
@@ -67,6 +68,7 @@ app.innerHTML = `
   </div>
 
   <div class="view" id="view-plate" hidden></div>
+  <div class="view" id="view-admin" hidden></div>
 
   <dialog class="modal" aria-labelledby="modal-title">
     <form method="dialog" class="modal__inner">
@@ -448,7 +450,16 @@ const $viewPlate = app.querySelector<HTMLElement>("#view-plate")!;
 let searchStarted = false;
 let searchScroll = 0;
 
+const $viewAdmin = app.querySelector<HTMLElement>("#view-admin")!;
+
 onRoute((route) => {
+  $viewAdmin.hidden = route.name !== "admin";
+  if (route.name === "admin") {
+    if (!$viewSearch.hidden) searchScroll = window.scrollY;
+    $viewSearch.hidden = $viewPlate.hidden = true;
+    renderAdminPage($viewAdmin);
+    return;
+  }
   if (route.name === "plate") {
     if (!$viewSearch.hidden) searchScroll = window.scrollY;
     $viewSearch.hidden = true;

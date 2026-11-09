@@ -1,0 +1,46 @@
+/* ---------- Жалоба на фото (complaint.ts): кнопки и модалка (база — .modal, .seg из style.css) ---------- */
+
+.cm-btn {
+  position: absolute; z-index: 3;
+  display: inline-flex; align-items: center; gap: 6px;
+  font: inherit; font-size: 0.82rem; font-weight: 600; color: #fff;
+  border: 0; border-radius: 999px; cursor: pointer;
+  background: rgb(0 0 0 / 0.5); backdrop-filter: blur(4px);
+  transition: background 0.15s, opacity 0.15s;
+}
+.cm-btn:hover { background: #e5484d; }
+.cm-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; box-shadow: 0 0 0 4px var(--accent); }
+
+/* На большом фото — в правом верхнем углу, над кнопкой увеличения (клик по фото по-прежнему увеличивает). */
+.cm-btn--photo { top: 12px; right: 12px; padding: 6px 12px 6px 10px; }
+
+/* На миниатюре ленты истории — значок в углу, по наведению на пункт (на таче — всегда). */
+.cm-btn--thumb {
+  top: 4px; left: 46px; width: 22px; height: 22px; padding: 0; justify-content: center;
+  opacity: 0;
+}
+.cm-btn--thumb svg { width: 12px; height: 12px; }
+.tl__item:hover .cm-btn--thumb, .cm-btn--thumb:focus-visible { opacity: 1; }
+@media (hover: none) { .cm-btn--thumb { opacity: 0.85; } }
+
+.cm .modal__inner { gap: 18px; }
+.cm__body { display: grid; gap: 18px; }
+.cm__label { font-weight: 600; }
+.cm__reasons { display: flex; flex-wrap: wrap; gap: 6px; border: 0; margin: 0; padding: 0; }
+.cm__reasons legend { width: 100%; margin-bottom: 8px; padding: 0; }
+.cm__field { display: grid; gap: 8px; position: relative; }
+.cm__comment {
+  font: inherit; font-size: 0.95rem; resize: vertical; min-height: 80px;
+  padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); outline: none;
+}
+.cm__comment:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.cm__count { justify-self: end; color: var(--muted); font-size: 0.78rem; }
+.cm__msg { margin: 0; padding: 12px 14px; border-radius: 12px; font-size: 0.92rem; }
+.cm__msg.is-error { background: color-mix(in srgb, #e5484d 15%, transparent); color: #e5484d; }
+.cm__thanks { display: grid; justify-items: center; gap: 6px; padding: 16px 8px; text-align: center; color: var(--muted); }
+.cm__thanks strong { color: var(--text); font-size: 1.05rem; }
+.cm__check {
+  width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 1.5rem; font-weight: 700; color: #fff; background: #2fb36b; margin-bottom: 6px;
+}

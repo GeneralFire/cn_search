@@ -43,6 +43,33 @@
         ]
       }
     },
+    "/carsearch.CarSearchService/Complain": {
+      "post": {
+        "summary": "Complain — жалоба на фото фиксации (кнопка «Пожаловаться»). Создаётся со статусом «новая».",
+        "operationId": "CarSearchService_Complain",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchComplaint"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchComplainRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
     "/carsearch.CarSearchService/Get": {
       "post": {
         "summary": "Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.",
@@ -62,6 +89,60 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/carsearchGetRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/ListComplaints": {
+      "post": {
+        "summary": "ListComplaints — жалобы для админ-панели, от новых к старым, постранично, вместе с фиксацией.\nНужен заголовок admin-token (= ADMIN_TOKEN бэка), иначе PERMISSION_DENIED.",
+        "operationId": "CarSearchService_ListComplaints",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchListComplaintsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchListComplaintsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/ResolveComplaint": {
+      "post": {
+        "summary": "ResolveComplaint — отметить жалобу решённой. Нужен заголовок admin-token.",
+        "operationId": "CarSearchService_ResolveComplaint",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchComplaint"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchResolveComplaintRequest"
             }
           }
         ],
@@ -196,6 +277,75 @@
         }
       }
     },
+    "carsearchComplainRequest": {
+      "type": "object",
+      "properties": {
+        "sightingId": {
+          "type": "string",
+          "description": "uuid фиксации."
+        },
+        "reason": {
+          "$ref": "#/definitions/carsearchComplaintReason",
+          "description": "Причина, обязательна."
+        },
+        "comment": {
+          "type": "string",
+          "description": "Комментарий, до 500 символов; можно пусто."
+        }
+      }
+    },
+    "carsearchComplaint": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "sightingId": {
+          "type": "string",
+          "description": "uuid фиксации, на фото которой жалоба."
+        },
+        "reason": {
+          "$ref": "#/definitions/carsearchComplaintReason"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/carsearchComplaintStatus"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sighting": {
+          "$ref": "#/definitions/carsearchPlateSighting",
+          "description": "Фиксация (номер, адрес, фото, время) — только в ListComplaints."
+        }
+      },
+      "description": "Complaint — жалоба на фото фиксации."
+    },
+    "carsearchComplaintReason": {
+      "type": "string",
+      "enum": [
+        "COMPLAINT_REASON_UNSPECIFIED",
+        "COMPLAINT_REASON_WRONG_PLATE",
+        "COMPLAINT_REASON_BAD_PHOTO",
+        "COMPLAINT_REASON_PERSONAL_DATA",
+        "COMPLAINT_REASON_OTHER"
+      ],
+      "default": "COMPLAINT_REASON_UNSPECIFIED",
+      "description": "Причина жалобы на фото."
+    },
+    "carsearchComplaintStatus": {
+      "type": "string",
+      "enum": [
+        "COMPLAINT_STATUS_UNSPECIFIED",
+        "COMPLAINT_STATUS_NEW",
+        "COMPLAINT_STATUS_RESOLVED"
+      ],
+      "default": "COMPLAINT_STATUS_UNSPECIFIED",
+      "description": "Статус жалобы."
+    },
     "carsearchGetRequest": {
       "type": "object",
       "properties": {
@@ -214,6 +364,46 @@
             "$ref": "#/definitions/carsearchPlateSighting"
           },
           "description": "Все фиксации номера, от новых к старым; первая по id всегда среди них."
+        }
+      }
+    },
+    "carsearchListComplaintsRequest": {
+      "type": "object",
+      "properties": {
+        "offset": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Сколько жалоб пропустить («Загрузить ещё»)."
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Размер страницы, 1..100; 0 — по умолчанию (30)."
+        },
+        "status": {
+          "$ref": "#/definitions/carsearchComplaintStatus",
+          "description": "Фильтр по статусу; UNSPECIFIED — все."
+        }
+      }
+    },
+    "carsearchListComplaintsResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchComplaint"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Всего жалоб по фильтру."
+        },
+        "nextOffset": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Смещение следующей страницы; не задано — дальше ничего нет."
         }
       }
     },
@@ -280,6 +470,15 @@
       ],
       "default": "PLATE_TYPE_DEFAULT",
       "description": "Формат номерного знака — от него зависит, как его рисовать."
+    },
+    "carsearchResolveComplaintRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "uuid жалобы."
+        }
+      }
     },
     "carsearchSearchRequest": {
       "type": "object",

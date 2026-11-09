@@ -1,6 +1,7 @@
 package implementation
 
 //go:generate minimock -i plateSightings -o ./mocks/plate_sightings_mock.go -n PlateSightingsMock -p mocks
+//go:generate minimock -i complaints -o ./mocks/complaints_mock.go -n ComplaintsMock -p mocks
 
 import (
 	"context"
@@ -14,4 +15,11 @@ type plateSightings interface {
 	ListSamePlate(ctx context.Context, o models.SamePlateOpts) ([]models.PlateSighting, error)
 	SeeAlso(ctx context.Context, o models.SeeAlsoOpts) ([]models.PlateSighting, error)
 	Clarify(ctx context.Context, o models.ClarifyOpts) (models.Clarification, error)
+}
+
+// complaints — сценарии жалоб на фото (реализация — usecase.Complaints).
+type complaints interface {
+	Complain(ctx context.Context, o models.ComplainOpts) (models.Complaint, error)
+	ListComplaints(ctx context.Context, o models.ListComplaintsOpts) (models.ComplaintsPage, error)
+	ResolveComplaint(ctx context.Context, id string) (models.Complaint, error)
 }

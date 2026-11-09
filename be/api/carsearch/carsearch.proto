@@ -29,6 +29,16 @@ service CarSearchService {
   // фиксации — INVALID_ARGUMENT с текстом для пользователя. Создаётся «не принят»; когда
   // 3 уточнения фиксации совпали (без учёта похожих символов), все они становятся «принят».
   rpc Clarify(ClarifyRequest) returns (ClarifyResponse);
+
+  // Complain — жалоба на фото фиксации (кнопка «Пожаловаться»). Создаётся со статусом «новая».
+  rpc Complain(ComplainRequest) returns (Complaint);
+
+  // ListComplaints — жалобы для админ-панели, от новых к старым, постранично, вместе с фиксацией.
+  // Нужен заголовок admin-token (= ADMIN_TOKEN бэка), иначе PERMISSION_DENIED.
+  rpc ListComplaints(ListComplaintsRequest) returns (ListComplaintsResponse);
+
+  // ResolveComplaint — отметить жалобу решённой. Нужен заголовок admin-token.
+  rpc ResolveComplaint(ResolveComplaintRequest) returns (Complaint);
 }
 
 // PlateSighting — фиксация номера: где и когда замечена машина.
@@ -145,4 +155,64 @@ message ClarifyRequest {
 
 message ClarifyResponse {
   Clarification clarification = 1;
+}
+
+// Причина жалобы на фото.
+enum ComplaintReason {
+  COMPLAINT_REASON_UNSPECIFIED = 0;
+  COMPLAINT_REASON_WRONG_PLATE = 1;   // номер распознан неверно / не та машина
+  COMPLAINT_REASON_BAD_PHOTO = 2;     // фото плохое: размыто, темно, не видно машину
+  COMPLAINT_REASON_PERSONAL_DATA = 3; // в кадре лица или другие личные данные
+  COMPLAINT_REASON_OTHER = 4;
+}
+
+// Статус жалобы.
+enum ComplaintStatus {
+  COMPLAINT_STATUS_UNSPECIFIED = 0; // в фильтре ListComplaints — все
+  COMPLAINT_STATUS_NEW = 1;
+  COMPLAINT_STATUS_RESOLVED = 2;
+}
+
+// Complaint — жалоба на фото фиксации.
+message Complaint {
+  string id = 1;
+  // uuid фиксации, на фото которой жалоба.
+  string sighting_id = 2;
+  ComplaintReason reason = 3;
+  string comment = 4;
+  ComplaintStatus status = 5;
+  google.protobuf.Timestamp created_at = 6;
+  // Фиксация (номер, адрес, фото, время) — только в ListComplaints.
+  PlateSighting sighting = 7;
+}
+
+message ComplainRequest {
+  // uuid фиксации.
+  string sighting_id = 1;
+  // Причина, обязательна.
+  ComplaintReason reason = 2;
+  // Комментарий, до 500 символов; можно пусто.
+  string comment = 3;
+}
+
+message ListComplaintsRequest {
+  // Сколько жалоб пропустить («Загрузить ещё»).
+  int32 offset = 1;
+  // Размер страницы, 1..100; 0 — по умолчанию (30).
+  int32 limit = 2;
+  // Фильтр по статусу; UNSPECIFIED — все.
+  ComplaintStatus status = 3;
+}
+
+message ListComplaintsResponse {
+  repeated Complaint items = 1;
+  // Всего жалоб по фильтру.
+  int32 total = 2;
+  // Смещение следующей страницы; не задано — дальше ничего нет.
+  optional int32 next_offset = 3;
+}
+
+message ResolveComplaintRequest {
+  // uuid жалобы.
+  string id = 1;
 }

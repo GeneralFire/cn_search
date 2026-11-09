@@ -134,3 +134,30 @@ func TestHTTPErrors(t *testing.T) {
 		}
 	}
 }
+
+// Заголовок admin-token доходит через clay до проверки в implementation: без него — 403, с ним — 200.
+func TestHTTPAdminTokenHeader(t *testing.T) {
+	c := mocks.NewComplaintsMock(t)
+	c.ListComplaintsMock.Return(models.ComplaintsPage{Total: 0}, nil)
+	desc := pb.NewCarSearchServiceServiceDesc(implementation.NewCarSearch(mocks.NewPlateSightingsMock(t), "/s3/cars",
+		implementation.WithComplaints(c, "tok")))
+	r := chi.NewRouter()
+	desc.RegisterHTTP(r)
+	srv := httptest.NewServer(r)
+	t.Cleanup(srv.Close)
+
+	for token, want := range map[string]int{"": http.StatusForbidden, "bad": http.StatusForbidden, "tok": http.StatusOK} {
+		req, _ := http.NewRequest(http.MethodPost, srv.URL+"/carsearch.CarSearchService/ListComplaints", strings.NewReader(`{}`))
+		if token != "" {
+			req.Header.Set("Admin-Token", token)
+		}
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		res.Body.Close()
+		if res.StatusCode != want {
+			t.Errorf("admin-token %q: %d, want %d", token, res.StatusCode, want)
+		}
+	}
+}

@@ -292,6 +292,147 @@ func (d *CarSearchServiceDesc) RegisterHTTP(mux transport.Router) {
 		}
 	}
 
+	{
+		// Handler for Complain, binding: POST /carsearch.CarSearchService/Complain
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_Complain_0(r)
+			rsp, err := _CarSearchService_Complain_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_Complain_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_Complain_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
+	{
+		// Handler for ListComplaints, binding: POST /carsearch.CarSearchService/ListComplaints
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_ListComplaints_0(r)
+			rsp, err := _CarSearchService_ListComplaints_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_ListComplaints_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_ListComplaints_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
+	{
+		// Handler for ResolveComplaint, binding: POST /carsearch.CarSearchService/ResolveComplaint
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_ResolveComplaint_0(r)
+			rsp, err := _CarSearchService_ResolveComplaint_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_ResolveComplaint_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_ResolveComplaint_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
 }
 
 type CarSearchService_httpClient struct {
@@ -512,6 +653,159 @@ func (c *CarSearchService_httpClient) Clarify(ctx context.Context, in *ClarifyRe
 	return &ret, errors.Wrap(err, "can't unmarshal response")
 }
 
+func (c *CarSearchService_httpClient) Complain(ctx context.Context, in *ComplainRequest, opts ...grpc.CallOption) (*Complaint, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_Complain_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := Complaint{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
+func (c *CarSearchService_httpClient) ListComplaints(ctx context.Context, in *ListComplaintsRequest, opts ...grpc.CallOption) (*ListComplaintsResponse, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_ListComplaints_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := ListComplaintsResponse{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
+func (c *CarSearchService_httpClient) ResolveComplaint(ctx context.Context, in *ResolveComplaintRequest, opts ...grpc.CallOption) (*Complaint, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_ResolveComplaint_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := Complaint{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
 // patterns for CarSearchService
 var (
 	pattern_goclay_CarSearchService_Search_0 = "/carsearch.CarSearchService/Search"
@@ -569,6 +863,48 @@ var (
 	}
 
 	unmarshaler_goclay_CarSearchService_Clarify_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
+	pattern_goclay_CarSearchService_Complain_0 = "/carsearch.CarSearchService/Complain"
+
+	pattern_goclay_CarSearchService_Complain_0_builder = func(in *ComplainRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/Complain"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_Complain_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
+	pattern_goclay_CarSearchService_ListComplaints_0 = "/carsearch.CarSearchService/ListComplaints"
+
+	pattern_goclay_CarSearchService_ListComplaints_0_builder = func(in *ListComplaintsRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/ListComplaints"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_ListComplaints_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
+	pattern_goclay_CarSearchService_ResolveComplaint_0 = "/carsearch.CarSearchService/ResolveComplaint"
+
+	pattern_goclay_CarSearchService_ResolveComplaint_0_builder = func(in *ResolveComplaintRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/ResolveComplaint"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_ResolveComplaint_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
 // marshalers for CarSearchService
@@ -636,6 +972,54 @@ var (
 			return nil
 		}
 	}
+
+	unmarshaler_goclay_CarSearchService_Complain_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*ComplainRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_Complain_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
+
+	unmarshaler_goclay_CarSearchService_ListComplaints_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*ListComplaintsRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_ListComplaints_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
+
+	unmarshaler_goclay_CarSearchService_ResolveComplaint_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*ResolveComplaintRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_ResolveComplaint_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
 )
 
 var _swaggerDef_carsearch_carsearch_proto = []byte(`{
@@ -683,6 +1067,33 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         ]
       }
     },
+    "/carsearch.CarSearchService/Complain": {
+      "post": {
+        "summary": "Complain — жалоба на фото фиксации (кнопка «Пожаловаться»). Создаётся со статусом «новая».",
+        "operationId": "CarSearchService_Complain",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchComplaint"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchComplainRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
     "/carsearch.CarSearchService/Get": {
       "post": {
         "summary": "Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.",
@@ -702,6 +1113,60 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
             "required": true,
             "schema": {
               "$ref": "#/definitions/carsearchGetRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/ListComplaints": {
+      "post": {
+        "summary": "ListComplaints — жалобы для админ-панели, от новых к старым, постранично, вместе с фиксацией.\nНужен заголовок admin-token (= ADMIN_TOKEN бэка), иначе PERMISSION_DENIED.",
+        "operationId": "CarSearchService_ListComplaints",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchListComplaintsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchListComplaintsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/ResolveComplaint": {
+      "post": {
+        "summary": "ResolveComplaint — отметить жалобу решённой. Нужен заголовок admin-token.",
+        "operationId": "CarSearchService_ResolveComplaint",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchComplaint"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchResolveComplaintRequest"
             }
           }
         ],
@@ -836,6 +1301,75 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         }
       }
     },
+    "carsearchComplainRequest": {
+      "type": "object",
+      "properties": {
+        "sightingId": {
+          "type": "string",
+          "description": "uuid фиксации."
+        },
+        "reason": {
+          "$ref": "#/definitions/carsearchComplaintReason",
+          "description": "Причина, обязательна."
+        },
+        "comment": {
+          "type": "string",
+          "description": "Комментарий, до 500 символов; можно пусто."
+        }
+      }
+    },
+    "carsearchComplaint": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "sightingId": {
+          "type": "string",
+          "description": "uuid фиксации, на фото которой жалоба."
+        },
+        "reason": {
+          "$ref": "#/definitions/carsearchComplaintReason"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/carsearchComplaintStatus"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sighting": {
+          "$ref": "#/definitions/carsearchPlateSighting",
+          "description": "Фиксация (номер, адрес, фото, время) — только в ListComplaints."
+        }
+      },
+      "description": "Complaint — жалоба на фото фиксации."
+    },
+    "carsearchComplaintReason": {
+      "type": "string",
+      "enum": [
+        "COMPLAINT_REASON_UNSPECIFIED",
+        "COMPLAINT_REASON_WRONG_PLATE",
+        "COMPLAINT_REASON_BAD_PHOTO",
+        "COMPLAINT_REASON_PERSONAL_DATA",
+        "COMPLAINT_REASON_OTHER"
+      ],
+      "default": "COMPLAINT_REASON_UNSPECIFIED",
+      "description": "Причина жалобы на фото."
+    },
+    "carsearchComplaintStatus": {
+      "type": "string",
+      "enum": [
+        "COMPLAINT_STATUS_UNSPECIFIED",
+        "COMPLAINT_STATUS_NEW",
+        "COMPLAINT_STATUS_RESOLVED"
+      ],
+      "default": "COMPLAINT_STATUS_UNSPECIFIED",
+      "description": "Статус жалобы."
+    },
     "carsearchGetRequest": {
       "type": "object",
       "properties": {
@@ -854,6 +1388,46 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
             "$ref": "#/definitions/carsearchPlateSighting"
           },
           "description": "Все фиксации номера, от новых к старым; первая по id всегда среди них."
+        }
+      }
+    },
+    "carsearchListComplaintsRequest": {
+      "type": "object",
+      "properties": {
+        "offset": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Сколько жалоб пропустить («Загрузить ещё»)."
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Размер страницы, 1..100; 0 — по умолчанию (30)."
+        },
+        "status": {
+          "$ref": "#/definitions/carsearchComplaintStatus",
+          "description": "Фильтр по статусу; UNSPECIFIED — все."
+        }
+      }
+    },
+    "carsearchListComplaintsResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchComplaint"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Всего жалоб по фильтру."
+        },
+        "nextOffset": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Смещение следующей страницы; не задано — дальше ничего нет."
         }
       }
     },
@@ -920,6 +1494,15 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
       ],
       "default": "PLATE_TYPE_DEFAULT",
       "description": "Формат номерного знака — от него зависит, как его рисовать."
+    },
+    "carsearchResolveComplaintRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "uuid жалобы."
+        }
+      }
     },
     "carsearchSearchRequest": {
       "type": "object",

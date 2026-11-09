@@ -37,6 +37,7 @@ type config struct {
 	GRPCPort    string
 	DatabaseURL string
 	PhotoBase   string // публичный URL бакета с картинками для браузера
+	AdminToken  string // пароль админ-панели (заголовок admin-token); пусто — админские методы выключены
 }
 
 func loadConfig() config {
@@ -45,6 +46,7 @@ func loadConfig() config {
 		GRPCPort:    envOr("GRPC_PORT", "8082"),
 		DatabaseURL: os.Getenv("DATABASE_URL"),
 		PhotoBase:   envOr("S3_PUBLIC_URL", "/s3/cars"),
+		AdminToken:  os.Getenv("ADMIN_TOKEN"),
 	}
 }
 
@@ -81,8 +83,14 @@ func withPool(ctx context.Context, cfg config, fn func(*pgxpool.Pool) error) err
 func serve(ctx context.Context, log *slog.Logger, cfg config) error {
 	return withPool(ctx, cfg, func(pool *pgxpool.Pool) error {
 		// implementation (RPC) → usecase (транзакции) → repository (SQL) → db (pgx).
-		uc := usecase.New(db.NewCluster(pool), repository.New())
-		desc := pb.NewCarSearchServiceServiceDesc(implementation.NewCarSearch(uc, cfg.PhotoBase))
+		cluster, repo := db.NewCluster(pool), repository.New()
+		uc := usecase.New(cluster, repo)
+		if cfg.AdminToken == "" {
+			log.Warn("ADMIN_TOKEN не задан — админ-панель выключена")
+		}
+		svc := implementation.NewCarSearch(uc, cfg.PhotoBase,
+			implementation.WithComplaints(usecase.NewComplaints(cluster, repo), cfg.AdminToken))
+		desc := pb.NewCarSearchServiceServiceDesc(svc)
 
 		// HTTP: ручки clay под /api + health + swagger.
 		api := chi.NewRouter()

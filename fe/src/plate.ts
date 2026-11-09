@@ -7,6 +7,7 @@ import { t, tp } from "./i18n/i18n";
 import { mountSettings } from "./settings";
 import { openLightbox } from "./lightbox";
 import { mountPlateMap, plateMapHtml } from "./map";
+import { complainButtonHtml } from "./complaint";
 
 /** Сколько карточек показывать в «Свежих фиксациях» (ручка отдаёт не больше). */
 const SEE_ALSO_LIMIT = 21;
@@ -106,6 +107,7 @@ function pageHtml(items: Car[], currentId: string): string {
                </button>`
             : icon.car
         }
+        ${shown.photoUrl ? complainButtonHtml(shown, "photo") : ""}
         <figcaption>
           <span class="pp-photo__tag">${t(shown === latest ? "photo.latest" : "photo.sighting")}</span>
           <span>${escapeHtml(shown.address)}</span>
@@ -138,6 +140,7 @@ function timelineItem(c: Car, current: boolean): string {
       <a class="tl__link" href="${plateHref(c.id)}" data-link${current ? ` aria-current="page"` : ""}
          aria-label="${escapeHtml(t("history.item", { date: formatShortDate(c.createdAt), address: c.address }))}"></a>
       <a class="tl__thumb" href="${plateHref(c.id)}" data-link tabindex="-1"${full ? ` data-full="${escapeHtml(full)}"` : ""}>${thumb}</a>
+      ${src ? complainButtonHtml(c, "thumb") : ""}
       <div class="tl__body">
         <div class="tl__when">
           <time datetime="${escapeHtml(c.createdAt)}">${escapeHtml(formatShortDate(c.createdAt))}, ${escapeHtml(formatTime(c.createdAt))}</time>

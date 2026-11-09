@@ -131,6 +131,112 @@ func (ClarificationStatus) EnumDescriptor() ([]byte, []int) {
 	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{1}
 }
 
+// Причина жалобы на фото.
+type ComplaintReason int32
+
+const (
+	ComplaintReason_COMPLAINT_REASON_UNSPECIFIED   ComplaintReason = 0
+	ComplaintReason_COMPLAINT_REASON_WRONG_PLATE   ComplaintReason = 1 // номер распознан неверно / не та машина
+	ComplaintReason_COMPLAINT_REASON_BAD_PHOTO     ComplaintReason = 2 // фото плохое: размыто, темно, не видно машину
+	ComplaintReason_COMPLAINT_REASON_PERSONAL_DATA ComplaintReason = 3 // в кадре лица или другие личные данные
+	ComplaintReason_COMPLAINT_REASON_OTHER         ComplaintReason = 4
+)
+
+// Enum value maps for ComplaintReason.
+var (
+	ComplaintReason_name = map[int32]string{
+		0: "COMPLAINT_REASON_UNSPECIFIED",
+		1: "COMPLAINT_REASON_WRONG_PLATE",
+		2: "COMPLAINT_REASON_BAD_PHOTO",
+		3: "COMPLAINT_REASON_PERSONAL_DATA",
+		4: "COMPLAINT_REASON_OTHER",
+	}
+	ComplaintReason_value = map[string]int32{
+		"COMPLAINT_REASON_UNSPECIFIED":   0,
+		"COMPLAINT_REASON_WRONG_PLATE":   1,
+		"COMPLAINT_REASON_BAD_PHOTO":     2,
+		"COMPLAINT_REASON_PERSONAL_DATA": 3,
+		"COMPLAINT_REASON_OTHER":         4,
+	}
+)
+
+func (x ComplaintReason) Enum() *ComplaintReason {
+	p := new(ComplaintReason)
+	*p = x
+	return p
+}
+
+func (x ComplaintReason) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ComplaintReason) Descriptor() protoreflect.EnumDescriptor {
+	return file_carsearch_carsearch_proto_enumTypes[2].Descriptor()
+}
+
+func (ComplaintReason) Type() protoreflect.EnumType {
+	return &file_carsearch_carsearch_proto_enumTypes[2]
+}
+
+func (x ComplaintReason) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ComplaintReason.Descriptor instead.
+func (ComplaintReason) EnumDescriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{2}
+}
+
+// Статус жалобы.
+type ComplaintStatus int32
+
+const (
+	ComplaintStatus_COMPLAINT_STATUS_UNSPECIFIED ComplaintStatus = 0 // в фильтре ListComplaints — все
+	ComplaintStatus_COMPLAINT_STATUS_NEW         ComplaintStatus = 1
+	ComplaintStatus_COMPLAINT_STATUS_RESOLVED    ComplaintStatus = 2
+)
+
+// Enum value maps for ComplaintStatus.
+var (
+	ComplaintStatus_name = map[int32]string{
+		0: "COMPLAINT_STATUS_UNSPECIFIED",
+		1: "COMPLAINT_STATUS_NEW",
+		2: "COMPLAINT_STATUS_RESOLVED",
+	}
+	ComplaintStatus_value = map[string]int32{
+		"COMPLAINT_STATUS_UNSPECIFIED": 0,
+		"COMPLAINT_STATUS_NEW":         1,
+		"COMPLAINT_STATUS_RESOLVED":    2,
+	}
+)
+
+func (x ComplaintStatus) Enum() *ComplaintStatus {
+	p := new(ComplaintStatus)
+	*p = x
+	return p
+}
+
+func (x ComplaintStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ComplaintStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_carsearch_carsearch_proto_enumTypes[3].Descriptor()
+}
+
+func (ComplaintStatus) Type() protoreflect.EnumType {
+	return &file_carsearch_carsearch_proto_enumTypes[3]
+}
+
+func (x ComplaintStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ComplaintStatus.Descriptor instead.
+func (ComplaintStatus) EnumDescriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{3}
+}
+
 // PlateSighting — фиксация номера: где и когда замечена машина.
 type PlateSighting struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -805,6 +911,334 @@ func (x *ClarifyResponse) GetClarification() *Clarification {
 	return nil
 }
 
+// Complaint — жалоба на фото фиксации.
+type Complaint struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// uuid фиксации, на фото которой жалоба.
+	SightingId string                 `protobuf:"bytes,2,opt,name=sighting_id,json=sightingId,proto3" json:"sighting_id,omitempty"`
+	Reason     ComplaintReason        `protobuf:"varint,3,opt,name=reason,proto3,enum=carsearch.ComplaintReason" json:"reason,omitempty"`
+	Comment    string                 `protobuf:"bytes,4,opt,name=comment,proto3" json:"comment,omitempty"`
+	Status     ComplaintStatus        `protobuf:"varint,5,opt,name=status,proto3,enum=carsearch.ComplaintStatus" json:"status,omitempty"`
+	CreatedAt  *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	// Фиксация (номер, адрес, фото, время) — только в ListComplaints.
+	Sighting      *PlateSighting `protobuf:"bytes,7,opt,name=sighting,proto3" json:"sighting,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Complaint) Reset() {
+	*x = Complaint{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Complaint) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Complaint) ProtoMessage() {}
+
+func (x *Complaint) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Complaint.ProtoReflect.Descriptor instead.
+func (*Complaint) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *Complaint) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Complaint) GetSightingId() string {
+	if x != nil {
+		return x.SightingId
+	}
+	return ""
+}
+
+func (x *Complaint) GetReason() ComplaintReason {
+	if x != nil {
+		return x.Reason
+	}
+	return ComplaintReason_COMPLAINT_REASON_UNSPECIFIED
+}
+
+func (x *Complaint) GetComment() string {
+	if x != nil {
+		return x.Comment
+	}
+	return ""
+}
+
+func (x *Complaint) GetStatus() ComplaintStatus {
+	if x != nil {
+		return x.Status
+	}
+	return ComplaintStatus_COMPLAINT_STATUS_UNSPECIFIED
+}
+
+func (x *Complaint) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *Complaint) GetSighting() *PlateSighting {
+	if x != nil {
+		return x.Sighting
+	}
+	return nil
+}
+
+type ComplainRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// uuid фиксации.
+	SightingId string `protobuf:"bytes,1,opt,name=sighting_id,json=sightingId,proto3" json:"sighting_id,omitempty"`
+	// Причина, обязательна.
+	Reason ComplaintReason `protobuf:"varint,2,opt,name=reason,proto3,enum=carsearch.ComplaintReason" json:"reason,omitempty"`
+	// Комментарий, до 500 символов; можно пусто.
+	Comment       string `protobuf:"bytes,3,opt,name=comment,proto3" json:"comment,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ComplainRequest) Reset() {
+	*x = ComplainRequest{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ComplainRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ComplainRequest) ProtoMessage() {}
+
+func (x *ComplainRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ComplainRequest.ProtoReflect.Descriptor instead.
+func (*ComplainRequest) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ComplainRequest) GetSightingId() string {
+	if x != nil {
+		return x.SightingId
+	}
+	return ""
+}
+
+func (x *ComplainRequest) GetReason() ComplaintReason {
+	if x != nil {
+		return x.Reason
+	}
+	return ComplaintReason_COMPLAINT_REASON_UNSPECIFIED
+}
+
+func (x *ComplainRequest) GetComment() string {
+	if x != nil {
+		return x.Comment
+	}
+	return ""
+}
+
+type ListComplaintsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Сколько жалоб пропустить («Загрузить ещё»).
+	Offset int32 `protobuf:"varint,1,opt,name=offset,proto3" json:"offset,omitempty"`
+	// Размер страницы, 1..100; 0 — по умолчанию (30).
+	Limit int32 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	// Фильтр по статусу; UNSPECIFIED — все.
+	Status        ComplaintStatus `protobuf:"varint,3,opt,name=status,proto3,enum=carsearch.ComplaintStatus" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListComplaintsRequest) Reset() {
+	*x = ListComplaintsRequest{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListComplaintsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListComplaintsRequest) ProtoMessage() {}
+
+func (x *ListComplaintsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListComplaintsRequest.ProtoReflect.Descriptor instead.
+func (*ListComplaintsRequest) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ListComplaintsRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+func (x *ListComplaintsRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *ListComplaintsRequest) GetStatus() ComplaintStatus {
+	if x != nil {
+		return x.Status
+	}
+	return ComplaintStatus_COMPLAINT_STATUS_UNSPECIFIED
+}
+
+type ListComplaintsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Items []*Complaint           `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	// Всего жалоб по фильтру.
+	Total int32 `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	// Смещение следующей страницы; не задано — дальше ничего нет.
+	NextOffset    *int32 `protobuf:"varint,3,opt,name=next_offset,json=nextOffset,proto3,oneof" json:"next_offset,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListComplaintsResponse) Reset() {
+	*x = ListComplaintsResponse{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListComplaintsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListComplaintsResponse) ProtoMessage() {}
+
+func (x *ListComplaintsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListComplaintsResponse.ProtoReflect.Descriptor instead.
+func (*ListComplaintsResponse) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ListComplaintsResponse) GetItems() []*Complaint {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+func (x *ListComplaintsResponse) GetTotal() int32 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+func (x *ListComplaintsResponse) GetNextOffset() int32 {
+	if x != nil && x.NextOffset != nil {
+		return *x.NextOffset
+	}
+	return 0
+}
+
+type ResolveComplaintRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// uuid жалобы.
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResolveComplaintRequest) Reset() {
+	*x = ResolveComplaintRequest{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResolveComplaintRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResolveComplaintRequest) ProtoMessage() {}
+
+func (x *ResolveComplaintRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResolveComplaintRequest.ProtoReflect.Descriptor instead.
+func (*ResolveComplaintRequest) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ResolveComplaintRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
 var File_carsearch_carsearch_proto protoreflect.FileDescriptor
 
 const file_carsearch_carsearch_proto_rawDesc = "" +
@@ -867,7 +1301,34 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"plate_type\x18\x03 \x01(\x0e2\x14.carsearch.PlateTypeR\tplateType\x12!\n" +
 	"\fplate_region\x18\x04 \x01(\tR\vplateRegion\"Q\n" +
 	"\x0fClarifyResponse\x12>\n" +
-	"\rclarification\x18\x01 \x01(\v2\x18.carsearch.ClarificationR\rclarification*\x82\x01\n" +
+	"\rclarification\x18\x01 \x01(\v2\x18.carsearch.ClarificationR\rclarification\"\xaf\x02\n" +
+	"\tComplaint\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
+	"\vsighting_id\x18\x02 \x01(\tR\n" +
+	"sightingId\x122\n" +
+	"\x06reason\x18\x03 \x01(\x0e2\x1a.carsearch.ComplaintReasonR\x06reason\x12\x18\n" +
+	"\acomment\x18\x04 \x01(\tR\acomment\x122\n" +
+	"\x06status\x18\x05 \x01(\x0e2\x1a.carsearch.ComplaintStatusR\x06status\x129\n" +
+	"\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x124\n" +
+	"\bsighting\x18\a \x01(\v2\x18.carsearch.PlateSightingR\bsighting\"\x80\x01\n" +
+	"\x0fComplainRequest\x12\x1f\n" +
+	"\vsighting_id\x18\x01 \x01(\tR\n" +
+	"sightingId\x122\n" +
+	"\x06reason\x18\x02 \x01(\x0e2\x1a.carsearch.ComplaintReasonR\x06reason\x12\x18\n" +
+	"\acomment\x18\x03 \x01(\tR\acomment\"y\n" +
+	"\x15ListComplaintsRequest\x12\x16\n" +
+	"\x06offset\x18\x01 \x01(\x05R\x06offset\x12\x14\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\x122\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x1a.carsearch.ComplaintStatusR\x06status\"\x90\x01\n" +
+	"\x16ListComplaintsResponse\x12*\n" +
+	"\x05items\x18\x01 \x03(\v2\x14.carsearch.ComplaintR\x05items\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x05R\x05total\x12$\n" +
+	"\vnext_offset\x18\x03 \x01(\x05H\x00R\n" +
+	"nextOffset\x88\x01\x01B\x0e\n" +
+	"\f_next_offset\")\n" +
+	"\x17ResolveComplaintRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id*\x82\x01\n" +
 	"\tPlateType\x12\x16\n" +
 	"\x12PLATE_TYPE_DEFAULT\x10\x00\x12\x11\n" +
 	"\rPLATE_TYPE_RU\x10\x01\x12\x11\n" +
@@ -878,12 +1339,25 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\x13ClarificationStatus\x12$\n" +
 	" CLARIFICATION_STATUS_UNSPECIFIED\x10\x00\x12%\n" +
 	"!CLARIFICATION_STATUS_NOT_ACCEPTED\x10\x01\x12!\n" +
-	"\x1dCLARIFICATION_STATUS_ACCEPTED\x10\x022\x8b\x02\n" +
+	"\x1dCLARIFICATION_STATUS_ACCEPTED\x10\x02*\xb5\x01\n" +
+	"\x0fComplaintReason\x12 \n" +
+	"\x1cCOMPLAINT_REASON_UNSPECIFIED\x10\x00\x12 \n" +
+	"\x1cCOMPLAINT_REASON_WRONG_PLATE\x10\x01\x12\x1e\n" +
+	"\x1aCOMPLAINT_REASON_BAD_PHOTO\x10\x02\x12\"\n" +
+	"\x1eCOMPLAINT_REASON_PERSONAL_DATA\x10\x03\x12\x1a\n" +
+	"\x16COMPLAINT_REASON_OTHER\x10\x04*l\n" +
+	"\x0fComplaintStatus\x12 \n" +
+	"\x1cCOMPLAINT_STATUS_UNSPECIFIED\x10\x00\x12\x18\n" +
+	"\x14COMPLAINT_STATUS_NEW\x10\x01\x12\x1d\n" +
+	"\x19COMPLAINT_STATUS_RESOLVED\x10\x022\xee\x03\n" +
 	"\x10CarSearchService\x12=\n" +
 	"\x06Search\x12\x18.carsearch.SearchRequest\x1a\x19.carsearch.SearchResponse\x124\n" +
 	"\x03Get\x12\x15.carsearch.GetRequest\x1a\x16.carsearch.GetResponse\x12@\n" +
 	"\aSeeAlso\x12\x19.carsearch.SeeAlsoRequest\x1a\x1a.carsearch.SeeAlsoResponse\x12@\n" +
-	"\aClarify\x12\x19.carsearch.ClarifyRequest\x1a\x1a.carsearch.ClarifyResponseB=Z;github.com/GeneralFire/cn_search/be/pkg/carsearch;carsearchb\x06proto3"
+	"\aClarify\x12\x19.carsearch.ClarifyRequest\x1a\x1a.carsearch.ClarifyResponse\x12<\n" +
+	"\bComplain\x12\x1a.carsearch.ComplainRequest\x1a\x14.carsearch.Complaint\x12U\n" +
+	"\x0eListComplaints\x12 .carsearch.ListComplaintsRequest\x1a!.carsearch.ListComplaintsResponse\x12L\n" +
+	"\x10ResolveComplaint\x12\".carsearch.ResolveComplaintRequest\x1a\x14.carsearch.ComplaintB=Z;github.com/GeneralFire/cn_search/be/pkg/carsearch;carsearchb\x06proto3"
 
 var (
 	file_carsearch_carsearch_proto_rawDescOnce sync.Once
@@ -897,47 +1371,67 @@ func file_carsearch_carsearch_proto_rawDescGZIP() []byte {
 	return file_carsearch_carsearch_proto_rawDescData
 }
 
-var file_carsearch_carsearch_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_carsearch_carsearch_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_carsearch_carsearch_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_carsearch_carsearch_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_carsearch_carsearch_proto_goTypes = []any{
-	(PlateType)(0),                // 0: carsearch.PlateType
-	(ClarificationStatus)(0),      // 1: carsearch.ClarificationStatus
-	(*PlateSighting)(nil),         // 2: carsearch.PlateSighting
-	(*SearchRequest)(nil),         // 3: carsearch.SearchRequest
-	(*SearchResponse)(nil),        // 4: carsearch.SearchResponse
-	(*GetRequest)(nil),            // 5: carsearch.GetRequest
-	(*GetResponse)(nil),           // 6: carsearch.GetResponse
-	(*SeeAlsoRequest)(nil),        // 7: carsearch.SeeAlsoRequest
-	(*SeeAlsoResponse)(nil),       // 8: carsearch.SeeAlsoResponse
-	(*Clarification)(nil),         // 9: carsearch.Clarification
-	(*ClarifyRequest)(nil),        // 10: carsearch.ClarifyRequest
-	(*ClarifyResponse)(nil),       // 11: carsearch.ClarifyResponse
-	(*timestamppb.Timestamp)(nil), // 12: google.protobuf.Timestamp
+	(PlateType)(0),                  // 0: carsearch.PlateType
+	(ClarificationStatus)(0),        // 1: carsearch.ClarificationStatus
+	(ComplaintReason)(0),            // 2: carsearch.ComplaintReason
+	(ComplaintStatus)(0),            // 3: carsearch.ComplaintStatus
+	(*PlateSighting)(nil),           // 4: carsearch.PlateSighting
+	(*SearchRequest)(nil),           // 5: carsearch.SearchRequest
+	(*SearchResponse)(nil),          // 6: carsearch.SearchResponse
+	(*GetRequest)(nil),              // 7: carsearch.GetRequest
+	(*GetResponse)(nil),             // 8: carsearch.GetResponse
+	(*SeeAlsoRequest)(nil),          // 9: carsearch.SeeAlsoRequest
+	(*SeeAlsoResponse)(nil),         // 10: carsearch.SeeAlsoResponse
+	(*Clarification)(nil),           // 11: carsearch.Clarification
+	(*ClarifyRequest)(nil),          // 12: carsearch.ClarifyRequest
+	(*ClarifyResponse)(nil),         // 13: carsearch.ClarifyResponse
+	(*Complaint)(nil),               // 14: carsearch.Complaint
+	(*ComplainRequest)(nil),         // 15: carsearch.ComplainRequest
+	(*ListComplaintsRequest)(nil),   // 16: carsearch.ListComplaintsRequest
+	(*ListComplaintsResponse)(nil),  // 17: carsearch.ListComplaintsResponse
+	(*ResolveComplaintRequest)(nil), // 18: carsearch.ResolveComplaintRequest
+	(*timestamppb.Timestamp)(nil),   // 19: google.protobuf.Timestamp
 }
 var file_carsearch_carsearch_proto_depIdxs = []int32{
-	12, // 0: carsearch.PlateSighting.created_at:type_name -> google.protobuf.Timestamp
+	19, // 0: carsearch.PlateSighting.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 1: carsearch.PlateSighting.plate_type:type_name -> carsearch.PlateType
-	2,  // 2: carsearch.SearchResponse.items:type_name -> carsearch.PlateSighting
-	2,  // 3: carsearch.GetResponse.items:type_name -> carsearch.PlateSighting
-	2,  // 4: carsearch.SeeAlsoResponse.items:type_name -> carsearch.PlateSighting
+	4,  // 2: carsearch.SearchResponse.items:type_name -> carsearch.PlateSighting
+	4,  // 3: carsearch.GetResponse.items:type_name -> carsearch.PlateSighting
+	4,  // 4: carsearch.SeeAlsoResponse.items:type_name -> carsearch.PlateSighting
 	1,  // 5: carsearch.Clarification.status:type_name -> carsearch.ClarificationStatus
-	12, // 6: carsearch.Clarification.created_at:type_name -> google.protobuf.Timestamp
+	19, // 6: carsearch.Clarification.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 7: carsearch.Clarification.plate_type:type_name -> carsearch.PlateType
 	0,  // 8: carsearch.ClarifyRequest.plate_type:type_name -> carsearch.PlateType
-	9,  // 9: carsearch.ClarifyResponse.clarification:type_name -> carsearch.Clarification
-	3,  // 10: carsearch.CarSearchService.Search:input_type -> carsearch.SearchRequest
-	5,  // 11: carsearch.CarSearchService.Get:input_type -> carsearch.GetRequest
-	7,  // 12: carsearch.CarSearchService.SeeAlso:input_type -> carsearch.SeeAlsoRequest
-	10, // 13: carsearch.CarSearchService.Clarify:input_type -> carsearch.ClarifyRequest
-	4,  // 14: carsearch.CarSearchService.Search:output_type -> carsearch.SearchResponse
-	6,  // 15: carsearch.CarSearchService.Get:output_type -> carsearch.GetResponse
-	8,  // 16: carsearch.CarSearchService.SeeAlso:output_type -> carsearch.SeeAlsoResponse
-	11, // 17: carsearch.CarSearchService.Clarify:output_type -> carsearch.ClarifyResponse
-	14, // [14:18] is the sub-list for method output_type
-	10, // [10:14] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	11, // 9: carsearch.ClarifyResponse.clarification:type_name -> carsearch.Clarification
+	2,  // 10: carsearch.Complaint.reason:type_name -> carsearch.ComplaintReason
+	3,  // 11: carsearch.Complaint.status:type_name -> carsearch.ComplaintStatus
+	19, // 12: carsearch.Complaint.created_at:type_name -> google.protobuf.Timestamp
+	4,  // 13: carsearch.Complaint.sighting:type_name -> carsearch.PlateSighting
+	2,  // 14: carsearch.ComplainRequest.reason:type_name -> carsearch.ComplaintReason
+	3,  // 15: carsearch.ListComplaintsRequest.status:type_name -> carsearch.ComplaintStatus
+	14, // 16: carsearch.ListComplaintsResponse.items:type_name -> carsearch.Complaint
+	5,  // 17: carsearch.CarSearchService.Search:input_type -> carsearch.SearchRequest
+	7,  // 18: carsearch.CarSearchService.Get:input_type -> carsearch.GetRequest
+	9,  // 19: carsearch.CarSearchService.SeeAlso:input_type -> carsearch.SeeAlsoRequest
+	12, // 20: carsearch.CarSearchService.Clarify:input_type -> carsearch.ClarifyRequest
+	15, // 21: carsearch.CarSearchService.Complain:input_type -> carsearch.ComplainRequest
+	16, // 22: carsearch.CarSearchService.ListComplaints:input_type -> carsearch.ListComplaintsRequest
+	18, // 23: carsearch.CarSearchService.ResolveComplaint:input_type -> carsearch.ResolveComplaintRequest
+	6,  // 24: carsearch.CarSearchService.Search:output_type -> carsearch.SearchResponse
+	8,  // 25: carsearch.CarSearchService.Get:output_type -> carsearch.GetResponse
+	10, // 26: carsearch.CarSearchService.SeeAlso:output_type -> carsearch.SeeAlsoResponse
+	13, // 27: carsearch.CarSearchService.Clarify:output_type -> carsearch.ClarifyResponse
+	14, // 28: carsearch.CarSearchService.Complain:output_type -> carsearch.Complaint
+	17, // 29: carsearch.CarSearchService.ListComplaints:output_type -> carsearch.ListComplaintsResponse
+	14, // 30: carsearch.CarSearchService.ResolveComplaint:output_type -> carsearch.Complaint
+	24, // [24:31] is the sub-list for method output_type
+	17, // [17:24] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_carsearch_carsearch_proto_init() }
@@ -947,13 +1441,14 @@ func file_carsearch_carsearch_proto_init() {
 	}
 	file_carsearch_carsearch_proto_msgTypes[0].OneofWrappers = []any{}
 	file_carsearch_carsearch_proto_msgTypes[2].OneofWrappers = []any{}
+	file_carsearch_carsearch_proto_msgTypes[13].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_carsearch_carsearch_proto_rawDesc), len(file_carsearch_carsearch_proto_rawDesc)),
-			NumEnums:      2,
-			NumMessages:   10,
+			NumEnums:      4,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

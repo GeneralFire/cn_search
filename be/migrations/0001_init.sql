@@ -64,7 +64,29 @@ CREATE INDEX clarifications_sighting_plate_key_idx ON clarifications (sighting_i
 -- Поиск по уточнённым номерам (rpc Search) — то же выражение, что для plates.
 CREATE INDEX clarifications_plate_gin_idx ON clarifications USING gin (to_tsvector('simple', plate_search_key(plate)));
 
+-- Жалобы на фото фиксации (кнопка «Пожаловаться»); разбирает администратор (админ-панель /admin).
+CREATE TYPE complaint_reason AS ENUM ('wrong_plate', 'bad_photo', 'personal_data', 'other');
+CREATE TYPE complaint_status AS ENUM ('new', 'resolved');
+
+CREATE TABLE complaints (
+    id           uuid             PRIMARY KEY DEFAULT gen_random_uuid(),
+    sighting_id  uuid             NOT NULL REFERENCES plate_sightings (id),
+    reason       complaint_reason NOT NULL,
+    comment      text             NOT NULL DEFAULT '' CHECK (char_length(comment) <= 500),
+    status       complaint_status NOT NULL DEFAULT 'new',
+    created_at   timestamptz      NOT NULL DEFAULT now(),
+    is_test_data boolean          NOT NULL DEFAULT false -- как у фиксации, на которую жалоба
+);
+
+CREATE INDEX complaints_sighting_id_idx ON complaints (sighting_id);
+-- Админ-панель (rpc ListComplaints): от новых к старым, с фильтром по статусу и без него.
+CREATE INDEX complaints_status_created_at_idx ON complaints (status, created_at DESC, id);
+CREATE INDEX complaints_created_at_idx ON complaints (created_at DESC, id);
+
 -- +goose Down
+DROP TABLE complaints;
+DROP TYPE complaint_status;
+DROP TYPE complaint_reason;
 DROP TABLE clarifications;
 DROP TYPE clarification_status;
 DROP TABLE plate_sightings;

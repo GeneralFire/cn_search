@@ -17,10 +17,26 @@ type CarSearch struct {
 
 	uc        plateSightings
 	photoBase string // публичный URL бакета с картинками, напр. "/s3/cars"
+
+	complaints complaints // жалобы на фото (WithComplaints); nil — методы жалоб недоступны
+	adminToken string     // ADMIN_TOKEN: пусто — админские методы выключены
 }
 
-func NewCarSearch(uc plateSightings, photoBaseURL string) *CarSearch {
-	return &CarSearch{uc: uc, photoBase: strings.TrimRight(photoBaseURL, "/")}
+// Option — необязательная часть сервиса.
+type Option func(*CarSearch)
+
+// WithComplaints включает жалобы на фото (Complain) и их разбор (ListComplaints, ResolveComplaint)
+// по заголовку admin-token, равному adminToken; пустой adminToken — админские методы выключены.
+func WithComplaints(c complaints, adminToken string) Option {
+	return func(s *CarSearch) { s.complaints, s.adminToken = c, adminToken }
+}
+
+func NewCarSearch(uc plateSightings, photoBaseURL string, opts ...Option) *CarSearch {
+	s := &CarSearch{uc: uc, photoBase: strings.TrimRight(photoBaseURL, "/")}
+	for _, o := range opts {
+		o(s)
+	}
+	return s
 }
 
 func (s *CarSearch) toPB(c models.PlateSighting) *pb.PlateSighting {

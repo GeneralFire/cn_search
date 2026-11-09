@@ -2,6 +2,7 @@ package usecase
 
 //go:generate minimock -i transactor -o ./mocks/transactor_mock.go -n TransactorMock -p mocks
 //go:generate minimock -i repository -o ./mocks/repository_mock.go -n RepositoryMock -p mocks
+//go:generate minimock -i complaintsRepository -o ./mocks/complaints_repository_mock.go -n ComplaintsRepositoryMock -p mocks
 
 import (
 	"context"
@@ -25,4 +26,11 @@ type repository interface {
 	MatchesSightingPlate(ctx context.Context, tx db.Executor, sightingID, plate string) (bool, error)
 	CountMatchingClarifications(ctx context.Context, tx db.Executor, sightingID, plate string) (int, error)
 	AcceptMatchingClarifications(ctx context.Context, tx db.Executor, sightingID, plate string) error
+}
+
+// complaintsRepository — запросы к жалобам на фото (реализация — repository.New()).
+type complaintsRepository interface {
+	CreateComplaint(ctx context.Context, tx db.Executor, o models.ComplainOpts) (models.Complaint, error)
+	ListComplaints(ctx context.Context, tx db.Executor, o models.ListComplaintsOpts) (models.ComplaintsPage, error)
+	ResolveComplaint(ctx context.Context, tx db.Executor, id string) (models.Complaint, error)
 }

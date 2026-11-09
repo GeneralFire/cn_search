@@ -3,6 +3,7 @@
 // открывает панель — в ней есть ссылка «На главную».
 import { getLang, LANGS, setLang, t, type Lang } from "./i18n/i18n";
 import { logoHtml } from "./ui";
+import { getAdminToken } from "./api";
 import { getTheme, setTheme, THEMES, type Theme } from "./theme";
 
 // ---------- Секция «Тема» (переключатель auto/light/dark) ----------
@@ -40,6 +41,7 @@ function bindThemeSection(panel: HTMLElement): void {
 }
 
 
+
 const CLOSE_DELAY_MS = 250; // успеть довести мышь от значка до панели
 
 let seq = 0;
@@ -57,6 +59,7 @@ export function mountSettings(root: HTMLElement): void {
       <div class="st__panel" id="${id}" role="group" aria-label="${t("settings.title")}" hidden>
         <div class="st__title">${t("settings.title")}</div>
         <a class="st__home" href="/" data-link>${t("nav.homeShort")}</a>
+        ${getAdminToken() ? `<a class="st__home" href="/admin" data-link>${t("admin.link")}</a>` : ""}
         <div class="st__label" id="${id}-lang">${t("lang.label")}</div>
         <div class="st__langs" role="radiogroup" aria-labelledby="${id}-lang">
           ${LANGS.map(
@@ -105,7 +108,7 @@ export function mountSettings(root: HTMLElement): void {
     }
     setOpen(false);
   });
-  $panel.querySelector(".st__home")!.addEventListener("click", () => setOpen(false));
+  $panel.querySelectorAll(".st__home").forEach((a) => a.addEventListener("click", () => setOpen(false)));
   // Клавиатура: фокус внутри — открыто, ушёл наружу — закрыто.
   $box.addEventListener("focusin", () => setOpen(true));
   $box.addEventListener("focusout", (e) => {

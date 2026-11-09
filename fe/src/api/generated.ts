@@ -12,7 +12,14 @@
 
 export type CarSearchServiceClarifyData = CarsearchClarifyResponse;
 
+export type CarSearchServiceComplainData = CarsearchComplaint;
+
 export type CarSearchServiceGetData = CarsearchGetResponse;
+
+export type CarSearchServiceListComplaintsData =
+  CarsearchListComplaintsResponse;
+
+export type CarSearchServiceResolveComplaintData = CarsearchComplaint;
 
 export type CarSearchServiceSearchData = CarsearchSearchResponse;
 
@@ -63,6 +70,53 @@ export interface CarsearchClarifyResponse {
   clarification?: CarsearchClarification;
 }
 
+export interface CarsearchComplainRequest {
+  /** Комментарий, до 500 символов; можно пусто. */
+  comment?: string;
+  /** Причина, обязательна. */
+  reason?: CarsearchComplaintReason;
+  /** uuid фиксации. */
+  sightingId?: string;
+}
+
+/** Complaint — жалоба на фото фиксации. */
+export interface CarsearchComplaint {
+  comment?: string;
+  /** @format date-time */
+  createdAt?: string;
+  id?: string;
+  /** Причина жалобы на фото. */
+  reason?: CarsearchComplaintReason;
+  /** Фиксация (номер, адрес, фото, время) — только в ListComplaints. */
+  sighting?: CarsearchPlateSighting;
+  /** uuid фиксации, на фото которой жалоба. */
+  sightingId?: string;
+  /** Статус жалобы. */
+  status?: CarsearchComplaintStatus;
+}
+
+/**
+ * Причина жалобы на фото.
+ * @default "COMPLAINT_REASON_UNSPECIFIED"
+ */
+export enum CarsearchComplaintReason {
+  COMPLAINT_REASON_UNSPECIFIED = "COMPLAINT_REASON_UNSPECIFIED",
+  COMPLAINT_REASON_WRONG_PLATE = "COMPLAINT_REASON_WRONG_PLATE",
+  COMPLAINT_REASON_BAD_PHOTO = "COMPLAINT_REASON_BAD_PHOTO",
+  COMPLAINT_REASON_PERSONAL_DATA = "COMPLAINT_REASON_PERSONAL_DATA",
+  COMPLAINT_REASON_OTHER = "COMPLAINT_REASON_OTHER",
+}
+
+/**
+ * Статус жалобы.
+ * @default "COMPLAINT_STATUS_UNSPECIFIED"
+ */
+export enum CarsearchComplaintStatus {
+  COMPLAINT_STATUS_UNSPECIFIED = "COMPLAINT_STATUS_UNSPECIFIED",
+  COMPLAINT_STATUS_NEW = "COMPLAINT_STATUS_NEW",
+  COMPLAINT_STATUS_RESOLVED = "COMPLAINT_STATUS_RESOLVED",
+}
+
 export interface CarsearchGetRequest {
   /** uuid любой фиксации номера. */
   id?: string;
@@ -71,6 +125,35 @@ export interface CarsearchGetRequest {
 export interface CarsearchGetResponse {
   /** Все фиксации номера, от новых к старым; первая по id всегда среди них. */
   items?: CarsearchPlateSighting[];
+}
+
+export interface CarsearchListComplaintsRequest {
+  /**
+   * Размер страницы, 1..100; 0 — по умолчанию (30).
+   * @format int32
+   */
+  limit?: number;
+  /**
+   * Сколько жалоб пропустить («Загрузить ещё»).
+   * @format int32
+   */
+  offset?: number;
+  /** Фильтр по статусу; UNSPECIFIED — все. */
+  status?: CarsearchComplaintStatus;
+}
+
+export interface CarsearchListComplaintsResponse {
+  items?: CarsearchComplaint[];
+  /**
+   * Смещение следующей страницы; не задано — дальше ничего нет.
+   * @format int32
+   */
+  nextOffset?: number;
+  /**
+   * Всего жалоб по фильтру.
+   * @format int32
+   */
+  total?: number;
 }
 
 /** PlateSighting — фиксация номера: где и когда замечена машина. */
@@ -115,6 +198,11 @@ export enum CarsearchPlateType {
   PLATE_TYPE_US = "PLATE_TYPE_US",
   PLATE_TYPE_UA = "PLATE_TYPE_UA",
   PLATE_TYPE_CN = "PLATE_TYPE_CN",
+}
+
+export interface CarsearchResolveComplaintRequest {
+  /** uuid жалобы. */
+  id?: string;
 }
 
 export interface CarsearchSearchRequest {
@@ -459,6 +547,27 @@ export class CarSearchApi<
      * No description
      *
      * @tags CarSearchService
+     * @name CarSearchServiceComplain
+     * @summary Complain — жалоба на фото фиксации (кнопка «Пожаловаться»). Создаётся со статусом «новая».
+     * @request POST:/carsearch.CarSearchService/Complain
+     */
+    carSearchServiceComplain: (
+      body: CarsearchComplainRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceComplainData, any>({
+        path: `/carsearch.CarSearchService/Complain`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
      * @name CarSearchServiceGet
      * @summary Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.
      * @request POST:/carsearch.CarSearchService/Get
@@ -469,6 +578,48 @@ export class CarSearchApi<
     ) =>
       this.request<CarSearchServiceGetData, any>({
         path: `/carsearch.CarSearchService/Get`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
+     * @name CarSearchServiceListComplaints
+     * @summary ListComplaints — жалобы для админ-панели, от новых к старым, постранично, вместе с фиксацией. Нужен заголовок admin-token (= ADMIN_TOKEN бэка), иначе PERMISSION_DENIED.
+     * @request POST:/carsearch.CarSearchService/ListComplaints
+     */
+    carSearchServiceListComplaints: (
+      body: CarsearchListComplaintsRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceListComplaintsData, any>({
+        path: `/carsearch.CarSearchService/ListComplaints`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
+     * @name CarSearchServiceResolveComplaint
+     * @summary ResolveComplaint — отметить жалобу решённой. Нужен заголовок admin-token.
+     * @request POST:/carsearch.CarSearchService/ResolveComplaint
+     */
+    carSearchServiceResolveComplaint: (
+      body: CarsearchResolveComplaintRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceResolveComplaintData, any>({
+        path: `/carsearch.CarSearchService/ResolveComplaint`,
         method: "POST",
         body: body,
         type: ContentType.Json,

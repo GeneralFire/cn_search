@@ -2,6 +2,8 @@
 import {
   CarSearchApi,
   CarsearchClarificationStatus,
+  CarsearchComplaintReason,
+  CarsearchComplaintStatus,
   CarsearchPlateType,
   type CarsearchGetResponse,
   type CarsearchPlateSighting,
@@ -132,6 +134,97 @@ export async function seeAlso(id: string, signal?: AbortSignal): Promise<Car[]> 
     return (data.items ?? []).map(toCar);
   } catch (e) {
     if (signal?.aborted) throw e;
+    throw new ApiError(await errorMessage(e), e instanceof Response ? e.status : 0);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Жалобы на фото и админ-панель
+// ---------------------------------------------------------------------------
+
+/** Причина жалобы — как в БД (enum complaint_reason). */
+export type ComplaintReason = "wrong_plate" | "bad_photo" | "personal_data" | "other";
+export const COMPLAINT_REASONS: ComplaintReason[] = ["wrong_plate", "bad_photo", "personal_data", "other"];
+
+const reasonEnum: Record<ComplaintReason, CarsearchComplaintReason> = {
+  wrong_plate: CarsearchComplaintReason.COMPLAINT_REASON_WRONG_PLATE,
+  bad_photo: CarsearchComplaintReason.COMPLAINT_REASON_BAD_PHOTO,
+  personal_data: CarsearchComplaintReason.COMPLAINT_REASON_PERSONAL_DATA,
+  other: CarsearchComplaintReason.COMPLAINT_REASON_OTHER,
+};
+const reasonName = Object.fromEntries(Object.entries(reasonEnum).map(([k, v]) => [v, k])) as Record<string, ComplaintReason>;
+
+/** Жалоба на фото фиксации на проверку; статус новой — «новая». */
+export async function complain(sightingId: string, reason: ComplaintReason, comment: string): Promise<void> {
+  try {
+    await api.carsearchCarSearchService.carSearchServiceComplain({ sightingId, reason: reasonEnum[reason], comment });
+  } catch (e) {
+    throw new ApiError(await errorMessage(e), e instanceof Response ? e.status : 0);
+  }
+}
+
+// Токен админ-панели (заголовок admin-token) — только в sessionStorage этой вкладки.
+const ADMIN_TOKEN_KEY = "admin-token";
+export const getAdminToken = (): string => sessionStorage.getItem(ADMIN_TOKEN_KEY) ?? "";
+export function setAdminToken(token: string): void {
+  if (token) sessionStorage.setItem(ADMIN_TOKEN_KEY, token);
+  else sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+}
+const adminParams = () => ({ headers: { "admin-token": getAdminToken() } });
+
+export type ComplaintStatus = "new" | "resolved";
+
+/** Жалоба вместе с фиксацией (админ-панель). */
+export interface Complaint {
+  id: string;
+  reason: ComplaintReason;
+  comment: string;
+  status: ComplaintStatus;
+  createdAt: string;
+  sighting: Car | null;
+}
+
+export interface ComplaintsPage {
+  items: Complaint[];
+  total: number;
+  nextOffset: number | null;
+}
+
+const statusEnum: Record<ComplaintStatus | "", CarsearchComplaintStatus> = {
+  "": CarsearchComplaintStatus.COMPLAINT_STATUS_UNSPECIFIED,
+  new: CarsearchComplaintStatus.COMPLAINT_STATUS_NEW,
+  resolved: CarsearchComplaintStatus.COMPLAINT_STATUS_RESOLVED,
+};
+
+/** Страница жалоб (админ); status "" — все. 403 (ApiError.status) — неверный или не заданный токен. */
+export async function listComplaints(status: ComplaintStatus | "", offset: number, limit = 30): Promise<ComplaintsPage> {
+  try {
+    const { data } = await api.carsearchCarSearchService.carSearchServiceListComplaints(
+      { status: statusEnum[status], offset, limit },
+      adminParams()
+    );
+    return {
+      items: (data.items ?? []).map((c) => ({
+        id: c.id ?? "",
+        reason: reasonName[c.reason ?? ""] ?? "other",
+        comment: c.comment ?? "",
+        status: c.status === CarsearchComplaintStatus.COMPLAINT_STATUS_RESOLVED ? "resolved" : "new",
+        createdAt: c.createdAt ?? "",
+        sighting: c.sighting ? toCar(c.sighting) : null,
+      })),
+      total: data.total ?? 0,
+      nextOffset: data.nextOffset ?? null,
+    };
+  } catch (e) {
+    throw new ApiError(await errorMessage(e), e instanceof Response ? e.status : 0);
+  }
+}
+
+/** Отметить жалобу решённой (админ). */
+export async function resolveComplaint(id: string): Promise<void> {
+  try {
+    await api.carsearchCarSearchService.carSearchServiceResolveComplaint({ id }, adminParams());
+  } catch (e) {
     throw new ApiError(await errorMessage(e), e instanceof Response ? e.status : 0);
   }
 }

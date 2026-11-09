@@ -29,3 +29,16 @@ func TestIncludeTestData(t *testing.T) {
 		}
 	}
 }
+
+func TestRequireAdmin(t *testing.T) {
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("admin-token", "tok"))
+	if err := requireAdmin(ctx, "tok"); err != nil {
+		t.Errorf("верный токен: %v", err)
+	}
+	if err := requireAdmin(ctx, "tok2"); err == nil {
+		t.Error("неверный токен принят")
+	}
+	if err := requireAdmin(ctx, ""); err == nil {
+		t.Error("ADMIN_TOKEN не задан — должно быть выключено")
+	}
+}

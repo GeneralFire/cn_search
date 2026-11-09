@@ -1,0 +1,79 @@
+/* ---------- Админ-панель /admin (admin.ts): вход по токену и таблица жалоб ---------- */
+
+.adm-bar {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; gap: 16px; padding: 10px 24px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+.adm-bar__title { margin: 0; font-size: 1.15rem; flex: 1; }
+
+.adm { max-width: 1400px; margin: 0 auto; padding: 24px 24px 64px; }
+
+.adm-login {
+  display: grid; gap: 12px; max-width: 380px; margin: 48px auto; padding: 24px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow);
+}
+.adm-login__field { display: grid; gap: 8px; }
+.adm-login__label { font-weight: 600; }
+.adm-login__input {
+  font: inherit; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); outline: none;
+}
+.adm-login__input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.adm-login__hint { margin: 0; color: var(--muted); font-size: 0.85rem; }
+.adm-login__error { margin: 0; padding: 10px 12px; border-radius: 12px; font-size: 0.9rem;
+  background: color-mix(in srgb, #e5484d 15%, transparent); color: #e5484d; }
+
+.adm-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.adm-filter { display: flex; gap: 6px; }
+.adm-count { color: var(--muted); font-size: 0.9rem; }
+
+.adm-table-wrap {
+  overflow-x: auto; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
+}
+.adm-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.adm-table th {
+  text-align: left; font-weight: 600; color: var(--muted); font-size: 0.78rem;
+  text-transform: uppercase; letter-spacing: 0.05em; padding: 12px; border-bottom: 1px solid var(--border);
+}
+.adm-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.adm-table tr:last-child td { border-bottom: 0; }
+.adm-table tr.is-resolved { opacity: 0.65; }
+
+.adm-thumb {
+  display: grid; place-items: center; position: relative; overflow: hidden;
+  width: 80px; aspect-ratio: 4 / 3; border-radius: 10px; color: var(--accent);
+  background: linear-gradient(135deg, var(--accent-soft), var(--bg));
+}
+.adm-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.adm-thumb > svg { width: 60%; opacity: 0.5; }
+.adm-plate { display: inline-block; text-decoration: none; border-radius: 8px; }
+.adm-plate:hover { filter: brightness(0.95); }
+.adm-plate:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.adm-addr { min-width: 180px; }
+.adm-comment { min-width: 160px; max-width: 320px; overflow-wrap: anywhere; color: var(--muted); }
+.adm-time { white-space: nowrap; color: var(--muted); }
+
+.adm-reason { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 0.8rem; font-weight: 600;
+  background: var(--bg); white-space: nowrap; }
+.adm-reason--personal_data { background: color-mix(in srgb, #e5484d 14%, transparent); color: #e5484d; }
+.adm-reason--wrong_plate { background: color-mix(in srgb, #f5a524 18%, transparent); color: #b7791f; }
+.adm-reason--bad_photo { background: var(--accent-soft); color: var(--accent); }
+
+.adm-status { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+.adm-status--new { background: var(--accent); color: #fff; }
+.adm-status--resolved { background: color-mix(in srgb, #2fb36b 15%, transparent); color: #2fb36b; }
+.adm-table .btn.is-error { border-color: #e5484d; color: #e5484d; }
+
+.adm-sk .skeleton { height: 48px; }
+.adm-note { margin: 16px 0 0; padding: 24px; text-align: center; color: var(--muted);
+  border: 2px dashed var(--border); border-radius: var(--radius); }
+.adm-note.is-error { color: #e5484d; border-color: color-mix(in srgb, #e5484d 40%, transparent); }
+.adm .more { margin-top: 20px; }
+
+@media (max-width: 640px) {
+  .adm-bar { padding: 8px 12px; }
+  .adm { padding: 16px 12px 48px; }
+}

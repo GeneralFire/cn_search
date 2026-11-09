@@ -19,10 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CarSearchService_Search_FullMethodName  = "/carsearch.CarSearchService/Search"
-	CarSearchService_Get_FullMethodName     = "/carsearch.CarSearchService/Get"
-	CarSearchService_SeeAlso_FullMethodName = "/carsearch.CarSearchService/SeeAlso"
-	CarSearchService_Clarify_FullMethodName = "/carsearch.CarSearchService/Clarify"
+	CarSearchService_Search_FullMethodName           = "/carsearch.CarSearchService/Search"
+	CarSearchService_Get_FullMethodName              = "/carsearch.CarSearchService/Get"
+	CarSearchService_SeeAlso_FullMethodName          = "/carsearch.CarSearchService/SeeAlso"
+	CarSearchService_Clarify_FullMethodName          = "/carsearch.CarSearchService/Clarify"
+	CarSearchService_Complain_FullMethodName         = "/carsearch.CarSearchService/Complain"
+	CarSearchService_ListComplaints_FullMethodName   = "/carsearch.CarSearchService/ListComplaints"
+	CarSearchService_ResolveComplaint_FullMethodName = "/carsearch.CarSearchService/ResolveComplaint"
 )
 
 // CarSearchServiceClient is the client API for CarSearchService service.
@@ -49,6 +52,13 @@ type CarSearchServiceClient interface {
 	// фиксации — INVALID_ARGUMENT с текстом для пользователя. Создаётся «не принят»; когда
 	// 3 уточнения фиксации совпали (без учёта похожих символов), все они становятся «принят».
 	Clarify(ctx context.Context, in *ClarifyRequest, opts ...grpc.CallOption) (*ClarifyResponse, error)
+	// Complain — жалоба на фото фиксации (кнопка «Пожаловаться»). Создаётся со статусом «новая».
+	Complain(ctx context.Context, in *ComplainRequest, opts ...grpc.CallOption) (*Complaint, error)
+	// ListComplaints — жалобы для админ-панели, от новых к старым, постранично, вместе с фиксацией.
+	// Нужен заголовок admin-token (= ADMIN_TOKEN бэка), иначе PERMISSION_DENIED.
+	ListComplaints(ctx context.Context, in *ListComplaintsRequest, opts ...grpc.CallOption) (*ListComplaintsResponse, error)
+	// ResolveComplaint — отметить жалобу решённой. Нужен заголовок admin-token.
+	ResolveComplaint(ctx context.Context, in *ResolveComplaintRequest, opts ...grpc.CallOption) (*Complaint, error)
 }
 
 type carSearchServiceClient struct {
@@ -99,6 +109,36 @@ func (c *carSearchServiceClient) Clarify(ctx context.Context, in *ClarifyRequest
 	return out, nil
 }
 
+func (c *carSearchServiceClient) Complain(ctx context.Context, in *ComplainRequest, opts ...grpc.CallOption) (*Complaint, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Complaint)
+	err := c.cc.Invoke(ctx, CarSearchService_Complain_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carSearchServiceClient) ListComplaints(ctx context.Context, in *ListComplaintsRequest, opts ...grpc.CallOption) (*ListComplaintsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListComplaintsResponse)
+	err := c.cc.Invoke(ctx, CarSearchService_ListComplaints_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carSearchServiceClient) ResolveComplaint(ctx context.Context, in *ResolveComplaintRequest, opts ...grpc.CallOption) (*Complaint, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Complaint)
+	err := c.cc.Invoke(ctx, CarSearchService_ResolveComplaint_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CarSearchServiceServer is the server API for CarSearchService service.
 // All implementations must embed UnimplementedCarSearchServiceServer
 // for forward compatibility.
@@ -123,6 +163,13 @@ type CarSearchServiceServer interface {
 	// фиксации — INVALID_ARGUMENT с текстом для пользователя. Создаётся «не принят»; когда
 	// 3 уточнения фиксации совпали (без учёта похожих символов), все они становятся «принят».
 	Clarify(context.Context, *ClarifyRequest) (*ClarifyResponse, error)
+	// Complain — жалоба на фото фиксации (кнопка «Пожаловаться»). Создаётся со статусом «новая».
+	Complain(context.Context, *ComplainRequest) (*Complaint, error)
+	// ListComplaints — жалобы для админ-панели, от новых к старым, постранично, вместе с фиксацией.
+	// Нужен заголовок admin-token (= ADMIN_TOKEN бэка), иначе PERMISSION_DENIED.
+	ListComplaints(context.Context, *ListComplaintsRequest) (*ListComplaintsResponse, error)
+	// ResolveComplaint — отметить жалобу решённой. Нужен заголовок admin-token.
+	ResolveComplaint(context.Context, *ResolveComplaintRequest) (*Complaint, error)
 	mustEmbedUnimplementedCarSearchServiceServer()
 }
 
@@ -144,6 +191,15 @@ func (UnimplementedCarSearchServiceServer) SeeAlso(context.Context, *SeeAlsoRequ
 }
 func (UnimplementedCarSearchServiceServer) Clarify(context.Context, *ClarifyRequest) (*ClarifyResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Clarify not implemented")
+}
+func (UnimplementedCarSearchServiceServer) Complain(context.Context, *ComplainRequest) (*Complaint, error) {
+	return nil, status.Error(codes.Unimplemented, "method Complain not implemented")
+}
+func (UnimplementedCarSearchServiceServer) ListComplaints(context.Context, *ListComplaintsRequest) (*ListComplaintsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListComplaints not implemented")
+}
+func (UnimplementedCarSearchServiceServer) ResolveComplaint(context.Context, *ResolveComplaintRequest) (*Complaint, error) {
+	return nil, status.Error(codes.Unimplemented, "method ResolveComplaint not implemented")
 }
 func (UnimplementedCarSearchServiceServer) mustEmbedUnimplementedCarSearchServiceServer() {}
 func (UnimplementedCarSearchServiceServer) testEmbeddedByValue()                          {}
@@ -238,6 +294,60 @@ func _CarSearchService_Clarify_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CarSearchService_Complain_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ComplainRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).Complain(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_Complain_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).Complain(ctx, req.(*ComplainRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarSearchService_ListComplaints_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListComplaintsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).ListComplaints(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_ListComplaints_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).ListComplaints(ctx, req.(*ListComplaintsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarSearchService_ResolveComplaint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResolveComplaintRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).ResolveComplaint(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_ResolveComplaint_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).ResolveComplaint(ctx, req.(*ResolveComplaintRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CarSearchService_ServiceDesc is the grpc.ServiceDesc for CarSearchService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -260,6 +370,18 @@ var CarSearchService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Clarify",
 			Handler:    _CarSearchService_Clarify_Handler,
+		},
+		{
+			MethodName: "Complain",
+			Handler:    _CarSearchService_Complain_Handler,
+		},
+		{
+			MethodName: "ListComplaints",
+			Handler:    _CarSearchService_ListComplaints_Handler,
+		},
+		{
+			MethodName: "ResolveComplaint",
+			Handler:    _CarSearchService_ResolveComplaint_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
