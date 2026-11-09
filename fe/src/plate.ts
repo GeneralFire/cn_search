@@ -2,9 +2,12 @@
 import { ApiError, plateSightings, seeAlso, type Car } from "./api";
 import { mountQuickSearch, type QuickSearchHandlers } from "./quicksearch";
 import { plateHref } from "./router";
-import { cardHtml, escapeHtml, formatAgo, formatDate, formatShortDate, formatTime, icon, logoHtml, photoAttrs, plateHtml } from "./ui";
+import { escapeHtml, formatAgo, formatDate, formatShortDate, formatTime, icon, logoHtml, miniCardHtml, miniSkeletonHtml, photoAttrs, plateHtml } from "./ui";
 import { t, tp } from "./i18n/i18n";
 import { mountSettings } from "./settings";
+
+/** Сколько карточек показывать в «Свежих фиксациях» (ручка отдаёт не больше). */
+const SEE_ALSO_LIMIT = 21;
 
 let ctrl: AbortController | null = null;
 
@@ -117,8 +120,8 @@ function pageHtml(items: Car[], currentId: string): string {
 
     <section class="pp-more" aria-labelledby="pp-more-title">
       <h2 id="pp-more-title">${t("seeAlso.title")}</h2>
-      <div class="grid pp-more__grid"><div class="skeleton skeleton--photo"></div><div class="skeleton skeleton--photo"></div><div class="skeleton skeleton--photo"></div></div>
-      <a class="pp-more__home btn btn--ghost" href="/" data-link>${t("seeAlso.home")}</a>
+      <div class="pp-more__grid" aria-busy="true">${miniSkeletonHtml.repeat(7)}</div>
+      <a class="pp-more__home" href="/" data-link>${t("seeAlso.home")}</a>
     </section>`;
 }
 
@@ -158,17 +161,27 @@ function openLightbox(src: string): void {
   $lightbox.showModal();
 }
 
-/** Блок «Свежие фиксации»: до 21 карточки других номеров. */
+/** Блок «Свежие фиксации»: до 21 компактной карточки других номеров. */
 async function loadSeeAlso($main: HTMLElement, id: string, signal: AbortSignal): Promise<void> {
   const $grid = $main.querySelector<HTMLElement>(".pp-more__grid");
   if (!$grid) return;
+  $grid.setAttribute("aria-busy", "true");
+  $grid.innerHTML = miniSkeletonHtml.repeat(7);
   try {
-    const items = await seeAlso(id, signal);
+    const items = (await seeAlso(id, signal)).slice(0, SEE_ALSO_LIMIT);
     if (signal.aborted) return;
     $grid.innerHTML = items.length
-      ? items.map((c, i) => cardHtml(c, i, { clarify: false })).join("")
-      : `<div class="empty">${t("seeAlso.none")}</div>`;
+      ? items.map((c, i) => miniCardHtml(c, i)).join("")
+      : `<p class="pp-more__note">${t("seeAlso.none")}</p>`;
   } catch {
-    if (!signal.aborted) $grid.innerHTML = `<div class="empty">${t("seeAlso.failed")}</div>`;
+    if (signal.aborted) return;
+    $grid.innerHTML = `
+      <p class="pp-more__note pp-more__note--error">
+        ${t("seeAlso.failed")}
+        <button class="btn btn--ghost" type="button" data-retry>${t("more.retry")}</button>
+      </p>`;
+    $grid.querySelector("[data-retry]")?.addEventListener("click", () => void loadSeeAlso($main, id, signal));
+  } finally {
+    if (!signal.aborted) $grid.removeAttribute("aria-busy");
   }
 }

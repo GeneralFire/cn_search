@@ -510,9 +510,64 @@ body {
 .tl__badge { justify-self: start; margin-top: 4px; font-size: 0.75rem; font-weight: 600; color: var(--accent); }
 
 /* Свежие фиксации внизу страницы номера */
-.pp-more { display: grid; gap: 16px; margin-top: 16px; }
+.pp-more { display: grid; gap: 14px; margin-top: 8px; padding-top: 24px; border-top: 1px solid var(--border); }
 .pp-more h2 { margin: 0; font-size: 1.1rem; }
-.pp-more__home { justify-self: center; text-decoration: none; margin-top: 8px; }
+/* Сетка маленьких карточек: не уже 150px, от 2 (телефон) до 7 колонок. */
+.pp-more__grid {
+  --min-card: 150px;
+  --max-cols: 7;
+  --gap: 14px;
+  display: grid;
+  gap: var(--gap);
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(max(var(--min-card), (100% - (var(--max-cols) - 1) * var(--gap)) / var(--max-cols)), 1fr)
+  );
+}
+.mini {
+  display: grid; grid-template-rows: auto 1fr; min-width: 0;
+  background: var(--surface); color: inherit; text-decoration: none;
+  border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  animation: card-in 0.3s ease both;
+}
+a.mini:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); border-color: var(--accent); }
+a.mini:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.mini__photo {
+  aspect-ratio: 16 / 10; position: relative; display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--accent-soft), var(--bg)); color: var(--accent);
+}
+.mini__photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.mini__photo > svg { width: 40%; opacity: 0.55; }
+.mini__body { display: grid; gap: 4px; align-content: start; padding: 8px 10px 10px; min-width: 0; }
+.mini__plate { display: flex; min-width: 0; overflow: hidden; margin-bottom: 2px; }
+.mini__plate > * { font-size: 0.78rem; }
+.mini__where {
+  font-size: 0.82rem; font-weight: 500; line-height: 1.3;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mini__when { font-size: 0.75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini--skeleton { animation: none; box-shadow: none; }
+.mini--skeleton .mini__photo { border-radius: 0; }
+.mini__sk-plate { display: block; width: 70%; height: 22px; border-radius: 5px; margin-bottom: 2px; }
+.mini__sk-line { display: block; width: 90%; height: 11px; border-radius: 4px; }
+.mini__sk-line--short { width: 55%; }
+.pp-more__note {
+  grid-column: 1 / -1; margin: 0; padding: 18px 16px;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 14px;
+  color: var(--muted); font-size: 0.92rem; text-align: center;
+  border: 1px dashed var(--border); border-radius: 12px;
+}
+.pp-more__note--error { color: var(--text); }
+.pp-more__home {
+  justify-self: center; display: inline-flex; align-items: center; gap: 4px; margin-top: 6px;
+  padding: 8px 16px 8px 10px; border-radius: 999px; border: 1px solid var(--border);
+  color: var(--accent); font-weight: 600; font-size: 0.9rem; text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+.pp-more__home:hover { background: var(--accent-soft); border-color: var(--accent); }
+.pp-more__home:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .pp-empty { margin-top: 24px; }
 
@@ -607,8 +662,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .st__panel { animation: none; }
   .st__btn svg { transition: none; }
-  .card { animation: none; transition: none; }
-  .card:hover { transform: none; }
+  .card, .mini { animation: none; transition: none; }
+  .card:hover, a.mini:hover { transform: none; }
   .modal[open] { animation: none; }
   .more__btn.is-loading::before { animation-duration: 2.4s; }
   .skeleton { animation: none; }
@@ -632,4 +687,8 @@ body {
   .hero__settings { top: 10px; left: 10px; }
   .pp { padding: 20px 16px 48px; gap: 20px; }
   .pp-hero { padding: 16px; }
+  .pp-more__grid { --min-card: 130px; --gap: 10px; }
+}
+@media (max-width: 560px) {
+  .pp-more__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

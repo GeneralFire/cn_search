@@ -95,6 +95,32 @@ export const logoHtml = `
     <span class="logo__bottom">${t("logo.bottom")}<i class="plate__flag"></i></span>
   </span>`;
 
+/** Компактная карточка фиксации (блок «Свежие фиксации» на странице номера): вся — одна ссылка на номер. */
+export function miniCardHtml(
+  c: PlateLike & { id: string; address: string; createdAt: string; photoUrl?: string; thumbUrl?: string },
+  i: number
+): string {
+  const { src } = photoAttrs(c);
+  const photo = src ? `<img src="${escapeHtml(src)}" alt="" loading="lazy" />` : icon.car;
+  return `
+    <a class="mini" href="${plateHref(c.id)}" data-link style="animation-delay:${Math.min(i, 14) * 25}ms"
+       aria-label="${escapeHtml(t("card.allSightings", { plate: c.plate }))}">
+      <span class="mini__photo">${photo}</span>
+      <span class="mini__body">
+        <span class="mini__plate">${plateHtml(c)}</span>
+        <span class="mini__where" title="${escapeHtml(c.address)}">${escapeHtml(c.address)}</span>
+        <time class="mini__when" datetime="${escapeHtml(c.createdAt)}">${escapeHtml(formatShortDate(c.createdAt))}, ${escapeHtml(formatTime(c.createdAt))}</time>
+      </span>
+    </a>`;
+}
+
+/** Заглушка компактной карточки на время загрузки. */
+export const miniSkeletonHtml = `
+  <div class="mini mini--skeleton" aria-hidden="true">
+    <span class="mini__photo skeleton"></span>
+    <span class="mini__body"><span class="skeleton mini__sk-plate"></span><span class="skeleton mini__sk-line"></span><span class="skeleton mini__sk-line mini__sk-line--short"></span></span>
+  </div>`;
+
 /** Карточка фиксации: вся — ссылка на страницу номера; clarify — кнопка «Уточнить» (модалка на главной). */
 export function cardHtml(
   c: PlateLike & { id: string; address: string; createdAt: string; photoUrl?: string; thumbUrl?: string },
