@@ -328,8 +328,23 @@ body {
 .modal__car { display: flex; align-items: center; gap: 16px; padding: 16px; border-radius: 14px; background: var(--bg); }
 .modal__date { font-size: 0.9rem; color: var(--muted); }
 .modal__addr { color: var(--muted); font-size: 0.9rem; margin-top: 2px; }
-.modal__stub { margin: 0; color: var(--muted); line-height: 1.5; padding: 16px; border: 2px dashed var(--border); border-radius: 14px; }
-.modal__foot { display: flex; justify-content: flex-end; }
+.modal__car > div { min-width: 0; }
+.modal__foot { display: flex; justify-content: flex-end; gap: 10px; }
+
+/* Форма уточнения номера */
+.clarify { display: grid; gap: 8px; }
+.clarify__label { font-weight: 600; }
+.clarify__input {
+  font: 700 1.15rem/1 "Roboto Mono", ui-monospace, Menlo, monospace; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border);
+  background: var(--bg); color: var(--text); outline: none;
+}
+.clarify__input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.clarify__input:disabled { opacity: 0.6; }
+.clarify__hint { color: var(--muted); font-size: 0.85rem; line-height: 1.4; }
+.clarify__msg { margin: 0; padding: 12px 14px; border-radius: 12px; font-size: 0.92rem; }
+.clarify__msg.is-ok { background: color-mix(in srgb, #2fb36b 15%, transparent); color: #2fb36b; }
+.clarify__msg.is-error { background: color-mix(in srgb, #e5484d 15%, transparent); color: #e5484d; }
 
 /* ---------- Крупный номерной знак ---------- */
 
@@ -411,24 +426,25 @@ body {
 .pp { max-width: 1200px; margin: 0 auto; padding: 32px 32px 80px; display: grid; gap: 32px; }
 
 .pp-hero {
-  display: grid; justify-items: center; gap: 18px; text-align: center;
-  padding: 40px 24px 32px;
-  border-radius: calc(var(--radius) + 8px);
-  background: radial-gradient(800px 260px at 50% -20%, var(--accent-soft), transparent 70%), var(--surface);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px;
+  padding: 18px 24px;
+  border-radius: calc(var(--radius) + 4px);
+  background: radial-gradient(600px 160px at 0% 0%, var(--accent-soft), transparent 70%), var(--surface);
   border: 1px solid var(--border);
 }
-.pp-hero__meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.pp-hero__info { display: grid; gap: 10px; flex: 1; min-width: 260px; }
+.pp-hero__meta { display: flex; flex-wrap: wrap; gap: 8px; }
 .pp-chip {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 12px; border-radius: 999px;
-  background: var(--bg); color: var(--muted); font-size: 0.9rem;
+  padding: 5px 11px; border-radius: 999px;
+  background: var(--bg); color: var(--muted); font-size: 0.88rem;
 }
 .pp-chip svg { color: var(--accent); }
 
-.pp-stats { display: grid; grid-template-columns: repeat(4, minmax(110px, 1fr)); gap: 12px; width: min(720px, 100%); margin-top: 8px; }
-.pp-stat { padding: 14px 12px; border-radius: var(--radius); background: var(--bg); }
-.pp-stat__value { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em; }
-.pp-stat__label { color: var(--muted); font-size: 0.85rem; margin-top: 2px; }
+.pp-stats { display: flex; flex-wrap: wrap; gap: 6px 22px; }
+.pp-stat { display: flex; align-items: baseline; gap: 6px; }
+.pp-stat__value { font-size: 1.05rem; font-weight: 700; }
+.pp-stat__label { color: var(--muted); font-size: 0.85rem; }
 
 .pp-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr); gap: 24px; align-items: start; }
 
@@ -491,10 +507,15 @@ body {
 .tl__item.is-current .tl__thumb { box-shadow: 0 0 0 3px var(--accent); }
 .tl__badge { justify-self: start; margin-top: 4px; font-size: 0.75rem; font-weight: 600; color: var(--accent); }
 
+/* Свежие фиксации внизу страницы номера */
+.pp-more { display: grid; gap: 16px; margin-top: 16px; }
+.pp-more h2 { margin: 0; font-size: 1.1rem; }
+.pp-more__home { justify-self: center; text-decoration: none; margin-top: 8px; }
+
 .pp-empty { margin-top: 24px; }
 
 /* Заглушки во время загрузки. */
-.pp-hero--loading { min-height: 260px; align-content: center; }
+.pp-hero--loading { min-height: 96px; }
 .skeleton { border-radius: 12px; background: linear-gradient(90deg, var(--bg) 25%, var(--border) 50%, var(--bg) 75%) 0 0 / 200% 100%; animation: shimmer 1.2s infinite linear; }
 .skeleton--plate { width: 300px; height: 64px; }
 .skeleton--line { width: 220px; height: 16px; }
@@ -557,6 +578,5 @@ body {
   .pp-bar { padding: 8px 12px; gap: 10px; }
   .pp-bar::after { display: none; }
   .pp { padding: 20px 16px 48px; gap: 20px; }
-  .pp-hero { padding: 28px 16px 20px; }
-  .pp-stats { grid-template-columns: repeat(2, 1fr); }
+  .pp-hero { padding: 16px; }
 }

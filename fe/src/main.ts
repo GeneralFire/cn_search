@@ -1,8 +1,8 @@
 import "./style.css";
-import { ApiError, search, type Car } from "./api";
+import { ApiError, clarify, search, type Car } from "./api";
 import { navigate, onRoute, plateHref } from "./router";
 import { renderPlatePage } from "./plate";
-import { escapeHtml, formatDate, icon, logoHtml, photoAttrs, plateHtml, plural } from "./ui";
+import { cardHtml, escapeHtml, formatDate, icon, logoHtml, plateHtml, plural } from "./ui";
 import { initHoverPreview } from "./hoverpreview";
 
 const PAGE_SIZE = 35; // кратно 5 и 7 — по числу колонок сетки
@@ -57,8 +57,8 @@ app.innerHTML = `
   <dialog class="modal" aria-labelledby="modal-title">
     <form method="dialog" class="modal__inner">
       <header class="modal__head">
-        <h3 id="modal-title">Уточнить данные</h3>
-        <button class="modal__x" value="close" aria-label="Закрыть">${icon.clear}</button>
+        <h3 id="modal-title">Уточнить номер</h3>
+        <button class="modal__x" value="close" formnovalidate aria-label="Закрыть">${icon.clear}</button>
       </header>
       <div class="modal__body"></div>
       <footer class="modal__foot">
@@ -76,25 +76,9 @@ const $moreBtn = app.querySelector<HTMLButtonElement>(".more__btn")!;
 const $moreInfo = app.querySelector<HTMLElement>(".more__info")!;
 const $modal = app.querySelector<HTMLDialogElement>(".modal")!;
 const $modalBody = app.querySelector<HTMLElement>(".modal__body")!;
+const $modalFoot = app.querySelector<HTMLElement>(".modal__foot")!;
+const $modalForm = app.querySelector<HTMLFormElement>(".modal__inner")!;
 
-function cardHtml(c: Car, i: number): string {
-  const city = c.address.split(",")[0] ?? "";
-  const { src } = photoAttrs(c); // на главной — только миниатюра, без превью по наведению
-  const photo = src ? `<img src="${escapeHtml(src)}" alt="" loading="lazy" />` : icon.car;
-  return `
-    <article class="card" style="animation-delay:${Math.min(i, 14) * 30}ms">
-      <a class="card__link" href="${plateHref(c.id)}" data-link aria-label="${escapeHtml(c.plate)}: все фиксации"></a>
-      <a class="card__photo" href="${plateHref(c.id)}" data-link tabindex="-1">${photo}<span class="card__badge">${escapeHtml(city)}</span></a>
-      <div class="card__body">
-        <p class="card__address">${icon.pin}${escapeHtml(c.address)}</p>
-        <div class="card__row">${plateHtml(c)}</div>
-        <div class="card__foot">
-          <span class="card__date">${icon.cal}<time datetime="${escapeHtml(c.createdAt)}">${formatDate(c.createdAt)}</time></span>
-          <button class="btn btn--ghost" type="button" data-clarify="${escapeHtml(c.id)}">Уточнить</button>
-        </div>
-      </div>
-    </article>`;
-}
 
 
 // ---------------------------------------------------------------------------
@@ -214,9 +198,47 @@ function openClarify(car: Car): void {
         <div class="modal__addr">${escapeHtml(car.address)}</div>
       </div>
     </div>
-    <p class="modal__stub">Здесь будет форма уточнения данных по машине. Пока это заглушка.</p>`;
+    <label class="clarify">
+      <span class="clarify__label">Какой номер на самом деле?</span>
+      <input class="clarify__input" name="plate" required maxlength="32" autocomplete="off" spellcheck="false"
+        placeholder="${escapeHtml(car.plate)}" value="${escapeHtml(car.plate)}" />
+      <span class="clarify__hint">Уточнение уйдёт на проверку со статусом «не принят». Поиск будет находить машину и по нему.</span>
+    </label>
+    <p class="clarify__msg" role="status" hidden></p>`;
+  $modalFoot.innerHTML = `
+    <button class="btn btn--ghost" value="close" formnovalidate>Отмена</button>
+    <button class="btn btn--primary" value="send" type="submit">Отправить</button>`;
+  clarifyFor = car;
   $modal.showModal();
+  const $input = $modalBody.querySelector<HTMLInputElement>(".clarify__input")!;
+  $input.select();
 }
+
+let clarifyFor: Car | null = null;
+
+$modalForm.addEventListener("submit", async (e) => {
+  const submitter = (e as SubmitEvent).submitter as HTMLButtonElement | null;
+  if (submitter?.value !== "send" || !clarifyFor) return; // «Отмена» и крестик — обычное закрытие
+  e.preventDefault();
+  const $input = $modalBody.querySelector<HTMLInputElement>(".clarify__input")!;
+  const $msg = $modalBody.querySelector<HTMLElement>(".clarify__msg")!;
+  submitter.disabled = true;
+  submitter.textContent = "Отправляем…";
+  try {
+    const c = await clarify(clarifyFor.id, $input.value);
+    $msg.hidden = false;
+    $msg.className = "clarify__msg is-ok";
+    $msg.textContent = `Спасибо! Уточнение «${c.plate}» отправлено, статус: ${c.accepted ? "принят" : "не принят"}.`;
+    $input.disabled = true;
+    $modalFoot.innerHTML = `<button class="btn btn--primary" value="close">Готово</button>`;
+  } catch (err) {
+    $msg.hidden = false;
+    $msg.className = "clarify__msg is-error";
+    $msg.textContent = err instanceof ApiError ? err.message : "Не удалось отправить — попробуйте ещё раз";
+    submitter.disabled = false;
+    submitter.textContent = "Отправить";
+  }
+});
 
 $grid.addEventListener("click", (e) => {
   const btn = (e.target as Element).closest<HTMLButtonElement>("[data-clarify]");

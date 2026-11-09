@@ -1,6 +1,7 @@
 // Обёртка над сгенерированным клиентом (generated.ts — не править руками, см. `make gen-ts`).
 import {
   CarSearchApi,
+  CarsearchClarificationStatus,
   CarsearchPlateType,
   type CarsearchGetResponse,
   type CarsearchPlateSighting,
@@ -80,6 +81,30 @@ export async function plateSightings(id: string, signal?: AbortSignal): Promise<
     throw new ApiError(await errorMessage(e), e instanceof Response ? e.status : 0);
   }
   return (data.items ?? []).map(toCar);
+}
+
+/** Уточнение номера к фиксации; статус нового — «не принят». */
+export async function clarify(sightingId: string, plate: string): Promise<{ plate: string; accepted: boolean }> {
+  try {
+    const { data } = await api.carsearchCarSearchService.carSearchServiceClarify({ sightingId, plate });
+    return {
+      plate: data.clarification?.plate ?? plate,
+      accepted: data.clarification?.status === CarsearchClarificationStatus.CLARIFICATION_STATUS_ACCEPTED,
+    };
+  } catch (e) {
+    throw new ApiError(await errorMessage(e), e instanceof Response ? e.status : 0);
+  }
+}
+
+/** Свежие фиксации других номеров (блок внизу страницы номера), не больше 21. */
+export async function seeAlso(id: string, signal?: AbortSignal): Promise<Car[]> {
+  try {
+    const { data } = await api.carsearchCarSearchService.carSearchServiceSeeAlso({ id }, { signal });
+    return (data.items ?? []).map(toCar);
+  } catch (e) {
+    if (signal?.aborted) throw e;
+    throw new ApiError(await errorMessage(e), e instanceof Response ? e.status : 0);
+  }
 }
 
 async function errorMessage(e: unknown): Promise<string> {

@@ -1,3 +1,5 @@
+import { plateHref } from "./router";
+
 // Общие куски разметки и форматирования для страниц поиска и номера.
 
 export const icon = {
@@ -95,3 +97,27 @@ export const logoHtml = `
     <span class="logo__top">ПОИСК</span>
     <span class="logo__bottom">НОМЕР<i class="plate__flag"></i></span>
   </span>`;
+
+/** Карточка фиксации: вся — ссылка на страницу номера; clarify — кнопка «Уточнить» (модалка на главной). */
+export function cardHtml(
+  c: PlateLike & { id: string; address: string; createdAt: string; photoUrl?: string; thumbUrl?: string },
+  i: number,
+  opts: { clarify?: boolean } = { clarify: true }
+): string {
+  const city = c.address.split(",")[0] ?? "";
+  const { src } = photoAttrs(c); // в карточках — только миниатюра, без превью по наведению
+  const photo = src ? `<img src="${escapeHtml(src)}" alt="" loading="lazy" />` : icon.car;
+  return `
+    <article class="card" style="animation-delay:${Math.min(i, 14) * 30}ms">
+      <a class="card__link" href="${plateHref(c.id)}" data-link aria-label="${escapeHtml(c.plate)}: все фиксации"></a>
+      <a class="card__photo" href="${plateHref(c.id)}" data-link tabindex="-1">${photo}<span class="card__badge">${escapeHtml(city)}</span></a>
+      <div class="card__body">
+        <p class="card__address">${icon.pin}${escapeHtml(c.address)}</p>
+        <div class="card__row">${plateHtml(c)}</div>
+        <div class="card__foot">
+          <span class="card__date">${icon.cal}<time datetime="${escapeHtml(c.createdAt)}">${formatDate(c.createdAt)}</time></span>
+          ${opts.clarify ? `<button class="btn btn--ghost" type="button" data-clarify="${escapeHtml(c.id)}">Уточнить</button>` : ""}
+        </div>
+      </div>
+    </article>`;
+}

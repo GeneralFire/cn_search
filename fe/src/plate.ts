@@ -1,8 +1,8 @@
 // Страница номера: все фиксации номера — где и когда его видели.
-import { ApiError, plateSightings, type Car } from "./api";
+import { ApiError, plateSightings, seeAlso, type Car } from "./api";
 import { mountQuickSearch, type QuickSearchHandlers } from "./quicksearch";
 import { plateHref } from "./router";
-import { escapeHtml, formatAgo, formatDate, formatShortDate, formatTime, icon, logoHtml, photoAttrs, plateHtml, plural } from "./ui";
+import { cardHtml, escapeHtml, formatAgo, formatDate, formatShortDate, formatTime, icon, logoHtml, photoAttrs, plateHtml, plural } from "./ui";
 
 let ctrl: AbortController | null = null;
 
@@ -41,6 +41,7 @@ export async function renderPlatePage(root: HTMLElement, id: string, handlers: Q
     const items = await plateSightings(id, my.signal);
     if (my.signal.aborted) return;
     $main.innerHTML = pageHtml(items, id);
+    void loadSeeAlso($main, id, my.signal);
     $main.querySelector<HTMLButtonElement>("[data-zoom]")?.addEventListener("click", (e) =>
       openLightbox((e.currentTarget as HTMLElement).dataset.zoom!)
     );
@@ -70,15 +71,17 @@ function pageHtml(items: Car[], currentId: string): string {
   return `
     <section class="pp-hero">
       ${plateHtml(latest, "xl")}
-      <div class="pp-hero__meta">
-        <span class="pp-chip">${icon.pin}${escapeHtml(cities.join(", "))}</span>
-        <span class="pp-chip">${icon.clock}Последний раз ${escapeHtml(formatAgo(latest.createdAt))}</span>
-      </div>
-      <div class="pp-stats">
-        ${stat(String(items.length), plural(items.length, "фиксация", "фиксации", "фиксаций"))}
-        ${stat(String(places), plural(places, "место", "места", "мест"))}
-        ${stat(escapeHtml(formatShortDate(first.createdAt)), "первая")}
-        ${stat(escapeHtml(formatShortDate(latest.createdAt)), "последняя")}
+      <div class="pp-hero__info">
+        <div class="pp-hero__meta">
+          <span class="pp-chip">${icon.pin}${escapeHtml(cities.join(", "))}</span>
+          <span class="pp-chip">${icon.clock}Последний раз ${escapeHtml(formatAgo(latest.createdAt))}</span>
+        </div>
+        <div class="pp-stats">
+          ${stat(String(items.length), plural(items.length, "фиксация", "фиксации", "фиксаций"))}
+          ${stat(String(places), plural(places, "место", "места", "мест"))}
+          ${stat(escapeHtml(formatShortDate(first.createdAt)), "первая")}
+          ${stat(escapeHtml(formatShortDate(latest.createdAt)), "последняя")}
+        </div>
       </div>
     </section>
 
@@ -104,7 +107,13 @@ function pageHtml(items: Car[], currentId: string): string {
           ${items.map((c) => timelineItem(c, c.id === currentId)).join("")}
         </ol>
       </section>
-    </div>`;
+    </div>
+
+    <section class="pp-more" aria-labelledby="pp-more-title">
+      <h2 id="pp-more-title">Свежие фиксации</h2>
+      <div class="grid pp-more__grid"><div class="skeleton skeleton--photo"></div><div class="skeleton skeleton--photo"></div><div class="skeleton skeleton--photo"></div></div>
+      <a class="pp-more__home btn btn--ghost" href="/" data-link>← Все номера на главной</a>
+    </section>`;
 }
 
 function timelineItem(c: Car, current: boolean): string {
@@ -141,4 +150,19 @@ function openLightbox(src: string): void {
   }
   $lightbox.querySelector<HTMLImageElement>(".lightbox__img")!.src = src;
   $lightbox.showModal();
+}
+
+/** Блок «Свежие фиксации»: до 21 карточки других номеров. */
+async function loadSeeAlso($main: HTMLElement, id: string, signal: AbortSignal): Promise<void> {
+  const $grid = $main.querySelector<HTMLElement>(".pp-more__grid");
+  if (!$grid) return;
+  try {
+    const items = await seeAlso(id, signal);
+    if (signal.aborted) return;
+    $grid.innerHTML = items.length
+      ? items.map((c, i) => cardHtml(c, i, { clarify: false })).join("")
+      : `<div class="empty">Пока нет других фиксаций</div>`;
+  } catch {
+    if (!signal.aborted) $grid.innerHTML = `<div class="empty">Не удалось загрузить свежие фиксации</div>`;
+  }
 }
