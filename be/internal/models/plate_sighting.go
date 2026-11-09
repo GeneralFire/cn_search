@@ -12,4 +12,8 @@ type PlateSighting struct {
 	ThumbKey  string    `db:"photo_thumb_key"` // миниатюра в S3: "car-3_thumb.jpg"
 	Address   string    `db:"address"`
 	CreatedAt time.Time `db:"created_at"`
+
+	PlateType     string `db:"plate_type"`     // plates.meta->>'type': "ru", "eu", "us"; "" — неизвестен
+	PlateRegion   string `db:"plate_region"`   // plates.meta->>'region': "D", "CA", …
+	AddressLocale string `db:"address_locale"` // язык адреса: "ru", "en", "de", …
 }

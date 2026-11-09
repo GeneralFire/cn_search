@@ -4,7 +4,7 @@
 CREATE TABLE plates (
     id    uuid  PRIMARY KEY DEFAULT gen_random_uuid(),
     plate text  NOT NULL UNIQUE, -- госномер кириллицей: "А123ВС 777"
-    meta  jsonb NOT NULL DEFAULT '{}',
+    meta  jsonb NOT NULL DEFAULT '{}', -- {"type": "ru"|"eu"|"us", "region": "D"|"CA"…, …}; нет type — формат неизвестен
     is_test_data boolean NOT NULL DEFAULT false -- тестовые данные (миграция 0002_test_data)
 );
 
@@ -15,6 +15,7 @@ CREATE TABLE plate_sightings (
     id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
     plate_id   uuid        NOT NULL REFERENCES plates (id),
     address    text        NOT NULL,
+    address_locale text    NOT NULL DEFAULT 'ru', -- язык, на котором записан адрес: ru, en, de, …
     photo_key       text   NOT NULL DEFAULT '', -- ключ полного фото в S3-бакете
     photo_thumb_key text   NOT NULL DEFAULT '', -- ключ миниатюры в S3-бакете
     created_at timestamptz NOT NULL DEFAULT now(), -- когда номер зафиксирован

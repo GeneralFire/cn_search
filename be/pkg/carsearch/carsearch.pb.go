@@ -22,6 +22,59 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Формат номерного знака — от него зависит, как его рисовать.
+type PlateType int32
+
+const (
+	PlateType_PLATE_TYPE_DEFAULT PlateType = 0 // неизвестен
+	PlateType_PLATE_TYPE_RU      PlateType = 1
+	PlateType_PLATE_TYPE_EU      PlateType = 2
+	PlateType_PLATE_TYPE_US      PlateType = 3
+)
+
+// Enum value maps for PlateType.
+var (
+	PlateType_name = map[int32]string{
+		0: "PLATE_TYPE_DEFAULT",
+		1: "PLATE_TYPE_RU",
+		2: "PLATE_TYPE_EU",
+		3: "PLATE_TYPE_US",
+	}
+	PlateType_value = map[string]int32{
+		"PLATE_TYPE_DEFAULT": 0,
+		"PLATE_TYPE_RU":      1,
+		"PLATE_TYPE_EU":      2,
+		"PLATE_TYPE_US":      3,
+	}
+)
+
+func (x PlateType) Enum() *PlateType {
+	p := new(PlateType)
+	*p = x
+	return p
+}
+
+func (x PlateType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (PlateType) Descriptor() protoreflect.EnumDescriptor {
+	return file_carsearch_carsearch_proto_enumTypes[0].Descriptor()
+}
+
+func (PlateType) Type() protoreflect.EnumType {
+	return &file_carsearch_carsearch_proto_enumTypes[0]
+}
+
+func (x PlateType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use PlateType.Descriptor instead.
+func (PlateType) EnumDescriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{0}
+}
+
 // Статус уточнения.
 type ClarificationStatus int32
 
@@ -56,11 +109,11 @@ func (x ClarificationStatus) String() string {
 }
 
 func (ClarificationStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_carsearch_carsearch_proto_enumTypes[0].Descriptor()
+	return file_carsearch_carsearch_proto_enumTypes[1].Descriptor()
 }
 
 func (ClarificationStatus) Type() protoreflect.EnumType {
-	return &file_carsearch_carsearch_proto_enumTypes[0]
+	return &file_carsearch_carsearch_proto_enumTypes[1]
 }
 
 func (x ClarificationStatus) Number() protoreflect.EnumNumber {
@@ -69,7 +122,7 @@ func (x ClarificationStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ClarificationStatus.Descriptor instead.
 func (ClarificationStatus) EnumDescriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{0}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{1}
 }
 
 // PlateSighting — фиксация номера: где и когда замечена машина.
@@ -85,7 +138,13 @@ type PlateSighting struct {
 	// Когда номер зафиксирован.
 	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	// URL миниатюры (S3) — для списков; полное фото — photo_url.
-	ThumbUrl      string `protobuf:"bytes,6,opt,name=thumb_url,json=thumbUrl,proto3" json:"thumb_url,omitempty"`
+	ThumbUrl string `protobuf:"bytes,6,opt,name=thumb_url,json=thumbUrl,proto3" json:"thumb_url,omitempty"`
+	// Формат номера (plates.meta.type); не задан — неизвестен.
+	PlateType PlateType `protobuf:"varint,7,opt,name=plate_type,json=plateType,proto3,enum=carsearch.PlateType" json:"plate_type,omitempty"`
+	// Страна (ЕС: "D") или штат (США: "CA") для формата номера.
+	PlateRegion string `protobuf:"bytes,8,opt,name=plate_region,json=plateRegion,proto3" json:"plate_region,omitempty"`
+	// Язык, на котором записан адрес: "ru", "en", "de", …
+	AddressLocale string `protobuf:"bytes,9,opt,name=address_locale,json=addressLocale,proto3" json:"address_locale,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -158,6 +217,27 @@ func (x *PlateSighting) GetCreatedAt() *timestamppb.Timestamp {
 func (x *PlateSighting) GetThumbUrl() string {
 	if x != nil {
 		return x.ThumbUrl
+	}
+	return ""
+}
+
+func (x *PlateSighting) GetPlateType() PlateType {
+	if x != nil {
+		return x.PlateType
+	}
+	return PlateType_PLATE_TYPE_DEFAULT
+}
+
+func (x *PlateSighting) GetPlateRegion() string {
+	if x != nil {
+		return x.PlateRegion
+	}
+	return ""
+}
+
+func (x *PlateSighting) GetAddressLocale() string {
+	if x != nil {
+		return x.AddressLocale
 	}
 	return ""
 }
@@ -658,7 +738,7 @@ var File_carsearch_carsearch_proto protoreflect.FileDescriptor
 
 const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\n" +
-	"\x19carsearch/carsearch.proto\x12\tcarsearch\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc4\x01\n" +
+	"\x19carsearch/carsearch.proto\x12\tcarsearch\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc3\x02\n" +
 	"\rPlateSighting\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tphoto_url\x18\x02 \x01(\tR\bphotoUrl\x12\x18\n" +
@@ -666,7 +746,11 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\x05plate\x18\x04 \x01(\tR\x05plate\x129\n" +
 	"\n" +
 	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1b\n" +
-	"\tthumb_url\x18\x06 \x01(\tR\bthumbUrl\"S\n" +
+	"\tthumb_url\x18\x06 \x01(\tR\bthumbUrl\x123\n" +
+	"\n" +
+	"plate_type\x18\a \x01(\x0e2\x14.carsearch.PlateTypeR\tplateType\x12!\n" +
+	"\fplate_region\x18\b \x01(\tR\vplateRegion\x12%\n" +
+	"\x0eaddress_locale\x18\t \x01(\tR\raddressLocale\"S\n" +
 	"\rSearchRequest\x12\x14\n" +
 	"\x05plate\x18\x01 \x01(\tR\x05plate\x12\x16\n" +
 	"\x06offset\x18\x02 \x01(\x05R\x06offset\x12\x14\n" +
@@ -700,7 +784,12 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"sightingId\x12\x14\n" +
 	"\x05plate\x18\x02 \x01(\tR\x05plate\"Q\n" +
 	"\x0fClarifyResponse\x12>\n" +
-	"\rclarification\x18\x01 \x01(\v2\x18.carsearch.ClarificationR\rclarification*\x85\x01\n" +
+	"\rclarification\x18\x01 \x01(\v2\x18.carsearch.ClarificationR\rclarification*\\\n" +
+	"\tPlateType\x12\x16\n" +
+	"\x12PLATE_TYPE_DEFAULT\x10\x00\x12\x11\n" +
+	"\rPLATE_TYPE_RU\x10\x01\x12\x11\n" +
+	"\rPLATE_TYPE_EU\x10\x02\x12\x11\n" +
+	"\rPLATE_TYPE_US\x10\x03*\x85\x01\n" +
 	"\x13ClarificationStatus\x12$\n" +
 	" CLARIFICATION_STATUS_UNSPECIFIED\x10\x00\x12%\n" +
 	"!CLARIFICATION_STATUS_NOT_ACCEPTED\x10\x01\x12!\n" +
@@ -723,43 +812,45 @@ func file_carsearch_carsearch_proto_rawDescGZIP() []byte {
 	return file_carsearch_carsearch_proto_rawDescData
 }
 
-var file_carsearch_carsearch_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_carsearch_carsearch_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_carsearch_carsearch_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_carsearch_carsearch_proto_goTypes = []any{
-	(ClarificationStatus)(0),      // 0: carsearch.ClarificationStatus
-	(*PlateSighting)(nil),         // 1: carsearch.PlateSighting
-	(*SearchRequest)(nil),         // 2: carsearch.SearchRequest
-	(*SearchResponse)(nil),        // 3: carsearch.SearchResponse
-	(*GetRequest)(nil),            // 4: carsearch.GetRequest
-	(*GetResponse)(nil),           // 5: carsearch.GetResponse
-	(*SeeAlsoRequest)(nil),        // 6: carsearch.SeeAlsoRequest
-	(*SeeAlsoResponse)(nil),       // 7: carsearch.SeeAlsoResponse
-	(*Clarification)(nil),         // 8: carsearch.Clarification
-	(*ClarifyRequest)(nil),        // 9: carsearch.ClarifyRequest
-	(*ClarifyResponse)(nil),       // 10: carsearch.ClarifyResponse
-	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
+	(PlateType)(0),                // 0: carsearch.PlateType
+	(ClarificationStatus)(0),      // 1: carsearch.ClarificationStatus
+	(*PlateSighting)(nil),         // 2: carsearch.PlateSighting
+	(*SearchRequest)(nil),         // 3: carsearch.SearchRequest
+	(*SearchResponse)(nil),        // 4: carsearch.SearchResponse
+	(*GetRequest)(nil),            // 5: carsearch.GetRequest
+	(*GetResponse)(nil),           // 6: carsearch.GetResponse
+	(*SeeAlsoRequest)(nil),        // 7: carsearch.SeeAlsoRequest
+	(*SeeAlsoResponse)(nil),       // 8: carsearch.SeeAlsoResponse
+	(*Clarification)(nil),         // 9: carsearch.Clarification
+	(*ClarifyRequest)(nil),        // 10: carsearch.ClarifyRequest
+	(*ClarifyResponse)(nil),       // 11: carsearch.ClarifyResponse
+	(*timestamppb.Timestamp)(nil), // 12: google.protobuf.Timestamp
 }
 var file_carsearch_carsearch_proto_depIdxs = []int32{
-	11, // 0: carsearch.PlateSighting.created_at:type_name -> google.protobuf.Timestamp
-	1,  // 1: carsearch.SearchResponse.items:type_name -> carsearch.PlateSighting
-	1,  // 2: carsearch.GetResponse.items:type_name -> carsearch.PlateSighting
-	1,  // 3: carsearch.SeeAlsoResponse.items:type_name -> carsearch.PlateSighting
-	0,  // 4: carsearch.Clarification.status:type_name -> carsearch.ClarificationStatus
-	11, // 5: carsearch.Clarification.created_at:type_name -> google.protobuf.Timestamp
-	8,  // 6: carsearch.ClarifyResponse.clarification:type_name -> carsearch.Clarification
-	2,  // 7: carsearch.CarSearchService.Search:input_type -> carsearch.SearchRequest
-	4,  // 8: carsearch.CarSearchService.Get:input_type -> carsearch.GetRequest
-	6,  // 9: carsearch.CarSearchService.SeeAlso:input_type -> carsearch.SeeAlsoRequest
-	9,  // 10: carsearch.CarSearchService.Clarify:input_type -> carsearch.ClarifyRequest
-	3,  // 11: carsearch.CarSearchService.Search:output_type -> carsearch.SearchResponse
-	5,  // 12: carsearch.CarSearchService.Get:output_type -> carsearch.GetResponse
-	7,  // 13: carsearch.CarSearchService.SeeAlso:output_type -> carsearch.SeeAlsoResponse
-	10, // 14: carsearch.CarSearchService.Clarify:output_type -> carsearch.ClarifyResponse
-	11, // [11:15] is the sub-list for method output_type
-	7,  // [7:11] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	12, // 0: carsearch.PlateSighting.created_at:type_name -> google.protobuf.Timestamp
+	0,  // 1: carsearch.PlateSighting.plate_type:type_name -> carsearch.PlateType
+	2,  // 2: carsearch.SearchResponse.items:type_name -> carsearch.PlateSighting
+	2,  // 3: carsearch.GetResponse.items:type_name -> carsearch.PlateSighting
+	2,  // 4: carsearch.SeeAlsoResponse.items:type_name -> carsearch.PlateSighting
+	1,  // 5: carsearch.Clarification.status:type_name -> carsearch.ClarificationStatus
+	12, // 6: carsearch.Clarification.created_at:type_name -> google.protobuf.Timestamp
+	9,  // 7: carsearch.ClarifyResponse.clarification:type_name -> carsearch.Clarification
+	3,  // 8: carsearch.CarSearchService.Search:input_type -> carsearch.SearchRequest
+	5,  // 9: carsearch.CarSearchService.Get:input_type -> carsearch.GetRequest
+	7,  // 10: carsearch.CarSearchService.SeeAlso:input_type -> carsearch.SeeAlsoRequest
+	10, // 11: carsearch.CarSearchService.Clarify:input_type -> carsearch.ClarifyRequest
+	4,  // 12: carsearch.CarSearchService.Search:output_type -> carsearch.SearchResponse
+	6,  // 13: carsearch.CarSearchService.Get:output_type -> carsearch.GetResponse
+	8,  // 14: carsearch.CarSearchService.SeeAlso:output_type -> carsearch.SeeAlsoResponse
+	11, // 15: carsearch.CarSearchService.Clarify:output_type -> carsearch.ClarifyResponse
+	12, // [12:16] is the sub-list for method output_type
+	8,  // [8:12] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_carsearch_carsearch_proto_init() }
@@ -773,7 +864,7 @@ func file_carsearch_carsearch_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_carsearch_carsearch_proto_rawDesc), len(file_carsearch_carsearch_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      2,
 			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,

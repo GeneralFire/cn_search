@@ -22,9 +22,9 @@ INSERT INTO cities VALUES
 -- Фиксированные записи для ручной проверки: у А123ВС 777 три фиксации
 -- (id …0001, …0004, …0005). id фиксированных — предсказуемые uuid, остальных — gen_random_uuid().
 INSERT INTO plates (plate, meta, is_test_data) VALUES
-  ('А123ВС 777', '{"city": "Москва"}', true),
-  ('М456ОР 178', '{"city": "Санкт-Петербург"}', true),
-  ('Т789УХ 116', '{"city": "Казань"}', true);
+  ('А123ВС 777', '{"type": "ru", "city": "Москва"}', true),
+  ('М456ОР 178', '{"type": "ru", "city": "Санкт-Петербург"}', true),
+  ('Т789УХ 116', '{"type": "ru", "city": "Казань"}', true);
 
 INSERT INTO plate_sightings (id, plate_id, address, photo_key, photo_thumb_key, created_at, is_test_data)
 SELECT ('00000000-0000-0000-0000-00000000000' || v.n)::uuid, p.id, v.address,
@@ -41,7 +41,7 @@ JOIN plates p ON p.plate = v.plate;
 
 -- Пул случайных номеров: корректные буквы (12 «латинских» кириллицы) и коды регионов города.
 INSERT INTO plates (plate, meta, is_test_data)
-SELECT DISTINCT ON (plate) plate, jsonb_build_object('city', name), true
+SELECT DISTINCT ON (plate) plate, jsonb_build_object('type', 'ru', 'city', name), true
 FROM (
   SELECT c.name,
          substr(l, 1 + floor(random() * 12)::int, 1)
@@ -74,6 +74,40 @@ SELECT gen_random_uuid(),
 FROM (SELECT g, 1 + floor(random() * (SELECT count(*) FROM pool))::int AS pi FROM generate_series(1, 595) g) r
 JOIN pool ON pool.rn = r.pi
 JOIN cities c ON c.name = pool.city;
+
+-- Номера не российского формата: ЕС (Германия) и США — с фиксациями в своих городах,
+-- адреса на языке страны (address_locale). Один номер без типа — формат неизвестен (рисуется по умолчанию).
+INSERT INTO plates (plate, meta, is_test_data) VALUES
+  ('B MW 1234', '{"type": "eu", "region": "D", "city": "Berlin"}', true),
+  ('B KL 77',   '{"type": "eu", "region": "D", "city": "Berlin"}', true),
+  ('M AB 4021', '{"type": "eu", "region": "D", "city": "München"}', true),
+  ('HH CS 908', '{"type": "eu", "region": "D", "city": "Hamburg"}', true),
+  ('7XYZ123',   '{"type": "us", "region": "CA", "city": "Los Angeles"}', true),
+  ('8LMN472',   '{"type": "us", "region": "CA", "city": "San Francisco"}', true),
+  ('KDT-4419',  '{"type": "us", "region": "NY", "city": "New York"}', true),
+  ('JPX 5520',  '{"type": "us", "region": "TX", "city": "Austin"}', true),
+  ('ТАКСИ 01',  '{"city": "Москва"}', true);
+
+INSERT INTO plate_sightings (plate_id, address, address_locale, photo_key, photo_thumb_key, created_at, is_test_data)
+SELECT p.id, v.address, v.locale,
+       'car-' || v.photo || '.jpg', 'car-' || v.photo || '_thumb.jpg', v.created_at, true
+FROM (VALUES
+  ('B MW 1234', 'Berlin, Unter den Linden 12',        'de', 1, timestamptz '2026-11-09 08:10:00Z'),
+  ('B MW 1234', 'Berlin, Friedrichstraße 43',         'de', 1, timestamptz '2026-11-03 17:45:00Z'),
+  ('B MW 1234', 'Berlin, Kurfürstendamm 101',         'de', 1, timestamptz '2026-10-15 12:20:00Z'),
+  ('B KL 77',   'Berlin, Alexanderplatz 3',           'de', 7, timestamptz '2026-11-07 19:05:00Z'),
+  ('M AB 4021', 'München, Leopoldstraße 58',          'de', 4, timestamptz '2026-11-06 09:30:00Z'),
+  ('M AB 4021', 'München, Maximilianstraße 9',        'de', 4, timestamptz '2026-10-29 14:00:00Z'),
+  ('HH CS 908', 'Hamburg, Jungfernstieg 21',          'de', 2, timestamptz '2026-11-01 11:11:00Z'),
+  ('7XYZ123',   'Los Angeles, 6801 Hollywood Blvd',   'en', 8, timestamptz '2026-11-08 22:40:00Z'),
+  ('7XYZ123',   'Los Angeles, 200 Santa Monica Pier', 'en', 8, timestamptz '2026-11-02 18:15:00Z'),
+  ('8LMN472',   'San Francisco, 1 Ferry Building',    'en', 3, timestamptz '2026-11-05 07:55:00Z'),
+  ('KDT-4419',  'New York, 350 5th Ave',              'en', 6, timestamptz '2026-11-04 13:25:00Z'),
+  ('KDT-4419',  'New York, 89 E 42nd St',             'en', 6, timestamptz '2026-10-25 08:45:00Z'),
+  ('JPX 5520',  'Austin, 1100 Congress Ave',          'en', 5, timestamptz '2026-10-30 16:35:00Z'),
+  ('ТАКСИ 01',  'Москва, Тверская ул., 1',            'ru', 9, timestamptz '2026-11-09 06:00:00Z')
+) AS v (plate, address, locale, photo, created_at)
+JOIN plates p ON p.plate = v.plate;
 
 -- Уточнения: к фиксации Т789УХ 116 предложили Т789УХ 716 (принято), к М456ОР 178 — М456ОР 198 (не принято).
 INSERT INTO clarifications (sighting_id, plate, status, created_at, is_test_data) VALUES

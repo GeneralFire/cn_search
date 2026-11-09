@@ -228,9 +228,32 @@
         "thumbUrl": {
           "type": "string",
           "description": "URL миниатюры (S3) — для списков; полное фото — photo_url."
+        },
+        "plateType": {
+          "$ref": "#/definitions/carsearchPlateType",
+          "description": "Формат номера (plates.meta.type); не задан — неизвестен."
+        },
+        "plateRegion": {
+          "type": "string",
+          "description": "Страна (ЕС: \"D\") или штат (США: \"CA\") для формата номера."
+        },
+        "addressLocale": {
+          "type": "string",
+          "title": "Язык, на котором записан адрес: \"ru\", \"en\", \"de\", …"
         }
       },
       "description": "PlateSighting — фиксация номера: где и когда замечена машина."
+    },
+    "carsearchPlateType": {
+      "type": "string",
+      "enum": [
+        "PLATE_TYPE_DEFAULT",
+        "PLATE_TYPE_RU",
+        "PLATE_TYPE_EU",
+        "PLATE_TYPE_US"
+      ],
+      "default": "PLATE_TYPE_DEFAULT",
+      "description": "Формат номерного знака — от него зависит, как его рисовать."
     },
     "carsearchSearchRequest": {
       "type": "object",

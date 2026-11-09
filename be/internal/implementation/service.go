@@ -29,6 +29,10 @@ func (s *CarSearch) toPB(c models.PlateSighting) *pb.PlateSighting {
 		Address:   c.Address,
 		Plate:     c.Plate,
 		CreatedAt: timestamppb.New(c.CreatedAt),
+
+		PlateType:     plateTypePB[c.PlateType],
+		PlateRegion:   c.PlateRegion,
+		AddressLocale: c.AddressLocale,
 	}
 	if c.PhotoKey != "" {
 		out.PhotoUrl = s.photoBase + "/" + c.PhotoKey
@@ -37,4 +41,10 @@ func (s *CarSearch) toPB(c models.PlateSighting) *pb.PlateSighting {
 		out.ThumbUrl = s.photoBase + "/" + c.ThumbKey
 	}
 	return out
+}
+
+var plateTypePB = map[string]pb.PlateType{
+	"ru": pb.PlateType_PLATE_TYPE_RU,
+	"eu": pb.PlateType_PLATE_TYPE_EU,
+	"us": pb.PlateType_PLATE_TYPE_US,
 }

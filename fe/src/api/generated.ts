@@ -66,6 +66,8 @@ export interface CarsearchGetResponse {
 /** PlateSighting — фиксация номера: где и когда замечена машина. */
 export interface CarsearchPlateSighting {
   address?: string;
+  /** Язык, на котором записан адрес: "ru", "en", "de", … */
+  addressLocale?: string;
   /**
    * Когда номер зафиксирован.
    * @format date-time
@@ -77,8 +79,23 @@ export interface CarsearchPlateSighting {
   photoUrl?: string;
   /** Госномер кириллицей: "А123ВС 777". */
   plate?: string;
+  /** Страна (ЕС: "D") или штат (США: "CA") для формата номера. */
+  plateRegion?: string;
+  /** Формат номера (plates.meta.type); не задан — неизвестен. */
+  plateType?: CarsearchPlateType;
   /** URL миниатюры (S3) — для списков; полное фото — photo_url. */
   thumbUrl?: string;
+}
+
+/**
+ * Формат номерного знака — от него зависит, как его рисовать.
+ * @default "PLATE_TYPE_DEFAULT"
+ */
+export enum CarsearchPlateType {
+  PLATE_TYPE_DEFAULT = "PLATE_TYPE_DEFAULT",
+  PLATE_TYPE_RU = "PLATE_TYPE_RU",
+  PLATE_TYPE_EU = "PLATE_TYPE_EU",
+  PLATE_TYPE_US = "PLATE_TYPE_US",
 }
 
 export interface CarsearchSearchRequest {

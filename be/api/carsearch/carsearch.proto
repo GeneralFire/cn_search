@@ -40,6 +40,20 @@ message PlateSighting {
   google.protobuf.Timestamp created_at = 5;
   // URL миниатюры (S3) — для списков; полное фото — photo_url.
   string thumb_url = 6;
+  // Формат номера (plates.meta.type); не задан — неизвестен.
+  PlateType plate_type = 7;
+  // Страна (ЕС: "D") или штат (США: "CA") для формата номера.
+  string plate_region = 8;
+  // Язык, на котором записан адрес: "ru", "en", "de", …
+  string address_locale = 9;
+}
+
+// Формат номерного знака — от него зависит, как его рисовать.
+enum PlateType {
+  PLATE_TYPE_DEFAULT = 0; // неизвестен
+  PLATE_TYPE_RU = 1;
+  PLATE_TYPE_EU = 2;
+  PLATE_TYPE_US = 3;
 }
 
 message SearchRequest {
