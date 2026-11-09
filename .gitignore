@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+
+# локальные данные инструментов
+.codegraph/
+.claude/
+.DS_Store
+CLAUDE.local.md

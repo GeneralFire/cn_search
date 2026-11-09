@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Поиск по авто — вариант B</title>
+<style>
+  :root {
+    --bg: #0b0d12;
+    --panel: #12151c;
+    --panel-2: #181c25;
+    --line: #232837;
+    --text: #e9ecf2;
+    --muted: #8a93a6;
+    --accent: #c6f432;
+    --accent-ink: #0b0d12;
+    color-scheme: dark;
+    font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; color: var(--text); -webkit-font-smoothing: antialiased;
+    background:
+      radial-gradient(800px 500px at 100% 0%, rgba(198,244,50,.08), transparent 60%),
+      radial-gradient(600px 400px at 0% 100%, rgba(80,120,255,.08), transparent 60%),
+      var(--bg);
+  }
+  .layout { max-width: 960px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  .top { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; }
+  .logo {
+    width: 40px; height: 40px; border-radius: 12px; background: var(--accent); color: var(--accent-ink);
+    display: grid; place-items: center;
+  }
+  .top h1 { font-size: 1.25rem; margin: 0; letter-spacing: -.01em; }
+  .top span { color: var(--muted); font-size: .85rem; }
+
+  .search { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 20px; margin-bottom: 28px; }
+  .search__label { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 12px; display: block; }
+
+  .tabs { display: inline-flex; gap: 6px; margin-bottom: 14px; }
+  .tabs input { position: absolute; opacity: 0; pointer-events: none; }
+  .tabs label {
+    display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 10px;
+    border: 1px solid var(--line); color: var(--muted); cursor: pointer; font-size: .9rem; font-weight: 500;
+    transition: all .15s;
+  }
+  .tabs label:hover { color: var(--text); border-color: #3a4152; }
+  .tabs input:checked + label { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .tabs input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .field { position: relative; }
+  .field input {
+    width: 100%; font: inherit; font-size: 1.5rem; font-weight: 600; letter-spacing: .04em;
+    color: var(--text); background: var(--panel-2); border: 1px solid var(--line);
+    border-radius: 14px; padding: 18px 56px 18px 20px; outline: none; transition: border-color .15s, box-shadow .15s;
+  }
+  .field input::placeholder { color: #4b5366; font-weight: 500; }
+  .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(198,244,50,.12); }
+  .field input::-webkit-search-cancel-button { display: none; }
+  .field kbd {
+    position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+    font: 600 .75rem ui-monospace, Menlo, monospace; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 6px; padding: 4px 7px; background: var(--panel);
+  }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 28px; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+  .stat b { display: block; font-size: 1.5rem; margin-bottom: 2px; }
+  .stat span { color: var(--muted); font-size: .8rem; }
+
+  .list { display: grid; gap: 10px; }
+  .row {
+    display: grid; grid-template-columns: 120px 1fr auto; gap: 20px; align-items: center;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 12px;
+    transition: border-color .15s, background .15s, transform .15s; animation: in .25s ease both;
+  }
+  .row:hover { border-color: #3a4152; background: var(--panel-2); transform: translateX(2px); }
+  @keyframes in { from { opacity: 0; transform: translateY(4px); } }
+
+  .row__photo {
+    aspect-ratio: 4 / 3; border-radius: 10px; overflow: hidden; display: grid; place-items: center;
+    background: linear-gradient(135deg, #1e2330, #141821); color: #3c4458;
+  }
+  .row__photo img { width: 100%; height: 100%; object-fit: cover; }
+  .row__photo svg { width: 60%; }
+
+  .row__main { min-width: 0; display: grid; gap: 8px; }
+  .row__address { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row__meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .chip {
+    font-size: .78rem; color: var(--muted); background: var(--panel-2); border: 1px solid var(--line);
+    padding: 4px 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .chip--key { font-family: ui-monospace, Menlo, monospace; }
+  .chip--new { color: var(--accent); border-color: rgba(198,244,50,.35); }
+
+  .plate {
+    display: inline-flex; border: 2px solid #111; border-radius: 6px; background: #fff; color: #111;
+    font: 700 1rem "Roboto Mono", ui-monospace, Menlo, monospace; line-height: 1; overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.08);
+  }
+  .plate__num { padding: 7px 9px; letter-spacing: .05em; }
+  .plate__reg { border-left: 2px solid #111; padding: 3px 7px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: .82rem; gap: 1px; }
+  .plate__rus { font-size: .45rem; display: flex; align-items: center; gap: 2px; }
+  .plate__flag { width: 10px; height: 6px; background: linear-gradient(#fff 33%, #1c3fae 33% 66%, #d52b1e 66%); border: .5px solid #999; }
+
+  mark { background: var(--accent); color: var(--accent-ink); border-radius: 3px; }
+
+  .empty { text-align: center; padding: 56px 24px; color: var(--muted); background: var(--panel); border: 1px dashed var(--line); border-radius: 16px; }
+  .empty b { display: block; color: var(--text); font-size: 1.1rem; margin-bottom: 6px; }
+
+  @media (max-width: 640px) {
+    .layout { padding: 24px 16px 48px; }
+    .row { grid-template-columns: 88px 1fr; }
+    .row__side { grid-column: 1 / -1; }
+    .field input { font-size: 1.15rem; }
+    .stats { grid-template-columns: 1fr 1fr; }
+    .stats .stat:last-child { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <header class="top">
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    </div>
+    <div><h1>Поиск по авто</h1><span>База автомобилей</span></div>
+  </header>
+
+  <section class="search">
+    <span class="search__label">Искать по</span>
+    <div class="tabs" role="radiogroup" aria-label="Искать по">
+      <input type="radio" name="mode" id="m-plate" value="plate" checked />
+      <label for="m-plate"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M16 7v10"/></svg>Госномер</label>
+      <input type="radio" name="mode" id="m-key" value="key" />
+      <label for="m-key"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M15 8l2 2"/></svg>Ключ</label>
+    </div>
+    <div class="field">
+      <input id="q" type="search" autocomplete="off" aria-label="Поисковый запрос" />
+      <kbd>/</kbd>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div class="stat"><b id="s-found">0</b><span>найдено</span></div>
+    <div class="stat"><b id="s-total">0</b><span>всего в базе</span></div>
+    <div class="stat"><b id="s-last">—</b><span>последнее обновление</span></div>
+  </section>
+
+  <section class="list" id="results" aria-live="polite"></section>
+</div>
+
+<script>
+  const cars = [
+    { id: 1, address: "Москва, Пресненская наб., 10", plate: "А123ВС 777", key: "KEY-0451", date: "2026-11-02" },
+    { id: 2, address: "Санкт-Петербург, Невский пр., 28", plate: "М456ОР 178", key: "KEY-1187", date: "2026-10-27" },
+    { id: 3, address: "Казань, ул. Баумана, 44", plate: "Т789УХ 116", key: "KEY-2093", date: "2026-11-08" },
+  ];
+
+  const lat2cyr = { A:"А",B:"В",E:"Е",K:"К",M:"М",H:"Н",O:"О",P:"Р",C:"С",T:"Т",Y:"У",X:"Х" };
+  const norm = (s, plate) => {
+    const r = s.toUpperCase().replace(/\s+/g, "");
+    return plate ? r.replace(/[ABEKMHOPCTYX]/g, (c) => lat2cyr[c]) : r;
+  };
+  const esc = (s) => s.replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+  const fmt = (iso, o) => new Date(iso).toLocaleDateString("ru-RU", { timeZone: "UTC", ...o });
+  const daysAgo = (iso) => Math.floor((Date.now() - Date.parse(iso)) / 864e5);
+
+  const carSvg = `<svg viewBox="0 0 64 32" fill="currentColor"><path d="M10 22h-4a2 2 0 0 1-2-2v-4c0-1.5 1-2.6 2.4-3l6.6-1.8 6-5.4A6 6 0 0 1 23 4.5h14a6 6 0 0 1 4.3 1.8L47 12l9 1.6c1.8.3 3 1.9 3 3.6V20a2 2 0 0 1-2 2h-3"/><circle cx="16" cy="23" r="5"/><circle cx="48" cy="23" r="5"/></svg>`;
+
+  const plateHtml = (p) => {
+    const [num, reg = ""] = p.split(" ");
+    return `<span class="plate"><span class="plate__num">${esc(num)}</span><span class="plate__reg">${esc(reg)}<span class="plate__rus">RUS<i class="plate__flag"></i></span></span></span>`;
+  };
+
+  let mode = "plate";
+  const $q = document.getElementById("q"), $res = document.getElementById("results");
+  document.getElementById("s-total").textContent = cars.length;
+  document.getElementById("s-last").textContent =
+    fmt(cars.map((c) => c.date).sort().at(-1), { day: "numeric", month: "short" });
+
+  function render() {
+    const isPlate = mode === "plate";
+    $q.placeholder = isPlate ? "А123ВС 777" : "KEY-0451";
+    const q = norm($q.value, isPlate);
+    const found = cars
+      .filter((c) => norm(isPlate ? c.plate : c.key, isPlate).includes(q))
+      .sort((a, b) => b.date.localeCompare(a.date));
+    document.getElementById("s-found").textContent = found.length;
+
+    $res.innerHTML = found.length ? found.map((c, i) => {
+      const fresh = daysAgo(c.date) <= 3;
+      return `
+      <article class="row" style="animation-delay:${i * 40}ms">
+        <div class="row__photo">${c.photo ? `<img src="${esc(c.photo)}" alt="">` : carSvg}</div>
+        <div class="row__main">
+          <div class="row__address">${esc(c.address)}</div>
+          <div class="row__meta">
+            <span class="chip chip--key">${esc(c.key)}</span>
+            <span class="chip"><time datetime="${c.date}">${fmt(c.date, { day: "numeric", month: "long", year: "numeric" })}</time></span>
+            ${fresh ? `<span class="chip chip--new">● новое</span>` : ""}
+          </div>
+        </div>
+        <div class="row__side">${plateHtml(c.plate)}</div>
+      </article>`;
+    }).join("")
+    : `<div class="empty"><b>Ничего не найдено</b>Проверьте ${isPlate ? "номер" : "ключ"} или переключите режим поиска</div>`;
+  }
+
+  document.querySelectorAll('input[name="mode"]').forEach((r) =>
+    r.addEventListener("change", () => { mode = r.value; render(); $q.focus(); }));
+  $q.addEventListener("input", render);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "/" && document.activeElement !== $q) { e.preventDefault(); $q.focus(); }
+    if (e.key === "Escape" && document.activeElement === $q) { $q.value = ""; render(); }
+  });
+  render();
+</script>
+</body>
+</html>

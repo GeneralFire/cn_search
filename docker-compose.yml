@@ -1,0 +1,20 @@
+services:
+  # Бэкенд — пока заглушка (отвечает только на /api/health).
+  be:
+    build: ./be
+    environment:
+      PORT: "8080"
+    ports:
+      - "127.0.0.1:8080:8080" # только localhost — для отладки
+    restart: unless-stopped
+
+  fe:
+    build: ./fe
+    environment:
+      VITE_USE_POLLING: "true" # надёжный hot-reload с bind-mount на macOS
+    ports:
+      - "7173:7173" # доступен из локальной сети
+    volumes:
+      - ./fe:/app # исходники с хоста → hot-reload
+      - /app/node_modules # node_modules из образа, а не с хоста (macOS ≠ linux)
+    restart: unless-stopped
