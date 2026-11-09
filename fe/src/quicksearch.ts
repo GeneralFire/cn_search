@@ -3,9 +3,35 @@
 import { ApiError, search, type Car } from "./api";
 import { escapeHtml, formatAgo, icon, plateHtml } from "./ui";
 import { t, tp } from "./i18n/i18n";
+import { highlightPlate, plateSearchKey } from "./searchkey";
+import "./quicksearch.css";
 
 const PAGE_SIZE = 35;
 const DEBOUNCE_MS = 200;
+const RECENT_KEY = "qs.recent";
+const RECENT_MAX = 5;
+
+/** Недавние запросы (localStorage), от новых к старым. */
+function loadRecent(): string[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]");
+    return Array.isArray(v) ? v.filter((x) => typeof x === "string").slice(0, RECENT_MAX) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecent(list: string[]): void {
+  localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, RECENT_MAX)));
+}
+
+/** Запомнить запрос; похожие написания («о515» и «О515») считаем одним запросом. */
+function rememberQuery(q: string): void {
+  q = q.trim();
+  if (!q) return;
+  const key = plateSearchKey(q).toLowerCase();
+  saveRecent([q, ...loadRecent().filter((x) => plateSearchKey(x).toLowerCase() !== key)]);
+}
 
 export interface QuickSearchHandlers {
   open(id: string): void; // открыть страницу номера (по id фиксации)
@@ -22,6 +48,7 @@ export function mountQuickSearch(root: HTMLElement, h: QuickSearchHandlers): voi
         <ul class="qs__list" id="qs-list" role="listbox"></ul>
         <div class="qs__foot"></div>
       </div>
+      <div class="qs__recent" role="group" aria-label="${t("qs.recent.title")}" hidden></div>
     </div>`;
 
   const $box = root.querySelector<HTMLElement>(".qs")!;
@@ -29,6 +56,7 @@ export function mountQuickSearch(root: HTMLElement, h: QuickSearchHandlers): voi
   const $panel = root.querySelector<HTMLElement>(".qs__panel")!;
   const $list = root.querySelector<HTMLUListElement>(".qs__list")!;
   const $foot = root.querySelector<HTMLElement>(".qs__foot")!;
+  const $recent = root.querySelector<HTMLElement>(".qs__recent")!;
 
   const st = {
     gen: 0,
@@ -45,6 +73,29 @@ export function mountQuickSearch(root: HTMLElement, h: QuickSearchHandlers): voi
     $panel.hidden = !open;
     $box.setAttribute("aria-expanded", String(open));
   };
+
+  /** Чипы недавних запросов — под пустым полем в фокусе. */
+  function renderRecent(): void {
+    const list = loadRecent();
+    const show = !$input.value.trim() && list.length > 0 && $box.contains(document.activeElement);
+    $recent.hidden = !show;
+    if (!show) {
+      $recent.innerHTML = "";
+      return;
+    }
+    $recent.innerHTML = `
+      <span class="qs__recent-title">${t("qs.recent.title")}</span>
+      ${list
+        .map(
+          (q) => `<span class="qs__chip">
+            <button class="qs__chip-q" type="button" data-q="${escapeHtml(q)}">${escapeHtml(q)}</button>
+            <button class="qs__chip-x" type="button" data-remove="${escapeHtml(q)}"
+              aria-label="${escapeHtml(t("qs.recent.remove", { q }))}">${icon.clear}</button>
+          </span>`
+        )
+        .join("")}
+      <button class="qs__recent-clear" type="button" data-clear>${t("qs.recent.clear")}</button>`;
+  }
 
   function renderFoot(error = ""): void {
     $foot.innerHTML = error
@@ -86,6 +137,11 @@ export function mountQuickSearch(root: HTMLElement, h: QuickSearchHandlers): voi
         fresh.push(c);
       }
       $list.insertAdjacentHTML("beforeend", fresh.map((c, i) => itemHtml(c, start + i)).join(""));
+      // Подсветка совпавшего начала слов номера — с учётом похожих символов, как ищет бэк.
+      fresh.forEach((c, i) => {
+        const el = $list.querySelector(`#qs-opt-${start + i}`);
+        if (el) highlightPlate(el, c.plate, $input.value);
+      });
       st.total = page.total;
       st.nextOffset = page.nextOffset;
       st.loading = false;
@@ -109,6 +165,7 @@ export function mountQuickSearch(root: HTMLElement, h: QuickSearchHandlers): voi
     st.active = -1;
     $list.innerHTML = "";
     $list.scrollTop = 0;
+    renderRecent();
     if (!$input.value.trim()) return setOpen(false);
     setOpen(true);
     void loadMore();
@@ -125,17 +182,49 @@ export function mountQuickSearch(root: HTMLElement, h: QuickSearchHandlers): voi
   }
 
   function choose(id: string): void {
+    rememberQuery($input.value);
     setOpen(false);
     $input.blur();
     h.open(id);
   }
 
   $input.addEventListener("input", () => {
+    if (!$input.value.trim()) renderRecent();
+    else $recent.hidden = true;
     clearTimeout(debounce);
     debounce = window.setTimeout(newQuery, DEBOUNCE_MS);
   });
   $input.addEventListener("focus", () => {
     if ($input.value.trim() && $list.children.length) setOpen(true);
+    renderRecent();
+  });
+  // Фокус ушёл за пределы поиска (Tab, клик мимо) — прячем недавние.
+  $box.addEventListener("focusout", (e) => {
+    if (!$box.contains(e.relatedTarget as Node | null)) $recent.hidden = true;
+  });
+  // mousedown не забирает фокус у поля — панель не мигает; действие — по click (работает и с клавиатуры).
+  $recent.addEventListener("mousedown", (e) => {
+    if ((e.target as Element).closest("button")) e.preventDefault();
+  });
+  $recent.addEventListener("click", (e) => {
+    const b = (e.target as Element).closest<HTMLButtonElement>("button");
+    if (!b) return;
+    if (b.dataset.q !== undefined) {
+      clearTimeout(debounce);
+      $input.value = b.dataset.q;
+      $input.focus();
+      rememberQuery(b.dataset.q);
+      newQuery();
+    } else if (b.dataset.remove !== undefined) {
+      saveRecent(loadRecent().filter((x) => x !== b.dataset.remove));
+      renderRecent();
+      if ($recent.hidden) $input.focus();
+      else $recent.querySelector<HTMLElement>(".qs__chip-q, .qs__recent-clear")?.focus();
+    } else if (b.dataset.clear !== undefined) {
+      saveRecent([]);
+      $input.focus();
+      renderRecent();
+    }
   });
   $input.addEventListener("keydown", (e) => {
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -147,6 +236,7 @@ export function mountQuickSearch(root: HTMLElement, h: QuickSearchHandlers): voi
       const el = $list.querySelectorAll<HTMLElement>(".qs__item")[st.active];
       if (el && !$panel.hidden) choose(el.dataset.id!);
       else if ($input.value.trim()) {
+        rememberQuery($input.value);
         setOpen(false);
         h.submit($input.value);
       }
@@ -155,6 +245,9 @@ export function mountQuickSearch(root: HTMLElement, h: QuickSearchHandlers): voi
       if (!$panel.hidden) {
         e.preventDefault();
         setOpen(false);
+      } else if (!$recent.hidden) {
+        e.preventDefault();
+        $recent.hidden = true;
       }
     }
   });
@@ -175,6 +268,9 @@ export function mountQuickSearch(root: HTMLElement, h: QuickSearchHandlers): voi
     if (el) setActive([...$list.children].indexOf(el));
   });
   document.addEventListener("mousedown", (e) => {
-    if (!$box.contains(e.target as Node)) setOpen(false);
+    if (!$box.contains(e.target as Node)) {
+      setOpen(false);
+      $recent.hidden = true;
+    }
   });
 }

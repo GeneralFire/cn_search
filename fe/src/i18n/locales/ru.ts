@@ -156,4 +156,8 @@ export const ru = {
   "admin.empty": "Жалоб нет",
   "admin.shown": "Показано {shown} из {total}",
   "admin.resolveFailed": "Не удалось отметить жалобу",
+
+  "qs.recent.title": "Недавние",
+  "qs.recent.remove": "Убрать «{q}» из недавних",
+  "qs.recent.clear": "Очистить всё",
 } as const;

@@ -157,4 +157,8 @@ export const zh: Dict = {
   "admin.empty": "没有举报",
   "admin.shown": "已显示 {shown} / {total}",
   "admin.resolveFailed": "无法标记举报",
+
+  "qs.recent.title": "最近搜索",
+  "qs.recent.remove": "从最近搜索中删除“{q}”",
+  "qs.recent.clear": "全部清除",
 };

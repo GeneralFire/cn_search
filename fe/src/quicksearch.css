@@ -1,0 +1,20 @@
+/* Быстрый поиск в шапке (quicksearch.ts): подсветка совпадения и недавние запросы */
+.qs__mark { background: rgb(255 214 0 / 0.55); color: inherit; border-radius: 3px; box-shadow: 0 0 0 1px rgb(255 214 0 / 0.55); }
+
+.qs__recent {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 10;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  padding: 10px 12px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; box-shadow: var(--shadow-hover);
+}
+.qs__recent[hidden] { display: none; }
+.qs__recent-title { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; margin-right: 4px; }
+.qs__chip { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 999px; background: var(--bg); }
+.qs__chip-q, .qs__chip-x, .qs__recent-clear { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
+.qs__chip-q { padding: 4px 4px 4px 12px; font-size: 0.88rem; }
+.qs__chip-x { display: grid; place-items: center; width: 24px; height: 24px; margin-right: 3px; border-radius: 50%; color: var(--muted); }
+.qs__chip-x:hover { background: var(--border); color: var(--text); }
+.qs__chip:hover { border-color: var(--accent); }
+.qs__recent-clear { margin-left: auto; color: var(--accent); font-size: 0.85rem; font-weight: 600; padding: 4px 6px; border-radius: 8px; }
+.qs__recent-clear:hover { text-decoration: underline; }
+.qs__chip-q:focus-visible, .qs__chip-x:focus-visible, .qs__recent-clear:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 999px; }

@@ -156,4 +156,8 @@ export const en: Dict = {
   "admin.empty": "No reports",
   "admin.shown": "Showing {shown} of {total}",
   "admin.resolveFailed": "Could not resolve the report",
+
+  "qs.recent.title": "Recent",
+  "qs.recent.remove": "Remove “{q}” from recent",
+  "qs.recent.clear": "Clear all",
 };

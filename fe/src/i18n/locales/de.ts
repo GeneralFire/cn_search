@@ -156,4 +156,8 @@ export const de: Dict = {
   "admin.empty": "Keine Meldungen",
   "admin.shown": "{shown} von {total} angezeigt",
   "admin.resolveFailed": "Meldung konnte nicht erledigt werden",
+
+  "qs.recent.title": "Zuletzt gesucht",
+  "qs.recent.remove": "„{q}“ aus dem Verlauf entfernen",
+  "qs.recent.clear": "Alle löschen",
 };

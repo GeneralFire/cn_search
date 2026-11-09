@@ -156,4 +156,8 @@ export const uk: Dict = {
   "admin.empty": "Скарг немає",
   "admin.shown": "Показано {shown} з {total}",
   "admin.resolveFailed": "Не вдалося позначити скаргу",
+
+  "qs.recent.title": "Нещодавні",
+  "qs.recent.remove": "Прибрати «{q}» з нещодавніх",
+  "qs.recent.clear": "Очистити все",
 };
