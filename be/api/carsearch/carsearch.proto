@@ -61,6 +61,8 @@ enum PlateType {
   PLATE_TYPE_RU = 1;
   PLATE_TYPE_EU = 2;
   PLATE_TYPE_US = 3;
+  PLATE_TYPE_UA = 4; // украинский: "АА 1234 ВС"
+  PLATE_TYPE_CN = 5; // китайский: "京A·12345"
 }
 
 message SearchRequest {
@@ -72,6 +74,11 @@ message SearchRequest {
   int32 offset = 2;
   // Размер страницы, 1..100; 0 — по умолчанию (35).
   int32 limit = 3;
+  // «Рынок» номеров (главная: блок по языку интерфейса и вкладки стран):
+  // "ru" — российские, "ua" — украинские, "de" — ЕС с регионом D, "us" — США, "cn" — китайские,
+  // "other" — всё, что не попало ни в один рынок (формат неизвестен или другая страна).
+  // Пусто — без фильтра.
+  string market = 4;
 }
 
 message SearchResponse {

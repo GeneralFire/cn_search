@@ -1,0 +1,66 @@
+/* Главная: блок «для вас» и вкладки стран (home.ts). */
+
+/* Флаги стран рынков (у языков — свои, .flag--<язык> в style.css) */
+.flag--m-ru { background: linear-gradient(#fff 33%, #1c3fae 33% 66%, #d52b1e 66%); }
+.flag--m-ua { background: linear-gradient(#0057b7 50%, #ffd700 50%); }
+.flag--m-de { background: linear-gradient(#000 33%, #dd0000 33% 66%, #ffce00 66%); }
+.flag--m-cn { background: radial-gradient(circle at 26% 34%, #ffde00 0 14%, transparent 15%), #de2910; }
+.flag--m-us {
+  background:
+    linear-gradient(#3c3b6e, #3c3b6e) top left / 42% 54% no-repeat,
+    repeating-linear-gradient(#b22234 0 7.7%, #fff 7.7% 15.4%);
+}
+
+/* ---------- Для вас ---------- */
+
+.fy {
+  margin: 0 0 36px;
+  padding: 20px 20px 24px;
+  border-radius: calc(var(--radius) + 6px);
+  background: linear-gradient(180deg, var(--accent-soft), transparent 85%);
+  border: 1px solid var(--border);
+}
+.fy[hidden] { display: none; }
+.fy__head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 16px; }
+.fy__title { margin: 0; font-size: 1.1rem; display: inline-flex; align-items: center; gap: 8px; }
+.fy__title .flag { width: 20px; height: 13px; border-radius: 2px; }
+.fy__market { color: var(--accent); }
+.fy__sub { color: var(--muted); font-size: 0.9rem; }
+/* Пока «для вас» грузится — место под два ряда не прыгает */
+.fy__grid:empty { min-height: 120px; }
+
+/* ---------- Вкладки ---------- */
+
+.tabs {
+  display: flex; gap: 8px; margin: 0 0 20px; padding: 4px 2px 8px;
+  overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tabs[hidden] { display: none; }
+.tabs__tab {
+  flex-shrink: 0; scroll-snap-align: start;
+  display: inline-flex; align-items: center; gap: 8px;
+  font: inherit; font-size: 0.92rem; font-weight: 600; color: var(--text);
+  padding: 9px 16px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.tabs__tab .flag { width: 18px; height: 12px; border-radius: 2px; }
+.tabs__tab:hover { border-color: var(--accent); }
+.tabs__tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tabs__tab[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.tabs__code { letter-spacing: 0.04em; }
+.tabs__name { font-weight: 500; color: var(--muted); }
+.tabs__tab[aria-selected="true"] .tabs__name { color: rgb(255 255 255 / 0.82); }
+
+.feed__note {
+  grid-column: 1 / -1; margin: 0; padding: 18px 16px; text-align: center;
+  color: var(--muted); border: 1px dashed var(--border); border-radius: var(--radius);
+}
+
+@media (max-width: 640px) {
+  .fy { padding: 14px 12px 16px; margin-bottom: 24px; border-radius: var(--radius); }
+  .tabs { margin: 0 -16px 16px; padding: 4px 16px 8px; gap: 6px; }
+  .tabs__tab { padding: 8px 12px; }
+  .tabs__name { display: none; }
+}

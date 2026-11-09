@@ -914,7 +914,9 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         "PLATE_TYPE_DEFAULT",
         "PLATE_TYPE_RU",
         "PLATE_TYPE_EU",
-        "PLATE_TYPE_US"
+        "PLATE_TYPE_US",
+        "PLATE_TYPE_UA",
+        "PLATE_TYPE_CN"
       ],
       "default": "PLATE_TYPE_DEFAULT",
       "description": "Формат номерного знака — от него зависит, как его рисовать."
@@ -935,6 +937,10 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
           "type": "integer",
           "format": "int32",
           "description": "Размер страницы, 1..100; 0 — по умолчанию (35)."
+        },
+        "market": {
+          "type": "string",
+          "description": "«Рынок» номеров (главная: блок по языку интерфейса и вкладки стран):\n\"ru\" — российские, \"ua\" — украинские, \"de\" — ЕС с регионом D, \"us\" — США, \"cn\" — китайские,\n\"other\" — всё, что не попало ни в один рынок (формат неизвестен или другая страна).\nПусто — без фильтра."
         }
       }
     },

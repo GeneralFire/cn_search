@@ -46,6 +46,8 @@
 - Данные БД и S3 — bind mount в `./.data` (не коммитится), удаляет `make reset`.
 - `fe/` — TypeScript + Vite. TS-клиент `fe/src/api/generated.ts` генерируется из swagger: `make gen-ts`.
   Поиск по номеру, бесконечная прокрутка + «Загрузить ещё», модалка «Уточнить» (заглушка),
+  главная без запроса — блок «для вас» (2 ряда номеров «рынка» языка) и вкладки стран + «Прочее»
+  (`src/home.ts`, `SearchRequest.market` → `models.Market` → условия по `plates.meta` type/region; вкладка — `?tab=`),
   страница номера `/plate/<id фиксации>` (`src/plate.ts`, роутер на History API — `src/router.ts`).
 - `docker-compose.yml`: db (Postgres), s3 (RustFS — minio/minio больше нет на Docker Hub), be, fe.
   Запуск: `make run` (всё) или по частям `make etc` (db+s3+миграции), `make run-be`, `make run-fe`.

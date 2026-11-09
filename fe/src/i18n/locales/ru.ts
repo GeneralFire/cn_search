@@ -90,4 +90,19 @@ export const ru = {
   "map.marker": "{n}. {date} — {address}",
   "map.partial": "На карте {shown} из {total} фиксаций: у остальных нет координат",
   "map.failed": "Не удалось загрузить карту",
+
+  // Главная: блок «для вас» и вкладки стран
+  "homeTabs.forYou": "Для вас",
+  "homeTabs.forYouHint": "Свежие номера региона вашего языка",
+  "homeTabs.aria": "Номера по странам",
+  "homeTabs.market.ru": "Россия",
+  "homeTabs.market.ua": "Украина",
+  "homeTabs.market.de": "Германия",
+  "homeTabs.market.us": "США",
+  "homeTabs.market.cn": "Китай",
+  "homeTabs.market.other": "Прочее",
+  "homeTabs.otherHint": "Другие страны и номера неизвестного формата",
+  "homeTabs.allAbove": "Все номера этого региона — в блоке «Для вас» выше",
+  "homeTabs.emptyTitle": "Здесь пока пусто",
+  "homeTabs.emptyHint": "Номеров этого региона ещё нет — загляните в другие вкладки",
 } as const;

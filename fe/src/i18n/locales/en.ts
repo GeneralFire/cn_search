@@ -90,4 +90,19 @@ export const en: Dict = {
   "map.marker": "{n}. {date} — {address}",
   "map.partial": "{shown} of {total} sightings on the map: the rest have no coordinates",
   "map.failed": "Could not load the map",
+
+  // Главная: блок «для вас» и вкладки стран
+  "homeTabs.forYou": "For you",
+  "homeTabs.forYouHint": "Latest plates from your language’s region",
+  "homeTabs.aria": "Plates by country",
+  "homeTabs.market.ru": "Russia",
+  "homeTabs.market.ua": "Ukraine",
+  "homeTabs.market.de": "Germany",
+  "homeTabs.market.us": "USA",
+  "homeTabs.market.cn": "China",
+  "homeTabs.market.other": "Other",
+  "homeTabs.otherHint": "Other countries and plates of unknown format",
+  "homeTabs.allAbove": "All plates of this region are in “For you” above",
+  "homeTabs.emptyTitle": "Nothing here yet",
+  "homeTabs.emptyHint": "No plates from this region yet — try another tab",
 };

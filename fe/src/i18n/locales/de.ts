@@ -90,4 +90,19 @@ export const de: Dict = {
   "map.marker": "{n}. {date} — {address}",
   "map.partial": "{shown} von {total} Sichtungen auf der Karte: die übrigen haben keine Koordinaten",
   "map.failed": "Karte konnte nicht geladen werden",
+
+  // Главная: блок «для вас» и вкладки стран
+  "homeTabs.forYou": "Für dich",
+  "homeTabs.forYouHint": "Neueste Kennzeichen aus der Region deiner Sprache",
+  "homeTabs.aria": "Kennzeichen nach Ländern",
+  "homeTabs.market.ru": "Russland",
+  "homeTabs.market.ua": "Ukraine",
+  "homeTabs.market.de": "Deutschland",
+  "homeTabs.market.us": "USA",
+  "homeTabs.market.cn": "China",
+  "homeTabs.market.other": "Sonstige",
+  "homeTabs.otherHint": "Andere Länder und Kennzeichen unbekannten Formats",
+  "homeTabs.allAbove": "Alle Kennzeichen dieser Region stehen oben unter „Für dich“",
+  "homeTabs.emptyTitle": "Hier ist noch nichts",
+  "homeTabs.emptyHint": "Noch keine Kennzeichen aus dieser Region – schau in einen anderen Tab",
 };

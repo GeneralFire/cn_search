@@ -18,7 +18,7 @@ type Clarification struct {
 	Status     ClarificationStatus `db:"status"`
 	CreatedAt  time.Time           `db:"created_at"`
 
-	PlateType   string `db:"plate_type"`   // "ru" | "eu" | "us" | "" (другой/неизвестен)
+	PlateType   string `db:"plate_type"`   // "ru" | "eu" | "us" | "ua" | "cn" | "" (другой/неизвестен)
 	PlateRegion string `db:"plate_region"` // страна (ЕС) или штат (США)
 }
 
@@ -26,7 +26,7 @@ type Clarification struct {
 type ClarifyOpts struct {
 	SightingID  string
 	Plate       string
-	PlateType   string // "ru" | "eu" | "us" | ""
+	PlateType   string // "ru" | "eu" | "us" | "ua" | "cn" | ""
 	PlateRegion string
 }
 

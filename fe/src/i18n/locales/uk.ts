@@ -90,4 +90,19 @@ export const uk: Dict = {
   "map.marker": "{n}. {date} — {address}",
   "map.partial": "На мапі {shown} з {total} фіксацій: решта без координат",
   "map.failed": "Не вдалося завантажити мапу",
+
+  // Главная: блок «для вас» и вкладки стран
+  "homeTabs.forYou": "Для вас",
+  "homeTabs.forYouHint": "Свіжі номери регіону вашої мови",
+  "homeTabs.aria": "Номери за країнами",
+  "homeTabs.market.ru": "Росія",
+  "homeTabs.market.ua": "Україна",
+  "homeTabs.market.de": "Німеччина",
+  "homeTabs.market.us": "США",
+  "homeTabs.market.cn": "Китай",
+  "homeTabs.market.other": "Інше",
+  "homeTabs.otherHint": "Інші країни та номери невідомого формату",
+  "homeTabs.allAbove": "Усі номери цього регіону — у блоці «Для вас» вище",
+  "homeTabs.emptyTitle": "Тут поки порожньо",
+  "homeTabs.emptyHint": "Номерів цього регіону ще немає — загляньте в інші вкладки",
 };

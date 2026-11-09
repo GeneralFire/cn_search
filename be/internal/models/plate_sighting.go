@@ -13,7 +13,7 @@ type PlateSighting struct {
 	Address   string    `db:"address"`
 	CreatedAt time.Time `db:"created_at"`
 
-	PlateType     string `db:"plate_type"`     // plates.meta->>'type': "ru", "eu", "us"; "" — неизвестен
+	PlateType     string `db:"plate_type"`     // plates.meta->>'type': "ru", "eu", "us", "ua", "cn"; "" — неизвестен
 	PlateRegion   string `db:"plate_region"`   // plates.meta->>'region': "D", "CA", …
 	AddressLocale string `db:"address_locale"` // язык адреса: "ru", "en", "de", …
 

@@ -66,6 +66,8 @@ var plateTypeModel = map[pb.PlateType]string{
 	pb.PlateType_PLATE_TYPE_RU: "ru",
 	pb.PlateType_PLATE_TYPE_EU: "eu",
 	pb.PlateType_PLATE_TYPE_US: "us",
+	pb.PlateType_PLATE_TYPE_UA: "ua",
+	pb.PlateType_PLATE_TYPE_CN: "cn",
 }
 
 var clarificationStatusPB = map[models.ClarificationStatus]pb.ClarificationStatus{

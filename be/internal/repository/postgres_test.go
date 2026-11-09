@@ -4,6 +4,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/GeneralFire/cn_search/be/internal/models"
 )
 
 // Выражения поиска в запросе и в GIN-индексах миграции должны совпадать посимвольно,
@@ -39,5 +41,26 @@ func TestPlateSearchMatchesIndexes(t *testing.T) {
 	}
 	if !strings.Contains(migration, "CREATE FUNCTION plate_search_key(s text)") {
 		t.Error("migration has no plate_search_key")
+	}
+}
+
+// У каждого рынка есть условие, «прочее» — отрицание всех, пустой рынок — без фильтра.
+func TestMarketCond(t *testing.T) {
+	for _, m := range models.Markets {
+		if marketCond(m) == "" {
+			t.Errorf("market %q: нет условия", m)
+		}
+		if !strings.Contains(marketCond(models.MarketOther), marketCond(m)) {
+			t.Errorf("other не исключает %q", m)
+		}
+	}
+	if !strings.HasPrefix(marketCond(models.MarketOther), "NOT (") {
+		t.Errorf("other: %s", marketCond(models.MarketOther))
+	}
+	if marketCond("") != "" {
+		t.Error("пустой рынок фильтрует")
+	}
+	if want := `(coalesce(p.meta->>'type', '') = 'eu' AND coalesce(p.meta->>'region', '') = 'D')`; marketCond(models.MarketDE) != want {
+		t.Errorf("de: %s", marketCond(models.MarketDE))
 	}
 }

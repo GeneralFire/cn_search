@@ -91,4 +91,19 @@ export const zh: Dict = {
   "map.marker": "{n}. {date} — {address}",
   "map.partial": "地图上显示 {shown}/{total} 条记录：其余没有坐标",
   "map.failed": "无法加载地图",
+
+  // Главная: блок «для вас» и вкладки стран
+  "homeTabs.forYou": "为你推荐",
+  "homeTabs.forYouHint": "你的语言所在地区的最新车牌",
+  "homeTabs.aria": "按国家浏览车牌",
+  "homeTabs.market.ru": "俄罗斯",
+  "homeTabs.market.ua": "乌克兰",
+  "homeTabs.market.de": "德国",
+  "homeTabs.market.us": "美国",
+  "homeTabs.market.cn": "中国",
+  "homeTabs.market.other": "其他",
+  "homeTabs.otherHint": "其他国家及未知格式的车牌",
+  "homeTabs.allAbove": "该地区的所有车牌都在上方“为你推荐”中",
+  "homeTabs.emptyTitle": "这里还没有内容",
+  "homeTabs.emptyHint": "该地区暂无车牌——看看其他标签页",
 };

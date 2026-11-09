@@ -113,6 +113,8 @@ export enum CarsearchPlateType {
   PLATE_TYPE_RU = "PLATE_TYPE_RU",
   PLATE_TYPE_EU = "PLATE_TYPE_EU",
   PLATE_TYPE_US = "PLATE_TYPE_US",
+  PLATE_TYPE_UA = "PLATE_TYPE_UA",
+  PLATE_TYPE_CN = "PLATE_TYPE_CN",
 }
 
 export interface CarsearchSearchRequest {
@@ -121,6 +123,13 @@ export interface CarsearchSearchRequest {
    * @format int32
    */
   limit?: number;
+  /**
+   * «Рынок» номеров (главная: блок по языку интерфейса и вкладки стран):
+   * "ru" — российские, "ua" — украинские, "de" — ЕС с регионом D, "us" — США, "cn" — китайские,
+   * "other" — всё, что не попало ни в один рынок (формат неизвестен или другая страна).
+   * Пусто — без фильтра.
+   */
+  market?: string;
   /**
    * Сколько записей пропустить (для бесконечной прокрутки).
    * @format int32

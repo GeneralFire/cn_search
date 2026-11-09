@@ -1,6 +1,9 @@
 package models
 
-import "errors"
+import (
+	"errors"
+	"slices"
+)
 
 // ErrNotFound — запрошенной записи нет.
 var ErrNotFound = errors.New("not found")
@@ -10,7 +13,28 @@ type SearchOpts struct {
 	Plate           string // строка поиска по началу слов номера; пусто — все записи
 	Offset          int
 	Limit           int
-	IncludeTestData bool // отдавать и строки с is_test_data = true (заголовок include-test-data)
+	IncludeTestData bool   // отдавать и строки с is_test_data = true (заголовок include-test-data)
+	Market          Market // «рынок» номеров; пусто — без фильтра
+}
+
+// Market — «рынок» номеров для главной: страна по формату номера (plates.meta: type, region).
+type Market string
+
+const (
+	MarketRU    Market = "ru"    // type "ru"
+	MarketUA    Market = "ua"    // type "ua"
+	MarketDE    Market = "de"    // type "eu", region "D"
+	MarketUS    Market = "us"    // type "us"
+	MarketCN    Market = "cn"    // type "cn"
+	MarketOther Market = "other" // всё, что не попало ни в один рынок выше
+)
+
+// Markets — все рынки, кроме «прочего» (оно — их дополнение).
+var Markets = []Market{MarketRU, MarketUA, MarketDE, MarketUS, MarketCN}
+
+// Valid — известный рынок или пусто (без фильтра).
+func (m Market) Valid() bool {
+	return m == "" || m == MarketOther || slices.Contains(Markets, m)
 }
 
 // SamePlateOpts — параметры выборки всех фиксаций номера.

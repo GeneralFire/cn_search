@@ -45,6 +45,34 @@ var plateMatch = `(` + plateTSVector("p.plate") + ` @@ ` + tsQueryFrom + `
 // notTestData — без include-test-data строки с is_test_data не отдаются (ни фиксации, ни номера).
 const notTestData = `NOT s.is_test_data AND NOT p.is_test_data`
 
+// plateTypeExpr, plateRegionExpr — формат и регион номера; coalesce — чтобы условия рынков были
+// true/false и без ключа в meta (иначе NULL, и NOT (…) для «прочего» терял бы такие номера).
+const (
+	plateTypeExpr   = `coalesce(p.meta->>'type', '')`
+	plateRegionExpr = `coalesce(p.meta->>'region', '')`
+)
+
+// marketConds — условие на номер для каждого рынка (кроме «прочего» — это отрицание их всех).
+var marketConds = map[models.Market]string{
+	models.MarketRU: plateTypeExpr + ` = 'ru'`,
+	models.MarketUA: plateTypeExpr + ` = 'ua'`,
+	models.MarketDE: `(` + plateTypeExpr + ` = 'eu' AND ` + plateRegionExpr + ` = 'D')`,
+	models.MarketUS: plateTypeExpr + ` = 'us'`,
+	models.MarketCN: plateTypeExpr + ` = 'cn'`,
+}
+
+// marketCond — условие WHERE для рынка m; "" — без фильтра (пустой или неизвестный рынок).
+func marketCond(m models.Market) string {
+	if m != models.MarketOther {
+		return marketConds[m]
+	}
+	known := make([]string, len(models.Markets))
+	for i, k := range models.Markets {
+		known[i] = marketConds[k]
+	}
+	return `NOT (` + strings.Join(known, " OR ") + `)`
+}
+
 // latestPerPlate — по одной фиксации на номер (последней из подходящих), от новых к старым.
 func latestPerPlate(where string) string {
 	return fmt.Sprintf(`SELECT * FROM (
@@ -70,6 +98,9 @@ func (r *repository) Search(ctx context.Context, tx db.Executor, q models.Search
 	if q.Plate != "" {
 		args = append(args, q.Plate)
 		conds = append(conds, plateMatch) // $1
+	}
+	if c := marketCond(q.Market); c != "" {
+		conds = append(conds, c)
 	}
 	if !q.IncludeTestData {
 		conds = append(conds, notTestData)

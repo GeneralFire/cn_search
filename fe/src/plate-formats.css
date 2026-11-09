@@ -1,0 +1,31 @@
+/* Номерные знаки Украины и Китая (plateHtml в ui.ts); RU/EU/US — в style.css. */
+
+/* Номер Украины: синяя полоса с флагом и «UA», чёрные символы на белом */
+.plate-ua {
+  display: inline-flex; align-items: stretch; flex-shrink: 0;
+  border: 2px solid #1a1a1a; border-radius: 6px; overflow: hidden;
+  background: #fff; color: #111;
+  font: 700 0.95rem/1 "Roboto Mono", ui-monospace, Menlo, monospace;
+}
+.plate-ua__band {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  background: #0b3fa8; color: #fff; padding: 3px 4px; font-size: 0.5em; letter-spacing: 0.04em; min-width: 1.7em;
+}
+.plate-ua__flag.flag { width: 1.7em; height: 1.1em; border: 0; border-radius: 1px; }
+.plate-ua__num { padding: 6px 9px; letter-spacing: 0.06em; white-space: nowrap; }
+
+/* Номер Китая: синий знак, белые символы и белая рамка внутри */
+.plate-cn {
+  display: inline-block; flex-shrink: 0; white-space: nowrap;
+  padding: 2px; border-radius: 6px;
+  background: #1747b5; color: #fff;
+  font: 700 0.95rem/1 "Roboto Mono", ui-monospace, Menlo, "PingFang SC", "Noto Sans CJK SC", monospace;
+}
+.plate-cn__num {
+  display: block; padding: 4px 9px; border: 1.5px solid #fff; border-radius: 4px; letter-spacing: 0.06em;
+}
+
+.plate-ua.plate--xl, .plate-cn.plate--xl { font-size: clamp(1.6rem, 5vw, 2.4rem); box-shadow: var(--shadow); }
+.plate-ua.plate--xl { border-width: 3px; border-radius: 10px; }
+.plate-cn.plate--xl { padding: 4px; border-radius: 10px; }
+.plate-cn.plate--xl .plate-cn__num { border-width: 2px; border-radius: 7px; }

@@ -2,21 +2,22 @@
 
 -- +goose Up
 -- Ключ поиска по номеру: похожие символы сводятся к одному. Кириллические буквы номера
--- (А В Е К М Н О Р С Т У Х) → латинские двойники, буква О (кир. и лат.) → цифра 0, дефис → пробел
--- (иначе парсер tsvector читает "KDT-4419" как 'kdt' и '-4419'); регистр снимает
+-- (А В Е К М Н О Р С Т У Х, украинская І) → латинские двойники, буква О (кир. и лат.) → цифра 0,
+-- дефис и точка китайских номеров "·" → пробел (иначе парсер tsvector читает "KDT-4419" как 'kdt'
+-- и '-4419', а "京A·12345" — как одно слово с точкой); регистр снимает
 -- to_tsvector/to_tsquery ('simple' приводит к нижнему). "О515НХ 52" → "0515HX 52", запросы
 -- "0515", "O515hx", "о515нх" дают тот же ключ. Применяется и в индексах, и к строке запроса
 -- (internal/repository/postgres.go) — выражения должны совпадать, иначе GIN не используется.
 -- +goose StatementBegin
 CREATE FUNCTION plate_search_key(s text) RETURNS text
 LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE
-RETURN translate(s, 'АВЕКМНОРСТУХавекмнорстухOo-', 'ABEKMH0PCTYXabekmh0pctyx00 ');
+RETURN translate(s, 'АВЕКМНОРСТУХавекмнорстухOo-Іі·', 'ABEKMH0PCTYXabekmh0pctyx00 Ii ');
 -- +goose StatementEnd
 
 CREATE TABLE plates (
     id    uuid  PRIMARY KEY DEFAULT gen_random_uuid(),
     plate text  NOT NULL UNIQUE, -- госномер кириллицей: "А123ВС 777"
-    meta  jsonb NOT NULL DEFAULT '{}', -- {"type": "ru"|"eu"|"us", "region": "D"|"CA"…, …}; нет type — формат неизвестен
+    meta  jsonb NOT NULL DEFAULT '{}', -- {"type": "ru"|"eu"|"us"|"ua"|"cn", "region": "D"|"CA"…, …}; нет type — формат неизвестен
     is_test_data boolean NOT NULL DEFAULT false -- тестовые данные (миграция 0002_test_data)
 );
 
@@ -50,7 +51,7 @@ CREATE TABLE clarifications (
     id           uuid                 PRIMARY KEY DEFAULT gen_random_uuid(),
     sighting_id  uuid                 NOT NULL REFERENCES plate_sightings (id),
     plate        text                 NOT NULL, -- предложенный номер, как ввели
-    plate_type   text                 NOT NULL DEFAULT '' CHECK (plate_type IN ('', 'ru', 'eu', 'us')), -- формат; '' — другой/неизвестен
+    plate_type   text                 NOT NULL DEFAULT '' CHECK (plate_type IN ('', 'ru', 'eu', 'us', 'ua', 'cn')), -- формат; '' — другой/неизвестен
     plate_region text                 NOT NULL DEFAULT '', -- страна (ЕС: "D") или штат (США: "CA")
     status       clarification_status NOT NULL DEFAULT 'not_accepted',
     created_at   timestamptz          NOT NULL DEFAULT now(),

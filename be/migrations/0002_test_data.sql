@@ -128,6 +128,40 @@ FROM (VALUES
 ) AS v (plate, address, locale, photo, created_at, lat, lon)
 JOIN plates p ON p.plate = v.plate;
 
+-- Номера Украины и Китая (рынки главной для языков uk и zh) с адресами на языке страны и пара номеров
+-- других стран ЕС — для вкладки «Прочее» (вместе с ТАКСИ 01 без формата).
+INSERT INTO plates (plate, meta, is_test_data) VALUES
+  ('АА 1234 ВС', '{"type": "ua", "city": "Київ"}', true),
+  ('КА 7781 АМ', '{"type": "ua", "city": "Київ"}', true),
+  ('ВС 4502 ІК', '{"type": "ua", "city": "Львів"}', true),
+  ('ВН 3388 ЕК', '{"type": "ua", "city": "Одеса"}', true),
+  ('АХ 9061 НІ', '{"type": "ua", "city": "Харків"}', true),
+  ('京A·12345',  '{"type": "cn", "city": "北京"}', true),
+  ('沪B·67890',  '{"type": "cn", "city": "上海"}', true),
+  ('粤B·D1234',  '{"type": "cn", "city": "深圳"}', true),
+  ('AB-123-CD',  '{"type": "eu", "region": "F", "city": "Paris"}', true),
+  ('WA 12345',   '{"type": "eu", "region": "PL", "city": "Warszawa"}', true);
+
+INSERT INTO plate_sightings (plate_id, address, address_locale, photo_key, photo_thumb_key, created_at, is_test_data)
+SELECT p.id, v.address, v.locale,
+       'car-' || v.photo || '.jpg', 'car-' || v.photo || '_thumb.jpg', v.created_at, true
+FROM (VALUES
+  ('АА 1234 ВС', 'Київ, вул. Хрещатик, 22',          'uk', 3, timestamptz '2026-11-09 10:20:00Z'),
+  ('АА 1234 ВС', 'Київ, Майдан Незалежності, 1',     'uk', 3, timestamptz '2026-11-04 15:05:00Z'),
+  ('КА 7781 АМ', 'Київ, просп. Перемоги, 37',        'uk', 6, timestamptz '2026-11-07 08:40:00Z'),
+  ('ВС 4502 ІК', 'Львів, пл. Ринок, 1',              'uk', 2, timestamptz '2026-11-08 17:30:00Z'),
+  ('ВС 4502 ІК', 'Львів, просп. Свободи, 28',        'uk', 2, timestamptz '2026-10-31 12:10:00Z'),
+  ('ВН 3388 ЕК', 'Одеса, вул. Дерибасівська, 10',    'uk', 9, timestamptz '2026-11-05 19:45:00Z'),
+  ('АХ 9061 НІ', 'Харків, вул. Сумська, 46',         'uk', 5, timestamptz '2026-11-02 07:15:00Z'),
+  ('京A·12345',  '北京, 东城区东长安街1号',           'zh', 4, timestamptz '2026-11-09 03:30:00Z'),
+  ('京A·12345',  '北京, 朝阳区建国路87号',            'zh', 4, timestamptz '2026-11-01 09:00:00Z'),
+  ('沪B·67890',  '上海, 黄浦区南京东路100号',         'zh', 7, timestamptz '2026-11-06 11:50:00Z'),
+  ('粤B·D1234',  '深圳, 福田区深南大道6008号',        'zh', 1, timestamptz '2026-11-03 06:25:00Z'),
+  ('AB-123-CD',  'Paris, 8 Rue de Rivoli',           'fr', 10, timestamptz '2026-11-06 16:00:00Z'),
+  ('WA 12345',   'Warszawa, ul. Marszałkowska 104',  'pl', 8, timestamptz '2026-10-28 13:35:00Z')
+) AS v (plate, address, locale, photo, created_at)
+JOIN plates p ON p.plate = v.plate;
+
 -- Уточнения: к фиксации Т789УХ 116 предложили Т789УХ 716 (принято), к М456ОР 178 — М456ОР 198 (не принято).
 INSERT INTO clarifications (sighting_id, plate, status, created_at, is_test_data) VALUES
   ('00000000-0000-0000-0000-000000000003', 'Т789УХ 716', 'accepted',     timestamptz '2026-11-08 13:00:00Z', true),

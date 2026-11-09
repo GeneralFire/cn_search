@@ -44,6 +44,17 @@ func TestSearchPassesIncludeTestData(t *testing.T) {
 	}
 }
 
+func TestSearchPassesMarket(t *testing.T) {
+	for _, m := range []string{"ru", "ua", "de", "us", "cn", "other"} {
+		svc, uc := newSvc(t)
+		uc.SearchMock.Expect(minimock.AnyContext, models.SearchOpts{Limit: 14, Market: models.Market(m)}).
+			Return(models.SearchPage{}, nil)
+		if _, err := svc.Search(context.Background(), &pb.SearchRequest{Market: m, Limit: 14}); err != nil {
+			t.Errorf("%s: %v", m, err)
+		}
+	}
+}
+
 func TestSearchLastPage(t *testing.T) {
 	svc, uc := newSvc(t)
 	uc.SearchMock.Expect(minimock.AnyContext, models.SearchOpts{Offset: 595, Limit: 10}).
@@ -61,6 +72,8 @@ func TestSearchErrors(t *testing.T) {
 		"limit < 0":     {Limit: -1},
 		"offset < 0":    {Offset: -1},
 		"длинный номер": {Plate: "АААААААААААААААААААААААААААААААААААААА"},
+		"чужой рынок":   {Market: "fr"},
+		"рынок в caps":  {Market: "RU"},
 	} {
 		svc, _ := newSvc(t) // usecase не должен вызываться
 		if _, err := svc.Search(context.Background(), req); status.Code(err) != codes.InvalidArgument {
@@ -72,5 +85,22 @@ func TestSearchErrors(t *testing.T) {
 	uc.SearchMock.Return(models.SearchPage{}, errors.New("db down"))
 	if _, err := svc.Search(context.Background(), &pb.SearchRequest{}); status.Code(err) != codes.Internal {
 		t.Errorf("ошибка БД: %v", status.Code(err))
+	}
+}
+
+func TestPlateTypeMapping(t *testing.T) {
+	svc, _ := newSvc(t)
+	for typ, want := range map[string]pb.PlateType{
+		"ru": pb.PlateType_PLATE_TYPE_RU, "eu": pb.PlateType_PLATE_TYPE_EU, "us": pb.PlateType_PLATE_TYPE_US,
+		"ua": pb.PlateType_PLATE_TYPE_UA, "cn": pb.PlateType_PLATE_TYPE_CN, "": pb.PlateType_PLATE_TYPE_DEFAULT,
+	} {
+		c := sighting
+		c.PlateType = typ
+		if got := svc.toPB(c).GetPlateType(); got != want {
+			t.Errorf("%q → %v, want %v", typ, got, want)
+		}
+		if typ != "" && plateTypeModel[want] != typ {
+			t.Errorf("clarify: %v → %q, want %q", want, plateTypeModel[want], typ)
+		}
 	}
 }

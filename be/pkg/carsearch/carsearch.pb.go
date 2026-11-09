@@ -30,6 +30,8 @@ const (
 	PlateType_PLATE_TYPE_RU      PlateType = 1
 	PlateType_PLATE_TYPE_EU      PlateType = 2
 	PlateType_PLATE_TYPE_US      PlateType = 3
+	PlateType_PLATE_TYPE_UA      PlateType = 4 // украинский: "АА 1234 ВС"
+	PlateType_PLATE_TYPE_CN      PlateType = 5 // китайский: "京A·12345"
 )
 
 // Enum value maps for PlateType.
@@ -39,12 +41,16 @@ var (
 		1: "PLATE_TYPE_RU",
 		2: "PLATE_TYPE_EU",
 		3: "PLATE_TYPE_US",
+		4: "PLATE_TYPE_UA",
+		5: "PLATE_TYPE_CN",
 	}
 	PlateType_value = map[string]int32{
 		"PLATE_TYPE_DEFAULT": 0,
 		"PLATE_TYPE_RU":      1,
 		"PLATE_TYPE_EU":      2,
 		"PLATE_TYPE_US":      3,
+		"PLATE_TYPE_UA":      4,
+		"PLATE_TYPE_CN":      5,
 	}
 )
 
@@ -268,7 +274,12 @@ type SearchRequest struct {
 	// Сколько записей пропустить (для бесконечной прокрутки).
 	Offset int32 `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
 	// Размер страницы, 1..100; 0 — по умолчанию (35).
-	Limit         int32 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	Limit int32 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	// «Рынок» номеров (главная: блок по языку интерфейса и вкладки стран):
+	// "ru" — российские, "ua" — украинские, "de" — ЕС с регионом D, "us" — США, "cn" — китайские,
+	// "other" — всё, что не попало ни в один рынок (формат неизвестен или другая страна).
+	// Пусто — без фильтра.
+	Market        string `protobuf:"bytes,4,opt,name=market,proto3" json:"market,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -322,6 +333,13 @@ func (x *SearchRequest) GetLimit() int32 {
 		return x.Limit
 	}
 	return 0
+}
+
+func (x *SearchRequest) GetMarket() string {
+	if x != nil {
+		return x.Market
+	}
+	return ""
 }
 
 type SearchResponse struct {
@@ -808,11 +826,12 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	" \x01(\x01H\x00R\x03lat\x88\x01\x01\x12\x15\n" +
 	"\x03lon\x18\v \x01(\x01H\x01R\x03lon\x88\x01\x01B\x06\n" +
 	"\x04_latB\x06\n" +
-	"\x04_lon\"S\n" +
+	"\x04_lon\"k\n" +
 	"\rSearchRequest\x12\x14\n" +
 	"\x05plate\x18\x01 \x01(\tR\x05plate\x12\x16\n" +
 	"\x06offset\x18\x02 \x01(\x05R\x06offset\x12\x14\n" +
-	"\x05limit\x18\x03 \x01(\x05R\x05limit\"\x8c\x01\n" +
+	"\x05limit\x18\x03 \x01(\x05R\x05limit\x12\x16\n" +
+	"\x06market\x18\x04 \x01(\tR\x06market\"\x8c\x01\n" +
 	"\x0eSearchResponse\x12.\n" +
 	"\x05items\x18\x01 \x03(\v2\x18.carsearch.PlateSightingR\x05items\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x05R\x05total\x12$\n" +
@@ -848,12 +867,14 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"plate_type\x18\x03 \x01(\x0e2\x14.carsearch.PlateTypeR\tplateType\x12!\n" +
 	"\fplate_region\x18\x04 \x01(\tR\vplateRegion\"Q\n" +
 	"\x0fClarifyResponse\x12>\n" +
-	"\rclarification\x18\x01 \x01(\v2\x18.carsearch.ClarificationR\rclarification*\\\n" +
+	"\rclarification\x18\x01 \x01(\v2\x18.carsearch.ClarificationR\rclarification*\x82\x01\n" +
 	"\tPlateType\x12\x16\n" +
 	"\x12PLATE_TYPE_DEFAULT\x10\x00\x12\x11\n" +
 	"\rPLATE_TYPE_RU\x10\x01\x12\x11\n" +
 	"\rPLATE_TYPE_EU\x10\x02\x12\x11\n" +
-	"\rPLATE_TYPE_US\x10\x03*\x85\x01\n" +
+	"\rPLATE_TYPE_US\x10\x03\x12\x11\n" +
+	"\rPLATE_TYPE_UA\x10\x04\x12\x11\n" +
+	"\rPLATE_TYPE_CN\x10\x05*\x85\x01\n" +
 	"\x13ClarificationStatus\x12$\n" +
 	" CLARIFICATION_STATUS_UNSPECIFIED\x10\x00\x12%\n" +
 	"!CLARIFICATION_STATUS_NOT_ACCEPTED\x10\x01\x12!\n" +

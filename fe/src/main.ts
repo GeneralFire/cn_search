@@ -6,6 +6,9 @@ import { cardHtml, escapeHtml, formatDate, icon, plateHtml } from "./ui";
 import { SWITCH_FLAG, t, tp } from "./i18n/i18n";
 import { mountSettings } from "./settings";
 import { initHoverPreview } from "./hoverpreview";
+import {
+  flagHtml, gridColumns, homeMarket, marketName, setTabInUrl, tabFromUrl, tabsHtml, TABS, type Market,
+} from "./home";
 
 const PAGE_SIZE = 35; // кратно 5 и 7 — по числу колонок сетки
 const DEBOUNCE_MS = 250;
@@ -42,11 +45,19 @@ app.innerHTML = `
   </header>
 
   <main class="content">
+    <section class="fy" aria-labelledby="fy-title" hidden>
+      <div class="fy__head">
+        <h2 class="fy__title" id="fy-title">${flagHtml(homeMarket())}${t("homeTabs.forYou")} · <span class="fy__market">${escapeHtml(marketName(homeMarket()))}</span></h2>
+        <span class="fy__sub">${t("homeTabs.forYouHint")}</span>
+      </div>
+      <div class="grid fy__grid"></div>
+    </section>
+    <nav class="tabs" role="tablist" aria-label="${t("homeTabs.aria")}" hidden></nav>
     <div class="content__head">
-      <h2>${t("results.title")}</h2>
+      <h2 class="content__title">${t("results.title")}</h2>
       <span class="content__count" aria-live="polite"></span>
     </div>
-    <section class="grid"></section>
+    <section class="grid feed" id="feed"></section>
     <div class="more" hidden>
       <button class="more__btn" type="button">${t("more.load")}</button>
       <span class="more__info"></span>
@@ -71,7 +82,11 @@ app.innerHTML = `
 `;
 
 const $plate = app.querySelector<HTMLInputElement>("#q-plate")!;
-const $grid = app.querySelector<HTMLElement>(".grid")!;
+const $grid = app.querySelector<HTMLElement>(".feed")!;
+const $title = app.querySelector<HTMLElement>(".content__title")!;
+const $fy = app.querySelector<HTMLElement>(".fy")!;
+const $fyGrid = app.querySelector<HTMLElement>(".fy__grid")!;
+const $tabs = app.querySelector<HTMLElement>(".tabs")!;
 const $count = app.querySelector<HTMLElement>(".content__count")!;
 const $more = app.querySelector<HTMLElement>(".more")!;
 const $moreBtn = app.querySelector<HTMLButtonElement>(".more__btn")!;
@@ -95,12 +110,24 @@ const state = {
   total: 0,
   nextOffset: 0 as number | null, // null — всё загружено
   failed: false,
-  cars: new Map<string, Car>(), // загруженные машины — для модалки
+  cars: new Map<string, Car>(), // машины ленты
   ctrl: null as AbortController | null,
+  tab: tabFromUrl(), // вкладка главной (рынок ленты без запроса)
+  skip: 0, // ленту вкладки «для вас» начинаем после карточек блока — они уже показаны выше
 };
 
+/** Все загруженные машины (лента и «для вас») — для модалки «Уточнить». */
+const known = new Map<string, Car>();
+
+/** Есть запрос — обычная выдача поиска; нет — главная: «для вас», вкладки и лента вкладки. */
+const hasQuery = () => $plate.value.trim() !== "";
+
 function render(): void {
-  const shown = state.cars.size;
+  const shown = state.cars.size + state.skip;
+  const home = !hasQuery();
+  $fy.hidden = !home || forYou.cars.length === 0;
+  $tabs.hidden = !home;
+  $title.textContent = home ? marketName(state.tab) : t("results.title");
   $count.textContent = state.total
     ? tp("results.found", state.total)
     : "";
@@ -127,14 +154,23 @@ async function loadMore(): Promise<void> {
   render();
 
   try {
+    const home = !hasQuery();
+    if (home && state.tab === homeMarket()) {
+      // Лента вкладки языка продолжает блок «для вас»: ждём его и пропускаем его карточки.
+      const skip = await forYou.ready;
+      if (gen !== state.generation) return;
+      if (state.nextOffset === 0) state.nextOffset = state.skip = skip;
+    }
     const page = await search(
-      { plate: $plate.value, offset: state.nextOffset, limit: PAGE_SIZE },
+      home
+        ? { market: state.tab, offset: state.nextOffset!, limit: PAGE_SIZE }
+        : { plate: $plate.value, offset: state.nextOffset!, limit: PAGE_SIZE },
       ctrl.signal
     );
     if (gen !== state.generation) return; // пока грузили, запрос поменялся
 
     const startIndex = state.cars.size;
-    page.items.forEach((c) => state.cars.set(c.id, c));
+    page.items.forEach((c) => (state.cars.set(c.id, c), known.set(c.id, c)));
     $grid.insertAdjacentHTML("beforeend", page.items.map((c, i) => cardHtml(c, i)).join(""));
     state.total = page.total;
     state.nextOffset = page.nextOffset;
@@ -159,7 +195,13 @@ async function loadMore(): Promise<void> {
 }
 
 function renderEmpty(): void {
-  $grid.innerHTML = `<div class="empty"><strong>${t("empty.title")}</strong>${t("empty.hint")}</div>`;
+  if (hasQuery()) {
+    $grid.innerHTML = `<div class="empty"><strong>${t("empty.title")}</strong>${t("empty.hint")}</div>`;
+  } else if (state.skip > 0) {
+    $grid.innerHTML = `<p class="feed__note">${t("homeTabs.allAbove")}</p>`;
+  } else {
+    $grid.innerHTML = `<div class="empty"><strong>${t("homeTabs.emptyTitle")}</strong>${t("homeTabs.emptyHint")}</div>`;
+  }
 }
 
 function newSearch(): void {
@@ -169,10 +211,73 @@ function newSearch(): void {
   state.failed = false;
   state.total = 0;
   state.nextOffset = 0;
+  state.skip = 0;
   state.cars.clear();
   $grid.innerHTML = "";
+  if (!hasQuery()) {
+    loadForYou();
+    setTabInUrl(state.tab);
+  }
+  render();
   void loadMore();
 }
+
+// ---------------------------------------------------------------------------
+// Главная: «для вас» и вкладки
+// ---------------------------------------------------------------------------
+
+/** Блок «для вас»: первые 2 ряда номеров рынка языка; ready — сколько карточек показано. */
+const forYou = {
+  started: false,
+  cars: [] as Car[],
+  ready: Promise.resolve(0),
+};
+
+/** Грузится один раз: число карточек — 2 ряда при ширине сетки на момент загрузки. */
+function loadForYou(): void {
+  if (forYou.started) return;
+  forYou.started = true;
+  $fy.hidden = false; // чтобы сетка получила ширину и колонки
+  const limit = Math.min(2 * gridColumns($fyGrid), 100);
+  forYou.ready = search({ market: homeMarket(), offset: 0, limit })
+    .then((page) => {
+      forYou.cars = page.items;
+      page.items.forEach((c) => known.set(c.id, c));
+      $fyGrid.innerHTML = page.items.map((c, i) => cardHtml(c, i)).join("");
+      return page.items.length;
+    })
+    .catch(() => 0) // не загрузился — блока нет, лента вкладки начинается с начала
+    .finally(render);
+}
+
+function renderTabs(): void {
+  $tabs.innerHTML = tabsHtml(state.tab, "feed");
+  $grid.setAttribute("role", "tabpanel");
+  $grid.setAttribute("aria-labelledby", `tab-${state.tab}`);
+}
+
+function selectTab(m: Market, focus = false): void {
+  if (m === state.tab) return;
+  state.tab = m;
+  renderTabs();
+  if (focus) $tabs.querySelector<HTMLElement>(`[data-tab="${m}"]`)?.focus();
+  $tabs.querySelector(`[data-tab="${m}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  newSearch();
+}
+
+$tabs.addEventListener("click", (e) => {
+  const b = (e.target as Element).closest<HTMLButtonElement>("[data-tab]");
+  if (b) selectTab(b.dataset.tab as Market);
+});
+// Стрелки, Home/End — по вкладкам (шаблон WAI-ARIA tabs).
+$tabs.addEventListener("keydown", (e) => {
+  const i = TABS.findIndex((x) => x.market === state.tab);
+  const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: TABS.length - 1 }[e.key];
+  if (next === undefined) return;
+  e.preventDefault();
+  selectTab(TABS[(next + TABS.length) % TABS.length].market, true);
+});
+renderTabs();
 
 // Бесконечная прокрутка: когда блок «Загрузить ещё» подходит к экрану — грузим следующую страницу.
 const observer = new IntersectionObserver(
@@ -282,9 +387,9 @@ $modalForm.addEventListener("submit", async (e) => {
   }
 });
 
-$grid.addEventListener("click", (e) => {
+app.querySelector(".content")!.addEventListener("click", (e) => {
   const btn = (e.target as Element).closest<HTMLButtonElement>("[data-clarify]");
-  const car = btn && state.cars.get(btn.dataset.clarify ?? "");
+  const car = btn && known.get(btn.dataset.clarify ?? "");
   if (car) openClarify(car);
 });
 
@@ -368,6 +473,8 @@ onRoute((route) => {
   if (!searchStarted) {
     searchStarted = true;
     newSearch();
+  } else if (!hasQuery() && tabFromUrl() !== state.tab) {
+    selectTab(tabFromUrl()); // адрес с другой вкладкой (переход по истории)
   }
   requestAnimationFrame(() => window.scrollTo({ top: searchScroll }));
 });

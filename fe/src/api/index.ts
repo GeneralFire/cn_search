@@ -14,7 +14,7 @@ import { localizeAddress, t } from "../i18n/i18n";
  *  address — уже на языке интерфейса (localizeAddress), addressLocale — язык исходной записи. */
 export type Car = Required<Pick<CarsearchPlateSighting, "id" | "plate" | "address" | "createdAt">> &
   Pick<CarsearchPlateSighting, "photoUrl" | "thumbUrl" | "addressLocale" | "plateRegion"> & {
-    /** Формат номера: "ru" | "eu" | "us" | "" (неизвестен). */
+    /** Формат номера: "ru" | "eu" | "us" | "ua" | "cn" | "" (неизвестен). */
     plateType: string;
     /** Координаты места фиксации (WGS 84); нет — точка неизвестна (на карте не показывается). */
     lat?: number;
@@ -25,6 +25,8 @@ const plateTypes: Record<string, string> = {
   [CarsearchPlateType.PLATE_TYPE_RU]: "ru",
   [CarsearchPlateType.PLATE_TYPE_EU]: "eu",
   [CarsearchPlateType.PLATE_TYPE_US]: "us",
+  [CarsearchPlateType.PLATE_TYPE_UA]: "ua",
+  [CarsearchPlateType.PLATE_TYPE_CN]: "cn",
 };
 
 export interface CarsPage {
@@ -96,6 +98,8 @@ const plateTypeEnum: Record<string, CarsearchPlateType> = {
   ru: CarsearchPlateType.PLATE_TYPE_RU,
   eu: CarsearchPlateType.PLATE_TYPE_EU,
   us: CarsearchPlateType.PLATE_TYPE_US,
+  ua: CarsearchPlateType.PLATE_TYPE_UA,
+  cn: CarsearchPlateType.PLATE_TYPE_CN,
 };
 
 /** Уточнение номера к фиксации: номер, формат ("ru" | "eu" | "us" | "") и регион (страна ЕС / штат США). */

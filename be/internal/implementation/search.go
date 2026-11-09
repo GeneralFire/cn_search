@@ -32,6 +32,7 @@ func (s *CarSearch) Search(ctx context.Context, req *pb.SearchRequest) (*pb.Sear
 		Offset:          int(req.GetOffset()),
 		Limit:           limit,
 		IncludeTestData: includeTestData(ctx),
+		Market:          models.Market(req.GetMarket()),
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, "не удалось выполнить поиск")
@@ -57,6 +58,8 @@ func validateSearch(req *pb.SearchRequest) error {
 		return status.Errorf(codes.InvalidArgument, "plate: не длиннее %d символов", maxQueryLength)
 	case req.GetOffset() < 0:
 		return status.Error(codes.InvalidArgument, "offset: не может быть отрицательным")
+	case !models.Market(req.GetMarket()).Valid():
+		return status.Error(codes.InvalidArgument, "market: ru, ua, de, us, cn, other или пусто")
 	case req.GetLimit() < 0 || req.GetLimit() > MaxLimit:
 		return status.Errorf(codes.InvalidArgument, "limit: от 1 до %d (0 — по умолчанию %d)", MaxLimit, DefaultLimit)
 	}

@@ -50,4 +50,6 @@ var plateTypePB = map[string]pb.PlateType{
 	"ru": pb.PlateType_PLATE_TYPE_RU,
 	"eu": pb.PlateType_PLATE_TYPE_EU,
 	"us": pb.PlateType_PLATE_TYPE_US,
+	"ua": pb.PlateType_PLATE_TYPE_UA,
+	"cn": pb.PlateType_PLATE_TYPE_CN,
 }

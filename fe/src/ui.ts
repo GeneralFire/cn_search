@@ -1,4 +1,5 @@
 import { plateHref } from "./router";
+import "./plate-formats.css";
 
 // Общие куски разметки и форматирования для страниц поиска и номера.
 import { getLang, intlLocale, t } from "./i18n/i18n";
@@ -28,7 +29,7 @@ const dateFmt = new Intl.DateTimeFormat(LOCALE, {
 });
 export const formatDate = (iso: string) => (iso ? dateFmt.format(new Date(iso)) : "");
 
-/** Что нужно, чтобы нарисовать номер. type: "ru" | "eu" | "us" | "" (неизвестен). */
+/** Что нужно, чтобы нарисовать номер. type: "ru" | "eu" | "us" | "ua" | "cn" | "" (неизвестен). */
 export interface PlateLike {
   plate: string;
   plateType?: string;
@@ -39,7 +40,8 @@ const US_STATES: Record<string, string> = {
   CA: "California", NY: "New York", TX: "Texas", FL: "Florida", WA: "Washington", IL: "Illinois", NV: "Nevada",
 };
 
-/** Номерной знак в формате его страны: RU, EU (синяя полоса со звёздами), US (штат сверху), иначе — нейтральный. */
+/** Номерной знак в формате его страны: RU, EU (синяя полоса со звёздами), US (штат сверху),
+ *  UA (синяя полоса с флагом и «UA»), CN (синий знак с белыми символами), иначе — нейтральный. */
 export function plateHtml(c: PlateLike | string, size: "" | "xl" = ""): string {
   const { plate, plateType = "ru", plateRegion = "" } = typeof c === "string" ? { plate: c } : c;
   const label = `aria-label="${escapeHtml(t("plate.aria", { plate }))}"`;
@@ -54,6 +56,10 @@ export function plateHtml(c: PlateLike | string, size: "" | "xl" = ""): string {
       return `<span class="plate-eu${xl}" ${label}><span class="plate-eu__band"><i class="plate-eu__stars"></i>${escapeHtml(plateRegion)}</span><span class="plate-eu__num">${escapeHtml(plate)}</span></span>`;
     case "us":
       return `<span class="plate-us${xl}" ${label}><span class="plate-us__state">${escapeHtml(US_STATES[plateRegion] ?? plateRegion)}</span><span class="plate-us__num">${escapeHtml(plate)}</span></span>`;
+    case "ua":
+      return `<span class="plate-ua${xl}" ${label}><span class="plate-ua__band"><i class="flag flag--uk plate-ua__flag"></i>UA</span><span class="plate-ua__num">${escapeHtml(plate)}</span></span>`;
+    case "cn":
+      return `<span class="plate-cn${xl}" ${label}><span class="plate-cn__num">${escapeHtml(plate)}</span></span>`;
   }
   return `<span class="plate-any${xl}" ${label}>${escapeHtml(plate)}</span>`;
 }
