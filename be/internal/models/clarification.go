@@ -17,10 +17,15 @@ type Clarification struct {
 	Plate      string              `db:"plate"`
 	Status     ClarificationStatus `db:"status"`
 	CreatedAt  time.Time           `db:"created_at"`
+
+	PlateType   string `db:"plate_type"`   // "ru" | "eu" | "us" | "" (другой/неизвестен)
+	PlateRegion string `db:"plate_region"` // страна (ЕС) или штат (США)
 }
 
 // ClarifyOpts — новое уточнение.
 type ClarifyOpts struct {
-	SightingID string
-	Plate      string
+	SightingID  string
+	Plate       string
+	PlateType   string // "ru" | "eu" | "us" | ""
+	PlateRegion string
 }

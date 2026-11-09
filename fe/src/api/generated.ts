@@ -25,6 +25,9 @@ export interface CarsearchClarification {
   id?: string;
   /** Предложенный номер, как ввели. */
   plate?: string;
+  plateRegion?: string;
+  /** Формат номерного знака — от него зависит, как его рисовать. */
+  plateType?: CarsearchPlateType;
   /** uuid фиксации, к которой уточнение. */
   sightingId?: string;
   /** Статус уточнения. */
@@ -44,6 +47,10 @@ export enum CarsearchClarificationStatus {
 export interface CarsearchClarifyRequest {
   /** Номер, 1..32 символа. */
   plate?: string;
+  /** Страна (ЕС: "D") или штат (США: "CA"), до 3 латинских букв; для RU/DEFAULT не нужен. */
+  plateRegion?: string;
+  /** Формат номера; DEFAULT — другой/неизвестен. */
+  plateType?: CarsearchPlateType;
   /** uuid фиксации. */
   sightingId?: string;
 }

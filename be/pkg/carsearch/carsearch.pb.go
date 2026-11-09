@@ -567,6 +567,8 @@ type Clarification struct {
 	Plate         string                 `protobuf:"bytes,3,opt,name=plate,proto3" json:"plate,omitempty"`
 	Status        ClarificationStatus    `protobuf:"varint,4,opt,name=status,proto3,enum=carsearch.ClarificationStatus" json:"status,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	PlateType     PlateType              `protobuf:"varint,6,opt,name=plate_type,json=plateType,proto3,enum=carsearch.PlateType" json:"plate_type,omitempty"`
+	PlateRegion   string                 `protobuf:"bytes,7,opt,name=plate_region,json=plateRegion,proto3" json:"plate_region,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -636,12 +638,30 @@ func (x *Clarification) GetCreatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Clarification) GetPlateType() PlateType {
+	if x != nil {
+		return x.PlateType
+	}
+	return PlateType_PLATE_TYPE_DEFAULT
+}
+
+func (x *Clarification) GetPlateRegion() string {
+	if x != nil {
+		return x.PlateRegion
+	}
+	return ""
+}
+
 type ClarifyRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// uuid фиксации.
 	SightingId string `protobuf:"bytes,1,opt,name=sighting_id,json=sightingId,proto3" json:"sighting_id,omitempty"`
 	// Номер, 1..32 символа.
-	Plate         string `protobuf:"bytes,2,opt,name=plate,proto3" json:"plate,omitempty"`
+	Plate string `protobuf:"bytes,2,opt,name=plate,proto3" json:"plate,omitempty"`
+	// Формат номера; DEFAULT — другой/неизвестен.
+	PlateType PlateType `protobuf:"varint,3,opt,name=plate_type,json=plateType,proto3,enum=carsearch.PlateType" json:"plate_type,omitempty"`
+	// Страна (ЕС: "D") или штат (США: "CA"), до 3 латинских букв; для RU/DEFAULT не нужен.
+	PlateRegion   string `protobuf:"bytes,4,opt,name=plate_region,json=plateRegion,proto3" json:"plate_region,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -686,6 +706,20 @@ func (x *ClarifyRequest) GetSightingId() string {
 func (x *ClarifyRequest) GetPlate() string {
 	if x != nil {
 		return x.Plate
+	}
+	return ""
+}
+
+func (x *ClarifyRequest) GetPlateType() PlateType {
+	if x != nil {
+		return x.PlateType
+	}
+	return PlateType_PLATE_TYPE_DEFAULT
+}
+
+func (x *ClarifyRequest) GetPlateRegion() string {
+	if x != nil {
+		return x.PlateRegion
 	}
 	return ""
 }
@@ -770,7 +804,7 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limit\"A\n" +
 	"\x0fSeeAlsoResponse\x12.\n" +
-	"\x05items\x18\x01 \x03(\v2\x18.carsearch.PlateSightingR\x05items\"\xc9\x01\n" +
+	"\x05items\x18\x01 \x03(\v2\x18.carsearch.PlateSightingR\x05items\"\xa1\x02\n" +
 	"\rClarification\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1f\n" +
 	"\vsighting_id\x18\x02 \x01(\tR\n" +
@@ -778,11 +812,17 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\x05plate\x18\x03 \x01(\tR\x05plate\x126\n" +
 	"\x06status\x18\x04 \x01(\x0e2\x1e.carsearch.ClarificationStatusR\x06status\x129\n" +
 	"\n" +
-	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"G\n" +
+	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x123\n" +
+	"\n" +
+	"plate_type\x18\x06 \x01(\x0e2\x14.carsearch.PlateTypeR\tplateType\x12!\n" +
+	"\fplate_region\x18\a \x01(\tR\vplateRegion\"\x9f\x01\n" +
 	"\x0eClarifyRequest\x12\x1f\n" +
 	"\vsighting_id\x18\x01 \x01(\tR\n" +
 	"sightingId\x12\x14\n" +
-	"\x05plate\x18\x02 \x01(\tR\x05plate\"Q\n" +
+	"\x05plate\x18\x02 \x01(\tR\x05plate\x123\n" +
+	"\n" +
+	"plate_type\x18\x03 \x01(\x0e2\x14.carsearch.PlateTypeR\tplateType\x12!\n" +
+	"\fplate_region\x18\x04 \x01(\tR\vplateRegion\"Q\n" +
 	"\x0fClarifyResponse\x12>\n" +
 	"\rclarification\x18\x01 \x01(\v2\x18.carsearch.ClarificationR\rclarification*\\\n" +
 	"\tPlateType\x12\x16\n" +
@@ -837,20 +877,22 @@ var file_carsearch_carsearch_proto_depIdxs = []int32{
 	2,  // 4: carsearch.SeeAlsoResponse.items:type_name -> carsearch.PlateSighting
 	1,  // 5: carsearch.Clarification.status:type_name -> carsearch.ClarificationStatus
 	12, // 6: carsearch.Clarification.created_at:type_name -> google.protobuf.Timestamp
-	9,  // 7: carsearch.ClarifyResponse.clarification:type_name -> carsearch.Clarification
-	3,  // 8: carsearch.CarSearchService.Search:input_type -> carsearch.SearchRequest
-	5,  // 9: carsearch.CarSearchService.Get:input_type -> carsearch.GetRequest
-	7,  // 10: carsearch.CarSearchService.SeeAlso:input_type -> carsearch.SeeAlsoRequest
-	10, // 11: carsearch.CarSearchService.Clarify:input_type -> carsearch.ClarifyRequest
-	4,  // 12: carsearch.CarSearchService.Search:output_type -> carsearch.SearchResponse
-	6,  // 13: carsearch.CarSearchService.Get:output_type -> carsearch.GetResponse
-	8,  // 14: carsearch.CarSearchService.SeeAlso:output_type -> carsearch.SeeAlsoResponse
-	11, // 15: carsearch.CarSearchService.Clarify:output_type -> carsearch.ClarifyResponse
-	12, // [12:16] is the sub-list for method output_type
-	8,  // [8:12] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	0,  // 7: carsearch.Clarification.plate_type:type_name -> carsearch.PlateType
+	0,  // 8: carsearch.ClarifyRequest.plate_type:type_name -> carsearch.PlateType
+	9,  // 9: carsearch.ClarifyResponse.clarification:type_name -> carsearch.Clarification
+	3,  // 10: carsearch.CarSearchService.Search:input_type -> carsearch.SearchRequest
+	5,  // 11: carsearch.CarSearchService.Get:input_type -> carsearch.GetRequest
+	7,  // 12: carsearch.CarSearchService.SeeAlso:input_type -> carsearch.SeeAlsoRequest
+	10, // 13: carsearch.CarSearchService.Clarify:input_type -> carsearch.ClarifyRequest
+	4,  // 14: carsearch.CarSearchService.Search:output_type -> carsearch.SearchResponse
+	6,  // 15: carsearch.CarSearchService.Get:output_type -> carsearch.GetResponse
+	8,  // 16: carsearch.CarSearchService.SeeAlso:output_type -> carsearch.SeeAlsoResponse
+	11, // 17: carsearch.CarSearchService.Clarify:output_type -> carsearch.ClarifyResponse
+	14, // [14:18] is the sub-list for method output_type
+	10, // [10:14] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_carsearch_carsearch_proto_init() }

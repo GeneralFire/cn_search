@@ -786,6 +786,12 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         "createdAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "plateType": {
+          "$ref": "#/definitions/carsearchPlateType"
+        },
+        "plateRegion": {
+          "type": "string"
         }
       },
       "description": "Clarification — уточнение номера к фиксации."
@@ -810,6 +816,14 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         "plate": {
           "type": "string",
           "description": "Номер, 1..32 символа."
+        },
+        "plateType": {
+          "$ref": "#/definitions/carsearchPlateType",
+          "description": "Формат номера; DEFAULT — другой/неизвестен."
+        },
+        "plateRegion": {
+          "type": "string",
+          "description": "Страна (ЕС: \"D\") или штат (США: \"CA\"), до 3 латинских букв; для RU/DEFAULT не нужен."
         }
       }
     },

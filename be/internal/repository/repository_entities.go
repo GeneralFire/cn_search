@@ -10,7 +10,7 @@ const (
 )
 
 // clarificationColumns — колонки clarifications; совпадают с тегами db models.Clarification.
-const clarificationColumns = `id, sighting_id, plate, status, created_at`
+const clarificationColumns = `id, sighting_id, plate, status, created_at, plate_type, plate_region`
 
 // plateSightingSelect — колонки фиксации вместе с номером; совпадают с тегами db models.PlateSighting.
 const plateSightingSelect = `s.id, s.plate_id, p.plate, s.address, s.photo_key, s.photo_thumb_key, s.created_at,

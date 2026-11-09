@@ -222,6 +222,21 @@ body {
   border: 0.5px solid #999;
 }
 
+/* Флаги языков (логотип) */
+.flag { display: inline-block; width: 8px; height: 5px; border: 0.5px solid #999; flex-shrink: 0; }
+.flag--ru { background: linear-gradient(#fff 33%, #1c3fae 33% 66%, #d52b1e 66%); }
+.flag--uk { background: linear-gradient(#0057b7 50%, #ffd700 50%); }
+.flag--de { background: linear-gradient(#000 33%, #dd0000 33% 66%, #ffce00 66%); }
+.flag--zh { background: radial-gradient(circle at 26% 34%, #ffde00 0 14%, transparent 15%), #de2910; }
+.flag--en {
+  background:
+    linear-gradient(#c8102e, #c8102e) center / 100% 22% no-repeat,
+    linear-gradient(#c8102e, #c8102e) center / 16% 100% no-repeat,
+    linear-gradient(#fff, #fff) center / 100% 40% no-repeat,
+    linear-gradient(#fff, #fff) center / 30% 100% no-repeat,
+    #012169;
+}
+
 /* Номер ЕС: синяя полоса со звёздами и кодом страны */
 .plate-eu {
   display: inline-flex; align-items: stretch; flex-shrink: 0;
@@ -342,6 +357,23 @@ body {
 }
 .clarify__input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .clarify__input:disabled { opacity: 0.6; }
+.clarify__formats { display: flex; flex-wrap: wrap; gap: 6px; border: 0; margin: 0; padding: 0; }
+.clarify__formats legend { width: 100%; margin-bottom: 8px; padding: 0; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg span {
+  display: inline-block; padding: 7px 14px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg); font-weight: 600; font-size: 0.9rem;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.seg span:hover { border-color: var(--accent); }
+.seg input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; }
+.seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.clarify__row { display: flex; gap: 8px; }
+.clarify__row .clarify__input:first-child { flex: 1; min-width: 0; }
+.clarify__region { width: 5.5em; text-align: center; }
+.clarify__region[hidden] { display: none; }
+.clarify__preview { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-radius: 12px; background: var(--bg); }
+.clarify__preview .clarify__label { font-weight: 500; color: var(--muted); font-size: 0.88rem; }
 .clarify__hint { color: var(--muted); font-size: 0.85rem; line-height: 1.4; }
 .clarify__msg { margin: 0; padding: 12px 14px; border-radius: 12px; font-size: 0.92rem; }
 .clarify__msg.is-ok { background: color-mix(in srgb, #2fb36b 15%, transparent); color: #2fb36b; }
@@ -387,7 +419,7 @@ body {
 }
 .logo__top { font-size: 0.6rem; letter-spacing: 0.04em; border-bottom: 1.5px solid #1a1a1a; width: 100%; text-align: center; padding-bottom: 2px; }
 .logo__bottom { display: flex; align-items: center; gap: 3px; font-size: 0.6rem; letter-spacing: 0.04em; }
-.logo .plate__flag { width: 8px; height: 5px; }
+.logo .flag { width: 9px; height: 6px; }
 
 /* Поиск в шапке страницы номера */
 .qs { position: relative; max-width: 560px; margin: 0 auto; }
@@ -484,7 +516,10 @@ body {
 
 /* Лента истории: точки на вертикальной линии, от новых к старым. */
 .tl { list-style: none; margin: 0; padding: 0; position: relative; }
-.tl::before { content: ""; position: absolute; left: 35px; top: 8px; bottom: 24px; width: 2px; background: var(--border); }
+/* Соединитель — только между соседними пунктами: у единственной фиксации «хвостика» нет. */
+.tl__item:not(:last-child)::before {
+  content: ""; position: absolute; left: 35px; top: 54px; bottom: 0; width: 2px; background: var(--border);
+}
 .tl__item { position: relative; display: grid; grid-template-columns: 72px 1fr; gap: 14px; padding: 0 0 18px; }
 /* Пункт ленты — ссылка на свою фиксацию (большое фото станет её фото). */
 .tl__link { position: absolute; inset: 0 0 8px; z-index: 1; border-radius: 12px; }
@@ -614,24 +649,14 @@ a.mini:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 /* ---------- Настройки (язык): значок слева сверху, панель по наведению / клику / фокусу ---------- */
 
-.hero__settings { position: absolute; top: 16px; left: 20px; z-index: 6; }
-.st { position: relative; }
-.st__btn {
-  position: relative; display: grid; place-items: center;
-  width: 40px; height: 40px; border-radius: 12px;
-  color: var(--muted); background: var(--surface); border: 1px solid var(--border);
-  cursor: pointer; transition: color 0.15s, border-color 0.15s, transform 0.3s;
-}
-.st__btn:hover, .st__btn[aria-expanded="true"] { color: var(--accent); border-color: var(--accent); }
-.st__btn[aria-expanded="true"] svg { transform: rotate(45deg); }
-.st__btn svg { transition: transform 0.3s; }
-.st__btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.st__badge {
-  position: absolute; right: -6px; bottom: -6px;
-  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.02em; line-height: 1;
-  padding: 2px 4px; border-radius: 6px;
-  background: var(--accent); color: #fff;
-}
+/* Логотип — ссылка на главную и триггер панели настроек (наведение / фокус / тап на таче). */
+.st { position: relative; display: inline-block; z-index: 6; }
+.st__btn { display: block; line-height: 0; border-radius: 8px; transition: transform 0.15s; }
+.st__btn:hover, .st__btn[aria-expanded="true"] { transform: rotate(-4deg) scale(1.05); }
+.st__btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.hero__title .st__panel { text-align: left; font-size: 1rem; letter-spacing: 0; font-weight: 400; }
+.st__home { display: block; margin: -4px 0 10px; color: var(--accent); font-size: 0.9rem; text-decoration: none; font-weight: 600; }
+.st__home:hover { text-decoration: underline; }
 /* Панель с «мостиком» сверху: мышь проходит от значка к панели, не теряя наведения. */
 .st__panel {
   position: absolute; top: calc(100% + 8px); left: 0; z-index: 20;
@@ -684,7 +709,6 @@ a.mini:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   .pp-bar { padding: 8px 12px; gap: 10px; }
   .pp-bar::after { display: none; }
   .pp-bar__left { gap: 6px; }
-  .hero__settings { top: 10px; left: 10px; }
   .pp { padding: 20px 16px 48px; gap: 20px; }
   .pp-hero { padding: 16px; }
   .pp-more__grid { --min-card: 130px; --gap: 10px; }

@@ -119,8 +119,8 @@ const foreignKeyViolation = "23503"
 // CreateClarification сохраняет уточнение (статус — «не принят»); models.ErrNotFound, если фиксации нет.
 func (r *repository) CreateClarification(ctx context.Context, tx db.Executor, o models.ClarifyOpts) (models.Clarification, error) {
 	var c models.Clarification
-	err := tx.Get(ctx, &c, `INSERT INTO `+clarificationsTable+` (sighting_id, plate)
-		VALUES ($1, $2) RETURNING `+clarificationColumns, o.SightingID, o.Plate)
+	err := tx.Get(ctx, &c, `INSERT INTO `+clarificationsTable+` (sighting_id, plate, plate_type, plate_region)
+		VALUES ($1, $2, $3, $4) RETURNING `+clarificationColumns, o.SightingID, o.Plate, o.PlateType, o.PlateRegion)
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == foreignKeyViolation {
 		return models.Clarification{}, models.ErrNotFound

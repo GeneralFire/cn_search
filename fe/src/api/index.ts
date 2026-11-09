@@ -87,9 +87,26 @@ export async function plateSightings(id: string, signal?: AbortSignal): Promise<
 }
 
 /** Уточнение номера к фиксации; статус нового — «не принят». */
-export async function clarify(sightingId: string, plate: string): Promise<{ plate: string; accepted: boolean }> {
+const plateTypeEnum: Record<string, CarsearchPlateType> = {
+  ru: CarsearchPlateType.PLATE_TYPE_RU,
+  eu: CarsearchPlateType.PLATE_TYPE_EU,
+  us: CarsearchPlateType.PLATE_TYPE_US,
+};
+
+/** Уточнение номера к фиксации: номер, формат ("ru" | "eu" | "us" | "") и регион (страна ЕС / штат США). */
+export async function clarify(
+  sightingId: string,
+  plate: string,
+  plateType = "",
+  plateRegion = ""
+): Promise<{ plate: string; accepted: boolean }> {
   try {
-    const { data } = await api.carsearchCarSearchService.carSearchServiceClarify({ sightingId, plate });
+    const { data } = await api.carsearchCarSearchService.carSearchServiceClarify({
+      sightingId,
+      plate,
+      plateType: plateTypeEnum[plateType] ?? CarsearchPlateType.PLATE_TYPE_DEFAULT,
+      plateRegion,
+    });
     return {
       plate: data.clarification?.plate ?? plate,
       accepted: data.clarification?.status === CarsearchClarificationStatus.CLARIFICATION_STATUS_ACCEPTED,

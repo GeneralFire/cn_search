@@ -2,7 +2,7 @@
 import { ApiError, plateSightings, seeAlso, type Car } from "./api";
 import { mountQuickSearch, type QuickSearchHandlers } from "./quicksearch";
 import { plateHref } from "./router";
-import { escapeHtml, formatAgo, formatDate, formatShortDate, formatTime, icon, logoHtml, miniCardHtml, miniSkeletonHtml, photoAttrs, plateHtml } from "./ui";
+import { escapeHtml, formatAgo, formatDate, formatShortDate, formatTime, icon, miniCardHtml, miniSkeletonHtml, photoAttrs, plateHtml } from "./ui";
 import { t, tp } from "./i18n/i18n";
 import { mountSettings } from "./settings";
 
@@ -24,7 +24,6 @@ export async function renderPlatePage(root: HTMLElement, id: string, handlers: Q
       <header class="pp-bar">
         <div class="pp-bar__left">
           <div class="pp-bar__settings"></div>
-          <a class="pp-bar__home" href="/" data-link aria-label="${t("nav.home")}">${logoHtml}</a>
         </div>
         <div class="pp-bar__search"></div>
       </header>

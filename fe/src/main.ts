@@ -2,7 +2,7 @@ import "./style.css";
 import { ApiError, clarify, search, type Car } from "./api";
 import { navigate, onRoute, plateHref } from "./router";
 import { renderPlatePage } from "./plate";
-import { cardHtml, escapeHtml, formatDate, icon, logoHtml, plateHtml } from "./ui";
+import { cardHtml, escapeHtml, formatDate, icon, plateHtml } from "./ui";
 import { SWITCH_FLAG, t, tp } from "./i18n/i18n";
 import { mountSettings } from "./settings";
 import { initHoverPreview } from "./hoverpreview";
@@ -31,12 +31,11 @@ const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
   <div class="view" id="view-search">
   <header class="hero">
-    <div class="hero__settings"></div>
     <div class="hero__inner">
-      <h1 class="hero__title">${logoHtml}<span>${t("app.title")}</span></h1>
+      <h1 class="hero__title"><span class="hero__logo"></span><span>${t("app.title")}</span></h1>
       <p>${t("home.hint")}</p>
       <form class="searchbar" role="search" onsubmit="return false">
-        ${field("q-plate", t("search.label"), icon.plate, "А123ВС 777")}
+        ${field("q-plate", t("search.label"), icon.plate, t("search.placeholder"))}
         <span class="searchbar__go" aria-hidden="true">${icon.search}</span>
       </form>
     </div>
@@ -82,7 +81,7 @@ const $modalBody = app.querySelector<HTMLElement>(".modal__body")!;
 const $modalFoot = app.querySelector<HTMLElement>(".modal__foot")!;
 const $modalForm = app.querySelector<HTMLFormElement>(".modal__inner")!;
 
-mountSettings(app.querySelector<HTMLElement>(".hero__settings")!);
+mountSettings(app.querySelector<HTMLElement>(".hero__logo")!);
 
 
 
@@ -203,12 +202,27 @@ function openClarify(car: Car): void {
         <div class="modal__addr">${escapeHtml(car.address)}</div>
       </div>
     </div>
+    <fieldset class="clarify__formats">
+      <legend class="clarify__label">${t("clarify.format")}</legend>
+      ${[["ru", "RU"], ["eu", "EU"], ["us", "US"], ["", t("clarify.formatOther")]]
+        .map(
+          ([v, label]) => `<label class="seg"><input type="radio" name="ptype" value="${v}"${
+            v === (car.plateType || "") ? " checked" : ""
+          } /><span>${escapeHtml(label)}</span></label>`
+        )
+        .join("")}
+    </fieldset>
     <label class="clarify">
       <span class="clarify__label">${t("clarify.question")}</span>
-      <input class="clarify__input" name="plate" required maxlength="32" autocomplete="off" spellcheck="false"
-        placeholder="${escapeHtml(car.plate)}" value="${escapeHtml(car.plate)}" />
+      <span class="clarify__row">
+        <input class="clarify__input" name="plate" required maxlength="32" autocomplete="off" spellcheck="false"
+          placeholder="${escapeHtml(car.plate)}" value="${escapeHtml(car.plate)}" />
+        <input class="clarify__input clarify__region" name="region" maxlength="3" autocomplete="off" spellcheck="false"
+          value="${escapeHtml(car.plateRegion ?? "")}" aria-label="${t("clarify.regionEu")}" />
+      </span>
       <span class="clarify__hint">${t("clarify.hint")}</span>
     </label>
+    <div class="clarify__preview"><span class="clarify__label">${t("clarify.preview")}</span><span class="clarify__plate"></span></div>
     <p class="clarify__msg" role="status" hidden></p>`;
   $modalFoot.innerHTML = `
     <button class="btn btn--ghost" value="close" formnovalidate>${t("clarify.cancel")}</button>
@@ -216,7 +230,25 @@ function openClarify(car: Car): void {
   clarifyFor = car;
   $modal.showModal();
   const $input = $modalBody.querySelector<HTMLInputElement>(".clarify__input")!;
+  const $region = $modalBody.querySelector<HTMLInputElement>(".clarify__region")!;
+  const $preview = $modalBody.querySelector<HTMLElement>(".clarify__plate")!;
+  // Регион — только для EU (страна) и US (штат); предпросмотр номера — по выбранному формату.
+  const sync = () => {
+    const type = clarifyType();
+    $region.hidden = type !== "eu" && type !== "us";
+    $region.placeholder = type === "us" ? "CA" : "D";
+    $region.setAttribute("aria-label", t(type === "us" ? "clarify.regionUs" : "clarify.regionEu"));
+    const plate = $input.value.trim().toUpperCase() || car.plate;
+    $preview.innerHTML = plateHtml({ plate, plateType: type, plateRegion: $region.value.trim().toUpperCase() });
+  };
+  $modalBody.addEventListener("input", sync);
+  $modalBody.addEventListener("change", sync);
+  sync();
   $input.select();
+}
+
+function clarifyType(): string {
+  return $modalBody.querySelector<HTMLInputElement>('input[name="ptype"]:checked')?.value ?? "";
 }
 
 let clarifyFor: Car | null = null;
@@ -230,7 +262,9 @@ $modalForm.addEventListener("submit", async (e) => {
   submitter.disabled = true;
   submitter.textContent = t("clarify.sending");
   try {
-    const c = await clarify(clarifyFor.id, $input.value);
+    const type = clarifyType();
+    const region = $modalBody.querySelector<HTMLInputElement>(".clarify__region")!.value;
+    const c = await clarify(clarifyFor.id, $input.value, type, type === "eu" || type === "us" ? region : "");
     $msg.hidden = false;
     $msg.className = "clarify__msg is-ok";
     $msg.textContent = t("clarify.thanks", {

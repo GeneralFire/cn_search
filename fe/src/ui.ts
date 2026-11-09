@@ -1,7 +1,7 @@
 import { plateHref } from "./router";
 
 // Общие куски разметки и форматирования для страниц поиска и номера.
-import { intlLocale, t } from "./i18n/i18n";
+import { getLang, intlLocale, t } from "./i18n/i18n";
 
 export const icon = {
   back: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>`,
@@ -89,11 +89,14 @@ export function photoAttrs(c: { photoUrl?: string; thumbUrl?: string }): { src: 
 }
 
 /** Логотип — квадратный «мотоциклетный» номер: ПОИСК / НОМЕР + флаг (подписи — на языке интерфейса). */
-export const logoHtml = `
+/** Логотип — квадратный «мотоциклетный» номер (ПОИСК / НОМЕР) с флагом выбранного языка. */
+export function logoHtml(): string {
+  return `
   <span class="logo" aria-hidden="true">
     <span class="logo__top">${t("logo.top")}</span>
-    <span class="logo__bottom">${t("logo.bottom")}<i class="plate__flag"></i></span>
+    <span class="logo__bottom">${t("logo.bottom")}<i class="flag flag--${getLang()}"></i></span>
   </span>`;
+}
 
 /** Компактная карточка фиксации (блок «Свежие фиксации» на странице номера): вся — одна ссылка на номер. */
 export function miniCardHtml(

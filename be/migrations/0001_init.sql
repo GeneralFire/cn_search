@@ -47,6 +47,8 @@ CREATE TABLE clarifications (
     id           uuid                 PRIMARY KEY DEFAULT gen_random_uuid(),
     sighting_id  uuid                 NOT NULL REFERENCES plate_sightings (id),
     plate        text                 NOT NULL, -- предложенный номер, как ввели
+    plate_type   text                 NOT NULL DEFAULT '' CHECK (plate_type IN ('', 'ru', 'eu', 'us')), -- формат; '' — другой/неизвестен
+    plate_region text                 NOT NULL DEFAULT '', -- страна (ЕС: "D") или штат (США: "CA")
     status       clarification_status NOT NULL DEFAULT 'not_accepted',
     created_at   timestamptz          NOT NULL DEFAULT now(),
     is_test_data boolean              NOT NULL DEFAULT false

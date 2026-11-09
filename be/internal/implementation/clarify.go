@@ -3,6 +3,7 @@ package implementation
 import (
 	"context"
 	"errors"
+	"regexp"
 	"strings"
 	"unicode/utf8"
 
@@ -26,7 +27,16 @@ func (s *CarSearch) Clarify(ctx context.Context, req *pb.ClarifyRequest) (*pb.Cl
 	case utf8.RuneCountInString(plate) > maxQueryLength:
 		return nil, status.Errorf(codes.InvalidArgument, "plate: не длиннее %d символов", maxQueryLength)
 	}
-	c, err := s.uc.Clarify(ctx, models.ClarifyOpts{SightingID: req.GetSightingId(), Plate: plate})
+	plateType := plateTypeModel[req.GetPlateType()]
+	region := strings.ToUpper(strings.TrimSpace(req.GetPlateRegion()))
+	if plateType != "eu" && plateType != "us" {
+		region = "" // регион нужен только ЕС (страна) и США (штат)
+	} else if !regionRe.MatchString(region) {
+		return nil, status.Error(codes.InvalidArgument, "plate_region: до 3 латинских букв (страна ЕС, штат США)")
+	}
+	c, err := s.uc.Clarify(ctx, models.ClarifyOpts{
+		SightingID: req.GetSightingId(), Plate: plate, PlateType: plateType, PlateRegion: region,
+	})
 	switch {
 	case errors.Is(err, models.ErrNotFound):
 		return nil, status.Error(codes.NotFound, "фиксация не найдена")
@@ -34,12 +44,23 @@ func (s *CarSearch) Clarify(ctx context.Context, req *pb.ClarifyRequest) (*pb.Cl
 		return nil, status.Error(codes.Internal, "не удалось сохранить уточнение")
 	}
 	return &pb.ClarifyResponse{Clarification: &pb.Clarification{
-		Id:         c.ID,
-		SightingId: c.SightingID,
-		Plate:      c.Plate,
-		Status:     clarificationStatusPB[c.Status],
-		CreatedAt:  timestamppb.New(c.CreatedAt),
+		Id:          c.ID,
+		SightingId:  c.SightingID,
+		Plate:       c.Plate,
+		Status:      clarificationStatusPB[c.Status],
+		CreatedAt:   timestamppb.New(c.CreatedAt),
+		PlateType:   plateTypePB[c.PlateType],
+		PlateRegion: c.PlateRegion,
 	}}, nil
+}
+
+// regionRe — регион номера: пусто или 1–3 латинские буквы ("D", "CA", "NL").
+var regionRe = regexp.MustCompile(`^[A-Z]{0,3}$`)
+
+var plateTypeModel = map[pb.PlateType]string{
+	pb.PlateType_PLATE_TYPE_RU: "ru",
+	pb.PlateType_PLATE_TYPE_EU: "eu",
+	pb.PlateType_PLATE_TYPE_US: "us",
 }
 
 var clarificationStatusPB = map[models.ClarificationStatus]pb.ClarificationStatus{

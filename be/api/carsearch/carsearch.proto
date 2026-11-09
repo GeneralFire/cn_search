@@ -112,6 +112,8 @@ message Clarification {
   string plate = 3;
   ClarificationStatus status = 4;
   google.protobuf.Timestamp created_at = 5;
+  PlateType plate_type = 6;
+  string plate_region = 7;
 }
 
 message ClarifyRequest {
@@ -119,6 +121,10 @@ message ClarifyRequest {
   string sighting_id = 1;
   // Номер, 1..32 символа.
   string plate = 2;
+  // Формат номера; DEFAULT — другой/неизвестен.
+  PlateType plate_type = 3;
+  // Страна (ЕС: "D") или штат (США: "CA"), до 3 латинских букв; для RU/DEFAULT не нужен.
+  string plate_region = 4;
 }
 
 message ClarifyResponse {
