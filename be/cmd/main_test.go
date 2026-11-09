@@ -49,7 +49,7 @@ func call(t *testing.T, srv *httptest.Server, method, body string) (int, map[str
 }
 
 var sighting = models.PlateSighting{
-	ID: "00000000-0000-0000-0000-000000000001", PhotoKey: "car-3.png", Address: "Москва, Пресненская наб., 10", Plate: "А123ВС 777",
+	ID: "00000000-0000-0000-0000-000000000001", PhotoKey: "car-3.jpg", ThumbKey: "car-3_thumb.jpg", Address: "Москва, Пресненская наб., 10", Plate: "А123ВС 777",
 	CreatedAt: time.Date(2026, 11, 2, 9, 15, 0, 0, time.UTC),
 }
 
@@ -64,7 +64,7 @@ func TestHTTPSearch(t *testing.T) {
 		t.Fatalf("Search: %d %v", code, out)
 	}
 	first := out["items"].([]any)[0].(map[string]any)
-	if first["photoUrl"] != "/s3/cars/car-3.png" || first["createdAt"] != "2026-11-02T09:15:00Z" {
+	if first["photoUrl"] != "/s3/cars/car-3.jpg" || first["thumbUrl"] != "/s3/cars/car-3_thumb.jpg" || first["createdAt"] != "2026-11-02T09:15:00Z" {
 		t.Errorf("camelCase поля и время RFC 3339: %v", first)
 	}
 }

@@ -29,7 +29,7 @@ func TestSearch(t *testing.T) {
 		t.Fatalf("ответ: %v", resp)
 	}
 	it := resp.GetItems()[0]
-	if it.GetPhotoUrl() != "/s3/cars/car-1.png" || it.GetPlate() != "А123ВС 777" || !it.GetCreatedAt().AsTime().Equal(sighting.CreatedAt) {
+	if it.GetPhotoUrl() != "/s3/cars/car-1.jpg" || it.GetThumbUrl() != "/s3/cars/car-1_thumb.jpg" || it.GetPlate() != "А123ВС 777" || !it.GetCreatedAt().AsTime().Equal(sighting.CreatedAt) {
 		t.Errorf("маппинг: %v", it)
 	}
 }

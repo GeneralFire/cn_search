@@ -1,7 +1,7 @@
 // Страница номера: все фиксации номера — где и когда его видели.
 import { ApiError, plateSightings, type Car } from "./api";
 import { mountQuickSearch, type QuickSearchHandlers } from "./quicksearch";
-import { escapeHtml, formatAgo, formatDate, formatShortDate, formatTime, icon, plateHtml, plural } from "./ui";
+import { escapeHtml, formatAgo, formatDate, formatShortDate, formatTime, icon, logoHtml, photoAttrs, plateHtml, plural } from "./ui";
 
 let ctrl: AbortController | null = null;
 
@@ -14,8 +14,13 @@ export async function renderPlatePage(root: HTMLElement, id: string, handlers: Q
   const my = (ctrl = new AbortController());
 
   if (!root.querySelector(".pp-bar")) {
-    root.innerHTML = `<header class="pp-bar"></header><main class="pp"></main>`;
-    mountQuickSearch(root.querySelector<HTMLElement>(".pp-bar")!, handlers);
+    root.innerHTML = `
+      <header class="pp-bar">
+        <a class="pp-bar__home" href="/" data-link aria-label="На главную — поиск по авто">${logoHtml}</a>
+        <div class="pp-bar__search"></div>
+      </header>
+      <main class="pp"></main>`;
+    mountQuickSearch(root.querySelector<HTMLElement>(".pp-bar__search")!, handlers);
   }
   const $main = root.querySelector<HTMLElement>(".pp")!;
 
@@ -91,10 +96,11 @@ function pageHtml(items: Car[], currentId: string): string {
 }
 
 function timelineItem(c: Car, current: boolean): string {
-  const thumb = c.photoUrl ? `<img src="${escapeHtml(c.photoUrl)}" alt="" loading="lazy" />` : icon.car;
+  const { src, full } = photoAttrs(c);
+  const thumb = src ? `<img src="${escapeHtml(src)}" alt="" loading="lazy" />` : icon.car;
   return `
     <li class="tl__item${current ? " is-current" : ""}">
-      <div class="tl__thumb">${thumb}</div>
+      <div class="tl__thumb"${full ? ` data-full="${escapeHtml(full)}"` : ""}>${thumb}</div>
       <div class="tl__body">
         <div class="tl__when">
           <time datetime="${escapeHtml(c.createdAt)}">${escapeHtml(formatShortDate(c.createdAt))}, ${escapeHtml(formatTime(c.createdAt))}</time>

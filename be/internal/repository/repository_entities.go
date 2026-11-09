@@ -9,7 +9,7 @@ const (
 )
 
 // plateSightingSelect — колонки фиксации вместе с номером; совпадают с тегами db models.PlateSighting.
-const plateSightingSelect = `s.id, s.plate_id, p.plate, s.address, s.photo_key, s.created_at`
+const plateSightingSelect = `s.id, s.plate_id, p.plate, s.address, s.photo_key, s.photo_thumb_key, s.created_at`
 
 // plateSightingFrom — фиксации с JOIN номера.
 const plateSightingFrom = plateSightingsTable + ` s JOIN ` + platesTable + ` p ON p.id = s.plate_id`

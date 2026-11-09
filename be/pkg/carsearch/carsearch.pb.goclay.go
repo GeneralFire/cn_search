@@ -486,7 +486,7 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         },
         "photoUrl": {
           "type": "string",
-          "description": "URL картинки (S3)."
+          "description": "URL полного фото (S3)."
         },
         "address": {
           "type": "string"
@@ -499,6 +499,10 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
           "type": "string",
           "format": "date-time",
           "description": "Когда номер зафиксирован."
+        },
+        "thumbUrl": {
+          "type": "string",
+          "description": "URL миниатюры (S3) — для списков; полное фото — photo_url."
         }
       },
       "description": "PlateSighting — фиксация номера: где и когда замечена машина."

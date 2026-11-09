@@ -58,3 +58,15 @@ export const plural = (n: number, one: string, few: string, many: string) => {
   if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
   return many;
 };
+
+/** Миниатюра, при наведении — полное фото (data-full, см. hoverpreview.ts). */
+export function photoAttrs(c: { photoUrl?: string; thumbUrl?: string }): { src: string; full: string } {
+  return { src: c.thumbUrl || c.photoUrl || "", full: c.photoUrl || "" };
+}
+
+/** Логотип — квадратный «мотоциклетный» номер: ПОИСК / АВТО + RUS. */
+export const logoHtml = `
+  <span class="logo" aria-hidden="true">
+    <span class="logo__top">ПОИСК</span>
+    <span class="logo__bottom">АВТО<span class="logo__rus">RUS<i class="plate__flag"></i></span></span>
+  </span>`;

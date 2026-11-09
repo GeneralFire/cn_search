@@ -23,13 +23,15 @@ service CarSearchService {
 message PlateSighting {
   // uuid фиксации.
   string id = 1;
-  // URL картинки (S3).
+  // URL полного фото (S3).
   string photo_url = 2;
   string address = 3;
   // Госномер кириллицей: "А123ВС 777".
   string plate = 4;
   // Когда номер зафиксирован.
   google.protobuf.Timestamp created_at = 5;
+  // URL миниатюры (S3) — для списков; полное фото — photo_url.
+  string thumb_url = 6;
 }
 
 message SearchRequest {

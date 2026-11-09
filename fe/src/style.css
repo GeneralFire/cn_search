@@ -151,6 +151,8 @@ body {
 .card__link { position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
 .card__link:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .card .btn { position: relative; z-index: 2; }
+/* Фото — своя ссылка поверх общей: на нём работает превью полного фото по наведению. */
+.card .card__photo { z-index: 2; }
 @keyframes card-in { from { opacity: 0; transform: translateY(6px); } }
 
 .card__photo {
@@ -301,11 +303,30 @@ body {
 
 .pp-bar {
   position: sticky; top: 0; z-index: 5;
-  padding: 12px 32px;
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px;
+  padding: 10px 32px;
   background: color-mix(in srgb, var(--bg) 85%, transparent);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
 }
+.pp-bar::after { content: ""; width: 52px; } /* баланс к логотипу — поле поиска по центру */
+.pp-bar__home { display: block; border-radius: 8px; line-height: 0; transition: transform 0.15s; }
+.pp-bar__home:hover { transform: rotate(-4deg) scale(1.04); }
+.pp-bar__home:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* Логотип — квадратный «мотоциклетный» номер */
+.logo {
+  display: inline-grid; grid-template-rows: 1fr 1fr; align-items: center; justify-items: center;
+  width: 52px; height: 44px; padding: 3px 4px 2px;
+  background: #fff; color: #111; border: 2px solid #1a1a1a; border-radius: 6px;
+  font-family: "Roboto Mono", ui-monospace, Menlo, monospace; font-weight: 800; line-height: 1;
+  box-shadow: var(--shadow);
+}
+.logo__top { font-size: 0.6rem; letter-spacing: 0.04em; border-bottom: 1.5px solid #1a1a1a; width: 100%; text-align: center; padding-bottom: 2px; }
+.logo__bottom { display: flex; align-items: center; gap: 3px; font-size: 0.6rem; letter-spacing: 0.04em; }
+.logo__rus { display: grid; justify-items: center; gap: 1px; font-size: 0.3rem; font-weight: 700; }
+.logo .plate__flag { width: 8px; height: 5px; }
+
 /* Поиск в шапке страницы номера */
 .qs { position: relative; max-width: 560px; margin: 0 auto; }
 .qs__icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); display: grid; pointer-events: none; }
@@ -332,6 +353,7 @@ body {
 }
 .qs__item[aria-selected="true"] { background: var(--accent-soft); }
 .qs__item .plate { flex-shrink: 0; }
+.qs__thumb { width: 48px; height: 32px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
 .qs__meta { display: grid; min-width: 0; }
 .qs__addr { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.92rem; }
 .qs__ago { color: var(--muted); font-size: 0.8rem; }
@@ -429,12 +451,26 @@ body {
   .pp-photo { position: relative; top: 0; }
 }
 
+/* Полное фото по наведению на миниатюру */
+[data-full] { cursor: zoom-in; }
+.hp {
+  position: fixed; z-index: 50; pointer-events: none;
+  border-radius: 14px; overflow: hidden;
+  background: center / cover no-repeat var(--surface);
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.35), 0 0 0 1px var(--border);
+  opacity: 0; transform: scale(0.96); transition: opacity 0.15s, transform 0.15s;
+}
+.hp.is-shown { opacity: 1; transform: none; }
+.hp__img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.2s; }
+.hp__img.is-loaded { opacity: 1; }
+
 @media (prefers-reduced-motion: reduce) {
   .card { animation: none; transition: none; }
   .card:hover { transform: none; }
   .modal[open] { animation: none; }
   .more__btn.is-loading::before { animation-duration: 2.4s; }
   .skeleton { animation: none; }
+  .hp, .hp__img { transition: none; }
 }
 
 /* ---------- Мобильные ---------- */
@@ -447,7 +483,8 @@ body {
   .content { padding: 0 16px 48px; }
   .content__head { flex-direction: column; gap: 4px; }
   .content__count { text-align: left; }
-  .pp-bar { padding: 10px 16px; }
+  .pp-bar { padding: 8px 12px; gap: 10px; }
+  .pp-bar::after { display: none; }
   .pp { padding: 20px 16px 48px; gap: 20px; }
   .pp-hero { padding: 28px 16px 20px; }
   .pp-stats { grid-template-columns: repeat(2, 1fr); }

@@ -15,7 +15,8 @@ CREATE TABLE plate_sightings (
     id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
     plate_id   uuid        NOT NULL REFERENCES plates (id),
     address    text        NOT NULL,
-    photo_key  text        NOT NULL DEFAULT '', -- ключ объекта в S3-бакете
+    photo_key       text   NOT NULL DEFAULT '', -- ключ полного фото в S3-бакете
+    photo_thumb_key text   NOT NULL DEFAULT '', -- ключ миниатюры в S3-бакете
     created_at timestamptz NOT NULL DEFAULT now(), -- когда номер зафиксирован
     is_test_data boolean   NOT NULL DEFAULT false  -- тестовые данные (миграция 0002_test_data)
 );

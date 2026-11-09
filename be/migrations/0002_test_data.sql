@@ -1,7 +1,7 @@
 -- Тестовые данные: 600 фиксаций номеров из пула (~ треть от числа фиксаций), у номера обычно
 -- несколько фиксаций в разных местах его города. Все строки помечены is_test_data = true:
 -- Down удаляет только их, а в бою их можно отфильтровать или удалить тем же условием.
--- Картинки car-1..5.png заливает в S3 сервис s3-init (be/internal/test_utils/s3, docker-compose.yml).
+-- Фото car-N.jpg и миниатюры car-N_thumb.jpg (N = 1..10) заливает в S3 сервис s3-init (be/internal/test_utils/s3, docker-compose.yml).
 
 -- +goose Up
 SELECT setseed(0.20261109); -- одинаковый набор при каждой заливке
@@ -26,9 +26,10 @@ INSERT INTO plates (plate, meta, is_test_data) VALUES
   ('М456ОР 178', '{"city": "Санкт-Петербург"}', true),
   ('Т789УХ 116', '{"city": "Казань"}', true);
 
-INSERT INTO plate_sightings (id, plate_id, address, photo_key, created_at, is_test_data)
+INSERT INTO plate_sightings (id, plate_id, address, photo_key, photo_thumb_key, created_at, is_test_data)
 SELECT ('00000000-0000-0000-0000-00000000000' || v.n)::uuid, p.id, v.address,
-       'car-' || ((v.n * 7) % 5 + 1) || '.png', v.created_at, true
+       'car-' || ((v.n * 7) % 10 + 1) || '.jpg', 'car-' || ((v.n * 7) % 10 + 1) || '_thumb.jpg',
+       v.created_at, true
 FROM (VALUES
   (1, 'А123ВС 777', 'Москва, Пресненская наб., 10',     timestamptz '2026-11-02 09:15:00Z'),
   (2, 'М456ОР 178', 'Санкт-Петербург, Невский пр., 28', timestamptz '2026-10-27 18:40:00Z'),
@@ -61,12 +62,13 @@ CREATE TEMP TABLE pool ON COMMIT DROP AS
 SELECT row_number() OVER (ORDER BY plate) AS rn, id, meta ->> 'city' AS city
 FROM plates WHERE is_test_data AND plate NOT IN ('А123ВС 777', 'М456ОР 178', 'Т789УХ 116');
 
-INSERT INTO plate_sightings (id, plate_id, address, photo_key, created_at, is_test_data)
+INSERT INTO plate_sightings (id, plate_id, address, photo_key, photo_thumb_key, created_at, is_test_data)
 SELECT gen_random_uuid(),
        pool.id,
        c.name || ', ' || c.streets[1 + floor(random() * array_length(c.streets, 1))::int]
               || ', ' || (1 + floor(random() * 150))::int,
-       'car-' || (((5 + r.g) * 7) % 5 + 1) || '.png',
+       'car-' || (((5 + r.g) * 7) % 10 + 1) || '.jpg',
+       'car-' || (((5 + r.g) * 7) % 10 + 1) || '_thumb.jpg',
        date_trunc('second', timestamptz '2026-11-09 21:00:00Z' - random() * interval '180 days'),
        true
 FROM (SELECT g, 1 + floor(random() * (SELECT count(*) FROM pool))::int AS pi FROM generate_series(1, 595) g) r

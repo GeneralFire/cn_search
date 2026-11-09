@@ -9,7 +9,7 @@ import {
 
 /** Фиксация номера: где и когда замечена машина. createdAt — ISO 8601 (RFC 3339). */
 export type Car = Required<Pick<CarsearchPlateSighting, "id" | "plate" | "address" | "createdAt">> &
-  Pick<CarsearchPlateSighting, "photoUrl">;
+  Pick<CarsearchPlateSighting, "photoUrl" | "thumbUrl">;
 
 export interface CarsPage {
   items: Car[];
@@ -37,6 +37,7 @@ function toCar(c: CarsearchPlateSighting): Car {
     address: c.address ?? "",
     createdAt: c.createdAt ?? "",
     photoUrl: c.photoUrl,
+    thumbUrl: c.thumbUrl,
   };
 }
 

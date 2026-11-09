@@ -2,7 +2,8 @@ import "./style.css";
 import { ApiError, search, type Car } from "./api";
 import { navigate, onRoute, plateHref } from "./router";
 import { renderPlatePage } from "./plate";
-import { escapeHtml, formatDate, icon, plateHtml, plural } from "./ui";
+import { escapeHtml, formatDate, icon, photoAttrs, plateHtml, plural } from "./ui";
+import { initHoverPreview } from "./hoverpreview";
 
 const PAGE_SIZE = 35; // кратно 5 и 7 — по числу колонок сетки
 const DEBOUNCE_MS = 250;
@@ -78,11 +79,12 @@ const $modalBody = app.querySelector<HTMLElement>(".modal__body")!;
 
 function cardHtml(c: Car, i: number): string {
   const city = c.address.split(",")[0] ?? "";
-  const photo = c.photoUrl ? `<img src="${escapeHtml(c.photoUrl)}" alt="" loading="lazy" />` : icon.car;
+  const { src, full } = photoAttrs(c);
+  const photo = src ? `<img src="${escapeHtml(src)}" alt="" loading="lazy" />` : icon.car;
   return `
     <article class="card" style="animation-delay:${Math.min(i, 14) * 30}ms">
       <a class="card__link" href="${plateHref(c.id)}" data-link aria-label="${escapeHtml(c.plate)}: все фиксации"></a>
-      <div class="card__photo">${photo}<span class="card__badge">${escapeHtml(city)}</span></div>
+      <a class="card__photo" href="${plateHref(c.id)}" data-link tabindex="-1"${full ? ` data-full="${escapeHtml(full)}"` : ""}>${photo}<span class="card__badge">${escapeHtml(city)}</span></a>
       <div class="card__body">
         <p class="card__address">${icon.pin}${escapeHtml(c.address)}</p>
         <div class="card__row">${plateHtml(c.plate)}</div>
@@ -259,6 +261,8 @@ $moreBtn.addEventListener("click", () => {
 // Маршруты: поиск ↔ страница номера. Поиск не пересоздаётся — только скрывается,
 // поэтому при возврате остаются запрос, загруженные карточки и позиция прокрутки.
 // ---------------------------------------------------------------------------
+
+initHoverPreview();
 
 const $viewSearch = app.querySelector<HTMLElement>("#view-search")!;
 const $viewPlate = app.querySelector<HTMLElement>("#view-plate")!;

@@ -34,10 +34,12 @@ export interface CarsearchPlateSighting {
   createdAt?: string;
   /** uuid фиксации. */
   id?: string;
-  /** URL картинки (S3). */
+  /** URL полного фото (S3). */
   photoUrl?: string;
   /** Госномер кириллицей: "А123ВС 777". */
   plate?: string;
+  /** URL миниатюры (S3) — для списков; полное фото — photo_url. */
+  thumbUrl?: string;
 }
 
 export interface CarsearchSearchRequest {

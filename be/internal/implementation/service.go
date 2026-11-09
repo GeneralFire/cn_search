@@ -33,5 +33,8 @@ func (s *CarSearch) toPB(c models.PlateSighting) *pb.PlateSighting {
 	if c.PhotoKey != "" {
 		out.PhotoUrl = s.photoBase + "/" + c.PhotoKey
 	}
+	if c.ThumbKey != "" {
+		out.ThumbUrl = s.photoBase + "/" + c.ThumbKey
+	}
 	return out
 }
