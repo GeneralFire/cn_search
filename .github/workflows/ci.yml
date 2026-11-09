@@ -1,0 +1,111 @@
+# CI: тесты бэка (с Postgres для интеграционных), сборка фронта, реестры, актуальность генерации.
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Только публичные реестры (как в Makefile).
+  GOPROXY: https://proxy.golang.org,direct
+  GOSUMDB: sum.golang.org
+  GOFLAGS: ""
+  NPM_CONFIG_USERCONFIG: /dev/null
+  NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
+
+jobs:
+  go:
+    name: Go (vet, test -race)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: carsearch
+          POSTGRES_PASSWORD: x
+          POSTGRES_DB: carsearch
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U carsearch"
+          --health-interval 2s --health-timeout 5s --health-retries 30
+    env:
+      # Интеграционные тесты repository (без переменной пропускаются).
+      TEST_DATABASE_URL: postgres://carsearch:x@127.0.0.1:5432/carsearch?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: be/go.mod
+          cache-dependency-path: be/go.sum
+      - name: Миграции goose
+        run: >-
+          docker run --rm --network host -v "$PWD/be/migrations:/migrations:ro"
+          -e GOOSE_DRIVER=postgres -e GOOSE_DBSTRING="$TEST_DATABASE_URL"
+          kukymbr/goose-docker:3.28.0
+      - name: go vet
+        working-directory: be
+        run: go vet ./...
+      - name: go test -race
+        working-directory: be
+        run: go test -race -count=1 ./...
+
+  fe:
+    name: Frontend (tsc, vite build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fe
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: fe/package-lock.json
+      - run: npm ci --registry=https://registry.npmjs.org/
+      - run: npx tsc --noEmit
+      - run: npx vite build
+
+  registries:
+    name: Public registries only
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: make check-registries
+
+  generated:
+    name: Generated code is up to date
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: be/go.mod
+          cache-dependency-path: be/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: fe/package-lock.json
+      - name: protoc (релиз GitHub, версия — PROTOC_VERSION из Makefile)
+        run: |
+          v="$(make -s protoc-version)"
+          curl -fsSL -o "$RUNNER_TEMP/protoc.zip" \
+            "https://github.com/protocolbuffers/protobuf/releases/download/v$v/protoc-$v-linux-x86_64.zip"
+          unzip -q "$RUNNER_TEMP/protoc.zip" -d "$RUNNER_TEMP/protoc"
+          echo "$RUNNER_TEMP/protoc/bin" >> "$GITHUB_PATH"
+      - name: Генераторы (версии из Makefile) и зависимости фронта
+        run: |
+          make tools-go
+          cd fe && npm ci --registry=https://registry.npmjs.org/
+      - name: make gen и пустой git diff
+        run: make ci-check

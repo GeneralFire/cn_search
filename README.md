@@ -1,5 +1,7 @@
 # Поиск по авто
 
+[![CI](https://github.com/GeneralFire/cn_search/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/GeneralFire/cn_search/actions/workflows/ci.yml)
+
 Поиск фиксаций автомобиля (где и когда замечен) по госномеру: бэкенд на Go (контракт в proto, ручки генерирует
 [clay](https://github.com/utrack/clay)), Postgres, S3-хранилище картинок и фронтенд на
 TypeScript + Vite с TS-клиентом, сгенерированным по `swagger.json`.
@@ -204,6 +206,11 @@ clay генерирует ручки с флагом `generate_unbound_methods`:
 нулевые поля в ответе опускаются (пустой поиск — `{}`), фронт подставляет значения по умолчанию.
 
 ## Генерация кода
+
+CI (`.github/workflows/ci.yml`, push/PR в master): `go vet` + `go test -race` (с Postgres-сервисом и миграциями
+goose — интеграционные тесты через `TEST_DATABASE_URL`), `tsc --noEmit` + `vite build`, `make check-registries`
+и `make ci-check` — `make gen` с protoc `PROTOC_VERSION` и генераторами из Makefile (`make tools-go`) должен
+давать пустой `git diff`. Изменили proto или `contracts.go` — запустите `make gen` и закоммитьте результат.
 
 ```
 carsearch.proto ──protoc──► be/pkg/…/*.pb.go, *_grpc.pb.go      (protoc-gen-go, -go-grpc)

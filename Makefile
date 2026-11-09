@@ -25,6 +25,9 @@ CLAY_VERSION     := v3.2.0
 MINIMOCK_VERSION := v3.4.7
 PROTOC_GEN_GO    := v1.36.12
 PROTOC_GEN_GRPC  := v1.6.2
+# protoc — не Go-модуль, ставится отдельно (Homebrew локально, релиз GitHub в CI); версия попадает
+# в шапку сгенерированных *.pb.go, поэтому у всех должна совпадать.
+PROTOC_VERSION   := 36.2
 
 .DEFAULT_GOAL := help
 
@@ -99,12 +102,15 @@ psql: ## консоль БД
 # ---------------------------------------------------------------- генерация
 
 .PHONY: tools
-tools: ## поставить генераторы protoc-gen-* в be/bin
+tools: tools-go ## поставить генераторы protoc-gen-* в be/bin и зависимости фронта
+	cd $(FE) && npm install
+
+.PHONY: tools-go
+tools-go: ## только Go-генераторы (protoc-gen-*, minimock) в be/bin — без npm
 	GOBIN=$(BIN) go install google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO)
 	GOBIN=$(BIN) go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GRPC)
 	GOBIN=$(BIN) go install github.com/utrack/clay/v3/cmd/protoc-gen-goclay@$(CLAY_VERSION)
 	GOBIN=$(BIN) go install github.com/gojuno/minimock/v3/cmd/minimock@$(MINIMOCK_VERSION)
-	cd $(FE) && npm install
 
 .PHONY: gen
 gen: gen-go gen-ts gen-mocks ## сгенерировать всё: Go и swagger из proto, TS-клиент, моки
@@ -151,3 +157,14 @@ test: ## тесты бэка и проверка типов фронта
 check-registries: ## убедиться, что зависимости только из публичных реестров
 	@! grep -oE '"resolved": "https://[^/]+' $(FE)/package-lock.json | sort -u | grep -v registry.npmjs.org
 	@echo "npm: только registry.npmjs.org"
+
+.PHONY: protoc-version
+protoc-version: ## версия protoc, с которой сгенерирован код (для CI)
+	@echo $(PROTOC_VERSION)
+
+.PHONY: ci-check
+ci-check: gen ## сгенерированное совпадает с proto/swagger/contracts.go (CI): make gen и пустой git diff
+	@git diff --exit-code -- $(BE)/pkg $(SWAGGER) $(TS_CLIENT) $(BE)/internal \
+		|| { echo "сгенерированное устарело: запустите make gen и закоммитьте"; exit 1; }
+	@test -z "$$(git status --porcelain -- $(BE)/pkg $(BE)/schema $(BE)/internal $(FE)/src/api)" \
+		|| { git status --porcelain; echo "make gen создал новые файлы — закоммитьте их"; exit 1; }
