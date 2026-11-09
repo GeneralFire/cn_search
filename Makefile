@@ -22,6 +22,7 @@ export GOFLAGS   :=
 export NPM_CONFIG_USERCONFIG := /dev/null
 
 CLAY_VERSION     := v3.2.0
+MINIMOCK_VERSION := v3.4.7
 PROTOC_GEN_GO    := v1.36.12
 PROTOC_GEN_GRPC  := v1.6.2
 
@@ -90,10 +91,10 @@ migration: ## создать миграцию: make migration NAME=add_vin
 	f=$(BE)/migrations/$$(printf '%04d' $$((n+1)))_$(NAME).sql; \
 	printf -- '-- +goose Up\n\n-- +goose Down\n' > $$f; echo "создан $$f"
 
-.PHONY: seed
-seed: ## залить тестовые данные: машины в БД, картинки в S3 (SEED_TOTAL=600)
-	$(MAKE) --no-print-directory etc
-	$(DC) run --rm --build -e SEED_TOTAL=$(or $(SEED_TOTAL),600) be seed
+.PHONY: sample-data
+sample-data: etc ## тестовые данные из be/internal/test_utils: 600 фиксаций в БД + картинки в S3 [CMD=redo|down|status]
+	$(DC) run --rm -e GOOSE_COMMAND=$(or $(CMD),up) sample-data-db
+	$(DC) run --rm sample-data-s3
 
 .PHONY: psql
 psql: ## консоль БД
@@ -106,10 +107,11 @@ tools: ## поставить генераторы protoc-gen-* в be/bin
 	GOBIN=$(BIN) go install google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO)
 	GOBIN=$(BIN) go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GEN_GRPC)
 	GOBIN=$(BIN) go install github.com/utrack/clay/v3/cmd/protoc-gen-goclay@$(CLAY_VERSION)
+	GOBIN=$(BIN) go install github.com/gojuno/minimock/v3/cmd/minimock@$(MINIMOCK_VERSION)
 	cd $(FE) && npm install
 
 .PHONY: gen
-gen: gen-go gen-ts ## сгенерировать всё из proto: Go, swagger.json, TS-клиент
+gen: gen-go gen-ts gen-mocks ## сгенерировать всё: Go и swagger из proto, TS-клиент, моки
 
 .PHONY: gen-go
 gen-go: ## proto → Go (protobuf, gRPC, ручки clay) + swagger.json
@@ -125,6 +127,12 @@ gen-go: ## proto → Go (protobuf, gRPC, ручки clay) + swagger.json
 	@# clay пишет swagger в <goclay_out>/<swagger_path>/<имя proto>.json = be/schema/carsearch.json
 	@# (выход за goclay_out требует --unsafe_allow_out_dir_escape); имя — по нашему соглашению.
 	mv $(BE)/schema/carsearch.json $(SWAGGER)
+
+.PHONY: gen-mocks
+gen-mocks: ## моки minimock по //go:generate в contracts.go → <пакет>/mocks/*_mock.go
+	@test -x $(BIN)/minimock || { echo "нет minimock: make tools"; exit 1; }
+	cd $(BE) && find internal -name contracts.go -execdir mkdir -p mocks \; && \
+		PATH=$(BIN):$$PATH go generate -run 'minimock -i [A-Za-z]+ ' ./internal/...
 
 .PHONY: gen-ts
 gen-ts: ## swagger.json → TypeScript-клиент (fe/src/api/generated.ts)

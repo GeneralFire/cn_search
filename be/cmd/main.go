@@ -1,7 +1,7 @@
-// be — сервис поиска машин.
+// be — сервис поиска фиксаций госномеров: HTTP (ручки clay) + gRPC.
 //
-//	be serve    — HTTP (ручки clay) + gRPC
-//	be seed     — тестовые данные в БД + картинки в S3 (схема — миграции goose, см. be/migrations)
+// Схема БД — миграции goose (be/migrations), тестовые данные — be/internal/test_utils;
+// и то и другое применяется снаружи (docker-compose, Makefile), не этим бинарником.
 package main
 
 import (
@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 
@@ -23,10 +22,10 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
-	"github.com/GeneralFire/cn_search/be/assets"
+	"github.com/GeneralFire/cn_search/be/internal/db"
 	"github.com/GeneralFire/cn_search/be/internal/implementation"
 	"github.com/GeneralFire/cn_search/be/internal/repository"
-	"github.com/GeneralFire/cn_search/be/internal/s3"
+	"github.com/GeneralFire/cn_search/be/internal/usecase"
 	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch"
 )
 
@@ -37,26 +36,15 @@ type config struct {
 	HTTPPort    string
 	GRPCPort    string
 	DatabaseURL string
-	S3          s3.Config
-	PhotoBase   string // публичный URL бакета для браузера
-	SeedTotal   int
+	PhotoBase   string // публичный URL бакета с картинками для браузера
 }
 
 func loadConfig() config {
-	total, _ := strconv.Atoi(envOr("SEED_TOTAL", "600"))
 	return config{
 		HTTPPort:    envOr("PORT", "8080"),
 		GRPCPort:    envOr("GRPC_PORT", "8082"),
 		DatabaseURL: os.Getenv("DATABASE_URL"),
-		S3: s3.Config{
-			Endpoint:  envOr("S3_ENDPOINT", "localhost:9000"),
-			AccessKey: os.Getenv("S3_ACCESS_KEY"),
-			SecretKey: os.Getenv("S3_SECRET_KEY"),
-			UseSSL:    os.Getenv("S3_USE_SSL") == "true",
-			Bucket:    envOr("S3_BUCKET", "cars"),
-		},
-		PhotoBase: envOr("S3_PUBLIC_URL", "/s3/cars"),
-		SeedTotal: total,
+		PhotoBase:   envOr("S3_PUBLIC_URL", "/s3/cars"),
 	}
 }
 
@@ -64,31 +52,16 @@ func main() {
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(log)
 
-	cmd := "serve"
-	if len(os.Args) > 1 {
-		cmd = os.Args[1]
-	}
-
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	cfg := loadConfig()
-	var err error
-	switch cmd {
-	case "serve":
-		err = serve(ctx, log, cfg)
-	case "seed":
-		err = seed(ctx, log, cfg)
-	default:
-		err = fmt.Errorf("неизвестная команда %q; доступны: serve, seed", cmd)
-	}
-	if err != nil {
-		log.Error("fatal", "cmd", cmd, "err", err)
+	if err := serve(ctx, log, loadConfig()); err != nil {
+		log.Error("fatal", "err", err)
 		os.Exit(1)
 	}
 }
 
-func withStore(ctx context.Context, cfg config, fn func(*repository.PostgresStore) error) error {
+func withPool(ctx context.Context, cfg config, fn func(*pgxpool.Pool) error) error {
 	if cfg.DatabaseURL == "" {
 		return errors.New("DATABASE_URL не задан")
 	}
@@ -100,15 +73,16 @@ func withStore(ctx context.Context, cfg config, fn func(*repository.PostgresStor
 	if err := pool.Ping(ctx); err != nil {
 		return fmt.Errorf("db ping: %w", err)
 	}
-	return fn(repository.NewPostgresStore(pool))
+	return fn(pool)
 }
 
 // ---------------------------------------------------------------- serve
 
 func serve(ctx context.Context, log *slog.Logger, cfg config) error {
-	return withStore(ctx, cfg, func(store *repository.PostgresStore) error {
-		desc := pb.NewCarSearchServiceServiceDesc(implementation.NewCarSearch(store, cfg.PhotoBase))
-		configureHTTPRuntime()
+	return withPool(ctx, cfg, func(pool *pgxpool.Pool) error {
+		// implementation (RPC) → usecase (транзакции) → repository (SQL) → db (pgx).
+		uc := usecase.New(db.NewCluster(pool), repository.New())
+		desc := pb.NewCarSearchServiceServiceDesc(implementation.NewCarSearch(uc, cfg.PhotoBase))
 
 		// HTTP: ручки clay под /api + health + swagger.
 		api := chi.NewRouter()
@@ -187,44 +161,6 @@ func logRequests(log *slog.Logger, next http.Handler) http.Handler {
 		next.ServeHTTP(rec, r)
 		log.Info("request", "method", r.Method, "uri", r.URL.RequestURI(), "status", rec.status,
 			"duration_ms", time.Since(start).Milliseconds())
-	})
-}
-
-// ---------------------------------------------------------------- seed
-
-func seed(ctx context.Context, log *slog.Logger, cfg config) error {
-	// 1. Картинки → S3.
-	objects, err := s3.New(cfg.S3)
-	if err != nil {
-		return err
-	}
-	if err := objects.EnsurePublicBucket(ctx); err != nil {
-		return err
-	}
-	for i := 1; i <= assets.PhotoCount; i++ {
-		name := fmt.Sprintf("car-%d.png", i)
-		data, err := assets.Images.ReadFile("cars/" + name)
-		if err != nil {
-			return fmt.Errorf("read asset %s: %w", name, err)
-		}
-		if err := objects.Put(ctx, name, data, "image/png"); err != nil {
-			return err
-		}
-	}
-	log.Info("images uploaded", "bucket", cfg.S3.Bucket, "count", assets.PhotoCount)
-
-	// 2. Машины → Postgres.
-	return withStore(ctx, cfg, func(store *repository.PostgresStore) error {
-		opt := repository.DefaultGenerateOptions(func(id int) string {
-			return fmt.Sprintf("car-%d.png", (id*7)%assets.PhotoCount+1)
-		})
-		opt.Total = cfg.SeedTotal
-		all := repository.Generate(opt)
-		if err := store.ReplaceAll(ctx, all); err != nil {
-			return err
-		}
-		log.Info("plate sightings seeded", "count", len(all))
-		return nil
 	})
 }
 

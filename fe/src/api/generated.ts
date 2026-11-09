@@ -15,11 +15,8 @@ export type CarSearchServiceGetData = CarsearchGetResponse;
 export type CarSearchServiceSearchData = CarsearchSearchResponse;
 
 export interface CarsearchGetRequest {
-  /**
-   * Идентификатор любой фиксации номера.
-   * @format int32
-   */
-  id?: number;
+  /** uuid любой фиксации номера. */
+  id?: string;
 }
 
 export interface CarsearchGetResponse {
@@ -35,8 +32,8 @@ export interface CarsearchPlateSighting {
    * @format date-time
    */
   createdAt?: string;
-  /** @format int32 */
-  id?: number;
+  /** uuid фиксации. */
+  id?: string;
   /** URL картинки (S3). */
   photoUrl?: string;
   /** Госномер кириллицей: "А123ВС 777". */

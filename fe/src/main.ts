@@ -104,7 +104,7 @@ function cardHtml(c: Car, i: number): string {
         <div class="card__row">${plateHtml(c.plate)}</div>
         <div class="card__foot">
           <span class="card__date">${icon.cal}<time datetime="${escapeHtml(c.createdAt)}">${formatDate(c.createdAt)}</time></span>
-          <button class="btn btn--ghost" type="button" data-clarify="${c.id}">Уточнить</button>
+          <button class="btn btn--ghost" type="button" data-clarify="${escapeHtml(c.id)}">Уточнить</button>
         </div>
       </div>
     </article>`;
@@ -127,7 +127,7 @@ const state = {
   total: 0,
   nextOffset: 0 as number | null, // null — всё загружено
   failed: false,
-  cars: new Map<number, Car>(), // загруженные машины — для модалки
+  cars: new Map<string, Car>(), // загруженные машины — для модалки
   ctrl: null as AbortController | null,
 };
 
@@ -240,7 +240,7 @@ function openClarify(car: Car): void {
 
 $grid.addEventListener("click", (e) => {
   const btn = (e.target as Element).closest<HTMLButtonElement>("[data-clarify]");
-  const car = btn && state.cars.get(Number(btn.dataset.clarify));
+  const car = btn && state.cars.get(btn.dataset.clarify ?? "");
   if (car) openClarify(car);
 });
 

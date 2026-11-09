@@ -460,9 +460,8 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
       "type": "object",
       "properties": {
         "id": {
-          "type": "integer",
-          "format": "int32",
-          "description": "Идентификатор любой фиксации номера."
+          "type": "string",
+          "description": "uuid любой фиксации номера."
         }
       }
     },
@@ -482,8 +481,8 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
       "type": "object",
       "properties": {
         "id": {
-          "type": "integer",
-          "format": "int32"
+          "type": "string",
+          "description": "uuid фиксации."
         },
         "photoUrl": {
           "type": "string",

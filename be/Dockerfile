@@ -17,4 +17,3 @@ EXPOSE 8080 8082
 HEALTHCHECK --interval=5s --timeout=2s --retries=10 \
   CMD wget -qO- http://127.0.0.1:8080/api/health || exit 1
 ENTRYPOINT ["be"]
-CMD ["serve"]

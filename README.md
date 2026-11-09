@@ -14,7 +14,7 @@ TypeScript + Vite с TS-клиентом, сгенерированным по `s
 
 ```bash
 make run    # поднять всё: db + s3 (+ миграции), be, fe
-make seed   # залить тестовые данные: 600 машин в Postgres, 5 картинок в S3
+make sample-data   # тестовые данные: 600 фиксаций в Postgres, 5 картинок в S3
 ```
 
 По отдельности:
@@ -56,20 +56,20 @@ car-search/
 │   ├── schema/carsearch.swagger.json      # сгенерирован clay
 │   ├── pkg/carsearch/       # сгенерировано: *.pb.go, *_grpc.pb.go, *.pb.goclay.go (ручки)
 │   ├── cmd/
-│   │   ├── main.go          # be serve | seed
-│   │   └── httpruntime.go   # настройка JSON и формата ошибок ручек clay
+│   │   └── main.go          # be: HTTP (ручки clay) + gRPC, сборка слоёв
 │   ├── internal/
-│   │   ├── implementation/  # реализация CarSearchService, файл на RPC (руками, clay её не генерирует)
-│   │   ├── models/          # доменные модели
-│   │   ├── repository/      # Postgres (строки таблиц — repository_entities.go), генератор тестовых данных
+│   │   ├── implementation/  # RPC CarSearchService, файл на метод (руками, clay её не генерирует)
+│   │   ├── usecase/         # сценарии; управляет транзакциями (InReadTx / InWriteTx)
+│   │   ├── repository/      # plain SQL к Postgres; tx — вторым аргументом каждого метода
+│   │   ├── db/              # Executor (Select/Get/Exec, *Sqr) и Cluster (транзакции)
+│   │   ├── models/          # доменные модели (теги db)
+│   │   ├── test_utils/      # тестовые данные: migrations/ (goose) и s3/ (картинки + upload.sh)
 │   │   └── s3/              # S3-клиент
-│   ├── migrations/          # SQL-миграции goose: 0001_init.sql, 0002_… (в бинарник не входят)
-│   └── assets/cars/         # 5 PNG, вшиты в бинарник; `be seed` заливает их в S3
+│   ├── migrations/          # SQL-миграции схемы (goose): 0001_init.sql (в бинарник не входят)
 ├── fe/                      # фронтенд, TypeScript + Vite
 │   ├── src/api/generated.ts # сгенерированный TS-клиент (не править)
 │   ├── src/api/index.ts     # обёртка над клиентом
 │   ├── src/main.ts          # UI: поиск, бесконечная прокрутка, модалка
-│   └── scripts/gen-car-images.mjs   # генератор PNG-картинок → be/assets/cars
 └── mockups/                 # HTML-макеты дизайна
 ```
 
@@ -83,15 +83,16 @@ car-search/
 | `make stop-be` / `stop-fe` / `stop-etc` | остановить часть стека |
 | `make down` | остановить всё; данные остаются в `./.data` |
 | `make reset` | остановить и **удалить** данные БД и S3 (`./.data`) |
-| `make seed` | миграции + 600 тестовых машин + картинки в S3. Размер: `make seed SEED_TOTAL=5000` |
+| `make sample-data` | тестовые данные из `be/internal/test_utils`: миграция goose в БД + картинки в S3; `CMD=redo` — залить заново |
 | `make migrate` | миграции goose вручную; `CMD=status\|down\|redo\|version`, `CMD=up-to ARG=2` |
 | `make migration NAME=add_vin` | создать следующую миграцию `be/migrations/000N_add_vin.sql` |
 | `make psql` | консоль Postgres |
 | `make logs` / `ps` | логи / статус |
-| `make tools` | поставить генераторы `protoc-gen-go`, `-go-grpc`, `-goclay` в `be/bin` и npm-зависимости |
-| `make gen` | всё из proto: `gen-go` + `gen-ts` |
+| `make tools` | поставить `protoc-gen-go`, `-go-grpc`, `-goclay`, `minimock` в `be/bin` и npm-зависимости |
+| `make gen` | всё: `gen-go` + `gen-ts` + `gen-mocks` |
 | `make gen-go` | proto → Go + ручки clay + `swagger.json` |
 | `make gen-ts` | `swagger.json` → `fe/src/api/generated.ts` |
+| `make gen-mocks` | моки minimock по `//go:generate` в `contracts.go` → `<пакет>/mocks/*_mock.go` |
 | `make test` | тесты бэка (`go test -race`) и проверка типов фронта |
 | `make check-registries` | в `package-lock.json` только registry.npmjs.org |
 
@@ -120,7 +121,7 @@ clay генерирует ручки с флагом `generate_unbound_methods`:
 
 // ответ
 {
-  "items": [{ "id": 1, "photoUrl": "/s3/cars/car-3.png", "address": "Москва, …",
+  "items": [{ "id": "00000000-0000-0000-0000-000000000004", "photoUrl": "/s3/cars/car-3.png", "address": "Москва, …",
               "plate": "А123ВС 777", "createdAt": "2026-11-02T09:15:00Z" }],
   "total": 1,          // всего найдено — есть всегда, в т. ч. 0
   "nextOffset": 35     // смещение следующей страницы; нет поля — дальше пусто
@@ -140,29 +141,31 @@ clay генерирует ручки с флагом `generate_unbound_methods`:
 
 ```jsonc
 // запрос
-{ "id": 1 }
+{ "id": "00000000-0000-0000-0000-000000000001" }
 
 // ответ
 { "items": [
-  { "id": 4, "address": "Москва, ул. Тверская, 7",     "plate": "А123ВС 777", "createdAt": "2026-11-05T18:30:00Z", … },
-  { "id": 1, "address": "Москва, Пресненская наб., 10", "plate": "А123ВС 777", "createdAt": "2026-11-02T09:15:00Z", … },
-  { "id": 5, "address": "Москва, Кутузовский пр., 30",  "plate": "А123ВС 777", "createdAt": "2026-10-20T08:00:00Z", … }
+  { "id": "…0004", "address": "Москва, ул. Тверская, 7",     "plate": "А123ВС 777", "createdAt": "2026-11-05T18:30:00Z", … },
+  { "id": "…0001", "address": "Москва, Пресненская наб., 10", "plate": "А123ВС 777", "createdAt": "2026-11-02T09:15:00Z", … },
+  { "id": "…0005", "address": "Москва, Кутузовский пр., 30",  "plate": "А123ВС 777", "createdAt": "2026-10-20T08:00:00Z", … }
 ] }
 ```
 
 ### Ошибки
 
 ```json
-{ "code": "InvalidArgument", "message": "limit: от 1 до 100 (0 — по умолчанию 35)" }
+{ "error": "rpc error: code = InvalidArgument desc = limit: от 1 до 100 (0 — по умолчанию 35)" }
 ```
 
-| HTTP | `code` | Когда |
+| HTTP | gRPC-код | Когда |
 |---|---|---|
-| 400 | `InvalidArgument` | неверные параметры, битый JSON |
+| 400 | `InvalidArgument` | неверные параметры (`limit`, `offset`, не uuid в `Get`) |
 | 404 | `NotFound` | фиксации нет |
-| 500 | `Internal` | ошибка сервера (детали — только в логах) |
+| 500 | `Internal` | ошибка сервера |
+| 500 | — | битый JSON или неизвестное поле в запросе (ошибка разбора clay) |
 
-`code` — имя gRPC-кода (`codes.Code.String()`).
+Маршалер и формат ошибок — стандартные clay (`runtime.JSONPb{}` и `DefaultSetError`), без настройки:
+нулевые поля в ответе опускаются (пустой поиск — `{}`), фронт подставляет значения по умолчанию.
 
 ## Генерация кода
 
@@ -173,19 +176,13 @@ carsearch.proto ──protoc──► be/pkg/…/*.pb.go, *_grpc.pb.go      (pro
                                    └──swagger-typescript-api──► fe/src/api/generated.ts
 ```
 
-Поменяли proto → `make gen` → реализовать метод в `be/internal/implementation` → использовать в
-`fe/src/api/index.ts`. Нужен `protoc` (`brew install protobuf`) и `make tools` один раз.
+Поменяли proto → `make gen` → метод в `internal/implementation` → сценарий в `internal/usecase` →
+запрос в `internal/repository` → использовать в `fe/src/api/index.ts`. Нужен `protoc` (`brew install protobuf`) и `make tools` один раз.
 Сгенерированный код лежит в репозитории — для сборки генераторы не нужны.
 
 clay кладёт отдельный swagger в `<goclay_out>/<swagger_path>/<имя proto>.json`. Чтобы он попал в
 `be/schema`, `gen-go` передаёт `swagger_path=../schema` и флаг protoc `--unsafe_allow_out_dir_escape`
 (иначе protoc запрещает выход за каталог вывода), затем переименовывает файл в `carsearch.swagger.json`.
-
-Нюансы, зашитые в `be/cmd/httpruntime.go`:
-- **Нулевые значения в JSON.** По умолчанию proto3 JSON их не передаёт: пустая выдача была бы `{}`.
-  Включён `EmitUnpopulated` — `total` и `items` есть всегда; необязательный `nextOffset` пропадает,
-  когда страниц больше нет.
-- **Ошибки** — `{code, message}` вместо стандартного `{"error": "rpc error: code = … desc = …"}`.
 
 ## Фронтенд
 
@@ -204,7 +201,7 @@ clay кладёт отдельный swagger в `<goclay_out>/<swagger_path>/<и
 
 Схема БД — только миграции [goose](https://github.com/pressly/goose) в `be/migrations`: файлы
 `NNNN_название.sql` (номера подряд с `0001`, секции `-- +goose Up` / `-- +goose Down`).
-Применяет их сервис `migrate` в docker-compose (`goose up` при `make etc`, `make run` и перед `make seed`),
+Применяет их сервис `migrate` в docker-compose (`goose up` при `make etc` / `make run`),
 вручную — `make migrate [CMD=…]`; версии — в таблице `goose_db_version`. Код `be` миграции не знает.
 Применённую миграцию не меняем — добавляем следующую: `make migration NAME=…`.
 
@@ -212,31 +209,41 @@ clay кладёт отдельный swagger в `<goclay_out>/<swagger_path>/<и
 - `plates` — номера: `id uuid` (`gen_random_uuid()`), `plate text UNIQUE` (кириллицей, `А123ВС 777`),
   `meta jsonb` (по умолчанию `{}`). GIN по `to_tsvector('simple', plate)` — поиск
   `plainto_tsquery('simple', <строка из rpc>)`, расширения Postgres не нужны.
-- `plate_sightings` — фиксации: `id`, `plate_id uuid → plates(id)`, `address`, `photo_key` (ключ объекта
+- `plate_sightings` — фиксации: `id uuid` (`gen_random_uuid()`), `plate_id uuid → plates(id)`, `address`, `photo_key` (ключ объекта
   в S3), `created_at` (`timestamptz`). Индексы: `(created_at DESC, id)` для выдачи,
   `(plate_id, created_at DESC, id)` для `Get`.
 
-Миграции: `0001_init.sql` — `plate_sightings` с номером в колонке; `0002_plates.sql` — вынос номеров
-в `plates` с переносом данных (и обратно в Down).
+Схема целиком — в `0001_init.sql` (до первого выката её правим на месте).
 
-Слои бэкенда: `internal/models` — доменные модели `Plate`, `PlateSighting`; `internal/repository` —
-запросы к Postgres — plain SQL через `Select` / `Get` / `Exec` (и `SelectSql` / `GetSql` / `ExecSql` для
-построителей с `ToSql()`, как у squirrel) из `executor.go`, сканирование в модели по тегам `db` (scany);
-таблицы и SQL-фрагменты — в `repository_entities.go`; `internal/implementation` —
-RPC, по файлу на метод (`search.go`, `get.go`).
+### Слои бэкенда
 
-`make seed` (= `goose up` + `be seed`):
-1. создаёт бакет `cars` с анонимным чтением и заливает 5 PNG из `be/assets/cars`;
-2. **заменяет** все записи сгенерированным набором (схема уже создана миграциями).
+```
+implementation (RPC, валидация, маппинг в proto)
+   └─► usecase (сценарии, транзакции: InReadTx / InWriteTx)
+          └─► repository (plain SQL; методы принимают tx db.Executor вторым аргументом)
+                 └─► db (Executor поверх pgx.Tx: Select/Get/Exec + SelectSqr/GetSqr/ExecSqr; Cluster)
+```
 
-Генератор детерминированный (фиксированный seed): у всех одинаковые данные. 8 городов,
-корректные буквы и коды регионов; номера берутся из пула (≈ треть от числа записей), поэтому у номера
-обычно несколько фиксаций в разных местах его города; время — за последние 180 дней.
-Первые записи фиксированные — для ручной проверки: `А123ВС 777` (3 фиксации, id 1, 4, 5),
-`М456ОР 178`, `Т789УХ 116` (по одной).
+- Интерфейсы зависимостей объявляет потребитель в своём `contracts.go`: `implementation` — usecase,
+  `usecase` — `transactor` и `repository`, `db` — `Executor`, `querier`, `Sqlizer`.
+- Там же `//go:generate minimock …` → моки в `<пакет>/mocks/*_mock.go` (`make gen-mocks`); тесты — на моках.
+- `InReadTx` — read only + REPEATABLE READ: `count` и страница в `Search` из одного снимка.
+- `models` — `Plate`, `PlateSighting`, `SearchOpts`, `SearchPage`, `ErrNotFound`; теги `db` — для scany.
+- `*Sqr`-методы принимают построитель с `ToSql()` (контракт `squirrel.Sqlizer`); squirrel пока не подключён.
 
-Картинки (седан, хэтчбек, внедорожник, пикап, минивэн; 1280×720) рисует
-`node fe/scripts/gen-car-images.mjs` → `be/assets/cars/`. После перегенерации — `make run-be && make seed`.
+### Тестовые данные — `make sample-data`
+
+Всё лежит в `be/internal/test_utils` и заливается снаружи, бинарник `be` о нём не знает:
+
+1. `migrations/0001_test_data.sql` — миграция goose (сервис `sample-data-db`, отдельная таблица версий
+   `goose_test_data_version`). Очищает таблицы и генерирует набор прямо в SQL (`setseed` — одинаково
+   при каждой заливке): 8 городов, корректные буквы и коды регионов, ~200 номеров, 600 фиксаций —
+   у номера обычно несколько в разных местах его города, время — за 180 дней. Фиксированные записи
+   для ручной проверки: `А123ВС 777` — 3 фиксации (id `…0001`, `…0004`, `…0005`), `М456ОР 178`, `Т789УХ 116`.
+2. `s3/upload.sh` — сервис `sample-data-s3` (`amazon/aws-cli`): бакет `cars` с анонимным чтением
+   (`s3/policy.json`) и картинки `s3/cars/car-1..5.png`.
+
+Залить заново: `make sample-data CMD=redo`.
 
 ### Переменные окружения бэкенда
 
@@ -244,11 +251,7 @@ RPC, по файлу на метод (`search.go`, `get.go`).
 |---|---|---|
 | `PORT` / `GRPC_PORT` | `8080` / `8082` | |
 | `DATABASE_URL` | — | `postgres://user:pass@host:5432/carsearch?sslmode=disable` |
-| `S3_ENDPOINT` | `localhost:9000` | host:port |
-| `S3_ACCESS_KEY` / `S3_SECRET_KEY` | — | |
-| `S3_BUCKET` | `cars` | |
-| `S3_PUBLIC_URL` | `/s3/cars` | откуда браузер берёт картинки |
-| `SEED_TOTAL` | `600` | сколько машин генерирует `be seed` |
+| `S3_PUBLIC_URL` | `/s3/cars` | откуда браузер берёт картинки (бэку S3-клиент не нужен) |
 
 Пароли БД и S3 в `docker-compose.yml` — только для локальных контейнеров (их порты открыты на
 `127.0.0.1`); переопределяются через `.env`: `POSTGRES_PASSWORD`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`.

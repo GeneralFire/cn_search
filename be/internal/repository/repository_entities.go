@@ -13,6 +13,3 @@ const plateSightingSelect = `s.id, s.plate_id, p.plate, s.address, s.photo_key, 
 
 // plateSightingFrom — фиксации с JOIN номера.
 const plateSightingFrom = plateSightingsTable + ` s JOIN ` + platesTable + ` p ON p.id = s.plate_id`
-
-// plateSightingCopyColumns — колонки plate_sightings для COPY.
-var plateSightingCopyColumns = []string{"id", "plate_id", "address", "photo_key", "created_at"}

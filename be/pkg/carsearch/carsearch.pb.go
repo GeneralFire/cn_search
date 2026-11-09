@@ -25,7 +25,8 @@ const (
 // PlateSighting — фиксация номера: где и когда замечена машина.
 type PlateSighting struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	Id    int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// uuid фиксации.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// URL картинки (S3).
 	PhotoUrl string `protobuf:"bytes,2,opt,name=photo_url,json=photoUrl,proto3" json:"photo_url,omitempty"`
 	Address  string `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
@@ -67,11 +68,11 @@ func (*PlateSighting) Descriptor() ([]byte, []int) {
 	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *PlateSighting) GetId() int32 {
+func (x *PlateSighting) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *PlateSighting) GetPhotoUrl() string {
@@ -231,8 +232,8 @@ func (x *SearchResponse) GetNextOffset() int32 {
 
 type GetRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Идентификатор любой фиксации номера.
-	Id            int32 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	// uuid любой фиксации номера.
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -267,11 +268,11 @@ func (*GetRequest) Descriptor() ([]byte, []int) {
 	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetRequest) GetId() int32 {
+func (x *GetRequest) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 type GetResponse struct {
@@ -325,7 +326,7 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\n" +
 	"\x19carsearch/carsearch.proto\x12\tcarsearch\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa7\x01\n" +
 	"\rPlateSighting\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x1b\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tphoto_url\x18\x02 \x01(\tR\bphotoUrl\x12\x18\n" +
 	"\aaddress\x18\x03 \x01(\tR\aaddress\x12\x14\n" +
 	"\x05plate\x18\x04 \x01(\tR\x05plate\x129\n" +
@@ -343,7 +344,7 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\f_next_offset\"\x1c\n" +
 	"\n" +
 	"GetRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x05R\x02id\"=\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"=\n" +
 	"\vGetResponse\x12.\n" +
 	"\x05items\x18\x01 \x03(\v2\x18.carsearch.PlateSightingR\x05items2\x87\x01\n" +
 	"\x10CarSearchService\x12=\n" +

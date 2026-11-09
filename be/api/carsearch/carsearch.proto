@@ -21,7 +21,8 @@ service CarSearchService {
 
 // PlateSighting — фиксация номера: где и когда замечена машина.
 message PlateSighting {
-  int32 id = 1;
+  // uuid фиксации.
+  string id = 1;
   // URL картинки (S3).
   string photo_url = 2;
   string address = 3;
@@ -51,8 +52,8 @@ message SearchResponse {
 }
 
 message GetRequest {
-  // Идентификатор любой фиксации номера.
-  int32 id = 1;
+  // uuid любой фиксации номера.
+  string id = 1;
 }
 
 message GetResponse {

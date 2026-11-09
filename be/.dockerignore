@@ -2,3 +2,4 @@ Dockerfile
 .dockerignore
 bin
 *_test.go
+internal/test_utils

@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/GeneralFire/cn_search/be/internal/repository"
+	"github.com/GeneralFire/cn_search/be/internal/models"
 	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch"
 )
 
@@ -27,7 +27,7 @@ func (s *CarSearch) Search(ctx context.Context, req *pb.SearchRequest) (*pb.Sear
 		limit = DefaultLimit
 	}
 
-	page, err := s.repo.Search(ctx, repository.Query{
+	page, err := s.uc.Search(ctx, models.SearchOpts{
 		Plate:  req.GetPlate(),
 		Offset: int(req.GetOffset()),
 		Limit:  limit,

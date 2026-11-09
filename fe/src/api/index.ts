@@ -18,7 +18,7 @@ export class ApiError extends Error {}
 
 function toCar(c: CarsearchPlateSighting): Car {
   return {
-    id: c.id ?? 0,
+    id: c.id ?? "",
     plate: c.plate ?? "",
     address: c.address ?? "",
     createdAt: c.createdAt ?? "",
