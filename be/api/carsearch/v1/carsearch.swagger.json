@@ -1,0 +1,166 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "carsearch/v1/carsearch.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "CarSearchService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/carsearch.v1.CarSearchService/GetCar": {
+      "post": {
+        "summary": "GetCar возвращает машину по идентификатору.",
+        "operationId": "CarSearchService_GetCar",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetCarResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1GetCarRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.v1.CarSearchService/SearchCars": {
+      "post": {
+        "summary": "SearchCars ищет машины. Условия по номеру и ключу объединяются через И;\nпустое поле не ограничивает. Результаты — от новых к старым, постранично.",
+        "operationId": "CarSearchService_SearchCars",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SearchCarsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1SearchCarsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "v1Car": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "photoUrl": {
+          "type": "string",
+          "description": "URL картинки (S3)."
+        },
+        "address": {
+          "type": "string"
+        },
+        "plate": {
+          "type": "string",
+          "description": "Госномер кириллицей: \"А123ВС 777\"."
+        },
+        "key": {
+          "type": "string",
+          "description": "Ключ: \"KEY-0451\"."
+        },
+        "date": {
+          "type": "string",
+          "description": "Дата в формате YYYY-MM-DD."
+        }
+      },
+      "description": "Car — автомобиль."
+    },
+    "v1GetCarRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1GetCarResponse": {
+      "type": "object",
+      "properties": {
+        "car": {
+          "$ref": "#/definitions/v1Car"
+        }
+      }
+    },
+    "v1SearchCarsRequest": {
+      "type": "object",
+      "properties": {
+        "plate": {
+          "type": "string",
+          "description": "Подстрока госномера; регистр, пробелы и латиница вместо кириллицы не важны."
+        },
+        "key": {
+          "type": "string",
+          "description": "Подстрока ключа; регистр и пробелы не важны."
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Сколько записей пропустить (для бесконечной прокрутки)."
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Размер страницы, 1..100; 0 — по умолчанию (35)."
+        }
+      }
+    },
+    "v1SearchCarsResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Car"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Всего найдено по запросу."
+        },
+        "nextOffset": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Смещение следующей страницы; не задано — дальше ничего нет."
+        }
+      }
+    }
+  }
+}

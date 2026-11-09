@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package carsearch.v1;
+
+option go_package = "github.com/GeneralFire/cn_search/be/pkg/carsearch/v1;carsearchv1";
+
+// CarSearchService — поиск машин по госномеру и ключу.
+//
+// HTTP-аннотаций нет намеренно: HTTP-ручки генерирует clay с флагом
+// generate_unbound_methods — каждый метод доступен как
+// POST /carsearch.v1.CarSearchService/<Method> с JSON-телом запроса.
+service CarSearchService {
+  // SearchCars ищет машины. Условия по номеру и ключу объединяются через И;
+  // пустое поле не ограничивает. Результаты — от новых к старым, постранично.
+  rpc SearchCars(SearchCarsRequest) returns (SearchCarsResponse);
+
+  // GetCar возвращает машину по идентификатору.
+  rpc GetCar(GetCarRequest) returns (GetCarResponse);
+}
+
+// Car — автомобиль.
+message Car {
+  int32 id = 1;
+  // URL картинки (S3).
+  string photo_url = 2;
+  string address = 3;
+  // Госномер кириллицей: "А123ВС 777".
+  string plate = 4;
+  // Ключ: "KEY-0451".
+  string key = 5;
+  // Дата в формате YYYY-MM-DD.
+  string date = 6;
+}
+
+message SearchCarsRequest {
+  // Подстрока госномера; регистр, пробелы и латиница вместо кириллицы не важны.
+  string plate = 1;
+  // Подстрока ключа; регистр и пробелы не важны.
+  string key = 2;
+  // Сколько записей пропустить (для бесконечной прокрутки).
+  int32 offset = 3;
+  // Размер страницы, 1..100; 0 — по умолчанию (35).
+  int32 limit = 4;
+}
+
+message SearchCarsResponse {
+  repeated Car items = 1;
+  // Всего найдено по запросу.
+  int32 total = 2;
+  // Смещение следующей страницы; не задано — дальше ничего нет.
+  optional int32 next_offset = 3;
+}
+
+message GetCarRequest {
+  int32 id = 1;
+}
+
+message GetCarResponse {
+  Car car = 1;
+}

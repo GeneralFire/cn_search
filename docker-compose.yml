@@ -1,20 +1,90 @@
+# Локальное окружение для разработки.
+# Пароли ниже — только для локальных контейнеров (порты БД и S3 открыты лишь на 127.0.0.1);
+# переопределяются через .env: POSTGRES_PASSWORD, S3_ACCESS_KEY, S3_SECRET_KEY.
+
+x-db-env: &db-env
+  POSTGRES_USER: ${POSTGRES_USER:-carsearch}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-carsearch-dev}
+  POSTGRES_DB: carsearch
+
+x-s3-env: &s3-env
+  S3_ENDPOINT: s3:9000
+  S3_ACCESS_KEY: ${S3_ACCESS_KEY:-carsearch}
+  S3_SECRET_KEY: ${S3_SECRET_KEY:-carsearch-dev}
+  S3_BUCKET: cars
+
 services:
-  # Бэкенд — пока заглушка (отвечает только на /api/health).
+  # --- Postgres: машины ---
+  db:
+    image: postgres:17-alpine
+    environment: *db-env
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d carsearch"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  # --- S3 (RustFS — S3-совместимое хранилище, замена MinIO): картинки машин ---
+  # Образы minio/minio больше не публикуются на Docker Hub.
+  s3:
+    image: rustfs/rustfs:1.0.4
+    environment:
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:-carsearch}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:-carsearch-dev}
+      RUSTFS_CONSOLE_ENABLE: "true"
+    ports:
+      - "127.0.0.1:9000:9000" # S3 API
+      - "127.0.0.1:9001:9001" # веб-консоль
+    volumes:
+      - s3-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:9000/health"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  # --- Бэкенд (Go + clay) ---
   be:
     build: ./be
     environment:
+      <<: *s3-env
       PORT: "8080"
+      GRPC_PORT: "8082"
+      DATABASE_URL: postgres://${POSTGRES_USER:-carsearch}:${POSTGRES_PASSWORD:-carsearch-dev}@db:5432/carsearch?sslmode=disable
+      S3_PUBLIC_URL: /s3/cars # браузер получает картинки через прокси фронта
     ports:
-      - "127.0.0.1:8080:8080" # только localhost — для отладки
+      - "127.0.0.1:8080:8080" # HTTP: /api/...
+      - "127.0.0.1:8082:8082" # gRPC
+    depends_on:
+      db:
+        condition: service_healthy
+      s3:
+        condition: service_healthy
     restart: unless-stopped
 
+  # --- Фронтенд (Vite, hot-reload) ---
   fe:
     build: ./fe
     environment:
       VITE_USE_POLLING: "true" # надёжный hot-reload с bind-mount на macOS
+      API_URL: http://be:8080
+      S3_URL: http://s3:9000
     ports:
       - "7173:7173" # доступен из локальной сети
     volumes:
       - ./fe:/app # исходники с хоста → hot-reload
       - /app/node_modules # node_modules из образа, а не с хоста (macOS ≠ linux)
+    depends_on:
+      be:
+        condition: service_healthy
     restart: unless-stopped
+
+volumes:
+  db-data:
+  s3-data:
