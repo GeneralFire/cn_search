@@ -1,4 +1,6 @@
 # Локальное окружение для разработки.
+# Данные БД и S3 — в ./.data на хосте (bind mount): переживают перезапуск, `docker-compose down -v`,
+# очистку томов и пересоздание VM Docker. Удалить данные: `make reset`.
 # Пароли ниже — только для локальных контейнеров (порты БД и S3 открыты лишь на 127.0.0.1);
 # переопределяются через .env: POSTGRES_PASSWORD, S3_ACCESS_KEY, S3_SECRET_KEY.
 
@@ -6,6 +8,8 @@ x-db-env: &db-env
   POSTGRES_USER: ${POSTGRES_USER:-carsearch}
   POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-carsearch-dev}
   POSTGRES_DB: carsearch
+
+x-db-url: &db-url postgres://${POSTGRES_USER:-carsearch}:${POSTGRES_PASSWORD:-carsearch-dev}@db:5432/carsearch?sslmode=disable
 
 x-s3-env: &s3-env
   S3_ENDPOINT: s3:9000
@@ -21,7 +25,7 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - ./.data/db:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d carsearch"]
       interval: 3s
@@ -41,13 +45,28 @@ services:
       - "127.0.0.1:9000:9000" # S3 API
       - "127.0.0.1:9001:9001" # веб-консоль
     volumes:
-      - s3-data:/data
+      - ./.data/s3:/data
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://127.0.0.1:9000/health"]
       interval: 3s
       timeout: 3s
       retries: 20
     restart: unless-stopped
+
+  # --- Миграции БД (goose): применяются при каждом `up`, be стартует после них ---
+  migrate:
+    image: kukymbr/goose-docker:3.28.0
+    environment:
+      GOOSE_DRIVER: postgres
+      GOOSE_DBSTRING: *db-url
+      GOOSE_COMMAND: ${GOOSE_COMMAND:-up} # make migrate CMD=status|down|redo|version
+      GOOSE_COMMAND_ARG: ${GOOSE_COMMAND_ARG:-}
+    volumes:
+      - ./be/migrations:/migrations:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
 
   # --- Бэкенд (Go + clay) ---
   be:
@@ -56,7 +75,7 @@ services:
       <<: *s3-env
       PORT: "8080"
       GRPC_PORT: "8082"
-      DATABASE_URL: postgres://${POSTGRES_USER:-carsearch}:${POSTGRES_PASSWORD:-carsearch-dev}@db:5432/carsearch?sslmode=disable
+      DATABASE_URL: *db-url
       S3_PUBLIC_URL: /s3/cars # браузер получает картинки через прокси фронта
     ports:
       - "127.0.0.1:8080:8080" # HTTP: /api/...
@@ -66,6 +85,8 @@ services:
         condition: service_healthy
       s3:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   # --- Фронтенд (Vite, hot-reload) ---
@@ -84,7 +105,3 @@ services:
       be:
         condition: service_healthy
     restart: unless-stopped
-
-volumes:
-  db-data:
-  s3-data:

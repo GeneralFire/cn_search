@@ -2,23 +2,24 @@ syntax = "proto3";
 
 package carsearch.v1;
 
+import "google/protobuf/timestamp.proto";
+
 option go_package = "github.com/GeneralFire/cn_search/be/pkg/carsearch/v1;carsearchv1";
 
-// CarSearchService — поиск машин по госномеру и ключу.
+// CarSearchService — поиск появлений машин по госномеру.
 //
 // HTTP-аннотаций нет намеренно: HTTP-ручки генерирует clay с флагом
 // generate_unbound_methods — каждый метод доступен как
 // POST /carsearch.v1.CarSearchService/<Method> с JSON-телом запроса.
 service CarSearchService {
-  // SearchCars ищет машины. Условия по номеру и ключу объединяются через И;
-  // пустое поле не ограничивает. Результаты — от новых к старым, постранично.
-  rpc SearchCars(SearchCarsRequest) returns (SearchCarsResponse);
+  // Search ищет появления номеров. Результаты — от новых к старым, постранично.
+  rpc Search(SearchRequest) returns (SearchResponse);
 
-  // GetCar возвращает машину по идентификатору.
-  rpc GetCar(GetCarRequest) returns (GetCarResponse);
+  // Get возвращает появление номера по идентификатору.
+  rpc Get(GetRequest) returns (GetResponse);
 }
 
-// Car — автомобиль.
+// Car — появление номера: где и когда замечена машина.
 message Car {
   int32 id = 1;
   // URL картинки (S3).
@@ -26,24 +27,22 @@ message Car {
   string address = 3;
   // Госномер кириллицей: "А123ВС 777".
   string plate = 4;
-  // Ключ: "KEY-0451".
-  string key = 5;
-  // Дата в формате YYYY-MM-DD.
-  string date = 6;
+  // Когда номер появился.
+  google.protobuf.Timestamp created_at = 5;
 }
 
-message SearchCarsRequest {
-  // Подстрока госномера; регистр, пробелы и латиница вместо кириллицы не важны.
+message SearchRequest {
+  // Поисковая строка, как есть передаётся в plainto_tsquery('simple', plate) и сопоставляется
+  // с to_tsvector('simple', plate): каждое слово должно совпасть со словом номера —
+  // серией "А123ВС" или регионом "777". Пусто — все записи.
   string plate = 1;
-  // Подстрока ключа; регистр и пробелы не важны.
-  string key = 2;
   // Сколько записей пропустить (для бесконечной прокрутки).
-  int32 offset = 3;
+  int32 offset = 2;
   // Размер страницы, 1..100; 0 — по умолчанию (35).
-  int32 limit = 4;
+  int32 limit = 3;
 }
 
-message SearchCarsResponse {
+message SearchResponse {
   repeated Car items = 1;
   // Всего найдено по запросу.
   int32 total = 2;
@@ -51,10 +50,10 @@ message SearchCarsResponse {
   optional int32 next_offset = 3;
 }
 
-message GetCarRequest {
+message GetRequest {
   int32 id = 1;
 }
 
-message GetCarResponse {
+message GetResponse {
   Car car = 1;
 }

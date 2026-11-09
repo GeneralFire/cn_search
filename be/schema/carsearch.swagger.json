@@ -16,15 +16,15 @@
     "application/json"
   ],
   "paths": {
-    "/carsearch.v1.CarSearchService/GetCar": {
+    "/carsearch.v1.CarSearchService/Get": {
       "post": {
-        "summary": "GetCar возвращает машину по идентификатору.",
-        "operationId": "CarSearchService_GetCar",
+        "summary": "Get возвращает появление номера по идентификатору.",
+        "operationId": "CarSearchService_Get",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetCarResponse"
+              "$ref": "#/definitions/v1GetResponse"
             }
           }
         },
@@ -34,7 +34,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1GetCarRequest"
+              "$ref": "#/definitions/v1GetRequest"
             }
           }
         ],
@@ -43,15 +43,15 @@
         ]
       }
     },
-    "/carsearch.v1.CarSearchService/SearchCars": {
+    "/carsearch.v1.CarSearchService/Search": {
       "post": {
-        "summary": "SearchCars ищет машины. Условия по номеру и ключу объединяются через И;\nпустое поле не ограничивает. Результаты — от новых к старым, постранично.",
-        "operationId": "CarSearchService_SearchCars",
+        "summary": "Search ищет появления номеров. Результаты — от новых к старым, постранично.",
+        "operationId": "CarSearchService_Search",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1SearchCarsResponse"
+              "$ref": "#/definitions/v1SearchResponse"
             }
           }
         },
@@ -61,7 +61,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1SearchCarsRequest"
+              "$ref": "#/definitions/v1SearchRequest"
             }
           }
         ],
@@ -90,18 +90,15 @@
           "type": "string",
           "description": "Госномер кириллицей: \"А123ВС 777\"."
         },
-        "key": {
+        "createdAt": {
           "type": "string",
-          "description": "Ключ: \"KEY-0451\"."
-        },
-        "date": {
-          "type": "string",
-          "description": "Дата в формате YYYY-MM-DD."
+          "format": "date-time",
+          "description": "Когда номер появился."
         }
       },
-      "description": "Car — автомобиль."
+      "description": "Car — появление номера: где и когда замечена машина."
     },
-    "v1GetCarRequest": {
+    "v1GetRequest": {
       "type": "object",
       "properties": {
         "id": {
@@ -110,7 +107,7 @@
         }
       }
     },
-    "v1GetCarResponse": {
+    "v1GetResponse": {
       "type": "object",
       "properties": {
         "car": {
@@ -118,16 +115,12 @@
         }
       }
     },
-    "v1SearchCarsRequest": {
+    "v1SearchRequest": {
       "type": "object",
       "properties": {
         "plate": {
           "type": "string",
-          "description": "Подстрока госномера; регистр, пробелы и латиница вместо кириллицы не важны."
-        },
-        "key": {
-          "type": "string",
-          "description": "Подстрока ключа; регистр и пробелы не важны."
+          "description": "Поисковая строка, как есть передаётся в plainto_tsquery('simple', plate) и сопоставляется\nс to_tsvector('simple', plate): каждое слово должно совпасть со словом номера —\nсерией \"А123ВС\" или регионом \"777\". Пусто — все записи."
         },
         "offset": {
           "type": "integer",
@@ -141,7 +134,7 @@
         }
       }
     },
-    "v1SearchCarsResponse": {
+    "v1SearchResponse": {
       "type": "object",
       "properties": {
         "items": {

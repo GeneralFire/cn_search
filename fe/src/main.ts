@@ -1,5 +1,5 @@
 import "./style.css";
-import { ApiError, searchCars, type Car } from "./api";
+import { ApiError, search, type Car } from "./api";
 
 const PAGE_SIZE = 35; // кратно 5 и 7 — по числу колонок сетки
 const DEBOUNCE_MS = 250;
@@ -11,7 +11,6 @@ const DEBOUNCE_MS = 250;
 const icon = {
   search: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`,
   plate: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M16 7v10"/></svg>`,
-  key: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M15 8l2 2"/></svg>`,
   clear: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>`,
   pin: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>`,
   cal: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>`,
@@ -35,11 +34,9 @@ app.innerHTML = `
   <header class="hero">
     <div class="hero__inner">
       <h1>Поиск по авто</h1>
-      <p>Укажите госномер и ключ — подойдут машины, совпадающие по обоим полям</p>
+      <p>Введите госномер целиком или его часть: серию «А123ВС» или регион «777»</p>
       <form class="searchbar" role="search" onsubmit="return false">
         ${field("q-plate", "Номер", icon.plate, "А123ВС 777")}
-        <span class="searchbar__divider" aria-hidden="true"></span>
-        ${field("q-key", "Ключ", icon.key, "KEY-0451")}
         <span class="searchbar__go" aria-hidden="true">${icon.search}</span>
       </form>
     </div>
@@ -72,7 +69,6 @@ app.innerHTML = `
 `;
 
 const $plate = app.querySelector<HTMLInputElement>("#q-plate")!;
-const $key = app.querySelector<HTMLInputElement>("#q-key")!;
 const $grid = app.querySelector<HTMLElement>(".grid")!;
 const $count = app.querySelector<HTMLElement>(".content__count")!;
 const $more = app.querySelector<HTMLElement>(".more")!;
@@ -87,8 +83,9 @@ function escapeHtml(s: string): string {
   );
 }
 
-// timeZone: "UTC" — иначе "2026-11-02" в западных поясах покажется как 1 ноября.
-const dateFmt = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+const dateFmt = new Intl.DateTimeFormat("ru-RU", {
+  day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit",
+});
 const formatDate = (iso: string) => (iso ? dateFmt.format(new Date(iso)) : "");
 
 function plateHtml(plate: string): string {
@@ -104,9 +101,9 @@ function cardHtml(c: Car, i: number): string {
       <div class="card__photo">${photo}<span class="card__badge">${escapeHtml(city)}</span></div>
       <div class="card__body">
         <p class="card__address">${icon.pin}${escapeHtml(c.address)}</p>
-        <div class="card__row">${plateHtml(c.plate)}<span class="card__key">${escapeHtml(c.key)}</span></div>
+        <div class="card__row">${plateHtml(c.plate)}</div>
         <div class="card__foot">
-          <span class="card__date">${icon.cal}<time datetime="${escapeHtml(c.date)}">${formatDate(c.date)}</time></span>
+          <span class="card__date">${icon.cal}<time datetime="${escapeHtml(c.createdAt)}">${formatDate(c.createdAt)}</time></span>
           <button class="btn btn--ghost" type="button" data-clarify="${c.id}">Уточнить</button>
         </div>
       </div>
@@ -162,8 +159,8 @@ async function loadMore(): Promise<void> {
   render();
 
   try {
-    const page = await searchCars(
-      { plate: $plate.value, key: $key.value, offset: state.nextOffset, limit: PAGE_SIZE },
+    const page = await search(
+      { plate: $plate.value, offset: state.nextOffset, limit: PAGE_SIZE },
       ctrl.signal
     );
     if (gen !== state.generation) return; // пока грузили, запрос поменялся
@@ -194,10 +191,7 @@ async function loadMore(): Promise<void> {
 }
 
 function renderEmpty(): void {
-  const what = [$plate.value && "номер", $key.value && "ключ"].filter(Boolean).join(" и ");
-  $grid.innerHTML = `<div class="empty"><strong>Ничего не найдено</strong>Проверьте ${what || "запрос"}${
-    $plate.value && $key.value ? " — машина должна совпадать по обоим полям" : ""
-  }</div>`;
+  $grid.innerHTML = `<div class="empty"><strong>Ничего не найдено</strong>Проверьте номер — ищется по серии целиком и региону</div>`;
 }
 
 function newSearch(): void {
@@ -236,7 +230,7 @@ function openClarify(car: Car): void {
     <div class="modal__car">
       ${plateHtml(car.plate)}
       <div>
-        <div class="modal__key">${escapeHtml(car.key)}</div>
+        <div class="modal__date">${escapeHtml(formatDate(car.createdAt))}</div>
         <div class="modal__addr">${escapeHtml(car.address)}</div>
       </div>
     </div>
@@ -261,15 +255,12 @@ $modal.addEventListener("click", (e) => {
 
 let debounce: number | undefined;
 function onInput(): void {
-  for (const input of [$plate, $key]) {
-    app.querySelector<HTMLButtonElement>(`[data-clear="${input.id}"]`)!.hidden = !input.value;
-  }
+  app.querySelector<HTMLButtonElement>(`[data-clear="${$plate.id}"]`)!.hidden = !$plate.value;
   clearTimeout(debounce);
   debounce = window.setTimeout(newSearch, DEBOUNCE_MS);
 }
 
 $plate.addEventListener("input", onInput);
-$key.addEventListener("input", onInput);
 
 app.querySelectorAll<HTMLButtonElement>("[data-clear]").forEach((btn) =>
   btn.addEventListener("click", (e) => {

@@ -60,7 +60,6 @@ body {
   text-align: left;
 }
 
-.searchbar__divider { width: 1px; align-self: stretch; margin: 8px 0; background: var(--border); }
 
 .searchbar__go {
   flex-shrink: 0;
@@ -171,7 +170,6 @@ body {
 .card__address { display: flex; gap: 8px; align-items: flex-start; margin: 0; font-weight: 500; line-height: 1.35; }
 .card__address svg { flex-shrink: 0; color: var(--accent); margin-top: 2px; }
 .card__row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.card__key { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.85rem; color: var(--muted); }
 .card__foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .card__date { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 0.85rem; }
 
@@ -279,7 +277,7 @@ body {
 }
 .modal__x:hover { color: var(--text); }
 .modal__car { display: flex; align-items: center; gap: 16px; padding: 16px; border-radius: 14px; background: var(--bg); }
-.modal__key { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.9rem; }
+.modal__date { font-size: 0.9rem; color: var(--muted); }
 .modal__addr { color: var(--muted); font-size: 0.9rem; margin-top: 2px; }
 .modal__stub { margin: 0; color: var(--muted); line-height: 1.5; padding: 16px; border: 2px dashed var(--border); border-radius: 14px; }
 .modal__foot { display: flex; justify-content: flex-end; }
@@ -296,7 +294,6 @@ body {
 @media (max-width: 640px) {
   .hero { padding: 40px 16px 32px; }
   .searchbar { flex-direction: column; align-items: stretch; border-radius: 20px; padding: 6px; }
-  .searchbar__divider { width: auto; height: 1px; margin: 0 12px; }
   .searchbar__go { display: none; }
   .field { border-radius: 14px; }
   .content { padding: 0 16px 48px; }

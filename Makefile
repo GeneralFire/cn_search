@@ -9,7 +9,7 @@ FE        := fe
 BIN       := $(abspath $(BE)/bin)
 PROTO_DIR := $(BE)/api
 PROTO     := $(PROTO_DIR)/carsearch/v1/carsearch.proto
-SWAGGER   := $(PROTO_DIR)/carsearch/v1/carsearch.swagger.json
+SWAGGER   := $(BE)/schema/carsearch.swagger.json
 TS_CLIENT := $(FE)/src/api/generated.ts
 
 # Только публичные реестры (машина может быть глобально настроена на приватные).
@@ -42,8 +42,9 @@ down: ## остановить (данные сохраняются в томах
 	$(DC) down
 
 .PHONY: reset
-reset: ## остановить и УДАЛИТЬ данные БД и S3
+reset: ## остановить и УДАЛИТЬ данные БД и S3 (./.data)
 	$(DC) down -v
+	rm -rf .data
 
 .PHONY: logs
 logs: ## логи всех сервисов
@@ -56,13 +57,22 @@ ps: ## статус сервисов
 # ---------------------------------------------------------------- данные
 
 .PHONY: migrate
-migrate: ## создать схему БД
+migrate: ## миграции goose вручную: make migrate [CMD=up|status|down|redo|version|up-to ARG=2]
 	$(DC) up -d --wait db
-	$(DC) run --rm --build be migrate
+	$(DC) run --rm -e GOOSE_COMMAND=$(or $(CMD),up) -e GOOSE_COMMAND_ARG=$(ARG) migrate
+
+.PHONY: migration
+migration: ## создать миграцию: make migration NAME=add_vin
+	@test -n "$(NAME)" || { echo "укажите имя: make migration NAME=add_vin"; exit 1; }
+	@echo "$(NAME)" | grep -Eq '^[a-z0-9_]+$$' || { echo "NAME: строчные латинские буквы, цифры, _"; exit 1; }
+	@n=$$(ls $(BE)/migrations/[0-9][0-9][0-9][0-9]_*.sql 2>/dev/null | wc -l | tr -d ' '); \
+	f=$(BE)/migrations/$$(printf '%04d' $$((n+1)))_$(NAME).sql; \
+	printf -- '-- +goose Up\n\n-- +goose Down\n' > $$f; echo "создан $$f"
 
 .PHONY: seed
 seed: ## залить тестовые данные: машины в БД, картинки в S3 (SEED_TOTAL=600)
 	$(DC) up -d --wait db s3
+	$(DC) run --rm migrate
 	$(DC) run --rm --build -e SEED_TOTAL=$(or $(SEED_TOTAL),600) be seed
 
 .PHONY: psql
@@ -87,14 +97,14 @@ gen-go: ## proto → Go (protobuf, gRPC, ручки clay) + swagger.json
 	@test -x $(BIN)/protoc-gen-goclay || { echo "нет генераторов: make tools"; exit 1; }
 	rm -rf $(BE)/pkg/carsearch
 	mkdir -p $(BE)/pkg
-	PATH=$(BIN):$$PATH protoc -I $(PROTO_DIR) \
+	PATH=$(BIN):$$PATH protoc -I $(PROTO_DIR) --unsafe_allow_out_dir_escape \
 		--go_out=$(BE)/pkg --go_opt=paths=source_relative \
 		--go-grpc_out=$(BE)/pkg --go-grpc_opt=paths=source_relative \
-		--goclay_out=$(BE)/pkg --goclay_opt=paths=source_relative,generate_unbound_methods=true,impl=false,tests=false,swagger_path=swagger \
+		--goclay_out=$(BE)/pkg --goclay_opt=paths=source_relative,generate_unbound_methods=true,impl=false,tests=false,swagger_path=../schema \
 		$(PROTO)
-	@# clay кладёт swagger в <out>/<swagger_path>/<имя>.json — переносим к proto.
-	mv $(BE)/pkg/swagger/carsearch.json $(SWAGGER)
-	rm -rf $(BE)/pkg/swagger
+	@# clay пишет swagger в <goclay_out>/<swagger_path>/<имя proto>.json = be/schema/carsearch.json
+	@# (выход за goclay_out требует --unsafe_allow_out_dir_escape); имя — по нашему соглашению.
+	mv $(BE)/schema/carsearch.json $(SWAGGER)
 
 .PHONY: gen-ts
 gen-ts: ## swagger.json → TypeScript-клиент (fe/src/api/generated.ts)

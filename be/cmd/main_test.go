@@ -12,8 +12,8 @@ import (
 	"github.com/go-chi/chi"
 	"google.golang.org/grpc/codes"
 
-	"github.com/GeneralFire/cn_search/be/internal/cars"
-	"github.com/GeneralFire/cn_search/be/internal/service"
+	"github.com/GeneralFire/cn_search/be/internal/implementation"
+	"github.com/GeneralFire/cn_search/be/internal/repository"
 	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch/v1"
 )
 
@@ -21,7 +21,7 @@ import (
 func newHTTP(t *testing.T) *httptest.Server {
 	t.Helper()
 	configureHTTPRuntime()
-	desc := pb.NewCarSearchServiceServiceDesc(service.NewCarSearch(cars.NewMemoryStore(cars.Fixed), "/s3/cars"))
+	desc := pb.NewCarSearchServiceServiceDesc(implementation.NewCarSearch(repository.NewMemoryStore(repository.Fixed), "/s3/cars"))
 	r := chi.NewRouter()
 	desc.RegisterHTTP(r)
 	root := chi.NewRouter()
@@ -47,7 +47,7 @@ func call(t *testing.T, srv *httptest.Server, method, body string) (int, map[str
 
 func TestHTTPEmptyResultHasTotal(t *testing.T) {
 	srv := newHTTP(t)
-	code, out := call(t, srv, "SearchCars", `{"plate":"Х000ХХ"}`)
+	code, out := call(t, srv, "Search", `{"plate":"Х000ХХ 000"}`)
 	if code != http.StatusOK {
 		t.Fatalf("status %d", code)
 	}
@@ -64,12 +64,12 @@ func TestHTTPEmptyResultHasTotal(t *testing.T) {
 
 func TestHTTPSearchAndPaging(t *testing.T) {
 	srv := newHTTP(t)
-	_, out := call(t, srv, "SearchCars", `{"limit":2}`)
+	_, out := call(t, srv, "Search", `{"limit":2}`)
 	if out["total"] != float64(3) || len(out["items"].([]any)) != 2 || out["nextOffset"] != float64(2) {
 		t.Fatalf("page 1: %v", out)
 	}
 	first := out["items"].([]any)[0].(map[string]any)
-	if first["photoUrl"] == nil || first["plate"] == nil {
+	if first["photoUrl"] == nil || first["plate"] == nil || first["createdAt"] == nil {
 		t.Errorf("camelCase поля: %v", first)
 	}
 }
@@ -81,10 +81,10 @@ func TestHTTPErrors(t *testing.T) {
 		status       int
 		code         string
 	}{
-		{"SearchCars", `{"limit":101}`, http.StatusBadRequest, "invalid_argument"},
-		{"SearchCars", `{не json`, http.StatusBadRequest, "invalid_argument"},
-		{"GetCar", `{"id":100500}`, http.StatusNotFound, "not_found"},
-		{"GetCar", `{"id":0}`, http.StatusBadRequest, "invalid_argument"},
+		{"Search", `{"limit":101}`, http.StatusBadRequest, "invalid_argument"},
+		{"Search", `{не json`, http.StatusBadRequest, "invalid_argument"},
+		{"Get", `{"id":100500}`, http.StatusNotFound, "not_found"},
+		{"Get", `{"id":0}`, http.StatusBadRequest, "invalid_argument"},
 	}
 	for _, tt := range tests {
 		status, out := call(t, srv, tt.method, tt.body)

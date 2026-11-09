@@ -19,25 +19,24 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CarSearchService_SearchCars_FullMethodName = "/carsearch.v1.CarSearchService/SearchCars"
-	CarSearchService_GetCar_FullMethodName     = "/carsearch.v1.CarSearchService/GetCar"
+	CarSearchService_Search_FullMethodName = "/carsearch.v1.CarSearchService/Search"
+	CarSearchService_Get_FullMethodName    = "/carsearch.v1.CarSearchService/Get"
 )
 
 // CarSearchServiceClient is the client API for CarSearchService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// CarSearchService — поиск машин по госномеру и ключу.
+// CarSearchService — поиск появлений машин по госномеру.
 //
 // HTTP-аннотаций нет намеренно: HTTP-ручки генерирует clay с флагом
 // generate_unbound_methods — каждый метод доступен как
 // POST /carsearch.v1.CarSearchService/<Method> с JSON-телом запроса.
 type CarSearchServiceClient interface {
-	// SearchCars ищет машины. Условия по номеру и ключу объединяются через И;
-	// пустое поле не ограничивает. Результаты — от новых к старым, постранично.
-	SearchCars(ctx context.Context, in *SearchCarsRequest, opts ...grpc.CallOption) (*SearchCarsResponse, error)
-	// GetCar возвращает машину по идентификатору.
-	GetCar(ctx context.Context, in *GetCarRequest, opts ...grpc.CallOption) (*GetCarResponse, error)
+	// Search ищет появления номеров. Результаты — от новых к старым, постранично.
+	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+	// Get возвращает появление номера по идентификатору.
+	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 }
 
 type carSearchServiceClient struct {
@@ -48,20 +47,20 @@ func NewCarSearchServiceClient(cc grpc.ClientConnInterface) CarSearchServiceClie
 	return &carSearchServiceClient{cc}
 }
 
-func (c *carSearchServiceClient) SearchCars(ctx context.Context, in *SearchCarsRequest, opts ...grpc.CallOption) (*SearchCarsResponse, error) {
+func (c *carSearchServiceClient) Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SearchCarsResponse)
-	err := c.cc.Invoke(ctx, CarSearchService_SearchCars_FullMethodName, in, out, cOpts...)
+	out := new(SearchResponse)
+	err := c.cc.Invoke(ctx, CarSearchService_Search_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *carSearchServiceClient) GetCar(ctx context.Context, in *GetCarRequest, opts ...grpc.CallOption) (*GetCarResponse, error) {
+func (c *carSearchServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetCarResponse)
-	err := c.cc.Invoke(ctx, CarSearchService_GetCar_FullMethodName, in, out, cOpts...)
+	out := new(GetResponse)
+	err := c.cc.Invoke(ctx, CarSearchService_Get_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -72,17 +71,16 @@ func (c *carSearchServiceClient) GetCar(ctx context.Context, in *GetCarRequest, 
 // All implementations must embed UnimplementedCarSearchServiceServer
 // for forward compatibility.
 //
-// CarSearchService — поиск машин по госномеру и ключу.
+// CarSearchService — поиск появлений машин по госномеру.
 //
 // HTTP-аннотаций нет намеренно: HTTP-ручки генерирует clay с флагом
 // generate_unbound_methods — каждый метод доступен как
 // POST /carsearch.v1.CarSearchService/<Method> с JSON-телом запроса.
 type CarSearchServiceServer interface {
-	// SearchCars ищет машины. Условия по номеру и ключу объединяются через И;
-	// пустое поле не ограничивает. Результаты — от новых к старым, постранично.
-	SearchCars(context.Context, *SearchCarsRequest) (*SearchCarsResponse, error)
-	// GetCar возвращает машину по идентификатору.
-	GetCar(context.Context, *GetCarRequest) (*GetCarResponse, error)
+	// Search ищет появления номеров. Результаты — от новых к старым, постранично.
+	Search(context.Context, *SearchRequest) (*SearchResponse, error)
+	// Get возвращает появление номера по идентификатору.
+	Get(context.Context, *GetRequest) (*GetResponse, error)
 	mustEmbedUnimplementedCarSearchServiceServer()
 }
 
@@ -93,11 +91,11 @@ type CarSearchServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedCarSearchServiceServer struct{}
 
-func (UnimplementedCarSearchServiceServer) SearchCars(context.Context, *SearchCarsRequest) (*SearchCarsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method SearchCars not implemented")
+func (UnimplementedCarSearchServiceServer) Search(context.Context, *SearchRequest) (*SearchResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Search not implemented")
 }
-func (UnimplementedCarSearchServiceServer) GetCar(context.Context, *GetCarRequest) (*GetCarResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetCar not implemented")
+func (UnimplementedCarSearchServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Get not implemented")
 }
 func (UnimplementedCarSearchServiceServer) mustEmbedUnimplementedCarSearchServiceServer() {}
 func (UnimplementedCarSearchServiceServer) testEmbeddedByValue()                          {}
@@ -120,38 +118,38 @@ func RegisterCarSearchServiceServer(s grpc.ServiceRegistrar, srv CarSearchServic
 	s.RegisterService(&CarSearchService_ServiceDesc, srv)
 }
 
-func _CarSearchService_SearchCars_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SearchCarsRequest)
+func _CarSearchService_Search_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CarSearchServiceServer).SearchCars(ctx, in)
+		return srv.(CarSearchServiceServer).Search(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: CarSearchService_SearchCars_FullMethodName,
+		FullMethod: CarSearchService_Search_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CarSearchServiceServer).SearchCars(ctx, req.(*SearchCarsRequest))
+		return srv.(CarSearchServiceServer).Search(ctx, req.(*SearchRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CarSearchService_GetCar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetCarRequest)
+func _CarSearchService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CarSearchServiceServer).GetCar(ctx, in)
+		return srv.(CarSearchServiceServer).Get(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: CarSearchService_GetCar_FullMethodName,
+		FullMethod: CarSearchService_Get_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CarSearchServiceServer).GetCar(ctx, req.(*GetCarRequest))
+		return srv.(CarSearchServiceServer).Get(ctx, req.(*GetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -164,12 +162,12 @@ var CarSearchService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*CarSearchServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "SearchCars",
-			Handler:    _CarSearchService_SearchCars_Handler,
+			MethodName: "Search",
+			Handler:    _CarSearchService_Search_Handler,
 		},
 		{
-			MethodName: "GetCar",
-			Handler:    _CarSearchService_GetCar_Handler,
+			MethodName: "Get",
+			Handler:    _CarSearchService_Get_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

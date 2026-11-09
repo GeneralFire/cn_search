@@ -1,6 +1,6 @@
 # Поиск по авто
 
-Поиск автомобиля по госномеру **и** ключу: бэкенд на Go (контракт в proto, ручки генерирует
+Поиск появлений автомобиля (где и когда замечен) по госномеру: бэкенд на Go (контракт в proto, ручки генерирует
 [clay](https://github.com/utrack/clay)), Postgres, S3-хранилище картинок и фронтенд на
 TypeScript + Vite с TS-клиентом, сгенерированным по `swagger.json`.
 
@@ -25,6 +25,10 @@ make seed   # залить тестовые данные: 600 машин в Post
 | `be` | HTTP-ручки clay + gRPC | `127.0.0.1:8080` (HTTP), `127.0.0.1:8082` (gRPC) |
 | `db` | Postgres 17 | `127.0.0.1:5432`, БД `carsearch` |
 | `s3` | [RustFS](https://github.com/rustfs/rustfs) — S3-совместимое хранилище | `127.0.0.1:9000` (S3 API), `127.0.0.1:9001` (консоль) |
+| `migrate` | [goose](https://github.com/pressly/goose) (`kukymbr/goose-docker`): `goose up` при каждом `make up`, затем завершается; `be` стартует после него | — |
+
+Данные БД и S3 лежат на хосте в `./.data` (bind mount, в `.gitignore`): переживают перезапуск,
+`docker-compose down -v`, очистку томов и пересоздание VM Docker. Удаляет их только `make reset`.
 
 Браузер ходит только на фронт: Vite проксирует `/api/*` → `be`, `/s3/*` → `s3`.
 Поэтому коллегам в сети достаточно одного открытого порта.
@@ -39,17 +43,19 @@ car-search/
 ├── Makefile                 # все команды: make help
 ├── docker-compose.yml       # db + s3 + be + fe
 ├── be/                      # бэкенд, Go
-│   ├── api/carsearch/v1/
-│   │   ├── carsearch.proto          # КОНТРАКТ (без HTTP-аннотаций)
-│   │   └── carsearch.swagger.json   # сгенерирован clay
+│   ├── api/carsearch/v1/carsearch.proto   # КОНТРАКТ (без HTTP-аннотаций)
+│   ├── schema/carsearch.swagger.json      # сгенерирован clay
 │   ├── pkg/carsearch/v1/    # сгенерировано: *.pb.go, *_grpc.pb.go, *.pb.goclay.go (ручки)
+│   ├── cmd/
+│   │   ├── main.go          # be serve | seed
+│   │   └── httpruntime.go   # настройка JSON и формата ошибок ручек clay
 │   ├── internal/
-│   │   ├── cars/            # домен: нормализация, генератор данных, хранилища (Postgres, память)
-│   │   ├── service/         # реализация CarSearchService
-│   │   └── storage/         # S3-клиент
-│   ├── assets/cars/         # 5 PNG, вшиты в бинарник; `be seed` заливает их в S3
-│   ├── httpruntime.go       # настройка JSON и формата ошибок ручек clay
-│   └── main.go              # be serve | migrate | seed
+│   │   ├── implementation/  # реализация CarSearchService, файл на RPC (руками, clay её не генерирует)
+│   │   ├── models/          # доменные модели
+│   │   ├── repository/      # работа с БД (сущности — repository_entities.go), MemoryStore, генератор данных
+│   │   └── s3/              # S3-клиент
+│   ├── migrations/          # SQL-миграции goose: 0001_init.sql, 0002_… (в бинарник не входят)
+│   └── assets/cars/         # 5 PNG, вшиты в бинарник; `be seed` заливает их в S3
 ├── fe/                      # фронтенд, TypeScript + Vite
 │   ├── src/api/generated.ts # сгенерированный TS-клиент (не править)
 │   ├── src/api/index.ts     # обёртка над клиентом
@@ -62,10 +68,11 @@ car-search/
 
 | Команда | Что делает |
 |---|---|
-| `make up` / `down` | поднять / остановить всё (данные остаются в томах) |
-| `make reset` | остановить и **удалить** данные БД и S3 |
-| `make seed` | схема БД + 600 тестовых машин + картинки в S3. Размер: `make seed SEED_TOTAL=5000` |
-| `make migrate` | только схема БД |
+| `make up` / `down` | поднять (с миграциями) / остановить всё; данные остаются в `./.data` |
+| `make reset` | остановить и **удалить** данные БД и S3 (`./.data`) |
+| `make seed` | миграции + 600 тестовых машин + картинки в S3. Размер: `make seed SEED_TOTAL=5000` |
+| `make migrate` | миграции goose вручную; `CMD=status\|down\|redo\|version`, `CMD=up-to ARG=2` |
+| `make migration NAME=add_vin` | создать следующую миграцию `be/migrations/000N_add_vin.sql` |
 | `make psql` | консоль Postgres |
 | `make logs` / `ps` | логи / статус |
 | `make tools` | поставить генераторы `protoc-gen-go`, `-go-grpc`, `-goclay` в `be/bin` и npm-зависимости |
@@ -85,31 +92,33 @@ clay генерирует ручки с флагом `generate_unbound_methods`:
 
 | Метод | HTTP |
 |---|---|
-| `SearchCars` | `POST /api/carsearch.v1.CarSearchService/SearchCars` |
-| `GetCar` | `POST /api/carsearch.v1.CarSearchService/GetCar` |
+| `Search` | `POST /api/carsearch.v1.CarSearchService/Search` |
+| `Get` | `POST /api/carsearch.v1.CarSearchService/Get` |
 | — | `GET /api/swagger.json` — спецификация |
 | — | `GET /api/health` |
 
 Тот же сервис доступен по gRPC на `:8082` (с reflection: `grpcurl -plaintext localhost:8082 list`).
 
-### SearchCars
+### Search
 
 ```jsonc
 // запрос — все поля необязательны
-{ "plate": "a123bc", "key": "0451", "offset": 0, "limit": 35 }
+{ "plate": "a123bc 777", "offset": 0, "limit": 35 }
 
 // ответ
 {
   "items": [{ "id": 1, "photoUrl": "/s3/cars/car-3.png", "address": "Москва, …",
-              "plate": "А123ВС 777", "key": "KEY-0451", "date": "2026-11-02" }],
+              "plate": "А123ВС 777", "createdAt": "2026-11-02T09:15:00Z" }],
   "total": 1,          // всего найдено — есть всегда, в т. ч. 0
   "nextOffset": 35     // смещение следующей страницы; нет поля — дальше пусто
 }
 ```
 
-- Номер **И** ключ: условия объединяются, пустое поле не ограничивает.
-- Подстрока, без учёта регистра и пробелов; номер можно вводить латиницей (`A123BC` → `А123ВС`).
-- От новых к старым. `limit`: 1–100, `0` — по умолчанию 35 (кратно 5 и 7 — колонкам сетки).
+- Строка `plate` без обработки уходит в `plainto_tsquery('simple', $1)` и сравнивается с
+  `to_tsvector('simple', plate)`: каждое слово запроса должно совпасть со словом номера целиком —
+  серией (`А123ВС`) или регионом (`777`). Регистр не важен. `А12` и латиница не находят ничего.
+  Пусто — все записи. `plainto_tsquery`, а не `to_tsquery`: последний падает на обычном вводе с пробелом.
+- От новых к старым (`createdAt`). `limit`: 1–100, `0` — по умолчанию 35 (кратно 5 и 7 — колонкам сетки).
 
 ### Ошибки
 
@@ -120,7 +129,7 @@ clay генерирует ручки с флагом `generate_unbound_methods`:
 | HTTP | `code` | Когда |
 |---|---|---|
 | 400 | `invalid_argument` | неверные параметры, битый JSON |
-| 404 | `not_found` | машины нет |
+| 404 | `not_found` | записи нет |
 | 500 | `internal` | ошибка сервера (детали — только в логах) |
 
 ## Генерация кода
@@ -128,15 +137,19 @@ clay генерирует ручки с флагом `generate_unbound_methods`:
 ```
 carsearch.proto ──protoc──► be/pkg/…/*.pb.go, *_grpc.pb.go      (protoc-gen-go, -go-grpc)
                 └─────────► be/pkg/…/*.pb.goclay.go              (protoc-gen-goclay: HTTP-ручки)
-                └─────────► be/api/…/carsearch.swagger.json      (clay)
+                └─────────► be/schema/carsearch.swagger.json     (clay, swagger_path)
                                    └──swagger-typescript-api──► fe/src/api/generated.ts
 ```
 
-Поменяли proto → `make gen` → реализовать метод в `be/internal/service` → использовать в
+Поменяли proto → `make gen` → реализовать метод в `be/internal/implementation` → использовать в
 `fe/src/api/index.ts`. Нужен `protoc` (`brew install protobuf`) и `make tools` один раз.
 Сгенерированный код лежит в репозитории — для сборки генераторы не нужны.
 
-Нюансы, зашитые в `be/httpruntime.go`:
+clay кладёт отдельный swagger в `<goclay_out>/<swagger_path>/<имя proto>.json`. Чтобы он попал в
+`be/schema`, `gen-go` передаёт `swagger_path=../schema` и флаг protoc `--unsafe_allow_out_dir_escape`
+(иначе protoc запрещает выход за каталог вывода), затем переименовывает файл в `carsearch.swagger.json`.
+
+Нюансы, зашитые в `be/cmd/httpruntime.go`:
 - **Нулевые значения в JSON.** По умолчанию proto3 JSON их не передаёт: пустая выдача была бы `{}`.
   Включён `EmitUnpopulated` — `total` и `items` есть всегда; необязательный `nextOffset` пропадает,
   когда страниц больше нет.
@@ -144,7 +157,7 @@ carsearch.proto ──protoc──► be/pkg/…/*.pb.go, *_grpc.pb.go      (pro
 
 ## Фронтенд
 
-- Поля **Номер** и **Ключ**, поиск с задержкой 250 мс; устаревшие запросы отменяются.
+- Поле **Номер**, поиск с задержкой 250 мс; устаревшие запросы отменяются. На карточке — дата и время появления.
 - **Бесконечная прокрутка**: страницы по 35 подгружаются, когда низ списка подходит к экрану
   (`IntersectionObserver`). Внизу — кнопка **«Загрузить ещё»** и «Показано N из total»;
   кнопка работает и вручную, а после ошибки превращается в «Повторить».
@@ -157,17 +170,28 @@ carsearch.proto ──protoc──► be/pkg/…/*.pb.go, *_grpc.pb.go      (pro
 
 ## Данные
 
-Таблица `cars` (`be/internal/cars/schema.sql`): отображаемые `plate`/`key` и нормализованные
-`plate_norm`/`key_norm` для поиска, trigram-индексы для `LIKE '%…%'`, `photo_key` — ключ объекта в S3.
+Схема БД — только миграции [goose](https://github.com/pressly/goose) в `be/migrations`: файлы
+`NNNN_название.sql` (номера подряд с `0001`, секции `-- +goose Up` / `-- +goose Down`).
+Применяет их сервис `migrate` в docker-compose (`goose up` при каждом `make up` и перед `make seed`),
+вручную — `make migrate [CMD=…]`; версии — в таблице `goose_db_version`. Код `be` миграции не знает.
+Применённую миграцию не меняем — добавляем следующую: `make migration NAME=…`.
 
-`make seed` (= `be seed`):
+Таблица `plate_sightings` — появления номеров: `id`, `address`, `plate` (кириллицей, `А123ВС 777`),
+`photo_key` (ключ объекта в S3), `created_at` (`timestamptz`, когда номер появился).
+Индексы: `(created_at DESC, id)` для выдачи и GIN по `to_tsvector('simple', plate)` для поиска —
+запрос `plainto_tsquery('simple', <строка из rpc>)`, расширения Postgres не нужны.
+
+Слои бэкенда: `internal/models` — доменная модель `PlateSighting`; `internal/repository` — запросы
+к БД, строка таблицы описана отдельно в `repository_entities.go`; `internal/implementation` —
+RPC, по файлу на метод (`search.go`, `get.go`).
+
+`make seed` (= `goose up` + `be seed`):
 1. создаёт бакет `cars` с анонимным чтением и заливает 5 PNG из `be/assets/cars`;
-2. применяет схему и **заменяет** все машины сгенерированным набором.
+2. **заменяет** все записи сгенерированным набором (схема уже создана миграциями).
 
 Генератор детерминированный (фиксированный seed): у всех одинаковые данные. 8 городов,
-корректные буквы и коды регионов, уникальные номера и ключи, даты за последние 180 дней.
-Первые три записи фиксированные — для ручной проверки: `А123ВС 777` / `KEY-0451`,
-`М456ОР 178` / `KEY-1187`, `Т789УХ 116` / `KEY-2093`.
+корректные буквы и коды регионов, уникальные номера, время появления за последние 180 дней.
+Первые три записи фиксированные — для ручной проверки: `А123ВС 777`, `М456ОР 178`, `Т789УХ 116`.
 
 Картинки (седан, хэтчбек, внедорожник, пикап, минивэн; 1280×720) рисует
 `node fe/scripts/gen-car-images.mjs` → `be/assets/cars/`. После перегенерации — `make up && make seed`.

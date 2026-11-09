@@ -1,17 +1,19 @@
-package cars
+package repository
 
 import (
 	"fmt"
 	"math/rand/v2"
 	"time"
+
+	"github.com/GeneralFire/cn_search/be/internal/models"
 )
 
 // GenerateOptions — параметры генератора тестовых данных.
 type GenerateOptions struct {
-	Total    int                 // сколько машин
+	Total    int                 // сколько записей
 	Seed     uint64              // одинаковый seed → одинаковый набор
-	Base     time.Time           // самая поздняя возможная дата
-	DaysBack int                 // насколько далеко в прошлое разбрасывать даты
+	Base     time.Time           // самое позднее возможное время появления
+	DaysBack int                 // насколько далеко в прошлое разбрасывать время
 	PhotoKey func(id int) string // ключ картинки в S3 для машины; nil — без фото
 }
 
@@ -20,7 +22,7 @@ func DefaultGenerateOptions(photoKey func(id int) string) GenerateOptions {
 	return GenerateOptions{
 		Total:    600,
 		Seed:     20261109,
-		Base:     time.Date(2026, time.November, 9, 0, 0, 0, 0, time.UTC),
+		Base:     time.Date(2026, time.November, 9, 21, 0, 0, 0, time.UTC),
 		DaysBack: 180,
 		PhotoKey: photoKey,
 	}
@@ -49,47 +51,39 @@ var cities = []city{
 }
 
 // Fixed — три фиксированные записи, на них удобно проверять поиск руками.
-var Fixed = []Car{
-	{ID: 1, Address: "Москва, Пресненская наб., 10", Plate: "А123ВС 777", Key: "KEY-0451", Date: "2026-11-02"},
-	{ID: 2, Address: "Санкт-Петербург, Невский пр., 28", Plate: "М456ОР 178", Key: "KEY-1187", Date: "2026-10-27"},
-	{ID: 3, Address: "Казань, ул. Баумана, 44", Plate: "Т789УХ 116", Key: "KEY-2093", Date: "2026-11-08"},
+var Fixed = []models.PlateSighting{
+	{ID: 1, Address: "Москва, Пресненская наб., 10", Plate: "А123ВС 777", CreatedAt: time.Date(2026, 11, 2, 9, 15, 0, 0, time.UTC)},
+	{ID: 2, Address: "Санкт-Петербург, Невский пр., 28", Plate: "М456ОР 178", CreatedAt: time.Date(2026, 10, 27, 18, 40, 0, 0, time.UTC)},
+	{ID: 3, Address: "Казань, ул. Баумана, 44", Plate: "Т789УХ 116", CreatedAt: time.Date(2026, 11, 8, 12, 5, 0, 0, time.UTC)},
 }
 
-// Generate детерминированно генерирует тестовые машины: уникальные номера
-// и ключи, корректные буквы и коды регионов. Первые записи — Fixed.
-func Generate(opt GenerateOptions) []Car {
+// Generate детерминированно генерирует тестовые появления номеров: уникальные номера,
+// корректные буквы и коды регионов. Первые записи — Fixed.
+func Generate(opt GenerateOptions) []models.PlateSighting {
 	r := rand.New(rand.NewPCG(opt.Seed, opt.Seed^0x9e3779b97f4a7c15))
 	pick := func(xs []string) string { return xs[r.IntN(len(xs))] }
 	letter := func() string { return string(plateLetters[r.IntN(len(plateLetters))]) }
 
-	out := make([]Car, 0, max(opt.Total, len(Fixed)))
+	out := make([]models.PlateSighting, 0, max(opt.Total, len(Fixed)))
 	out = append(out, Fixed...)
 	plates := make(map[string]struct{}, opt.Total)
-	keys := make(map[string]struct{}, opt.Total)
 	for _, c := range Fixed {
 		plates[c.Plate] = struct{}{}
-		keys[c.Key] = struct{}{}
 	}
 
 	for len(out) < opt.Total {
 		c := cities[r.IntN(len(cities))]
 		plate := fmt.Sprintf("%s%03d%s%s %s", letter(), r.IntN(999)+1, letter(), letter(), pick(c.regions))
-		key := fmt.Sprintf("KEY-%04d", r.IntN(10000))
 		if _, dup := plates[plate]; dup {
 			continue
 		}
-		if _, dup := keys[key]; dup {
-			continue
-		}
 		plates[plate] = struct{}{}
-		keys[key] = struct{}{}
 
-		out = append(out, Car{
-			ID:      len(out) + 1,
-			Address: fmt.Sprintf("%s, %s, %d", c.name, pick(c.streets), r.IntN(150)+1),
-			Plate:   plate,
-			Key:     key,
-			Date:    opt.Base.AddDate(0, 0, -r.IntN(opt.DaysBack)).Format(time.DateOnly),
+		out = append(out, models.PlateSighting{
+			ID:        len(out) + 1,
+			Address:   fmt.Sprintf("%s, %s, %d", c.name, pick(c.streets), r.IntN(150)+1),
+			Plate:     plate,
+			CreatedAt: opt.Base.Add(-time.Duration(r.Int64N(int64(opt.DaysBack) * int64(24*time.Hour)))).Truncate(time.Second),
 		})
 	}
 

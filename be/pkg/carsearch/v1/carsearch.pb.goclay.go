@@ -105,13 +105,13 @@ func (d *CarSearchServiceDesc) RegisterHTTP(mux transport.Router) {
 	chiMux, isChi := mux.(chi.Router)
 
 	{
-		// Handler for SearchCars, binding: POST /carsearch.v1.CarSearchService/SearchCars
+		// Handler for Search, binding: POST /carsearch.v1.CarSearchService/Search
 		var h http.HandlerFunc
 		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer r.Body.Close()
 
-			unmFunc := unmarshaler_goclay_CarSearchService_SearchCars_0(r)
-			rsp, err := _CarSearchService_SearchCars_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+			unmFunc := unmarshaler_goclay_CarSearchService_Search_0(r)
+			rsp, err := _CarSearchService_Search_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
 
 			if err != nil {
 				if err, ok := err.(httptransport.MarshalerError); ok {
@@ -139,9 +139,9 @@ func (d *CarSearchServiceDesc) RegisterHTTP(mux transport.Router) {
 		h = httpmw.DefaultChain(h)
 
 		if isChi {
-			chiMux.Method("POST", pattern_goclay_CarSearchService_SearchCars_0, h)
+			chiMux.Method("POST", pattern_goclay_CarSearchService_Search_0, h)
 		} else {
-			mux.Handle(pattern_goclay_CarSearchService_SearchCars_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mux.Handle(pattern_goclay_CarSearchService_Search_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if r.Method != "POST" {
 					w.WriteHeader(http.StatusMethodNotAllowed)
 					return
@@ -152,13 +152,13 @@ func (d *CarSearchServiceDesc) RegisterHTTP(mux transport.Router) {
 	}
 
 	{
-		// Handler for GetCar, binding: POST /carsearch.v1.CarSearchService/GetCar
+		// Handler for Get, binding: POST /carsearch.v1.CarSearchService/Get
 		var h http.HandlerFunc
 		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer r.Body.Close()
 
-			unmFunc := unmarshaler_goclay_CarSearchService_GetCar_0(r)
-			rsp, err := _CarSearchService_GetCar_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+			unmFunc := unmarshaler_goclay_CarSearchService_Get_0(r)
+			rsp, err := _CarSearchService_Get_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
 
 			if err != nil {
 				if err, ok := err.(httptransport.MarshalerError); ok {
@@ -186,9 +186,9 @@ func (d *CarSearchServiceDesc) RegisterHTTP(mux transport.Router) {
 		h = httpmw.DefaultChain(h)
 
 		if isChi {
-			chiMux.Method("POST", pattern_goclay_CarSearchService_GetCar_0, h)
+			chiMux.Method("POST", pattern_goclay_CarSearchService_Get_0, h)
 		} else {
-			mux.Handle(pattern_goclay_CarSearchService_GetCar_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mux.Handle(pattern_goclay_CarSearchService_Get_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if r.Method != "POST" {
 					w.WriteHeader(http.StatusMethodNotAllowed)
 					return
@@ -214,13 +214,13 @@ func NewCarSearchServiceHTTPClient(c *http.Client, addr string) *CarSearchServic
 	return &CarSearchService_httpClient{c: c, host: addr}
 }
 
-func (c *CarSearchService_httpClient) SearchCars(ctx context.Context, in *SearchCarsRequest, opts ...grpc.CallOption) (*SearchCarsResponse, error) {
+func (c *CarSearchService_httpClient) Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
 	mw, err := httpclient.NewMiddlewareGRPC(opts)
 	if err != nil {
 		return nil, err
 	}
 
-	path := pattern_goclay_CarSearchService_SearchCars_0_builder(in)
+	path := pattern_goclay_CarSearchService_Search_0_builder(in)
 
 	buf := bytes.NewBuffer(nil)
 
@@ -258,20 +258,20 @@ func (c *CarSearchService_httpClient) SearchCars(ctx context.Context, in *Search
 		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
 	}
 
-	ret := SearchCarsResponse{}
+	ret := SearchResponse{}
 
 	err = m.Unmarshal(rsp.Body, &ret)
 
 	return &ret, errors.Wrap(err, "can't unmarshal response")
 }
 
-func (c *CarSearchService_httpClient) GetCar(ctx context.Context, in *GetCarRequest, opts ...grpc.CallOption) (*GetCarResponse, error) {
+func (c *CarSearchService_httpClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	mw, err := httpclient.NewMiddlewareGRPC(opts)
 	if err != nil {
 		return nil, err
 	}
 
-	path := pattern_goclay_CarSearchService_GetCar_0_builder(in)
+	path := pattern_goclay_CarSearchService_Get_0_builder(in)
 
 	buf := bytes.NewBuffer(nil)
 
@@ -309,7 +309,7 @@ func (c *CarSearchService_httpClient) GetCar(ctx context.Context, in *GetCarRequ
 		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
 	}
 
-	ret := GetCarResponse{}
+	ret := GetResponse{}
 
 	err = m.Unmarshal(rsp.Body, &ret)
 
@@ -318,42 +318,42 @@ func (c *CarSearchService_httpClient) GetCar(ctx context.Context, in *GetCarRequ
 
 // patterns for CarSearchService
 var (
-	pattern_goclay_CarSearchService_SearchCars_0 = "/carsearch.v1.CarSearchService/SearchCars"
+	pattern_goclay_CarSearchService_Search_0 = "/carsearch.v1.CarSearchService/Search"
 
-	pattern_goclay_CarSearchService_SearchCars_0_builder = func(in *SearchCarsRequest) string {
+	pattern_goclay_CarSearchService_Search_0_builder = func(in *SearchRequest) string {
 		values := url.Values{}
 
 		u := url.URL{
-			Path:     fmt.Sprintf("/carsearch.v1.CarSearchService/SearchCars"),
+			Path:     fmt.Sprintf("/carsearch.v1.CarSearchService/Search"),
 			RawQuery: values.Encode(),
 		}
 		return u.String()
 	}
 
-	unmarshaler_goclay_CarSearchService_SearchCars_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+	unmarshaler_goclay_CarSearchService_Search_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 
-	pattern_goclay_CarSearchService_GetCar_0 = "/carsearch.v1.CarSearchService/GetCar"
+	pattern_goclay_CarSearchService_Get_0 = "/carsearch.v1.CarSearchService/Get"
 
-	pattern_goclay_CarSearchService_GetCar_0_builder = func(in *GetCarRequest) string {
+	pattern_goclay_CarSearchService_Get_0_builder = func(in *GetRequest) string {
 		values := url.Values{}
 
 		u := url.URL{
-			Path:     fmt.Sprintf("/carsearch.v1.CarSearchService/GetCar"),
+			Path:     fmt.Sprintf("/carsearch.v1.CarSearchService/Get"),
 			RawQuery: values.Encode(),
 		}
 		return u.String()
 	}
 
-	unmarshaler_goclay_CarSearchService_GetCar_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+	unmarshaler_goclay_CarSearchService_Get_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
 // marshalers for CarSearchService
 var (
-	unmarshaler_goclay_CarSearchService_SearchCars_0 = func(r *http.Request) func(interface{}) error {
+	unmarshaler_goclay_CarSearchService_Search_0 = func(r *http.Request) func(interface{}) error {
 		return func(rif interface{}) error {
-			req := rif.(*SearchCarsRequest)
+			req := rif.(*SearchRequest)
 
-			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_SearchCars_0_boundParams), "couldn't populate query parameters"); err != nil {
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_Search_0_boundParams), "couldn't populate query parameters"); err != nil {
 				return httpruntime.TransformUnmarshalerError(err)
 			}
 
@@ -365,11 +365,11 @@ var (
 		}
 	}
 
-	unmarshaler_goclay_CarSearchService_GetCar_0 = func(r *http.Request) func(interface{}) error {
+	unmarshaler_goclay_CarSearchService_Get_0 = func(r *http.Request) func(interface{}) error {
 		return func(rif interface{}) error {
-			req := rif.(*GetCarRequest)
+			req := rif.(*GetRequest)
 
-			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_GetCar_0_boundParams), "couldn't populate query parameters"); err != nil {
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_Get_0_boundParams), "couldn't populate query parameters"); err != nil {
 				return httpruntime.TransformUnmarshalerError(err)
 			}
 
@@ -400,15 +400,15 @@ var _swaggerDef_carsearch_v1_carsearch_proto = []byte(`{
     "application/json"
   ],
   "paths": {
-    "/carsearch.v1.CarSearchService/GetCar": {
+    "/carsearch.v1.CarSearchService/Get": {
       "post": {
-        "summary": "GetCar возвращает машину по идентификатору.",
-        "operationId": "CarSearchService_GetCar",
+        "summary": "Get возвращает появление номера по идентификатору.",
+        "operationId": "CarSearchService_Get",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetCarResponse"
+              "$ref": "#/definitions/v1GetResponse"
             }
           }
         },
@@ -418,7 +418,7 @@ var _swaggerDef_carsearch_v1_carsearch_proto = []byte(`{
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1GetCarRequest"
+              "$ref": "#/definitions/v1GetRequest"
             }
           }
         ],
@@ -427,15 +427,15 @@ var _swaggerDef_carsearch_v1_carsearch_proto = []byte(`{
         ]
       }
     },
-    "/carsearch.v1.CarSearchService/SearchCars": {
+    "/carsearch.v1.CarSearchService/Search": {
       "post": {
-        "summary": "SearchCars ищет машины. Условия по номеру и ключу объединяются через И;\nпустое поле не ограничивает. Результаты — от новых к старым, постранично.",
-        "operationId": "CarSearchService_SearchCars",
+        "summary": "Search ищет появления номеров. Результаты — от новых к старым, постранично.",
+        "operationId": "CarSearchService_Search",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1SearchCarsResponse"
+              "$ref": "#/definitions/v1SearchResponse"
             }
           }
         },
@@ -445,7 +445,7 @@ var _swaggerDef_carsearch_v1_carsearch_proto = []byte(`{
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1SearchCarsRequest"
+              "$ref": "#/definitions/v1SearchRequest"
             }
           }
         ],
@@ -474,18 +474,15 @@ var _swaggerDef_carsearch_v1_carsearch_proto = []byte(`{
           "type": "string",
           "description": "Госномер кириллицей: \"А123ВС 777\"."
         },
-        "key": {
+        "createdAt": {
           "type": "string",
-          "description": "Ключ: \"KEY-0451\"."
-        },
-        "date": {
-          "type": "string",
-          "description": "Дата в формате YYYY-MM-DD."
+          "format": "date-time",
+          "description": "Когда номер появился."
         }
       },
-      "description": "Car — автомобиль."
+      "description": "Car — появление номера: где и когда замечена машина."
     },
-    "v1GetCarRequest": {
+    "v1GetRequest": {
       "type": "object",
       "properties": {
         "id": {
@@ -494,7 +491,7 @@ var _swaggerDef_carsearch_v1_carsearch_proto = []byte(`{
         }
       }
     },
-    "v1GetCarResponse": {
+    "v1GetResponse": {
       "type": "object",
       "properties": {
         "car": {
@@ -502,16 +499,12 @@ var _swaggerDef_carsearch_v1_carsearch_proto = []byte(`{
         }
       }
     },
-    "v1SearchCarsRequest": {
+    "v1SearchRequest": {
       "type": "object",
       "properties": {
         "plate": {
           "type": "string",
-          "description": "Подстрока госномера; регистр, пробелы и латиница вместо кириллицы не важны."
-        },
-        "key": {
-          "type": "string",
-          "description": "Подстрока ключа; регистр и пробелы не важны."
+          "description": "Поисковая строка, как есть передаётся в plainto_tsquery('simple', plate) и сопоставляется\nс to_tsvector('simple', plate): каждое слово должно совпасть со словом номера —\nсерией \"А123ВС\" или регионом \"777\". Пусто — все записи."
         },
         "offset": {
           "type": "integer",
@@ -525,7 +518,7 @@ var _swaggerDef_carsearch_v1_carsearch_proto = []byte(`{
         }
       }
     },
-    "v1SearchCarsResponse": {
+    "v1SearchResponse": {
       "type": "object",
       "properties": {
         "items": {

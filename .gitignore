@@ -10,3 +10,7 @@ CLAUDE.local.md
 
 # локальные генераторы protoc-gen-*
 be/bin/
+.idea/
+
+# данные локальных контейнеров (БД, S3)
+.data/

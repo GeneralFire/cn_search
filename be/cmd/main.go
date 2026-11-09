@@ -1,8 +1,7 @@
 // be — сервис поиска машин.
 //
 //	be serve    — HTTP (ручки clay) + gRPC
-//	be migrate  — создать схему БД
-//	be seed     — схема + тестовые данные в БД + картинки в S3
+//	be seed     — тестовые данные в БД + картинки в S3 (схема — миграции goose, см. be/migrations)
 package main
 
 import (
@@ -25,9 +24,9 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	"github.com/GeneralFire/cn_search/be/assets"
-	"github.com/GeneralFire/cn_search/be/internal/cars"
-	"github.com/GeneralFire/cn_search/be/internal/service"
-	"github.com/GeneralFire/cn_search/be/internal/storage"
+	"github.com/GeneralFire/cn_search/be/internal/implementation"
+	"github.com/GeneralFire/cn_search/be/internal/repository"
+	"github.com/GeneralFire/cn_search/be/internal/s3"
 	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch/v1"
 )
 
@@ -38,7 +37,7 @@ type config struct {
 	HTTPPort    string
 	GRPCPort    string
 	DatabaseURL string
-	S3          storage.Config
+	S3          s3.Config
 	PhotoBase   string // публичный URL бакета для браузера
 	SeedTotal   int
 }
@@ -49,7 +48,7 @@ func loadConfig() config {
 		HTTPPort:    envOr("PORT", "8080"),
 		GRPCPort:    envOr("GRPC_PORT", "8082"),
 		DatabaseURL: os.Getenv("DATABASE_URL"),
-		S3: storage.Config{
+		S3: s3.Config{
 			Endpoint:  envOr("S3_ENDPOINT", "localhost:9000"),
 			AccessKey: os.Getenv("S3_ACCESS_KEY"),
 			SecretKey: os.Getenv("S3_SECRET_KEY"),
@@ -78,12 +77,10 @@ func main() {
 	switch cmd {
 	case "serve":
 		err = serve(ctx, log, cfg)
-	case "migrate":
-		err = withStore(ctx, cfg, func(s *cars.PostgresStore) error { return s.Migrate(ctx) })
 	case "seed":
 		err = seed(ctx, log, cfg)
 	default:
-		err = fmt.Errorf("неизвестная команда %q; доступны: serve, migrate, seed", cmd)
+		err = fmt.Errorf("неизвестная команда %q; доступны: serve, seed", cmd)
 	}
 	if err != nil {
 		log.Error("fatal", "cmd", cmd, "err", err)
@@ -91,7 +88,7 @@ func main() {
 	}
 }
 
-func withStore(ctx context.Context, cfg config, fn func(*cars.PostgresStore) error) error {
+func withStore(ctx context.Context, cfg config, fn func(*repository.PostgresStore) error) error {
 	if cfg.DatabaseURL == "" {
 		return errors.New("DATABASE_URL не задан")
 	}
@@ -103,14 +100,14 @@ func withStore(ctx context.Context, cfg config, fn func(*cars.PostgresStore) err
 	if err := pool.Ping(ctx); err != nil {
 		return fmt.Errorf("db ping: %w", err)
 	}
-	return fn(cars.NewPostgresStore(pool))
+	return fn(repository.NewPostgresStore(pool))
 }
 
 // ---------------------------------------------------------------- serve
 
 func serve(ctx context.Context, log *slog.Logger, cfg config) error {
-	return withStore(ctx, cfg, func(store *cars.PostgresStore) error {
-		desc := pb.NewCarSearchServiceServiceDesc(service.NewCarSearch(store, cfg.PhotoBase))
+	return withStore(ctx, cfg, func(store *repository.PostgresStore) error {
+		desc := pb.NewCarSearchServiceServiceDesc(implementation.NewCarSearch(store, cfg.PhotoBase))
 		configureHTTPRuntime()
 
 		// HTTP: ручки clay под /api + health + swagger.
@@ -197,11 +194,11 @@ func logRequests(log *slog.Logger, next http.Handler) http.Handler {
 
 func seed(ctx context.Context, log *slog.Logger, cfg config) error {
 	// 1. Картинки → S3.
-	s3, err := storage.NewS3(cfg.S3)
+	objects, err := s3.New(cfg.S3)
 	if err != nil {
 		return err
 	}
-	if err := s3.EnsurePublicBucket(ctx); err != nil {
+	if err := objects.EnsurePublicBucket(ctx); err != nil {
 		return err
 	}
 	for i := 1; i <= assets.PhotoCount; i++ {
@@ -210,26 +207,23 @@ func seed(ctx context.Context, log *slog.Logger, cfg config) error {
 		if err != nil {
 			return fmt.Errorf("read asset %s: %w", name, err)
 		}
-		if err := s3.Put(ctx, name, data, "image/png"); err != nil {
+		if err := objects.Put(ctx, name, data, "image/png"); err != nil {
 			return err
 		}
 	}
 	log.Info("images uploaded", "bucket", cfg.S3.Bucket, "count", assets.PhotoCount)
 
 	// 2. Машины → Postgres.
-	return withStore(ctx, cfg, func(store *cars.PostgresStore) error {
-		if err := store.Migrate(ctx); err != nil {
-			return err
-		}
-		opt := cars.DefaultGenerateOptions(func(id int) string {
+	return withStore(ctx, cfg, func(store *repository.PostgresStore) error {
+		opt := repository.DefaultGenerateOptions(func(id int) string {
 			return fmt.Sprintf("car-%d.png", (id*7)%assets.PhotoCount+1)
 		})
 		opt.Total = cfg.SeedTotal
-		all := cars.Generate(opt)
+		all := repository.Generate(opt)
 		if err := store.ReplaceAll(ctx, all); err != nil {
 			return err
 		}
-		log.Info("cars seeded", "count", len(all))
+		log.Info("plate sightings seeded", "count", len(all))
 		return nil
 	})
 }

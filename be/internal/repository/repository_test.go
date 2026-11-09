@@ -1,28 +1,13 @@
-package cars
+package repository
 
 import (
 	"context"
 	"regexp"
 	"slices"
 	"testing"
-)
 
-func TestNormalize(t *testing.T) {
-	tests := []struct{ in, plate, key string }{
-		{"а123вс 777", "А123ВС777", "А123ВС777"},
-		{"A123BC", "А123ВС", "A123BC"}, // латиница → кириллица только для номера
-		{" key-0451 ", "КЕУ-0451", "KEY-0451"},
-		{"", "", ""},
-	}
-	for _, tt := range tests {
-		if got := NormalizePlate(tt.in); got != tt.plate {
-			t.Errorf("NormalizePlate(%q) = %q, want %q", tt.in, got, tt.plate)
-		}
-		if got := NormalizeKey(tt.in); got != tt.key {
-			t.Errorf("NormalizeKey(%q) = %q, want %q", tt.in, got, tt.key)
-		}
-	}
-}
+	"github.com/GeneralFire/cn_search/be/internal/models"
+)
 
 func TestGenerate(t *testing.T) {
 	opt := DefaultGenerateOptions(func(id int) string { return "/p" })
@@ -36,15 +21,18 @@ func TestGenerate(t *testing.T) {
 	}
 
 	plateRe := regexp.MustCompile(`^[АВЕКМНОРСТУХ]\d{3}[АВЕКМНОРСТУХ]{2} \d{2,3}$`)
-	plates, keys, ids := map[string]bool{}, map[string]bool{}, map[int]bool{}
+	plates, ids := map[string]bool{}, map[int]bool{}
 	for _, c := range got {
 		if !plateRe.MatchString(c.Plate) {
 			t.Errorf("некорректный номер %q", c.Plate)
 		}
-		if plates[c.Plate] || keys[c.Key] || ids[c.ID] {
+		if plates[c.Plate] || ids[c.ID] {
 			t.Errorf("дубликат: %+v", c)
 		}
-		plates[c.Plate], keys[c.Key], ids[c.ID] = true, true, true
+		plates[c.Plate], ids[c.ID] = true, true
+		if c.CreatedAt.After(opt.Base) || c.CreatedAt.Before(opt.Base.AddDate(0, 0, -opt.DaysBack)) {
+			t.Errorf("время вне диапазона: %+v", c)
+		}
 		if c.PhotoKey != "/p" {
 			t.Errorf("нет фото у %d", c.ID)
 		}
@@ -55,7 +43,7 @@ func TestGenerate(t *testing.T) {
 	}
 }
 
-func withPhoto(cs []Car, p string) []Car {
+func withPhoto(cs []models.PlateSighting, p string) []models.PlateSighting {
 	out := slices.Clone(cs)
 	for i := range out {
 		out[i].PhotoKey = p
@@ -63,7 +51,7 @@ func withPhoto(cs []Car, p string) []Car {
 	return out
 }
 
-func ids(cs []Car) []int {
+func ids(cs []models.PlateSighting) []int {
 	out := make([]int, len(cs))
 	for i, c := range cs {
 		out[i] = c.ID
@@ -72,7 +60,7 @@ func ids(cs []Car) []int {
 }
 
 func TestSearch(t *testing.T) {
-	s := NewMemoryStore(Fixed) // даты: 3 — 08.11, 1 — 02.11, 2 — 27.10
+	s := NewMemoryStore(Fixed) // время: 3 — 08.11, 1 — 02.11, 2 — 27.10
 	ctx := context.Background()
 
 	tests := []struct {
@@ -82,10 +70,10 @@ func TestSearch(t *testing.T) {
 	}{
 		{"пусто — всё, новые первыми", Query{Limit: 10}, []int{3, 1, 2}},
 		{"номер кириллицей с пробелом", Query{Plate: "а123вс 777", Limit: 10}, []int{1}},
-		{"номер латиницей", Query{Plate: "A123BC", Limit: 10}, []int{1}},
-		{"только ключ", Query{Key: "key-1187", Limit: 10}, []int{2}},
-		{"номер И ключ совпадают", Query{Plate: "А123", Key: "0451", Limit: 10}, []int{1}},
-		{"номер И ключ от разных машин", Query{Plate: "А123", Key: "1187", Limit: 10}, []int{}},
+		{"серия", Query{Plate: "м456ор", Limit: 10}, []int{2}},
+		{"регион", Query{Plate: "116", Limit: 10}, []int{3}},
+		{"серия И регион от разных машин", Query{Plate: "А123ВС 178", Limit: 10}, []int{}},
+		{"часть серии не ищется", Query{Plate: "А12", Limit: 10}, []int{}},
 		{"ничего", Query{Plate: "Х000ХХ", Limit: 10}, []int{}},
 	}
 	for _, tt := range tests {

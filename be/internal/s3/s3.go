@@ -1,5 +1,5 @@
 // Package storage — работа с S3-совместимым хранилищем картинок.
-package storage
+package s3
 
 import (
 	"bytes"
@@ -25,7 +25,7 @@ type S3 struct {
 	bucket string
 }
 
-func NewS3(cfg Config) (*S3, error) {
+func New(cfg Config) (*S3, error) {
 	c, err := minio.New(cfg.Endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(cfg.AccessKey, cfg.SecretKey, ""),
 		Secure: cfg.UseSSL,

@@ -1,7 +1,8 @@
 // Обёртка над сгенерированным клиентом (generated.ts — не править руками, см. `make gen-ts`).
-import { CarSearchApi, type V1Car, type V1SearchCarsRequest, type V1SearchCarsResponse } from "./generated";
+import { CarSearchApi, type V1Car, type V1SearchRequest, type V1SearchResponse } from "./generated";
 
-export type Car = Required<Pick<V1Car, "id" | "plate" | "key" | "address" | "date">> & Pick<V1Car, "photoUrl">;
+/** Появление номера: где и когда замечена машина. createdAt — ISO 8601 (RFC 3339). */
+export type Car = Required<Pick<V1Car, "id" | "plate" | "address" | "createdAt">> & Pick<V1Car, "photoUrl">;
 
 export interface CarsPage {
   items: Car[];
@@ -18,17 +19,16 @@ function toCar(c: V1Car): Car {
   return {
     id: c.id ?? 0,
     plate: c.plate ?? "",
-    key: c.key ?? "",
     address: c.address ?? "",
-    date: c.date ?? "",
+    createdAt: c.createdAt ?? "",
     photoUrl: c.photoUrl,
   };
 }
 
-export async function searchCars(req: V1SearchCarsRequest, signal?: AbortSignal): Promise<CarsPage> {
-  let data: V1SearchCarsResponse;
+export async function search(req: V1SearchRequest, signal?: AbortSignal): Promise<CarsPage> {
+  let data: V1SearchResponse;
   try {
-    ({ data } = await api.carsearchV1CarSearchService.carSearchServiceSearchCars(req, { signal }));
+    ({ data } = await api.carsearchV1CarSearchService.carSearchServiceSearch(req, { signal }));
   } catch (e) {
     if (signal?.aborted) throw e;
     throw new ApiError(await errorMessage(e));

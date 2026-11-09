@@ -10,38 +10,37 @@
  * ---------------------------------------------------------------
  */
 
-export type CarSearchServiceGetCarData = V1GetCarResponse;
+export type CarSearchServiceGetData = V1GetResponse;
 
-export type CarSearchServiceSearchCarsData = V1SearchCarsResponse;
+export type CarSearchServiceSearchData = V1SearchResponse;
 
-/** Car — автомобиль. */
+/** Car — появление номера: где и когда замечена машина. */
 export interface V1Car {
   address?: string;
-  /** Дата в формате YYYY-MM-DD. */
-  date?: string;
+  /**
+   * Когда номер появился.
+   * @format date-time
+   */
+  createdAt?: string;
   /** @format int32 */
   id?: number;
-  /** Ключ: "KEY-0451". */
-  key?: string;
   /** URL картинки (S3). */
   photoUrl?: string;
   /** Госномер кириллицей: "А123ВС 777". */
   plate?: string;
 }
 
-export interface V1GetCarRequest {
+export interface V1GetRequest {
   /** @format int32 */
   id?: number;
 }
 
-export interface V1GetCarResponse {
-  /** Car — автомобиль. */
+export interface V1GetResponse {
+  /** Car — появление номера: где и когда замечена машина. */
   car?: V1Car;
 }
 
-export interface V1SearchCarsRequest {
-  /** Подстрока ключа; регистр и пробелы не важны. */
-  key?: string;
+export interface V1SearchRequest {
   /**
    * Размер страницы, 1..100; 0 — по умолчанию (35).
    * @format int32
@@ -52,11 +51,15 @@ export interface V1SearchCarsRequest {
    * @format int32
    */
   offset?: number;
-  /** Подстрока госномера; регистр, пробелы и латиница вместо кириллицы не важны. */
+  /**
+   * Поисковая строка, как есть передаётся в plainto_tsquery('simple', plate) и сопоставляется
+   * с to_tsvector('simple', plate): каждое слово должно совпасть со словом номера —
+   * серией "А123ВС" или регионом "777". Пусто — все записи.
+   */
   plate?: string;
 }
 
-export interface V1SearchCarsResponse {
+export interface V1SearchResponse {
   items?: V1Car[];
   /**
    * Смещение следующей страницы; не задано — дальше ничего нет.
@@ -337,16 +340,13 @@ export class CarSearchApi<
      * No description
      *
      * @tags CarSearchService
-     * @name CarSearchServiceGetCar
-     * @summary GetCar возвращает машину по идентификатору.
-     * @request POST:/carsearch.v1.CarSearchService/GetCar
+     * @name CarSearchServiceGet
+     * @summary Get возвращает появление номера по идентификатору.
+     * @request POST:/carsearch.v1.CarSearchService/Get
      */
-    carSearchServiceGetCar: (
-      body: V1GetCarRequest,
-      params: RequestParams = {},
-    ) =>
-      this.request<CarSearchServiceGetCarData, any>({
-        path: `/carsearch.v1.CarSearchService/GetCar`,
+    carSearchServiceGet: (body: V1GetRequest, params: RequestParams = {}) =>
+      this.request<CarSearchServiceGetData, any>({
+        path: `/carsearch.v1.CarSearchService/Get`,
         method: "POST",
         body: body,
         type: ContentType.Json,
@@ -358,16 +358,16 @@ export class CarSearchApi<
      * No description
      *
      * @tags CarSearchService
-     * @name CarSearchServiceSearchCars
-     * @summary SearchCars ищет машины. Условия по номеру и ключу объединяются через И; пустое поле не ограничивает. Результаты — от новых к старым, постранично.
-     * @request POST:/carsearch.v1.CarSearchService/SearchCars
+     * @name CarSearchServiceSearch
+     * @summary Search ищет появления номеров. Результаты — от новых к старым, постранично.
+     * @request POST:/carsearch.v1.CarSearchService/Search
      */
-    carSearchServiceSearchCars: (
-      body: V1SearchCarsRequest,
+    carSearchServiceSearch: (
+      body: V1SearchRequest,
       params: RequestParams = {},
     ) =>
-      this.request<CarSearchServiceSearchCarsData, any>({
-        path: `/carsearch.v1.CarSearchService/SearchCars`,
+      this.request<CarSearchServiceSearchData, any>({
+        path: `/carsearch.v1.CarSearchService/Search`,
         method: "POST",
         body: body,
         type: ContentType.Json,

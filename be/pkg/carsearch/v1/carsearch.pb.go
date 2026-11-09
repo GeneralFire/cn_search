@@ -9,6 +9,7 @@ package carsearchv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -21,7 +22,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Car — автомобиль.
+// Car — появление номера: где и когда замечена машина.
 type Car struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Id    int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -30,10 +31,8 @@ type Car struct {
 	Address  string `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
 	// Госномер кириллицей: "А123ВС 777".
 	Plate string `protobuf:"bytes,4,opt,name=plate,proto3" json:"plate,omitempty"`
-	// Ключ: "KEY-0451".
-	Key string `protobuf:"bytes,5,opt,name=key,proto3" json:"key,omitempty"`
-	// Дата в формате YYYY-MM-DD.
-	Date          string `protobuf:"bytes,6,opt,name=date,proto3" json:"date,omitempty"`
+	// Когда номер появился.
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -96,48 +95,41 @@ func (x *Car) GetPlate() string {
 	return ""
 }
 
-func (x *Car) GetKey() string {
+func (x *Car) GetCreatedAt() *timestamppb.Timestamp {
 	if x != nil {
-		return x.Key
+		return x.CreatedAt
 	}
-	return ""
+	return nil
 }
 
-func (x *Car) GetDate() string {
-	if x != nil {
-		return x.Date
-	}
-	return ""
-}
-
-type SearchCarsRequest struct {
+type SearchRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Подстрока госномера; регистр, пробелы и латиница вместо кириллицы не важны.
+	// Поисковая строка, как есть передаётся в plainto_tsquery('simple', plate) и сопоставляется
+	// с to_tsvector('simple', plate): каждое слово должно совпасть со словом номера —
+	// серией "А123ВС" или регионом "777". Пусто — все записи.
 	Plate string `protobuf:"bytes,1,opt,name=plate,proto3" json:"plate,omitempty"`
-	// Подстрока ключа; регистр и пробелы не важны.
-	Key string `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
 	// Сколько записей пропустить (для бесконечной прокрутки).
-	Offset int32 `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
+	Offset int32 `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
 	// Размер страницы, 1..100; 0 — по умолчанию (35).
-	Limit         int32 `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
+	Limit         int32 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SearchCarsRequest) Reset() {
-	*x = SearchCarsRequest{}
+func (x *SearchRequest) Reset() {
+	*x = SearchRequest{}
 	mi := &file_carsearch_v1_carsearch_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SearchCarsRequest) String() string {
+func (x *SearchRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SearchCarsRequest) ProtoMessage() {}
+func (*SearchRequest) ProtoMessage() {}
 
-func (x *SearchCarsRequest) ProtoReflect() protoreflect.Message {
+func (x *SearchRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_carsearch_v1_carsearch_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -149,40 +141,33 @@ func (x *SearchCarsRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SearchCarsRequest.ProtoReflect.Descriptor instead.
-func (*SearchCarsRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use SearchRequest.ProtoReflect.Descriptor instead.
+func (*SearchRequest) Descriptor() ([]byte, []int) {
 	return file_carsearch_v1_carsearch_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *SearchCarsRequest) GetPlate() string {
+func (x *SearchRequest) GetPlate() string {
 	if x != nil {
 		return x.Plate
 	}
 	return ""
 }
 
-func (x *SearchCarsRequest) GetKey() string {
-	if x != nil {
-		return x.Key
-	}
-	return ""
-}
-
-func (x *SearchCarsRequest) GetOffset() int32 {
+func (x *SearchRequest) GetOffset() int32 {
 	if x != nil {
 		return x.Offset
 	}
 	return 0
 }
 
-func (x *SearchCarsRequest) GetLimit() int32 {
+func (x *SearchRequest) GetLimit() int32 {
 	if x != nil {
 		return x.Limit
 	}
 	return 0
 }
 
-type SearchCarsResponse struct {
+type SearchResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Items []*Car                 `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
 	// Всего найдено по запросу.
@@ -193,20 +178,20 @@ type SearchCarsResponse struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SearchCarsResponse) Reset() {
-	*x = SearchCarsResponse{}
+func (x *SearchResponse) Reset() {
+	*x = SearchResponse{}
 	mi := &file_carsearch_v1_carsearch_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SearchCarsResponse) String() string {
+func (x *SearchResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SearchCarsResponse) ProtoMessage() {}
+func (*SearchResponse) ProtoMessage() {}
 
-func (x *SearchCarsResponse) ProtoReflect() protoreflect.Message {
+func (x *SearchResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_carsearch_v1_carsearch_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -218,53 +203,53 @@ func (x *SearchCarsResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SearchCarsResponse.ProtoReflect.Descriptor instead.
-func (*SearchCarsResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use SearchResponse.ProtoReflect.Descriptor instead.
+func (*SearchResponse) Descriptor() ([]byte, []int) {
 	return file_carsearch_v1_carsearch_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *SearchCarsResponse) GetItems() []*Car {
+func (x *SearchResponse) GetItems() []*Car {
 	if x != nil {
 		return x.Items
 	}
 	return nil
 }
 
-func (x *SearchCarsResponse) GetTotal() int32 {
+func (x *SearchResponse) GetTotal() int32 {
 	if x != nil {
 		return x.Total
 	}
 	return 0
 }
 
-func (x *SearchCarsResponse) GetNextOffset() int32 {
+func (x *SearchResponse) GetNextOffset() int32 {
 	if x != nil && x.NextOffset != nil {
 		return *x.NextOffset
 	}
 	return 0
 }
 
-type GetCarRequest struct {
+type GetRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetCarRequest) Reset() {
-	*x = GetCarRequest{}
+func (x *GetRequest) Reset() {
+	*x = GetRequest{}
 	mi := &file_carsearch_v1_carsearch_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetCarRequest) String() string {
+func (x *GetRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetCarRequest) ProtoMessage() {}
+func (*GetRequest) ProtoMessage() {}
 
-func (x *GetCarRequest) ProtoReflect() protoreflect.Message {
+func (x *GetRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_carsearch_v1_carsearch_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -276,39 +261,39 @@ func (x *GetCarRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetCarRequest.ProtoReflect.Descriptor instead.
-func (*GetCarRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetRequest.ProtoReflect.Descriptor instead.
+func (*GetRequest) Descriptor() ([]byte, []int) {
 	return file_carsearch_v1_carsearch_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetCarRequest) GetId() int32 {
+func (x *GetRequest) GetId() int32 {
 	if x != nil {
 		return x.Id
 	}
 	return 0
 }
 
-type GetCarResponse struct {
+type GetResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Car           *Car                   `protobuf:"bytes,1,opt,name=car,proto3" json:"car,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetCarResponse) Reset() {
-	*x = GetCarResponse{}
+func (x *GetResponse) Reset() {
+	*x = GetResponse{}
 	mi := &file_carsearch_v1_carsearch_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetCarResponse) String() string {
+func (x *GetResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetCarResponse) ProtoMessage() {}
+func (*GetResponse) ProtoMessage() {}
 
-func (x *GetCarResponse) ProtoReflect() protoreflect.Message {
+func (x *GetResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_carsearch_v1_carsearch_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -320,12 +305,12 @@ func (x *GetCarResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetCarResponse.ProtoReflect.Descriptor instead.
-func (*GetCarResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetResponse.ProtoReflect.Descriptor instead.
+func (*GetResponse) Descriptor() ([]byte, []int) {
 	return file_carsearch_v1_carsearch_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *GetCarResponse) GetCar() *Car {
+func (x *GetResponse) GetCar() *Car {
 	if x != nil {
 		return x.Car
 	}
@@ -336,33 +321,32 @@ var File_carsearch_v1_carsearch_proto protoreflect.FileDescriptor
 
 const file_carsearch_v1_carsearch_proto_rawDesc = "" +
 	"\n" +
-	"\x1ccarsearch/v1/carsearch.proto\x12\fcarsearch.v1\"\x88\x01\n" +
+	"\x1ccarsearch/v1/carsearch.proto\x12\fcarsearch.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9d\x01\n" +
 	"\x03Car\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x1b\n" +
 	"\tphoto_url\x18\x02 \x01(\tR\bphotoUrl\x12\x18\n" +
 	"\aaddress\x18\x03 \x01(\tR\aaddress\x12\x14\n" +
-	"\x05plate\x18\x04 \x01(\tR\x05plate\x12\x10\n" +
-	"\x03key\x18\x05 \x01(\tR\x03key\x12\x12\n" +
-	"\x04date\x18\x06 \x01(\tR\x04date\"i\n" +
-	"\x11SearchCarsRequest\x12\x14\n" +
-	"\x05plate\x18\x01 \x01(\tR\x05plate\x12\x10\n" +
-	"\x03key\x18\x02 \x01(\tR\x03key\x12\x16\n" +
-	"\x06offset\x18\x03 \x01(\x05R\x06offset\x12\x14\n" +
-	"\x05limit\x18\x04 \x01(\x05R\x05limit\"\x89\x01\n" +
-	"\x12SearchCarsResponse\x12'\n" +
+	"\x05plate\x18\x04 \x01(\tR\x05plate\x129\n" +
+	"\n" +
+	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"S\n" +
+	"\rSearchRequest\x12\x14\n" +
+	"\x05plate\x18\x01 \x01(\tR\x05plate\x12\x16\n" +
+	"\x06offset\x18\x02 \x01(\x05R\x06offset\x12\x14\n" +
+	"\x05limit\x18\x03 \x01(\x05R\x05limit\"\x85\x01\n" +
+	"\x0eSearchResponse\x12'\n" +
 	"\x05items\x18\x01 \x03(\v2\x11.carsearch.v1.CarR\x05items\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x05R\x05total\x12$\n" +
 	"\vnext_offset\x18\x03 \x01(\x05H\x00R\n" +
 	"nextOffset\x88\x01\x01B\x0e\n" +
-	"\f_next_offset\"\x1f\n" +
-	"\rGetCarRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x05R\x02id\"5\n" +
-	"\x0eGetCarResponse\x12#\n" +
-	"\x03car\x18\x01 \x01(\v2\x11.carsearch.v1.CarR\x03car2\xa8\x01\n" +
-	"\x10CarSearchService\x12O\n" +
+	"\f_next_offset\"\x1c\n" +
 	"\n" +
-	"SearchCars\x12\x1f.carsearch.v1.SearchCarsRequest\x1a .carsearch.v1.SearchCarsResponse\x12C\n" +
-	"\x06GetCar\x12\x1b.carsearch.v1.GetCarRequest\x1a\x1c.carsearch.v1.GetCarResponseBBZ@github.com/GeneralFire/cn_search/be/pkg/carsearch/v1;carsearchv1b\x06proto3"
+	"GetRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\"2\n" +
+	"\vGetResponse\x12#\n" +
+	"\x03car\x18\x01 \x01(\v2\x11.carsearch.v1.CarR\x03car2\x93\x01\n" +
+	"\x10CarSearchService\x12C\n" +
+	"\x06Search\x12\x1b.carsearch.v1.SearchRequest\x1a\x1c.carsearch.v1.SearchResponse\x12:\n" +
+	"\x03Get\x12\x18.carsearch.v1.GetRequest\x1a\x19.carsearch.v1.GetResponseBBZ@github.com/GeneralFire/cn_search/be/pkg/carsearch/v1;carsearchv1b\x06proto3"
 
 var (
 	file_carsearch_v1_carsearch_proto_rawDescOnce sync.Once
@@ -378,24 +362,26 @@ func file_carsearch_v1_carsearch_proto_rawDescGZIP() []byte {
 
 var file_carsearch_v1_carsearch_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_carsearch_v1_carsearch_proto_goTypes = []any{
-	(*Car)(nil),                // 0: carsearch.v1.Car
-	(*SearchCarsRequest)(nil),  // 1: carsearch.v1.SearchCarsRequest
-	(*SearchCarsResponse)(nil), // 2: carsearch.v1.SearchCarsResponse
-	(*GetCarRequest)(nil),      // 3: carsearch.v1.GetCarRequest
-	(*GetCarResponse)(nil),     // 4: carsearch.v1.GetCarResponse
+	(*Car)(nil),                   // 0: carsearch.v1.Car
+	(*SearchRequest)(nil),         // 1: carsearch.v1.SearchRequest
+	(*SearchResponse)(nil),        // 2: carsearch.v1.SearchResponse
+	(*GetRequest)(nil),            // 3: carsearch.v1.GetRequest
+	(*GetResponse)(nil),           // 4: carsearch.v1.GetResponse
+	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
 }
 var file_carsearch_v1_carsearch_proto_depIdxs = []int32{
-	0, // 0: carsearch.v1.SearchCarsResponse.items:type_name -> carsearch.v1.Car
-	0, // 1: carsearch.v1.GetCarResponse.car:type_name -> carsearch.v1.Car
-	1, // 2: carsearch.v1.CarSearchService.SearchCars:input_type -> carsearch.v1.SearchCarsRequest
-	3, // 3: carsearch.v1.CarSearchService.GetCar:input_type -> carsearch.v1.GetCarRequest
-	2, // 4: carsearch.v1.CarSearchService.SearchCars:output_type -> carsearch.v1.SearchCarsResponse
-	4, // 5: carsearch.v1.CarSearchService.GetCar:output_type -> carsearch.v1.GetCarResponse
-	4, // [4:6] is the sub-list for method output_type
-	2, // [2:4] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	5, // 0: carsearch.v1.Car.created_at:type_name -> google.protobuf.Timestamp
+	0, // 1: carsearch.v1.SearchResponse.items:type_name -> carsearch.v1.Car
+	0, // 2: carsearch.v1.GetResponse.car:type_name -> carsearch.v1.Car
+	1, // 3: carsearch.v1.CarSearchService.Search:input_type -> carsearch.v1.SearchRequest
+	3, // 4: carsearch.v1.CarSearchService.Get:input_type -> carsearch.v1.GetRequest
+	2, // 5: carsearch.v1.CarSearchService.Search:output_type -> carsearch.v1.SearchResponse
+	4, // 6: carsearch.v1.CarSearchService.Get:output_type -> carsearch.v1.GetResponse
+	5, // [5:7] is the sub-list for method output_type
+	3, // [3:5] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_carsearch_v1_carsearch_proto_init() }
