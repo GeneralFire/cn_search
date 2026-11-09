@@ -11,8 +11,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.ref }}-${{ github.event_name == 'push' && github.sha || '' }}
+  # На master не отменяем: другие пуши идут часто, каждый коммит должен получить результат.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   # Только публичные реестры (как в Makefile).
@@ -41,8 +42,8 @@ jobs:
       # Интеграционные тесты repository (без переменной пропускаются).
       TEST_DATABASE_URL: postgres://carsearch:x@127.0.0.1:5432/carsearch?sslmode=disable
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: be/go.mod
           cache-dependency-path: be/go.sum
@@ -65,8 +66,8 @@ jobs:
       run:
         working-directory: fe
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: npm
@@ -79,19 +80,19 @@ jobs:
     name: Public registries only
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: make check-registries
 
   generated:
     name: Generated code is up to date
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: be/go.mod
           cache-dependency-path: be/go.sum
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: npm
