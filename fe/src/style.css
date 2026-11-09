@@ -1,31 +1,7 @@
 :root {
-  --bg: #f5f6f8;
-  --surface: #ffffff;
-  --text: #14171a;
-  --muted: #6b7380;
-  --border: #e3e6ea;
-  --accent: #2f6bff;
-  --accent-soft: #e8efff;
-  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 16px rgba(16, 24, 40, 0.06);
-  --shadow-hover: 0 2px 4px rgba(16, 24, 40, 0.06), 0 12px 32px rgba(16, 24, 40, 0.12);
+  /* Палитра (светлая/тёмная) — в theme.css */
   --radius: 16px;
-  color-scheme: light;
   font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f1115;
-    --surface: #181b21;
-    --text: #eef0f3;
-    --muted: #959dab;
-    --border: #272b33;
-    --accent: #6b95ff;
-    --accent-soft: #1d2740;
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.45);
-    color-scheme: dark;
-  }
 }
 
 * { box-sizing: border-box; }
@@ -70,7 +46,7 @@ body {
   border-radius: 50%;
   display: grid; place-items: center;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   margin-left: 6px;
 }
 
@@ -194,7 +170,7 @@ body {
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.btn--primary { background: var(--accent); color: #fff; }
+.btn--primary { background: var(--accent); color: var(--on-accent); }
 .btn--primary:hover { filter: brightness(1.08); }
 .btn--ghost { background: transparent; color: var(--accent); border-color: var(--border); padding: 6px 14px; }
 .btn--ghost:hover { background: var(--accent-soft); border-color: var(--accent); }
@@ -366,7 +342,7 @@ body {
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 .seg span:hover { border-color: var(--accent); }
-.seg input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; }
+.seg input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
 .clarify__row { display: flex; gap: 8px; }
 .clarify__row .clarify__input:first-child { flex: 1; min-width: 0; }
@@ -376,8 +352,8 @@ body {
 .clarify__preview .clarify__label { font-weight: 500; color: var(--muted); font-size: 0.88rem; }
 .clarify__hint { color: var(--muted); font-size: 0.85rem; line-height: 1.4; }
 .clarify__msg { margin: 0; padding: 12px 14px; border-radius: 12px; font-size: 0.92rem; }
-.clarify__msg.is-ok { background: color-mix(in srgb, #2fb36b 15%, transparent); color: #2fb36b; }
-.clarify__msg.is-error { background: color-mix(in srgb, #e5484d 15%, transparent); color: #e5484d; }
+.clarify__msg.is-ok { background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
+.clarify__msg.is-error { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); }
 
 /* ---------- Крупный номерной знак ---------- */
 
@@ -453,7 +429,7 @@ body {
 .qs__ago { color: var(--muted); font-size: 0.8rem; }
 .qs__foot { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.82rem; }
 .qs__foot kbd { font: inherit; font-size: 0.75rem; padding: 1px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); }
-.qs__err { color: #e5484d; }
+.qs__err { color: var(--danger); }
 .qs__spinner { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--border); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -505,7 +481,7 @@ body {
 .pp-photo__tag {
   justify-self: start; margin-bottom: 4px;
   font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
-  padding: 3px 8px; border-radius: 999px; background: var(--accent);
+  padding: 3px 8px; border-radius: 999px; background: var(--accent); color: var(--on-accent);
 }
 
 .pp-history {

@@ -106,4 +106,11 @@ export const zh: Dict = {
   "homeTabs.allAbove": "该地区的所有车牌都在上方“为你推荐”中",
   "homeTabs.emptyTitle": "这里还没有内容",
   "homeTabs.emptyHint": "该地区暂无车牌——看看其他标签页",
+
+  // Тема оформления (theme.ts, settings.ts)
+  "theme.label": "主题",
+  "theme.light": "浅色",
+  "theme.auto": "自动",
+  "theme.dark": "深色",
+  "theme.autoHint": "跟随系统",
 };

@@ -105,4 +105,11 @@ export const en: Dict = {
   "homeTabs.allAbove": "All plates of this region are in “For you” above",
   "homeTabs.emptyTitle": "Nothing here yet",
   "homeTabs.emptyHint": "No plates from this region yet — try another tab",
+
+  // Тема оформления (theme.ts, settings.ts)
+  "theme.label": "Theme",
+  "theme.light": "Light",
+  "theme.auto": "Auto",
+  "theme.dark": "Dark",
+  "theme.autoHint": "Follow system",
 };

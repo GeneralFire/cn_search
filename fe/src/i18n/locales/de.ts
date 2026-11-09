@@ -105,4 +105,11 @@ export const de: Dict = {
   "homeTabs.allAbove": "Alle Kennzeichen dieser Region stehen oben unter „Für dich“",
   "homeTabs.emptyTitle": "Hier ist noch nichts",
   "homeTabs.emptyHint": "Noch keine Kennzeichen aus dieser Region – schau in einen anderen Tab",
+
+  // Тема оформления (theme.ts, settings.ts)
+  "theme.label": "Design",
+  "theme.light": "Hell",
+  "theme.auto": "Auto",
+  "theme.dark": "Dunkel",
+  "theme.autoHint": "Wie im System",
 };

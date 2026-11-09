@@ -30,16 +30,16 @@
   display: grid; place-items: center; border-radius: 50%;
   background: var(--surface); color: var(--accent); border: 2px solid var(--accent);
   font-size: 0.78rem; font-weight: 700; line-height: 1;
-  box-shadow: 0 2px 6px rgba(16, 24, 40, 0.3);
+  box-shadow: var(--map-pin-shadow);
   transition: transform 0.12s ease, background 0.12s ease, color 0.12s ease;
 }
 .leaflet-marker-icon.pp-map__pin:not(.is-current) { cursor: pointer; }
 .leaflet-marker-icon.pp-map__pin.is-current {
-  background: var(--accent); color: #fff; font-size: 0.9rem; cursor: default;
+  background: var(--accent); color: var(--on-accent); font-size: 0.9rem; cursor: default;
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 30%, transparent), 0 2px 8px rgba(16, 24, 40, 0.35);
 }
 .leaflet-marker-icon.pp-map__pin.is-hover,
-.leaflet-marker-icon.pp-map__pin:not(.is-current):hover { background: var(--accent); color: #fff; transform: scale(1.2); }
+.leaflet-marker-icon.pp-map__pin:not(.is-current):hover { background: var(--accent); color: var(--on-accent); transform: scale(1.2); }
 .leaflet-marker-icon.pp-map__pin:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 
 /* Пункт ленты, чей маркер под курсором */
@@ -48,12 +48,9 @@
 .pp-map__canvas.leaflet-container { font: inherit; background: var(--bg); }
 .pp-map__canvas .leaflet-control-attribution { font-size: 0.68rem; }
 
-@media (prefers-color-scheme: dark) {
-  /* Тёмная тема: тайлы OSM светлые — инвертируем, возвращая оттенки, и приглушаем под фон страницы. */
-  .pp-map .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.85) saturate(0.5); }
-  .pp-map__canvas .leaflet-bar a { background: var(--surface); color: var(--text); border-color: var(--border); }
-  .pp-map__canvas .leaflet-bar a:hover { background: var(--bg); }
-  .pp-map__canvas.leaflet-container .leaflet-control-attribution { background: rgba(24, 27, 33, 0.8); color: var(--muted); }
-  .pp-map__canvas.leaflet-container .leaflet-control-attribution a { color: var(--accent); }
-  .leaflet-marker-icon.pp-map__pin { box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6); }
-}
+/* Тема (theme.css): фильтр тайлов, контролы и атрибуция — из палитры */
+.pp-map .leaflet-tile-pane { filter: var(--map-tiles-filter); }
+.pp-map__canvas .leaflet-bar a { background: var(--surface); color: var(--text); border-color: var(--border); }
+.pp-map__canvas .leaflet-bar a:hover { background: var(--bg); }
+.pp-map__canvas.leaflet-container .leaflet-control-attribution { background: color-mix(in srgb, var(--surface) 80%, transparent); color: var(--muted); }
+.pp-map__canvas.leaflet-container .leaflet-control-attribution a { color: var(--accent); }

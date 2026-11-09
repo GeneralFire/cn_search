@@ -105,4 +105,11 @@ export const uk: Dict = {
   "homeTabs.allAbove": "Усі номери цього регіону — у блоці «Для вас» вище",
   "homeTabs.emptyTitle": "Тут поки порожньо",
   "homeTabs.emptyHint": "Номерів цього регіону ще немає — загляньте в інші вкладки",
+
+  // Тема оформления (theme.ts, settings.ts)
+  "theme.label": "Тема",
+  "theme.light": "Світла",
+  "theme.auto": "Авто",
+  "theme.dark": "Темна",
+  "theme.autoHint": "Як у системі",
 };

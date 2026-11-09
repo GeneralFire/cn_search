@@ -1,4 +1,5 @@
 import "./style.css";
+import "./theme";
 import { ApiError, clarify, search, type Car } from "./api";
 import { navigate, onRoute, plateHref } from "./router";
 import { renderPlatePage } from "./plate";

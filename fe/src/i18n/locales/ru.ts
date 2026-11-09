@@ -105,4 +105,11 @@ export const ru = {
   "homeTabs.allAbove": "Все номера этого региона — в блоке «Для вас» выше",
   "homeTabs.emptyTitle": "Здесь пока пусто",
   "homeTabs.emptyHint": "Номеров этого региона ещё нет — загляните в другие вкладки",
+
+  // Тема оформления (theme.ts, settings.ts)
+  "theme.label": "Тема",
+  "theme.light": "Светлая",
+  "theme.auto": "Авто",
+  "theme.dark": "Тёмная",
+  "theme.autoHint": "Как в системе",
 } as const;
