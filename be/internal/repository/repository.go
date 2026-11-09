@@ -1,5 +1,5 @@
-// Package repository — работа с БД: поиск и чтение появлений номеров.
-// PostgresStore — рабочее хранилище, MemoryStore — для тестов, Generate — тестовые данные.
+// Package repository — работа с БД (Postgres): поиск и чтение фиксаций номеров.
+// Generate — тестовые данные для `be seed`.
 package repository
 
 import (
@@ -9,8 +9,8 @@ import (
 	"github.com/GeneralFire/cn_search/be/internal/models"
 )
 
-// ErrNotFound — записи с таким id нет.
-var ErrNotFound = errors.New("car not found")
+// ErrNotFound — фиксации с таким id нет.
+var ErrNotFound = errors.New("plate sighting not found")
 
 // Query — параметры поиска.
 type Query struct {
@@ -28,8 +28,12 @@ type Page struct {
 	NextOffset *int // nil — дальше ничего нет
 }
 
-// Repository — хранилище: PostgresStore в работе, MemoryStore — в тестах.
+// Repository — хранилище фиксаций. Реализация — PostgresStore; интерфейс нужен,
+// чтобы подменять БД заглушкой в тестах сервиса.
 type Repository interface {
+	// Search — фиксации по строке поиска, постранично, от новых к старым.
 	Search(ctx context.Context, q Query) (Page, error)
-	Get(ctx context.Context, id int) (models.PlateSighting, error)
+	// ListSamePlate — все фиксации номера, к которому относится фиксация id,
+	// от новых к старым; ErrNotFound, если такой фиксации нет.
+	ListSamePlate(ctx context.Context, id int) ([]models.PlateSighting, error)
 }

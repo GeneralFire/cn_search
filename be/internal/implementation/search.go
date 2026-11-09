@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/GeneralFire/cn_search/be/internal/repository"
-	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch/v1"
+	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch"
 )
 
 const (
@@ -37,7 +37,7 @@ func (s *CarSearch) Search(ctx context.Context, req *pb.SearchRequest) (*pb.Sear
 	}
 
 	resp := &pb.SearchResponse{
-		Items: make([]*pb.Car, len(page.Items)),
+		Items: make([]*pb.PlateSighting, len(page.Items)),
 		Total: int32(page.Total),
 	}
 	for i, c := range page.Items {

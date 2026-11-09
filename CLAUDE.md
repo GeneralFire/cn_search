@@ -19,20 +19,24 @@
 
 ## Устройство
 
-- `be/` — Go. Контракт: `be/api/carsearch/v1/carsearch.proto` **без HTTP-аннотаций**.
-  HTTP-ручки генерирует clay (`generate_unbound_methods` → `POST /api/carsearch.v1.CarSearchService/<Method>`).
+- `be/` — Go. Контракт: `be/api/carsearch/carsearch.proto` (`package carsearch`, без v1) **без HTTP-аннотаций**.
+  HTTP-ручки генерирует clay (`generate_unbound_methods` → `POST /api/carsearch.CarSearchService/<Method>`).
   Сгенерированное — `be/pkg/**` и `carsearch.swagger.json`, руками не править: `make gen-go`.
   Swagger clay кладёт в `be/schema/carsearch.swagger.json`.
   `cmd/` — main (`be serve|seed`) и `httpruntime.go` (JSON/ошибки ручек).
   `internal/implementation` — реализация сервиса, один RPC — один файл (`search.go`, `get.go`;
   руками, clay её не генерирует), `internal/models` — доменные модели,
-  `internal/repository` — БД (строки таблиц — `repository_entities.go`; MemoryStore для тестов, генератор данных),
+  `internal/repository` — БД (только Postgres; plain SQL через `s.Select(ctx, &buf, query, args...)` / `Get` / `Exec` и `*Sql`-варианты
+  для построителей — `executor.go`; модели с тегами `db`; таблицы/SQL-фрагменты — `repository_entities.go`; генератор данных).
+  В тестах сервиса и ручек — заглушка репозитория в `_test.go`,
   `internal/s3` — клиент S3.
 - Миграции — только goose: `be/migrations/NNNN_название.sql` (подряд с 0001, `-- +goose Up/Down`).
   Применяет сервис `migrate` в docker-compose (при `make etc` / `make run`), вручную — `make migrate [CMD=status|down|…]`.
   В коде `be` миграций нет. Применённые не менять, новая — `make migration NAME=…`.
-- БД: таблица `plate_sightings` (появления номеров); поиск — `to_tsvector('simple', plate) @@ plainto_tsquery('simple', <строка из rpc>)`
-  с GIN-индексом, без pg_trgm и без обработки ввода в Go.
+- БД: `plates` (id uuid, plate, meta jsonb) и `plate_sightings` (фиксации, `plate_id → plates.id`).
+  Поиск — `to_tsvector('simple', p.plate) @@ plainto_tsquery('simple', <строка из rpc>)` с GIN-индексом,
+  без pg_trgm и без обработки ввода в Go. `Get(id)` — все фиксации того же номера.
+- Ошибки ручек: `{"code": "<имя gRPC-кода>", "message": …}` (`cmd/httpruntime.go`).
 - Данные БД и S3 — bind mount в `./.data` (не коммитится), удаляет `make reset`.
 - `fe/` — TypeScript + Vite. TS-клиент `fe/src/api/generated.ts` генерируется из swagger: `make gen-ts`.
   Поиск по частям номера, бесконечная прокрутка + «Загрузить ещё», модалка «Уточнить» (заглушка).

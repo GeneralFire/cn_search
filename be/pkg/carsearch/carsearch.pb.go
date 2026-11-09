@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.12
 // 	protoc        v7.36.2
-// source: carsearch/v1/carsearch.proto
+// source: carsearch/carsearch.proto
 
-package carsearchv1
+package carsearch
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -22,8 +22,8 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Car — появление номера: где и когда замечена машина.
-type Car struct {
+// PlateSighting — фиксация номера: где и когда замечена машина.
+type PlateSighting struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Id    int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	// URL картинки (S3).
@@ -31,27 +31,27 @@ type Car struct {
 	Address  string `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
 	// Госномер кириллицей: "А123ВС 777".
 	Plate string `protobuf:"bytes,4,opt,name=plate,proto3" json:"plate,omitempty"`
-	// Когда номер появился.
+	// Когда номер зафиксирован.
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Car) Reset() {
-	*x = Car{}
-	mi := &file_carsearch_v1_carsearch_proto_msgTypes[0]
+func (x *PlateSighting) Reset() {
+	*x = PlateSighting{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Car) String() string {
+func (x *PlateSighting) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Car) ProtoMessage() {}
+func (*PlateSighting) ProtoMessage() {}
 
-func (x *Car) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_v1_carsearch_proto_msgTypes[0]
+func (x *PlateSighting) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -62,40 +62,40 @@ func (x *Car) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Car.ProtoReflect.Descriptor instead.
-func (*Car) Descriptor() ([]byte, []int) {
-	return file_carsearch_v1_carsearch_proto_rawDescGZIP(), []int{0}
+// Deprecated: Use PlateSighting.ProtoReflect.Descriptor instead.
+func (*PlateSighting) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Car) GetId() int32 {
+func (x *PlateSighting) GetId() int32 {
 	if x != nil {
 		return x.Id
 	}
 	return 0
 }
 
-func (x *Car) GetPhotoUrl() string {
+func (x *PlateSighting) GetPhotoUrl() string {
 	if x != nil {
 		return x.PhotoUrl
 	}
 	return ""
 }
 
-func (x *Car) GetAddress() string {
+func (x *PlateSighting) GetAddress() string {
 	if x != nil {
 		return x.Address
 	}
 	return ""
 }
 
-func (x *Car) GetPlate() string {
+func (x *PlateSighting) GetPlate() string {
 	if x != nil {
 		return x.Plate
 	}
 	return ""
 }
 
-func (x *Car) GetCreatedAt() *timestamppb.Timestamp {
+func (x *PlateSighting) GetCreatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreatedAt
 	}
@@ -118,7 +118,7 @@ type SearchRequest struct {
 
 func (x *SearchRequest) Reset() {
 	*x = SearchRequest{}
-	mi := &file_carsearch_v1_carsearch_proto_msgTypes[1]
+	mi := &file_carsearch_carsearch_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -130,7 +130,7 @@ func (x *SearchRequest) String() string {
 func (*SearchRequest) ProtoMessage() {}
 
 func (x *SearchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_v1_carsearch_proto_msgTypes[1]
+	mi := &file_carsearch_carsearch_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -143,7 +143,7 @@ func (x *SearchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchRequest.ProtoReflect.Descriptor instead.
 func (*SearchRequest) Descriptor() ([]byte, []int) {
-	return file_carsearch_v1_carsearch_proto_rawDescGZIP(), []int{1}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *SearchRequest) GetPlate() string {
@@ -169,7 +169,7 @@ func (x *SearchRequest) GetLimit() int32 {
 
 type SearchResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	Items []*Car                 `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	Items []*PlateSighting       `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
 	// Всего найдено по запросу.
 	Total int32 `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
 	// Смещение следующей страницы; не задано — дальше ничего нет.
@@ -180,7 +180,7 @@ type SearchResponse struct {
 
 func (x *SearchResponse) Reset() {
 	*x = SearchResponse{}
-	mi := &file_carsearch_v1_carsearch_proto_msgTypes[2]
+	mi := &file_carsearch_carsearch_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -192,7 +192,7 @@ func (x *SearchResponse) String() string {
 func (*SearchResponse) ProtoMessage() {}
 
 func (x *SearchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_v1_carsearch_proto_msgTypes[2]
+	mi := &file_carsearch_carsearch_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -205,10 +205,10 @@ func (x *SearchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchResponse.ProtoReflect.Descriptor instead.
 func (*SearchResponse) Descriptor() ([]byte, []int) {
-	return file_carsearch_v1_carsearch_proto_rawDescGZIP(), []int{2}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *SearchResponse) GetItems() []*Car {
+func (x *SearchResponse) GetItems() []*PlateSighting {
 	if x != nil {
 		return x.Items
 	}
@@ -230,15 +230,16 @@ func (x *SearchResponse) GetNextOffset() int32 {
 }
 
 type GetRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Идентификатор любой фиксации номера.
+	Id            int32 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetRequest) Reset() {
 	*x = GetRequest{}
-	mi := &file_carsearch_v1_carsearch_proto_msgTypes[3]
+	mi := &file_carsearch_carsearch_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -250,7 +251,7 @@ func (x *GetRequest) String() string {
 func (*GetRequest) ProtoMessage() {}
 
 func (x *GetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_v1_carsearch_proto_msgTypes[3]
+	mi := &file_carsearch_carsearch_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -263,7 +264,7 @@ func (x *GetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRequest.ProtoReflect.Descriptor instead.
 func (*GetRequest) Descriptor() ([]byte, []int) {
-	return file_carsearch_v1_carsearch_proto_rawDescGZIP(), []int{3}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetRequest) GetId() int32 {
@@ -274,15 +275,16 @@ func (x *GetRequest) GetId() int32 {
 }
 
 type GetResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Car           *Car                   `protobuf:"bytes,1,opt,name=car,proto3" json:"car,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Все фиксации номера, от новых к старым; первая по id всегда среди них.
+	Items         []*PlateSighting `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetResponse) Reset() {
 	*x = GetResponse{}
-	mi := &file_carsearch_v1_carsearch_proto_msgTypes[4]
+	mi := &file_carsearch_carsearch_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -294,7 +296,7 @@ func (x *GetResponse) String() string {
 func (*GetResponse) ProtoMessage() {}
 
 func (x *GetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_v1_carsearch_proto_msgTypes[4]
+	mi := &file_carsearch_carsearch_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -307,22 +309,22 @@ func (x *GetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetResponse.ProtoReflect.Descriptor instead.
 func (*GetResponse) Descriptor() ([]byte, []int) {
-	return file_carsearch_v1_carsearch_proto_rawDescGZIP(), []int{4}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *GetResponse) GetCar() *Car {
+func (x *GetResponse) GetItems() []*PlateSighting {
 	if x != nil {
-		return x.Car
+		return x.Items
 	}
 	return nil
 }
 
-var File_carsearch_v1_carsearch_proto protoreflect.FileDescriptor
+var File_carsearch_carsearch_proto protoreflect.FileDescriptor
 
-const file_carsearch_v1_carsearch_proto_rawDesc = "" +
+const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\n" +
-	"\x1ccarsearch/v1/carsearch.proto\x12\fcarsearch.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9d\x01\n" +
-	"\x03Car\x12\x0e\n" +
+	"\x19carsearch/carsearch.proto\x12\tcarsearch\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa7\x01\n" +
+	"\rPlateSighting\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\x12\x1b\n" +
 	"\tphoto_url\x18\x02 \x01(\tR\bphotoUrl\x12\x18\n" +
 	"\aaddress\x18\x03 \x01(\tR\aaddress\x12\x14\n" +
@@ -332,51 +334,51 @@ const file_carsearch_v1_carsearch_proto_rawDesc = "" +
 	"\rSearchRequest\x12\x14\n" +
 	"\x05plate\x18\x01 \x01(\tR\x05plate\x12\x16\n" +
 	"\x06offset\x18\x02 \x01(\x05R\x06offset\x12\x14\n" +
-	"\x05limit\x18\x03 \x01(\x05R\x05limit\"\x85\x01\n" +
-	"\x0eSearchResponse\x12'\n" +
-	"\x05items\x18\x01 \x03(\v2\x11.carsearch.v1.CarR\x05items\x12\x14\n" +
+	"\x05limit\x18\x03 \x01(\x05R\x05limit\"\x8c\x01\n" +
+	"\x0eSearchResponse\x12.\n" +
+	"\x05items\x18\x01 \x03(\v2\x18.carsearch.PlateSightingR\x05items\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x05R\x05total\x12$\n" +
 	"\vnext_offset\x18\x03 \x01(\x05H\x00R\n" +
 	"nextOffset\x88\x01\x01B\x0e\n" +
 	"\f_next_offset\"\x1c\n" +
 	"\n" +
 	"GetRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x05R\x02id\"2\n" +
-	"\vGetResponse\x12#\n" +
-	"\x03car\x18\x01 \x01(\v2\x11.carsearch.v1.CarR\x03car2\x93\x01\n" +
-	"\x10CarSearchService\x12C\n" +
-	"\x06Search\x12\x1b.carsearch.v1.SearchRequest\x1a\x1c.carsearch.v1.SearchResponse\x12:\n" +
-	"\x03Get\x12\x18.carsearch.v1.GetRequest\x1a\x19.carsearch.v1.GetResponseBBZ@github.com/GeneralFire/cn_search/be/pkg/carsearch/v1;carsearchv1b\x06proto3"
+	"\x02id\x18\x01 \x01(\x05R\x02id\"=\n" +
+	"\vGetResponse\x12.\n" +
+	"\x05items\x18\x01 \x03(\v2\x18.carsearch.PlateSightingR\x05items2\x87\x01\n" +
+	"\x10CarSearchService\x12=\n" +
+	"\x06Search\x12\x18.carsearch.SearchRequest\x1a\x19.carsearch.SearchResponse\x124\n" +
+	"\x03Get\x12\x15.carsearch.GetRequest\x1a\x16.carsearch.GetResponseB=Z;github.com/GeneralFire/cn_search/be/pkg/carsearch;carsearchb\x06proto3"
 
 var (
-	file_carsearch_v1_carsearch_proto_rawDescOnce sync.Once
-	file_carsearch_v1_carsearch_proto_rawDescData []byte
+	file_carsearch_carsearch_proto_rawDescOnce sync.Once
+	file_carsearch_carsearch_proto_rawDescData []byte
 )
 
-func file_carsearch_v1_carsearch_proto_rawDescGZIP() []byte {
-	file_carsearch_v1_carsearch_proto_rawDescOnce.Do(func() {
-		file_carsearch_v1_carsearch_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_carsearch_v1_carsearch_proto_rawDesc), len(file_carsearch_v1_carsearch_proto_rawDesc)))
+func file_carsearch_carsearch_proto_rawDescGZIP() []byte {
+	file_carsearch_carsearch_proto_rawDescOnce.Do(func() {
+		file_carsearch_carsearch_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_carsearch_carsearch_proto_rawDesc), len(file_carsearch_carsearch_proto_rawDesc)))
 	})
-	return file_carsearch_v1_carsearch_proto_rawDescData
+	return file_carsearch_carsearch_proto_rawDescData
 }
 
-var file_carsearch_v1_carsearch_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
-var file_carsearch_v1_carsearch_proto_goTypes = []any{
-	(*Car)(nil),                   // 0: carsearch.v1.Car
-	(*SearchRequest)(nil),         // 1: carsearch.v1.SearchRequest
-	(*SearchResponse)(nil),        // 2: carsearch.v1.SearchResponse
-	(*GetRequest)(nil),            // 3: carsearch.v1.GetRequest
-	(*GetResponse)(nil),           // 4: carsearch.v1.GetResponse
+var file_carsearch_carsearch_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_carsearch_carsearch_proto_goTypes = []any{
+	(*PlateSighting)(nil),         // 0: carsearch.PlateSighting
+	(*SearchRequest)(nil),         // 1: carsearch.SearchRequest
+	(*SearchResponse)(nil),        // 2: carsearch.SearchResponse
+	(*GetRequest)(nil),            // 3: carsearch.GetRequest
+	(*GetResponse)(nil),           // 4: carsearch.GetResponse
 	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
 }
-var file_carsearch_v1_carsearch_proto_depIdxs = []int32{
-	5, // 0: carsearch.v1.Car.created_at:type_name -> google.protobuf.Timestamp
-	0, // 1: carsearch.v1.SearchResponse.items:type_name -> carsearch.v1.Car
-	0, // 2: carsearch.v1.GetResponse.car:type_name -> carsearch.v1.Car
-	1, // 3: carsearch.v1.CarSearchService.Search:input_type -> carsearch.v1.SearchRequest
-	3, // 4: carsearch.v1.CarSearchService.Get:input_type -> carsearch.v1.GetRequest
-	2, // 5: carsearch.v1.CarSearchService.Search:output_type -> carsearch.v1.SearchResponse
-	4, // 6: carsearch.v1.CarSearchService.Get:output_type -> carsearch.v1.GetResponse
+var file_carsearch_carsearch_proto_depIdxs = []int32{
+	5, // 0: carsearch.PlateSighting.created_at:type_name -> google.protobuf.Timestamp
+	0, // 1: carsearch.SearchResponse.items:type_name -> carsearch.PlateSighting
+	0, // 2: carsearch.GetResponse.items:type_name -> carsearch.PlateSighting
+	1, // 3: carsearch.CarSearchService.Search:input_type -> carsearch.SearchRequest
+	3, // 4: carsearch.CarSearchService.Get:input_type -> carsearch.GetRequest
+	2, // 5: carsearch.CarSearchService.Search:output_type -> carsearch.SearchResponse
+	4, // 6: carsearch.CarSearchService.Get:output_type -> carsearch.GetResponse
 	5, // [5:7] is the sub-list for method output_type
 	3, // [3:5] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name
@@ -384,27 +386,27 @@ var file_carsearch_v1_carsearch_proto_depIdxs = []int32{
 	0, // [0:3] is the sub-list for field type_name
 }
 
-func init() { file_carsearch_v1_carsearch_proto_init() }
-func file_carsearch_v1_carsearch_proto_init() {
-	if File_carsearch_v1_carsearch_proto != nil {
+func init() { file_carsearch_carsearch_proto_init() }
+func file_carsearch_carsearch_proto_init() {
+	if File_carsearch_carsearch_proto != nil {
 		return
 	}
-	file_carsearch_v1_carsearch_proto_msgTypes[2].OneofWrappers = []any{}
+	file_carsearch_carsearch_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_carsearch_v1_carsearch_proto_rawDesc), len(file_carsearch_v1_carsearch_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_carsearch_carsearch_proto_rawDesc), len(file_carsearch_carsearch_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_carsearch_v1_carsearch_proto_goTypes,
-		DependencyIndexes: file_carsearch_v1_carsearch_proto_depIdxs,
-		MessageInfos:      file_carsearch_v1_carsearch_proto_msgTypes,
+		GoTypes:           file_carsearch_carsearch_proto_goTypes,
+		DependencyIndexes: file_carsearch_carsearch_proto_depIdxs,
+		MessageInfos:      file_carsearch_carsearch_proto_msgTypes,
 	}.Build()
-	File_carsearch_v1_carsearch_proto = out.File
-	file_carsearch_v1_carsearch_proto_goTypes = nil
-	file_carsearch_v1_carsearch_proto_depIdxs = nil
+	File_carsearch_carsearch_proto = out.File
+	file_carsearch_carsearch_proto_goTypes = nil
+	file_carsearch_carsearch_proto_depIdxs = nil
 }

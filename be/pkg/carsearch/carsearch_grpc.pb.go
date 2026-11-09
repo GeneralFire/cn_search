@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v7.36.2
-// source: carsearch/v1/carsearch.proto
+// source: carsearch/carsearch.proto
 
-package carsearchv1
+package carsearch
 
 import (
 	context "context"
@@ -19,23 +19,23 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CarSearchService_Search_FullMethodName = "/carsearch.v1.CarSearchService/Search"
-	CarSearchService_Get_FullMethodName    = "/carsearch.v1.CarSearchService/Get"
+	CarSearchService_Search_FullMethodName = "/carsearch.CarSearchService/Search"
+	CarSearchService_Get_FullMethodName    = "/carsearch.CarSearchService/Get"
 )
 
 // CarSearchServiceClient is the client API for CarSearchService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// CarSearchService — поиск появлений машин по госномеру.
+// CarSearchService — поиск фиксаций госномеров.
 //
 // HTTP-аннотаций нет намеренно: HTTP-ручки генерирует clay с флагом
 // generate_unbound_methods — каждый метод доступен как
-// POST /carsearch.v1.CarSearchService/<Method> с JSON-телом запроса.
+// POST /carsearch.CarSearchService/<Method> с JSON-телом запроса.
 type CarSearchServiceClient interface {
-	// Search ищет появления номеров. Результаты — от новых к старым, постранично.
+	// Search ищет фиксации номеров. Результаты — от новых к старым, постранично.
 	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
-	// Get возвращает появление номера по идентификатору.
+	// Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 }
 
@@ -71,15 +71,15 @@ func (c *carSearchServiceClient) Get(ctx context.Context, in *GetRequest, opts .
 // All implementations must embed UnimplementedCarSearchServiceServer
 // for forward compatibility.
 //
-// CarSearchService — поиск появлений машин по госномеру.
+// CarSearchService — поиск фиксаций госномеров.
 //
 // HTTP-аннотаций нет намеренно: HTTP-ручки генерирует clay с флагом
 // generate_unbound_methods — каждый метод доступен как
-// POST /carsearch.v1.CarSearchService/<Method> с JSON-телом запроса.
+// POST /carsearch.CarSearchService/<Method> с JSON-телом запроса.
 type CarSearchServiceServer interface {
-	// Search ищет появления номеров. Результаты — от новых к старым, постранично.
+	// Search ищет фиксации номеров. Результаты — от новых к старым, постранично.
 	Search(context.Context, *SearchRequest) (*SearchResponse, error)
-	// Get возвращает появление номера по идентификатору.
+	// Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 	mustEmbedUnimplementedCarSearchServiceServer()
 }
@@ -158,7 +158,7 @@ func _CarSearchService_Get_Handler(srv interface{}, ctx context.Context, dec fun
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var CarSearchService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "carsearch.v1.CarSearchService",
+	ServiceName: "carsearch.CarSearchService",
 	HandlerType: (*CarSearchServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -171,5 +171,5 @@ var CarSearchService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "carsearch/v1/carsearch.proto",
+	Metadata: "carsearch/carsearch.proto",
 }

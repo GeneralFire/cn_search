@@ -1,33 +1,33 @@
 syntax = "proto3";
 
-package carsearch.v1;
+package carsearch;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/GeneralFire/cn_search/be/pkg/carsearch/v1;carsearchv1";
+option go_package = "github.com/GeneralFire/cn_search/be/pkg/carsearch;carsearch";
 
-// CarSearchService — поиск появлений машин по госномеру.
+// CarSearchService — поиск фиксаций госномеров.
 //
 // HTTP-аннотаций нет намеренно: HTTP-ручки генерирует clay с флагом
 // generate_unbound_methods — каждый метод доступен как
-// POST /carsearch.v1.CarSearchService/<Method> с JSON-телом запроса.
+// POST /carsearch.CarSearchService/<Method> с JSON-телом запроса.
 service CarSearchService {
-  // Search ищет появления номеров. Результаты — от новых к старым, постранично.
+  // Search ищет фиксации номеров. Результаты — от новых к старым, постранично.
   rpc Search(SearchRequest) returns (SearchResponse);
 
-  // Get возвращает появление номера по идентификатору.
+  // Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.
   rpc Get(GetRequest) returns (GetResponse);
 }
 
-// Car — появление номера: где и когда замечена машина.
-message Car {
+// PlateSighting — фиксация номера: где и когда замечена машина.
+message PlateSighting {
   int32 id = 1;
   // URL картинки (S3).
   string photo_url = 2;
   string address = 3;
   // Госномер кириллицей: "А123ВС 777".
   string plate = 4;
-  // Когда номер появился.
+  // Когда номер зафиксирован.
   google.protobuf.Timestamp created_at = 5;
 }
 
@@ -43,7 +43,7 @@ message SearchRequest {
 }
 
 message SearchResponse {
-  repeated Car items = 1;
+  repeated PlateSighting items = 1;
   // Всего найдено по запросу.
   int32 total = 2;
   // Смещение следующей страницы; не задано — дальше ничего нет.
@@ -51,9 +51,11 @@ message SearchResponse {
 }
 
 message GetRequest {
+  // Идентификатор любой фиксации номера.
   int32 id = 1;
 }
 
 message GetResponse {
-  Car car = 1;
+  // Все фиксации номера, от новых к старым; первая по id всегда среди них.
+  repeated PlateSighting items = 1;
 }

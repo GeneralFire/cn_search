@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"log/slog"
@@ -10,18 +11,44 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi"
-	"google.golang.org/grpc/codes"
 
 	"github.com/GeneralFire/cn_search/be/internal/implementation"
+	"github.com/GeneralFire/cn_search/be/internal/models"
 	"github.com/GeneralFire/cn_search/be/internal/repository"
-	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch/v1"
+	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch"
 )
+
+// httpStub — заглушка репозитория: здесь проверяются ручки clay, JSON и ошибки, а не БД.
+// Search: пустая строка — 3 фиксации постранично, "Х000ХХ 000" — ничего. ListSamePlate: id 1 — две фиксации.
+type httpStub struct{}
+
+var stubItems = repository.Fixed[:3]
+
+func (httpStub) Search(_ context.Context, q repository.Query) (repository.Page, error) {
+	p := repository.Page{Items: []models.PlateSighting{}, Offset: q.Offset, Limit: q.Limit}
+	if q.Plate != "" {
+		return p, nil
+	}
+	p.Total = len(stubItems)
+	p.Items = stubItems[min(q.Offset, p.Total):min(q.Offset+q.Limit, p.Total)]
+	if next := q.Offset + len(p.Items); next < p.Total {
+		p.NextOffset = &next
+	}
+	return p, nil
+}
+
+func (httpStub) ListSamePlate(_ context.Context, id int) ([]models.PlateSighting, error) {
+	if id != 1 {
+		return nil, repository.ErrNotFound
+	}
+	return []models.PlateSighting{repository.Fixed[3], repository.Fixed[0]}, nil
+}
 
 // Проверяем сгенерированные clay ручки вместе с нашей настройкой JSON и ошибок.
 func newHTTP(t *testing.T) *httptest.Server {
 	t.Helper()
 	configureHTTPRuntime()
-	desc := pb.NewCarSearchServiceServiceDesc(implementation.NewCarSearch(repository.NewMemoryStore(repository.Fixed), "/s3/cars"))
+	desc := pb.NewCarSearchServiceServiceDesc(implementation.NewCarSearch(httpStub{}, "/s3/cars"))
 	r := chi.NewRouter()
 	desc.RegisterHTTP(r)
 	root := chi.NewRouter()
@@ -33,7 +60,7 @@ func newHTTP(t *testing.T) *httptest.Server {
 
 func call(t *testing.T, srv *httptest.Server, method, body string) (int, map[string]any) {
 	t.Helper()
-	res, err := http.Post(srv.URL+apiPrefix+"/carsearch.v1.CarSearchService/"+method, "application/json", strings.NewReader(body))
+	res, err := http.Post(srv.URL+apiPrefix+"/carsearch.CarSearchService/"+method, "application/json", strings.NewReader(body))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,6 +101,18 @@ func TestHTTPSearchAndPaging(t *testing.T) {
 	}
 }
 
+func TestHTTPGetReturnsAllSightings(t *testing.T) {
+	srv := newHTTP(t)
+	code, out := call(t, srv, "Get", `{"id":1}`)
+	items, _ := out["items"].([]any)
+	if code != http.StatusOK || len(items) != 2 {
+		t.Fatalf("Get: %d %v", code, out)
+	}
+	if first := items[0].(map[string]any); first["id"] != float64(4) || first["plate"] != "А123ВС 777" {
+		t.Errorf("первая фиксация: %v", first)
+	}
+}
+
 func TestHTTPErrors(t *testing.T) {
 	srv := newHTTP(t)
 	tests := []struct {
@@ -81,10 +120,10 @@ func TestHTTPErrors(t *testing.T) {
 		status       int
 		code         string
 	}{
-		{"Search", `{"limit":101}`, http.StatusBadRequest, "invalid_argument"},
-		{"Search", `{не json`, http.StatusBadRequest, "invalid_argument"},
-		{"Get", `{"id":100500}`, http.StatusNotFound, "not_found"},
-		{"Get", `{"id":0}`, http.StatusBadRequest, "invalid_argument"},
+		{"Search", `{"limit":101}`, http.StatusBadRequest, "InvalidArgument"},
+		{"Search", `{не json`, http.StatusBadRequest, "InvalidArgument"},
+		{"Get", `{"id":100500}`, http.StatusNotFound, "NotFound"},
+		{"Get", `{"id":0}`, http.StatusBadRequest, "InvalidArgument"},
 	}
 	for _, tt := range tests {
 		status, out := call(t, srv, tt.method, tt.body)
@@ -93,18 +132,6 @@ func TestHTTPErrors(t *testing.T) {
 		}
 		if msg, _ := out["message"].(string); msg == "" || strings.Contains(msg, "rpc error") {
 			t.Errorf("%s %s: message = %q", tt.method, tt.body, msg)
-		}
-	}
-}
-
-func TestSnakeCode(t *testing.T) {
-	for c, want := range map[codes.Code]string{
-		codes.InvalidArgument: "invalid_argument",
-		codes.NotFound:        "not_found",
-		codes.Internal:        "internal",
-	} {
-		if got := snakeCode(c); got != want {
-			t.Errorf("snakeCode(%v) = %q, want %q", c, got, want)
 		}
 	}
 }

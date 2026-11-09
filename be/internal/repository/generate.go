@@ -50,15 +50,24 @@ var cities = []city{
 	{"Самара", []string{"63", "163"}, []string{"ул. Куйбышева", "Московское ш.", "ул. Ленинградская"}},
 }
 
-// Fixed — три фиксированные записи, на них удобно проверять поиск руками.
+// Fixed — фиксированные записи для ручной проверки: у А123ВС 777 три фиксации,
+// у М456ОР 178 и Т789УХ 116 — по одной. Их номера в случайной части не встречаются.
 var Fixed = []models.PlateSighting{
 	{ID: 1, Address: "Москва, Пресненская наб., 10", Plate: "А123ВС 777", CreatedAt: time.Date(2026, 11, 2, 9, 15, 0, 0, time.UTC)},
 	{ID: 2, Address: "Санкт-Петербург, Невский пр., 28", Plate: "М456ОР 178", CreatedAt: time.Date(2026, 10, 27, 18, 40, 0, 0, time.UTC)},
 	{ID: 3, Address: "Казань, ул. Баумана, 44", Plate: "Т789УХ 116", CreatedAt: time.Date(2026, 11, 8, 12, 5, 0, 0, time.UTC)},
+	{ID: 4, Address: "Москва, ул. Тверская, 7", Plate: "А123ВС 777", CreatedAt: time.Date(2026, 11, 5, 18, 30, 0, 0, time.UTC)},
+	{ID: 5, Address: "Москва, Кутузовский пр., 30", Plate: "А123ВС 777", CreatedAt: time.Date(2026, 10, 20, 8, 0, 0, 0, time.UTC)},
 }
 
-// Generate детерминированно генерирует тестовые появления номеров: уникальные номера,
-// корректные буквы и коды регионов. Первые записи — Fixed.
+type plateOfCity struct {
+	plate string
+	city  city
+}
+
+// Generate детерминированно генерирует тестовые фиксации номеров. Номера берутся из пула
+// (примерно треть от числа записей), поэтому у номера обычно несколько фиксаций —
+// в разных местах его города. Буквы и коды регионов корректные. Первые записи — Fixed.
 func Generate(opt GenerateOptions) []models.PlateSighting {
 	r := rand.New(rand.NewPCG(opt.Seed, opt.Seed^0x9e3779b97f4a7c15))
 	pick := func(xs []string) string { return xs[r.IntN(len(xs))] }
@@ -66,23 +75,28 @@ func Generate(opt GenerateOptions) []models.PlateSighting {
 
 	out := make([]models.PlateSighting, 0, max(opt.Total, len(Fixed)))
 	out = append(out, Fixed...)
-	plates := make(map[string]struct{}, opt.Total)
+
+	seen := make(map[string]bool, opt.Total)
 	for _, c := range Fixed {
-		plates[c.Plate] = struct{}{}
+		seen[c.Plate] = true
+	}
+	pool := make([]plateOfCity, 0, max(1, (opt.Total-len(Fixed))/3))
+	for len(pool) < cap(pool) {
+		c := cities[r.IntN(len(cities))]
+		plate := fmt.Sprintf("%s%03d%s%s %s", letter(), r.IntN(999)+1, letter(), letter(), pick(c.regions))
+		if seen[plate] {
+			continue
+		}
+		seen[plate] = true
+		pool = append(pool, plateOfCity{plate, c})
 	}
 
 	for len(out) < opt.Total {
-		c := cities[r.IntN(len(cities))]
-		plate := fmt.Sprintf("%s%03d%s%s %s", letter(), r.IntN(999)+1, letter(), letter(), pick(c.regions))
-		if _, dup := plates[plate]; dup {
-			continue
-		}
-		plates[plate] = struct{}{}
-
+		p := pool[r.IntN(len(pool))]
 		out = append(out, models.PlateSighting{
 			ID:        len(out) + 1,
-			Address:   fmt.Sprintf("%s, %s, %d", c.name, pick(c.streets), r.IntN(150)+1),
-			Plate:     plate,
+			Address:   fmt.Sprintf("%s, %s, %d", p.city.name, pick(p.city.streets), r.IntN(150)+1),
+			Plate:     p.plate,
 			CreatedAt: opt.Base.Add(-time.Duration(r.Int64N(int64(opt.DaysBack) * int64(24*time.Hour)))).Truncate(time.Second),
 		})
 	}

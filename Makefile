@@ -8,7 +8,7 @@ BE        := be
 FE        := fe
 BIN       := $(abspath $(BE)/bin)
 PROTO_DIR := $(BE)/api
-PROTO     := $(PROTO_DIR)/carsearch/v1/carsearch.proto
+PROTO     := $(PROTO_DIR)/carsearch/carsearch.proto
 SWAGGER   := $(BE)/schema/carsearch.swagger.json
 TS_CLIENT := $(FE)/src/api/generated.ts
 

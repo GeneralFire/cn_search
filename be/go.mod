@@ -3,6 +3,7 @@ module github.com/GeneralFire/cn_search/be
 go 1.27
 
 require (
+	github.com/georgysavva/scany/v2 v2.1.4
 	github.com/go-chi/chi v3.3.4+incompatible
 	github.com/go-openapi/spec v0.0.0-20180415031709-bcff419492ee
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3

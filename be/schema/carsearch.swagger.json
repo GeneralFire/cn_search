@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "carsearch/v1/carsearch.proto",
+    "title": "carsearch/carsearch.proto",
     "version": "version not set"
   },
   "tags": [
@@ -16,15 +16,15 @@
     "application/json"
   ],
   "paths": {
-    "/carsearch.v1.CarSearchService/Get": {
+    "/carsearch.CarSearchService/Get": {
       "post": {
-        "summary": "Get возвращает появление номера по идентификатору.",
+        "summary": "Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.",
         "operationId": "CarSearchService_Get",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetResponse"
+              "$ref": "#/definitions/carsearchGetResponse"
             }
           }
         },
@@ -34,7 +34,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1GetRequest"
+              "$ref": "#/definitions/carsearchGetRequest"
             }
           }
         ],
@@ -43,15 +43,15 @@
         ]
       }
     },
-    "/carsearch.v1.CarSearchService/Search": {
+    "/carsearch.CarSearchService/Search": {
       "post": {
-        "summary": "Search ищет появления номеров. Результаты — от новых к старым, постранично.",
+        "summary": "Search ищет фиксации номеров. Результаты — от новых к старым, постранично.",
         "operationId": "CarSearchService_Search",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1SearchResponse"
+              "$ref": "#/definitions/carsearchSearchResponse"
             }
           }
         },
@@ -61,7 +61,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1SearchRequest"
+              "$ref": "#/definitions/carsearchSearchRequest"
             }
           }
         ],
@@ -72,7 +72,29 @@
     }
   },
   "definitions": {
-    "v1Car": {
+    "carsearchGetRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Идентификатор любой фиксации номера."
+        }
+      }
+    },
+    "carsearchGetResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchPlateSighting"
+          },
+          "description": "Все фиксации номера, от новых к старым; первая по id всегда среди них."
+        }
+      }
+    },
+    "carsearchPlateSighting": {
       "type": "object",
       "properties": {
         "id": {
@@ -93,29 +115,12 @@
         "createdAt": {
           "type": "string",
           "format": "date-time",
-          "description": "Когда номер появился."
+          "description": "Когда номер зафиксирован."
         }
       },
-      "description": "Car — появление номера: где и когда замечена машина."
+      "description": "PlateSighting — фиксация номера: где и когда замечена машина."
     },
-    "v1GetRequest": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int32"
-        }
-      }
-    },
-    "v1GetResponse": {
-      "type": "object",
-      "properties": {
-        "car": {
-          "$ref": "#/definitions/v1Car"
-        }
-      }
-    },
-    "v1SearchRequest": {
+    "carsearchSearchRequest": {
       "type": "object",
       "properties": {
         "plate": {
@@ -134,13 +139,13 @@
         }
       }
     },
-    "v1SearchResponse": {
+    "carsearchSearchResponse": {
       "type": "object",
       "properties": {
         "items": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/v1Car"
+            "$ref": "#/definitions/carsearchPlateSighting"
           }
         },
         "total": {

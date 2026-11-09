@@ -9,7 +9,7 @@ import (
 
 	"github.com/GeneralFire/cn_search/be/internal/models"
 	"github.com/GeneralFire/cn_search/be/internal/repository"
-	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch/v1"
+	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch"
 )
 
 // CarSearch — реализация CarSearchServiceServer.
@@ -24,8 +24,8 @@ func NewCarSearch(repo repository.Repository, photoBaseURL string) *CarSearch {
 	return &CarSearch{repo: repo, photoBase: strings.TrimRight(photoBaseURL, "/")}
 }
 
-func (s *CarSearch) toPB(c models.PlateSighting) *pb.Car {
-	out := &pb.Car{
+func (s *CarSearch) toPB(c models.PlateSighting) *pb.PlateSighting {
+	out := &pb.PlateSighting{
 		Id:        int32(c.ID),
 		Address:   c.Address,
 		Plate:     c.Plate,

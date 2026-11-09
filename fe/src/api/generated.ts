@@ -10,15 +10,28 @@
  * ---------------------------------------------------------------
  */
 
-export type CarSearchServiceGetData = V1GetResponse;
+export type CarSearchServiceGetData = CarsearchGetResponse;
 
-export type CarSearchServiceSearchData = V1SearchResponse;
+export type CarSearchServiceSearchData = CarsearchSearchResponse;
 
-/** Car — появление номера: где и когда замечена машина. */
-export interface V1Car {
+export interface CarsearchGetRequest {
+  /**
+   * Идентификатор любой фиксации номера.
+   * @format int32
+   */
+  id?: number;
+}
+
+export interface CarsearchGetResponse {
+  /** Все фиксации номера, от новых к старым; первая по id всегда среди них. */
+  items?: CarsearchPlateSighting[];
+}
+
+/** PlateSighting — фиксация номера: где и когда замечена машина. */
+export interface CarsearchPlateSighting {
   address?: string;
   /**
-   * Когда номер появился.
+   * Когда номер зафиксирован.
    * @format date-time
    */
   createdAt?: string;
@@ -30,17 +43,7 @@ export interface V1Car {
   plate?: string;
 }
 
-export interface V1GetRequest {
-  /** @format int32 */
-  id?: number;
-}
-
-export interface V1GetResponse {
-  /** Car — появление номера: где и когда замечена машина. */
-  car?: V1Car;
-}
-
-export interface V1SearchRequest {
+export interface CarsearchSearchRequest {
   /**
    * Размер страницы, 1..100; 0 — по умолчанию (35).
    * @format int32
@@ -59,8 +62,8 @@ export interface V1SearchRequest {
   plate?: string;
 }
 
-export interface V1SearchResponse {
-  items?: V1Car[];
+export interface CarsearchSearchResponse {
+  items?: CarsearchPlateSighting[];
   /**
    * Смещение следующей страницы; не задано — дальше ничего нет.
    * @format int32
@@ -329,24 +332,27 @@ export class HttpClient<SecurityDataType = unknown> {
 }
 
 /**
- * @title carsearch/v1/carsearch.proto
+ * @title carsearch/carsearch.proto
  * @version version not set
  */
 export class CarSearchApi<
   SecurityDataType extends unknown,
 > extends HttpClient<SecurityDataType> {
-  carsearchV1CarSearchService = {
+  carsearchCarSearchService = {
     /**
      * No description
      *
      * @tags CarSearchService
      * @name CarSearchServiceGet
-     * @summary Get возвращает появление номера по идентификатору.
-     * @request POST:/carsearch.v1.CarSearchService/Get
+     * @summary Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.
+     * @request POST:/carsearch.CarSearchService/Get
      */
-    carSearchServiceGet: (body: V1GetRequest, params: RequestParams = {}) =>
+    carSearchServiceGet: (
+      body: CarsearchGetRequest,
+      params: RequestParams = {},
+    ) =>
       this.request<CarSearchServiceGetData, any>({
-        path: `/carsearch.v1.CarSearchService/Get`,
+        path: `/carsearch.CarSearchService/Get`,
         method: "POST",
         body: body,
         type: ContentType.Json,
@@ -359,15 +365,15 @@ export class CarSearchApi<
      *
      * @tags CarSearchService
      * @name CarSearchServiceSearch
-     * @summary Search ищет появления номеров. Результаты — от новых к старым, постранично.
-     * @request POST:/carsearch.v1.CarSearchService/Search
+     * @summary Search ищет фиксации номеров. Результаты — от новых к старым, постранично.
+     * @request POST:/carsearch.CarSearchService/Search
      */
     carSearchServiceSearch: (
-      body: V1SearchRequest,
+      body: CarsearchSearchRequest,
       params: RequestParams = {},
     ) =>
       this.request<CarSearchServiceSearchData, any>({
-        path: `/carsearch.v1.CarSearchService/Search`,
+        path: `/carsearch.CarSearchService/Search`,
         method: "POST",
         body: body,
         type: ContentType.Json,

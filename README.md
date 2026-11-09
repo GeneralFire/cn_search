@@ -1,6 +1,6 @@
 # Поиск по авто
 
-Поиск появлений автомобиля (где и когда замечен) по госномеру: бэкенд на Go (контракт в proto, ручки генерирует
+Поиск фиксаций автомобиля (где и когда замечен) по госномеру: бэкенд на Go (контракт в proto, ручки генерирует
 [clay](https://github.com/utrack/clay)), Postgres, S3-хранилище картинок и фронтенд на
 TypeScript + Vite с TS-клиентом, сгенерированным по `swagger.json`.
 
@@ -52,16 +52,16 @@ car-search/
 ├── Makefile                 # все команды: make help
 ├── docker-compose.yml       # db + s3 + be + fe
 ├── be/                      # бэкенд, Go
-│   ├── api/carsearch/v1/carsearch.proto   # КОНТРАКТ (без HTTP-аннотаций)
+│   ├── api/carsearch/carsearch.proto      # КОНТРАКТ (без HTTP-аннотаций)
 │   ├── schema/carsearch.swagger.json      # сгенерирован clay
-│   ├── pkg/carsearch/v1/    # сгенерировано: *.pb.go, *_grpc.pb.go, *.pb.goclay.go (ручки)
+│   ├── pkg/carsearch/       # сгенерировано: *.pb.go, *_grpc.pb.go, *.pb.goclay.go (ручки)
 │   ├── cmd/
 │   │   ├── main.go          # be serve | seed
 │   │   └── httpruntime.go   # настройка JSON и формата ошибок ручек clay
 │   ├── internal/
 │   │   ├── implementation/  # реализация CarSearchService, файл на RPC (руками, clay её не генерирует)
 │   │   ├── models/          # доменные модели
-│   │   ├── repository/      # работа с БД (сущности — repository_entities.go), MemoryStore, генератор данных
+│   │   ├── repository/      # Postgres (строки таблиц — repository_entities.go), генератор тестовых данных
 │   │   └── s3/              # S3-клиент
 │   ├── migrations/          # SQL-миграции goose: 0001_init.sql, 0002_… (в бинарник не входят)
 │   └── assets/cars/         # 5 PNG, вшиты в бинарник; `be seed` заливает их в S3
@@ -99,14 +99,14 @@ car-search/
 
 ## API
 
-Контракт — `be/api/carsearch/v1/carsearch.proto`, **без HTTP-аннотаций**.
+Контракт — `be/api/carsearch/carsearch.proto` (`package carsearch`), **без HTTP-аннотаций**.
 clay генерирует ручки с флагом `generate_unbound_methods`: каждый метод доступен как
 `POST /<package>.<Service>/<Method>` с JSON-телом; бэкенд монтирует их под `/api`.
 
 | Метод | HTTP |
 |---|---|
-| `Search` | `POST /api/carsearch.v1.CarSearchService/Search` |
-| `Get` | `POST /api/carsearch.v1.CarSearchService/Get` |
+| `Search` | `POST /api/carsearch.CarSearchService/Search` |
+| `Get` | `POST /api/carsearch.CarSearchService/Get` |
 | — | `GET /api/swagger.json` — спецификация |
 | — | `GET /api/health` |
 
@@ -116,7 +116,7 @@ clay генерирует ручки с флагом `generate_unbound_methods`:
 
 ```jsonc
 // запрос — все поля необязательны
-{ "plate": "a123bc 777", "offset": 0, "limit": 35 }
+{ "plate": "А123ВС 777", "offset": 0, "limit": 35 }
 
 // ответ
 {
@@ -132,18 +132,37 @@ clay генерирует ручки с флагом `generate_unbound_methods`:
   серией (`А123ВС`) или регионом (`777`). Регистр не важен. `А12` и латиница не находят ничего.
   Пусто — все записи. `plainto_tsquery`, а не `to_tsquery`: последний падает на обычном вводе с пробелом.
 - От новых к старым (`createdAt`). `limit`: 1–100, `0` — по умолчанию 35 (кратно 5 и 7 — колонкам сетки).
+- Элемент `items` — `PlateSighting`, фиксация номера.
+
+### Get
+
+По id любой фиксации — **все фиксации того же номера**, от новых к старым:
+
+```jsonc
+// запрос
+{ "id": 1 }
+
+// ответ
+{ "items": [
+  { "id": 4, "address": "Москва, ул. Тверская, 7",     "plate": "А123ВС 777", "createdAt": "2026-11-05T18:30:00Z", … },
+  { "id": 1, "address": "Москва, Пресненская наб., 10", "plate": "А123ВС 777", "createdAt": "2026-11-02T09:15:00Z", … },
+  { "id": 5, "address": "Москва, Кутузовский пр., 30",  "plate": "А123ВС 777", "createdAt": "2026-10-20T08:00:00Z", … }
+] }
+```
 
 ### Ошибки
 
 ```json
-{ "code": "invalid_argument", "message": "limit: от 1 до 100 (0 — по умолчанию 35)" }
+{ "code": "InvalidArgument", "message": "limit: от 1 до 100 (0 — по умолчанию 35)" }
 ```
 
 | HTTP | `code` | Когда |
 |---|---|---|
-| 400 | `invalid_argument` | неверные параметры, битый JSON |
-| 404 | `not_found` | записи нет |
-| 500 | `internal` | ошибка сервера (детали — только в логах) |
+| 400 | `InvalidArgument` | неверные параметры, битый JSON |
+| 404 | `NotFound` | фиксации нет |
+| 500 | `Internal` | ошибка сервера (детали — только в логах) |
+
+`code` — имя gRPC-кода (`codes.Code.String()`).
 
 ## Генерация кода
 
@@ -170,7 +189,7 @@ clay кладёт отдельный swagger в `<goclay_out>/<swagger_path>/<и
 
 ## Фронтенд
 
-- Поле **Номер**, поиск с задержкой 250 мс; устаревшие запросы отменяются. На карточке — дата и время появления.
+- Поле **Номер**, поиск с задержкой 250 мс; устаревшие запросы отменяются. На карточке — дата и время фиксации.
 - **Бесконечная прокрутка**: страницы по 35 подгружаются, когда низ списка подходит к экрану
   (`IntersectionObserver`). Внизу — кнопка **«Загрузить ещё»** и «Показано N из total»;
   кнопка работает и вручную, а после ошибки превращается в «Повторить».
@@ -189,13 +208,21 @@ clay кладёт отдельный swagger в `<goclay_out>/<swagger_path>/<и
 вручную — `make migrate [CMD=…]`; версии — в таблице `goose_db_version`. Код `be` миграции не знает.
 Применённую миграцию не меняем — добавляем следующую: `make migration NAME=…`.
 
-Таблица `plate_sightings` — появления номеров: `id`, `address`, `plate` (кириллицей, `А123ВС 777`),
-`photo_key` (ключ объекта в S3), `created_at` (`timestamptz`, когда номер появился).
-Индексы: `(created_at DESC, id)` для выдачи и GIN по `to_tsvector('simple', plate)` для поиска —
-запрос `plainto_tsquery('simple', <строка из rpc>)`, расширения Postgres не нужны.
+Таблицы:
+- `plates` — номера: `id uuid` (`gen_random_uuid()`), `plate text UNIQUE` (кириллицей, `А123ВС 777`),
+  `meta jsonb` (по умолчанию `{}`). GIN по `to_tsvector('simple', plate)` — поиск
+  `plainto_tsquery('simple', <строка из rpc>)`, расширения Postgres не нужны.
+- `plate_sightings` — фиксации: `id`, `plate_id uuid → plates(id)`, `address`, `photo_key` (ключ объекта
+  в S3), `created_at` (`timestamptz`). Индексы: `(created_at DESC, id)` для выдачи,
+  `(plate_id, created_at DESC, id)` для `Get`.
 
-Слои бэкенда: `internal/models` — доменная модель `PlateSighting`; `internal/repository` — запросы
-к БД, строка таблицы описана отдельно в `repository_entities.go`; `internal/implementation` —
+Миграции: `0001_init.sql` — `plate_sightings` с номером в колонке; `0002_plates.sql` — вынос номеров
+в `plates` с переносом данных (и обратно в Down).
+
+Слои бэкенда: `internal/models` — доменные модели `Plate`, `PlateSighting`; `internal/repository` —
+запросы к Postgres — plain SQL через `Select` / `Get` / `Exec` (и `SelectSql` / `GetSql` / `ExecSql` для
+построителей с `ToSql()`, как у squirrel) из `executor.go`, сканирование в модели по тегам `db` (scany);
+таблицы и SQL-фрагменты — в `repository_entities.go`; `internal/implementation` —
 RPC, по файлу на метод (`search.go`, `get.go`).
 
 `make seed` (= `goose up` + `be seed`):
@@ -203,8 +230,10 @@ RPC, по файлу на метод (`search.go`, `get.go`).
 2. **заменяет** все записи сгенерированным набором (схема уже создана миграциями).
 
 Генератор детерминированный (фиксированный seed): у всех одинаковые данные. 8 городов,
-корректные буквы и коды регионов, уникальные номера, время появления за последние 180 дней.
-Первые три записи фиксированные — для ручной проверки: `А123ВС 777`, `М456ОР 178`, `Т789УХ 116`.
+корректные буквы и коды регионов; номера берутся из пула (≈ треть от числа записей), поэтому у номера
+обычно несколько фиксаций в разных местах его города; время — за последние 180 дней.
+Первые записи фиксированные — для ручной проверки: `А123ВС 777` (3 фиксации, id 1, 4, 5),
+`М456ОР 178`, `Т789УХ 116` (по одной).
 
 Картинки (седан, хэтчбек, внедорожник, пикап, минивэн; 1280×720) рисует
 `node fe/scripts/gen-car-images.mjs` → `be/assets/cars/`. После перегенерации — `make run-be && make seed`.

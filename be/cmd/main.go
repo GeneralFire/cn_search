@@ -27,10 +27,10 @@ import (
 	"github.com/GeneralFire/cn_search/be/internal/implementation"
 	"github.com/GeneralFire/cn_search/be/internal/repository"
 	"github.com/GeneralFire/cn_search/be/internal/s3"
-	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch/v1"
+	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch"
 )
 
-// apiPrefix — под этим префиксом смонтированы ручки clay: /api/carsearch.v1.CarSearchService/SearchCars.
+// apiPrefix — под этим префиксом смонтированы ручки clay: /api/carsearch.CarSearchService/Search.
 const apiPrefix = "/api"
 
 type config struct {

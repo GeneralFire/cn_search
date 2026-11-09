@@ -1,13 +1,14 @@
-// Package models — доменные модели.
+// Package models — доменные модели. Теги db — имена колонок для сканирования из Postgres.
 package models
 
 import "time"
 
-// PlateSighting — появление номера: где и когда замечена машина.
+// PlateSighting — фиксация номера: где и когда замечена машина (таблица plate_sightings).
 type PlateSighting struct {
-	ID        int
-	PhotoKey  string // ключ объекта в S3-бакете с картинками: "car-3.png"
-	Address   string
-	Plate     string // госномер кириллицей: "А123ВС 777"
-	CreatedAt time.Time
+	ID        int       `db:"id"`
+	PlateID   string    `db:"plate_id"` // uuid номера в plates
+	Plate     string    `db:"plate"`    // госномер кириллицей: "А123ВС 777" (plates.plate, через JOIN)
+	PhotoKey  string    `db:"photo_key"`
+	Address   string    `db:"address"`
+	CreatedAt time.Time `db:"created_at"`
 }

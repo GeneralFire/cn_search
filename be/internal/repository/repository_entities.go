@@ -1,37 +1,18 @@
 package repository
 
-import (
-	"time"
+// Таблицы и SQL-фрагменты (схема — миграции be/migrations).
+// Строки сканируются прямо в модели (models.Plate, models.PlateSighting) по тегам db.
 
-	"github.com/GeneralFire/cn_search/be/internal/models"
+const (
+	platesTable         = "plates"
+	plateSightingsTable = "plate_sightings"
 )
 
-// plateSightingTable — таблица появлений номеров (миграция 0001_init.sql).
-const plateSightingTable = "plate_sightings"
+// plateSightingSelect — колонки фиксации вместе с номером; совпадают с тегами db models.PlateSighting.
+const plateSightingSelect = `s.id, s.plate_id, p.plate, s.address, s.photo_key, s.created_at`
 
-// plateSightingColumns — порядок колонок для SELECT и COPY.
-var plateSightingColumns = []string{"id", "address", "plate", "photo_key", "created_at"}
+// plateSightingFrom — фиксации с JOIN номера.
+const plateSightingFrom = plateSightingsTable + ` s JOIN ` + platesTable + ` p ON p.id = s.plate_id`
 
-// plateSightingEntity — строка таблицы plate_sightings.
-type plateSightingEntity struct {
-	ID        int32     `db:"id"`
-	Address   string    `db:"address"`
-	Plate     string    `db:"plate"`
-	PhotoKey  string    `db:"photo_key"`
-	CreatedAt time.Time `db:"created_at"`
-}
-
-func (e plateSightingEntity) toModel() models.PlateSighting {
-	return models.PlateSighting{
-		ID:        int(e.ID),
-		Address:   e.Address,
-		Plate:     e.Plate,
-		PhotoKey:  e.PhotoKey,
-		CreatedAt: e.CreatedAt,
-	}
-}
-
-// values — значения в порядке plateSightingColumns (для COPY).
-func plateSightingValues(m models.PlateSighting) []any {
-	return []any{int32(m.ID), m.Address, m.Plate, m.PhotoKey, m.CreatedAt}
-}
+// plateSightingCopyColumns — колонки plate_sightings для COPY.
+var plateSightingCopyColumns = []string{"id", "plate_id", "address", "photo_key", "created_at"}

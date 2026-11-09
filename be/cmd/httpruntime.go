@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strings"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/utrack/clay/v3/transport/httpruntime"
@@ -31,7 +30,7 @@ func configureHTTPRuntime() {
 }
 
 type apiError struct {
-	Code    string `json:"code"`    // машиночитаемый: "invalid_argument", "not_found", …
+	Code    string `json:"code"`    // имя gRPC-кода: "InvalidArgument", "NotFound", …
 	Message string `json:"message"` // для пользователя
 }
 
@@ -49,20 +48,5 @@ func writeAPIError(_ context.Context, _ *http.Request, w http.ResponseWriter, er
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(runtime.HTTPStatusFromCode(st.Code()))
-	_ = json.NewEncoder(w).Encode(apiError{Code: snakeCode(st.Code()), Message: msg})
-}
-
-// snakeCode: codes.InvalidArgument → "invalid_argument".
-func snakeCode(c codes.Code) string {
-	var b strings.Builder
-	for i, r := range c.String() {
-		if r >= 'A' && r <= 'Z' {
-			if i > 0 {
-				b.WriteByte('_')
-			}
-			r += 'a' - 'A'
-		}
-		b.WriteRune(r)
-	}
-	return b.String()
+	_ = json.NewEncoder(w).Encode(apiError{Code: st.Code().String(), Message: msg})
 }
