@@ -69,7 +69,7 @@ function pageHtml(items: Car[], currentId: string): string {
 
   return `
     <section class="pp-hero">
-      ${plateHtml(latest.plate, "xl")}
+      ${plateHtml(latest, "xl")}
       <div class="pp-hero__meta">
         <span class="pp-chip">${icon.pin}${escapeHtml(cities.join(", "))}</span>
         <span class="pp-chip">${icon.clock}Последний раз ${escapeHtml(formatAgo(latest.createdAt))}</span>

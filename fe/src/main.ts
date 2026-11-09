@@ -87,7 +87,7 @@ function cardHtml(c: Car, i: number): string {
       <a class="card__photo" href="${plateHref(c.id)}" data-link tabindex="-1">${photo}<span class="card__badge">${escapeHtml(city)}</span></a>
       <div class="card__body">
         <p class="card__address">${icon.pin}${escapeHtml(c.address)}</p>
-        <div class="card__row">${plateHtml(c.plate)}</div>
+        <div class="card__row">${plateHtml(c)}</div>
         <div class="card__foot">
           <span class="card__date">${icon.cal}<time datetime="${escapeHtml(c.createdAt)}">${formatDate(c.createdAt)}</time></span>
           <button class="btn btn--ghost" type="button" data-clarify="${escapeHtml(c.id)}">Уточнить</button>
@@ -208,7 +208,7 @@ observer.observe($more);
 function openClarify(car: Car): void {
   $modalBody.innerHTML = `
     <div class="modal__car">
-      ${plateHtml(car.plate)}
+      ${plateHtml(car)}
       <div>
         <div class="modal__date">${escapeHtml(formatDate(car.createdAt))}</div>
         <div class="modal__addr">${escapeHtml(car.address)}</div>

@@ -22,9 +22,34 @@ const dateFmt = new Intl.DateTimeFormat("ru-RU", {
 });
 export const formatDate = (iso: string) => (iso ? dateFmt.format(new Date(iso)) : "");
 
-export function plateHtml(plate: string, size: "" | "xl" = ""): string {
-  const [num = "", reg = ""] = plate.split(" ");
-  return `<span class="plate${size ? ` plate--${size}` : ""}" aria-label="Госномер ${escapeHtml(plate)}"><span class="plate__num">${escapeHtml(num)}</span><span class="plate__reg">${escapeHtml(reg)}<span class="plate__rus">RUS<i class="plate__flag"></i></span></span></span>`;
+/** Что нужно, чтобы нарисовать номер. type: "ru" | "eu" | "us" | "" (неизвестен). */
+export interface PlateLike {
+  plate: string;
+  plateType?: string;
+  plateRegion?: string;
+}
+
+const US_STATES: Record<string, string> = {
+  CA: "California", NY: "New York", TX: "Texas", FL: "Florida", WA: "Washington", IL: "Illinois", NV: "Nevada",
+};
+
+/** Номерной знак в формате его страны: RU, EU (синяя полоса со звёздами), US (штат сверху), иначе — нейтральный. */
+export function plateHtml(c: PlateLike | string, size: "" | "xl" = ""): string {
+  const { plate, plateType = "ru", plateRegion = "" } = typeof c === "string" ? { plate: c } : c;
+  const label = `aria-label="Госномер ${escapeHtml(plate)}"`;
+  const xl = size ? ` plate--${size}` : "";
+  switch (plateType) {
+    case "ru": {
+      const [num = "", reg = ""] = plate.split(" ");
+      if (!reg) break; // не похоже на RU — рисуем нейтрально
+      return `<span class="plate${xl}" ${label}><span class="plate__num">${escapeHtml(num)}</span><span class="plate__reg">${escapeHtml(reg)}<span class="plate__rus">RUS<i class="plate__flag"></i></span></span></span>`;
+    }
+    case "eu":
+      return `<span class="plate-eu${xl}" ${label}><span class="plate-eu__band"><i class="plate-eu__stars"></i>${escapeHtml(plateRegion)}</span><span class="plate-eu__num">${escapeHtml(plate)}</span></span>`;
+    case "us":
+      return `<span class="plate-us${xl}" ${label}><span class="plate-us__state">${escapeHtml(US_STATES[plateRegion] ?? plateRegion)}</span><span class="plate-us__num">${escapeHtml(plate)}</span></span>`;
+  }
+  return `<span class="plate-any${xl}" ${label}>${escapeHtml(plate)}</span>`;
 }
 
 const dayMonthFmt = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" });

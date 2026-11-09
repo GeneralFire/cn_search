@@ -18,9 +18,13 @@ export function onRoute(fn: (r: Route) => void): void {
   fn(parseRoute());
 }
 
+/** Переход без перезагрузки. Со страницы номера на другую страницу номера (другая фиксация в ленте,
+ *  номер из поиска в шапке, «свежие фиксации») — замена записи истории: «Назад» ведёт туда, откуда
+ *  открыли первую страницу номера (обычно на главную), а не листает просмотренные фиксации. */
 export function navigate(path: string): void {
   if (path === location.pathname) return;
-  history.pushState({ fromApp: true }, "", path);
+  const replace = parseRoute().name === "plate" && parseRoute(path).name === "plate";
+  history[replace ? "replaceState" : "pushState"]({ fromApp: true }, "", path);
   listener(parseRoute());
 }
 

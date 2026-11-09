@@ -58,7 +58,7 @@ export function mountQuickSearch(root: HTMLElement, h: QuickSearchHandlers): voi
   function itemHtml(c: Car, i: number): string {
     return `
       <li class="qs__item" role="option" id="qs-opt-${i}" data-id="${escapeHtml(c.id)}" aria-selected="false">
-        ${plateHtml(c.plate)}
+        ${plateHtml(c)}
         ${c.thumbUrl ? `<img class="qs__thumb" src="${escapeHtml(c.thumbUrl)}" alt="" loading="lazy" />` : ""}
         <span class="qs__meta">
           <span class="qs__addr">${escapeHtml(c.address)}</span>

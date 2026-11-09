@@ -1,6 +1,7 @@
 // Обёртка над сгенерированным клиентом (generated.ts — не править руками, см. `make gen-ts`).
 import {
   CarSearchApi,
+  CarsearchPlateType,
   type CarsearchGetResponse,
   type CarsearchPlateSighting,
   type CarsearchSearchRequest,
@@ -9,7 +10,16 @@ import {
 
 /** Фиксация номера: где и когда замечена машина. createdAt — ISO 8601 (RFC 3339). */
 export type Car = Required<Pick<CarsearchPlateSighting, "id" | "plate" | "address" | "createdAt">> &
-  Pick<CarsearchPlateSighting, "photoUrl" | "thumbUrl">;
+  Pick<CarsearchPlateSighting, "photoUrl" | "thumbUrl" | "addressLocale" | "plateRegion"> & {
+    /** Формат номера: "ru" | "eu" | "us" | "" (неизвестен). */
+    plateType: string;
+  };
+
+const plateTypes: Record<string, string> = {
+  [CarsearchPlateType.PLATE_TYPE_RU]: "ru",
+  [CarsearchPlateType.PLATE_TYPE_EU]: "eu",
+  [CarsearchPlateType.PLATE_TYPE_US]: "us",
+};
 
 export interface CarsPage {
   items: Car[];
@@ -38,6 +48,9 @@ function toCar(c: CarsearchPlateSighting): Car {
     createdAt: c.createdAt ?? "",
     photoUrl: c.photoUrl,
     thumbUrl: c.thumbUrl,
+    addressLocale: c.addressLocale,
+    plateType: plateTypes[c.plateType ?? ""] ?? "",
+    plateRegion: c.plateRegion,
   };
 }
 
