@@ -1,6 +1,7 @@
 // Страница номера: все фиксации номера — где и когда его видели.
 import { ApiError, plateSightings, type Car } from "./api";
 import { mountQuickSearch, type QuickSearchHandlers } from "./quicksearch";
+import { plateHref } from "./router";
 import { escapeHtml, formatAgo, formatDate, formatShortDate, formatTime, icon, logoHtml, photoAttrs, plateHtml, plural } from "./ui";
 
 let ctrl: AbortController | null = null;
@@ -33,14 +34,17 @@ export async function renderPlatePage(root: HTMLElement, id: string, handlers: Q
       <div class="skeleton skeleton--photo"></div>
       <div class="skeleton skeleton--photo"></div>
     </div>`;
-  document.title = "Номер — Поиск по авто";
+  document.title = "Номер — Поиск по номеру";
   window.scrollTo({ top: 0 });
 
   try {
     const items = await plateSightings(id, my.signal);
     if (my.signal.aborted) return;
     $main.innerHTML = pageHtml(items, id);
-    document.title = `${items[0].plate} — Поиск по авто`;
+    $main.querySelector<HTMLButtonElement>("[data-zoom]")?.addEventListener("click", (e) =>
+      openLightbox((e.currentTarget as HTMLElement).dataset.zoom!)
+    );
+    document.title = `${items[0].plate} — Поиск по номеру`;
   } catch (e) {
     if (my.signal.aborted) return;
     const notFound = e instanceof ApiError && e.status === 404;
@@ -55,6 +59,8 @@ export async function renderPlatePage(root: HTMLElement, id: string, handlers: Q
 function pageHtml(items: Car[], currentId: string): string {
   const latest = items[0];
   const first = items[items.length - 1];
+  // Большое фото — открытая фиксация (по ней перешли из выдачи или ленты), иначе последняя.
+  const shown = items.find((c) => c.id === currentId) ?? latest;
   const cities = [...new Set(items.map((c) => city(c.address)))];
   const places = new Set(items.map((c) => c.address)).size;
 
@@ -78,11 +84,17 @@ function pageHtml(items: Car[], currentId: string): string {
 
     <div class="pp-grid">
       <figure class="pp-photo">
-        ${latest.photoUrl ? `<img src="${escapeHtml(latest.photoUrl)}" alt="Последняя фиксация" />` : icon.car}
+        ${
+          shown.photoUrl
+            ? `<button class="pp-photo__zoom" type="button" data-zoom="${escapeHtml(shown.photoUrl)}" aria-label="Увеличить фото">
+                 <img src="${escapeHtml(shown.photoUrl)}" alt="Фото фиксации" />
+               </button>`
+            : icon.car
+        }
         <figcaption>
-          <span class="pp-photo__tag">Последняя фиксация</span>
-          <span>${escapeHtml(latest.address)}</span>
-          <time datetime="${escapeHtml(latest.createdAt)}">${escapeHtml(formatDate(latest.createdAt))}</time>
+          <span class="pp-photo__tag">${shown === latest ? "Последняя фиксация" : "Фиксация"}</span>
+          <span>${escapeHtml(shown.address)}</span>
+          <time datetime="${escapeHtml(shown.createdAt)}">${escapeHtml(formatDate(shown.createdAt))}</time>
         </figcaption>
       </figure>
 
@@ -100,14 +112,33 @@ function timelineItem(c: Car, current: boolean): string {
   const thumb = src ? `<img src="${escapeHtml(src)}" alt="" loading="lazy" />` : icon.car;
   return `
     <li class="tl__item${current ? " is-current" : ""}">
-      <div class="tl__thumb"${full ? ` data-full="${escapeHtml(full)}"` : ""}>${thumb}</div>
+      <a class="tl__link" href="${plateHref(c.id)}" data-link${current ? ` aria-current="page"` : ""}
+         aria-label="Фиксация ${escapeHtml(formatShortDate(c.createdAt))}: ${escapeHtml(c.address)}"></a>
+      <a class="tl__thumb" href="${plateHref(c.id)}" data-link tabindex="-1"${full ? ` data-full="${escapeHtml(full)}"` : ""}>${thumb}</a>
       <div class="tl__body">
         <div class="tl__when">
           <time datetime="${escapeHtml(c.createdAt)}">${escapeHtml(formatShortDate(c.createdAt))}, ${escapeHtml(formatTime(c.createdAt))}</time>
           <span class="tl__ago">${escapeHtml(formatAgo(c.createdAt))}</span>
         </div>
         <div class="tl__where">${icon.pin}${escapeHtml(c.address)}</div>
-        ${current ? `<span class="tl__badge">Вы открыли эту фиксацию</span>` : ""}
+        ${current ? `<span class="tl__badge">Показана слева</span>` : ""}
       </div>
     </li>`;
+}
+
+// Лайтбокс: фото на весь экран; закрывается кликом, Esc или кнопкой.
+let $lightbox: HTMLDialogElement | null = null;
+
+function openLightbox(src: string): void {
+  if (!$lightbox) {
+    $lightbox = document.createElement("dialog");
+    $lightbox.className = "lightbox";
+    $lightbox.innerHTML = `
+      <img class="lightbox__img" alt="Фото фиксации" />
+      <button class="lightbox__x" type="button" aria-label="Закрыть">${icon.clear}</button>`;
+    $lightbox.addEventListener("click", () => $lightbox!.close());
+    document.body.append($lightbox);
+  }
+  $lightbox.querySelector<HTMLImageElement>(".lightbox__img")!.src = src;
+  $lightbox.showModal();
 }

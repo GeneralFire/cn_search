@@ -64,9 +64,9 @@ export function photoAttrs(c: { photoUrl?: string; thumbUrl?: string }): { src: 
   return { src: c.thumbUrl || c.photoUrl || "", full: c.photoUrl || "" };
 }
 
-/** Логотип — квадратный «мотоциклетный» номер: ПОИСК / АВТО + RUS. */
+/** Логотип — квадратный «мотоциклетный» номер: ПОИСК / НОМЕР + флаг. */
 export const logoHtml = `
   <span class="logo" aria-hidden="true">
     <span class="logo__top">ПОИСК</span>
-    <span class="logo__bottom">АВТО<span class="logo__rus">RUS<i class="plate__flag"></i></span></span>
+    <span class="logo__bottom">НОМЕР<i class="plate__flag"></i></span>
   </span>`;

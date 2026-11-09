@@ -2,7 +2,7 @@ import "./style.css";
 import { ApiError, search, type Car } from "./api";
 import { navigate, onRoute, plateHref } from "./router";
 import { renderPlatePage } from "./plate";
-import { escapeHtml, formatDate, icon, photoAttrs, plateHtml, plural } from "./ui";
+import { escapeHtml, formatDate, icon, logoHtml, photoAttrs, plateHtml, plural } from "./ui";
 import { initHoverPreview } from "./hoverpreview";
 
 const PAGE_SIZE = 35; // кратно 5 и 7 — по числу колонок сетки
@@ -30,7 +30,7 @@ app.innerHTML = `
   <div class="view" id="view-search">
   <header class="hero">
     <div class="hero__inner">
-      <h1>Поиск по авто</h1>
+      <h1 class="hero__title">${logoHtml}<span>Поиск по номеру</span></h1>
       <p>Введите госномер или его начало: «У54», «А123ВС 777», регион «77»</p>
       <form class="searchbar" role="search" onsubmit="return false">
         ${field("q-plate", "Номер", icon.plate, "А123ВС 777")}
@@ -79,12 +79,12 @@ const $modalBody = app.querySelector<HTMLElement>(".modal__body")!;
 
 function cardHtml(c: Car, i: number): string {
   const city = c.address.split(",")[0] ?? "";
-  const { src, full } = photoAttrs(c);
+  const { src } = photoAttrs(c); // на главной — только миниатюра, без превью по наведению
   const photo = src ? `<img src="${escapeHtml(src)}" alt="" loading="lazy" />` : icon.car;
   return `
     <article class="card" style="animation-delay:${Math.min(i, 14) * 30}ms">
       <a class="card__link" href="${plateHref(c.id)}" data-link aria-label="${escapeHtml(c.plate)}: все фиксации"></a>
-      <a class="card__photo" href="${plateHref(c.id)}" data-link tabindex="-1"${full ? ` data-full="${escapeHtml(full)}"` : ""}>${photo}<span class="card__badge">${escapeHtml(city)}</span></a>
+      <a class="card__photo" href="${plateHref(c.id)}" data-link tabindex="-1">${photo}<span class="card__badge">${escapeHtml(city)}</span></a>
       <div class="card__body">
         <p class="card__address">${icon.pin}${escapeHtml(c.address)}</p>
         <div class="card__row">${plateHtml(c.plate)}</div>
@@ -291,7 +291,7 @@ onRoute((route) => {
   $viewPlate.hidden = true;
   $viewPlate.querySelector(".pp")?.replaceChildren(); // шапку с поиском оставляем
   $viewSearch.hidden = false;
-  document.title = "Поиск по авто";
+  document.title = "Поиск по номеру";
   if (!searchStarted) {
     searchStarted = true;
     newSearch();
