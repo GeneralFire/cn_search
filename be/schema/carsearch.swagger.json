@@ -1,0 +1,159 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "carsearch/v1/carsearch.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "CarSearchService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/carsearch.v1.CarSearchService/Get": {
+      "post": {
+        "summary": "Get возвращает появление номера по идентификатору.",
+        "operationId": "CarSearchService_Get",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1GetRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.v1.CarSearchService/Search": {
+      "post": {
+        "summary": "Search ищет появления номеров. Результаты — от новых к старым, постранично.",
+        "operationId": "CarSearchService_Search",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SearchResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1SearchRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "v1Car": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "photoUrl": {
+          "type": "string",
+          "description": "URL картинки (S3)."
+        },
+        "address": {
+          "type": "string"
+        },
+        "plate": {
+          "type": "string",
+          "description": "Госномер кириллицей: \"А123ВС 777\"."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Когда номер появился."
+        }
+      },
+      "description": "Car — появление номера: где и когда замечена машина."
+    },
+    "v1GetRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1GetResponse": {
+      "type": "object",
+      "properties": {
+        "car": {
+          "$ref": "#/definitions/v1Car"
+        }
+      }
+    },
+    "v1SearchRequest": {
+      "type": "object",
+      "properties": {
+        "plate": {
+          "type": "string",
+          "description": "Поисковая строка, как есть передаётся в plainto_tsquery('simple', plate) и сопоставляется\nс to_tsvector('simple', plate): каждое слово должно совпасть со словом номера —\nсерией \"А123ВС\" или регионом \"777\". Пусто — все записи."
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Сколько записей пропустить (для бесконечной прокрутки)."
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Размер страницы, 1..100; 0 — по умолчанию (35)."
+        }
+      }
+    },
+    "v1SearchResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Car"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Всего найдено по запросу."
+        },
+        "nextOffset": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Смещение следующей страницы; не задано — дальше ничего нет."
+        }
+      }
+    }
+  }
+}

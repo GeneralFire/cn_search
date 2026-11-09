@@ -1,0 +1,63 @@
+package implementation
+
+import (
+	"context"
+	"unicode/utf8"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"github.com/GeneralFire/cn_search/be/internal/repository"
+	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch/v1"
+)
+
+const (
+	DefaultLimit   = 35 // кратно 5 и 7 — по числу колонок сетки на фронте
+	MaxLimit       = 100
+	maxQueryLength = 32
+)
+
+// Search — rpc Search: появления номеров по частям номера, постранично.
+func (s *CarSearch) Search(ctx context.Context, req *pb.SearchRequest) (*pb.SearchResponse, error) {
+	if err := validateSearch(req); err != nil {
+		return nil, err
+	}
+	limit := int(req.GetLimit())
+	if limit == 0 {
+		limit = DefaultLimit
+	}
+
+	page, err := s.repo.Search(ctx, repository.Query{
+		Plate:  req.GetPlate(),
+		Offset: int(req.GetOffset()),
+		Limit:  limit,
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, "не удалось выполнить поиск")
+	}
+
+	resp := &pb.SearchResponse{
+		Items: make([]*pb.Car, len(page.Items)),
+		Total: int32(page.Total),
+	}
+	for i, c := range page.Items {
+		resp.Items[i] = s.toPB(c)
+	}
+	if page.NextOffset != nil {
+		next := int32(*page.NextOffset)
+		resp.NextOffset = &next
+	}
+	return resp, nil
+}
+
+func validateSearch(req *pb.SearchRequest) error {
+	switch {
+	case utf8.RuneCountInString(req.GetPlate()) > maxQueryLength:
+		return status.Errorf(codes.InvalidArgument, "plate: не длиннее %d символов", maxQueryLength)
+	case req.GetOffset() < 0:
+		return status.Error(codes.InvalidArgument, "offset: не может быть отрицательным")
+	case req.GetLimit() < 0 || req.GetLimit() > MaxLimit:
+		return status.Errorf(codes.InvalidArgument, "limit: от 1 до %d (0 — по умолчанию %d)", MaxLimit, DefaultLimit)
+	}
+	return nil
+}
