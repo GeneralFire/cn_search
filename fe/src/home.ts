@@ -20,6 +20,12 @@ export const TABS: { market: Market; code: string; flag: string }[] = [
 /** Рынок языка интерфейса — блок «для вас» и вкладка по умолчанию. */
 export const homeMarket = (): Market => LANG_MARKET[getLang()];
 
+/** Вкладки ленты без рынка языка интерфейса — его номера уже в блоке «для вас» выше. */
+export const visibleTabs = () => TABS.filter((x) => x.market !== homeMarket());
+
+/** Вкладка по умолчанию — первая из видимых. */
+export const defaultTab = (): Market => visibleTabs()[0].market;
+
 export const marketName = (m: Market): string => t(`homeTabs.market.${m}` as Key);
 
 export function flagHtml(m: Market): string {
@@ -31,21 +37,21 @@ const isMarket = (v: string | null): v is Market => TABS.some((x) => x.market ==
 /** Вкладка из адреса; нет или чужая — рынок языка. */
 export function tabFromUrl(): Market {
   const v = new URLSearchParams(location.search).get("tab");
-  return isMarket(v) ? v : homeMarket();
+  return isMarket(v) && v !== homeMarket() ? v : defaultTab();
 }
 
 /** Записать вкладку в адрес (вкладка по умолчанию — без параметра), не добавляя запись в историю. */
 export function setTabInUrl(m: Market): void {
   if (location.pathname !== "/") return; // только на главной
   const url = new URL(location.href);
-  if (m === homeMarket()) url.searchParams.delete("tab");
+  if (m === defaultTab()) url.searchParams.delete("tab");
   else url.searchParams.set("tab", m);
   if (url.href !== location.href) history.replaceState(history.state, "", url);
 }
 
 /** Ряд вкладок (role="tablist"); активная — aria-selected. Панель — лента под вкладками (panelId). */
 export function tabsHtml(active: Market, panelId: string): string {
-  return TABS.map(({ market, code }) => {
+  return visibleTabs().map(({ market, code }) => {
     const on = market === active;
     const name = marketName(market);
     const title = market === "other" ? t("homeTabs.otherHint") : name;

@@ -153,3 +153,15 @@ export function cardHtml(
       </div>
     </article>`;
 }
+
+/** Номера не обрезаются: если знак шире контейнера (длинные UA/EU-номера в мини-карточках),
+ *  он уменьшается целиком (CSS zoom), а не режется. Вызывать после вставки разметки. */
+export function fitPlates(root: ParentNode, boxSelector = ".mini__plate"): void {
+  root.querySelectorAll<HTMLElement>(boxSelector).forEach((box) => {
+    const plate = box.firstElementChild as HTMLElement | null;
+    if (!plate) return;
+    plate.style.zoom = "";
+    const k = box.clientWidth / plate.scrollWidth;
+    if (k < 1) plate.style.zoom = String(Math.max(0.5, k - 0.02));
+  });
+}

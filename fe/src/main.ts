@@ -9,7 +9,7 @@ import { SWITCH_FLAG, t, tp } from "./i18n/i18n";
 import { mountSettings } from "./settings";
 import { initHoverPreview } from "./hoverpreview";
 import {
-  flagHtml, gridColumns, homeMarket, marketName, setTabInUrl, tabFromUrl, tabsHtml, TABS, type Market,
+  flagHtml, gridColumns, homeMarket, marketName, setTabInUrl, tabFromUrl, tabsHtml, visibleTabs, type Market,
 } from "./home";
 
 const PAGE_SIZE = 35; // кратно 5 и 7 — по числу колонок сетки
@@ -274,11 +274,12 @@ $tabs.addEventListener("click", (e) => {
 });
 // Стрелки, Home/End — по вкладкам (шаблон WAI-ARIA tabs).
 $tabs.addEventListener("keydown", (e) => {
-  const i = TABS.findIndex((x) => x.market === state.tab);
-  const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: TABS.length - 1 }[e.key];
+  const tabs = visibleTabs();
+  const i = tabs.findIndex((x) => x.market === state.tab);
+  const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
   if (next === undefined) return;
   e.preventDefault();
-  selectTab(TABS[(next + TABS.length) % TABS.length].market, true);
+  selectTab(tabs[(next + tabs.length) % tabs.length].market, true);
 });
 renderTabs();
 

@@ -142,25 +142,35 @@ INSERT INTO plates (plate, meta, is_test_data) VALUES
   ('AB-123-CD',  '{"type": "eu", "region": "F", "city": "Paris"}', true),
   ('WA 12345',   '{"type": "eu", "region": "PL", "city": "Warszawa"}', true);
 
-INSERT INTO plate_sightings (plate_id, address, address_locale, photo_key, photo_thumb_key, created_at, is_test_data)
+INSERT INTO plate_sightings (plate_id, address, address_locale, photo_key, photo_thumb_key, created_at, lat, lon, is_test_data)
 SELECT p.id, v.address, v.locale,
-       'car-' || v.photo || '.jpg', 'car-' || v.photo || '_thumb.jpg', v.created_at, true
+       'car-' || v.photo || '.jpg', 'car-' || v.photo || '_thumb.jpg', v.created_at, v.lat, v.lon, true
 FROM (VALUES
-  ('АА 1234 ВС', 'Київ, вул. Хрещатик, 22',          'uk', 3, timestamptz '2026-11-09 10:20:00Z'),
-  ('АА 1234 ВС', 'Київ, Майдан Незалежності, 1',     'uk', 3, timestamptz '2026-11-04 15:05:00Z'),
-  ('КА 7781 АМ', 'Київ, просп. Перемоги, 37',        'uk', 6, timestamptz '2026-11-07 08:40:00Z'),
-  ('ВС 4502 ІК', 'Львів, пл. Ринок, 1',              'uk', 2, timestamptz '2026-11-08 17:30:00Z'),
-  ('ВС 4502 ІК', 'Львів, просп. Свободи, 28',        'uk', 2, timestamptz '2026-10-31 12:10:00Z'),
-  ('ВН 3388 ЕК', 'Одеса, вул. Дерибасівська, 10',    'uk', 9, timestamptz '2026-11-05 19:45:00Z'),
-  ('АХ 9061 НІ', 'Харків, вул. Сумська, 46',         'uk', 5, timestamptz '2026-11-02 07:15:00Z'),
-  ('京A·12345',  '北京, 东城区东长安街1号',           'zh', 4, timestamptz '2026-11-09 03:30:00Z'),
-  ('京A·12345',  '北京, 朝阳区建国路87号',            'zh', 4, timestamptz '2026-11-01 09:00:00Z'),
-  ('沪B·67890',  '上海, 黄浦区南京东路100号',         'zh', 7, timestamptz '2026-11-06 11:50:00Z'),
-  ('粤B·D1234',  '深圳, 福田区深南大道6008号',        'zh', 1, timestamptz '2026-11-03 06:25:00Z'),
-  ('AB-123-CD',  'Paris, 8 Rue de Rivoli',           'fr', 10, timestamptz '2026-11-06 16:00:00Z'),
-  ('WA 12345',   'Warszawa, ul. Marszałkowska 104',  'pl', 8, timestamptz '2026-10-28 13:35:00Z')
-) AS v (plate, address, locale, photo, created_at)
+  ('АА 1234 ВС', 'Київ, вул. Хрещатик, 22',          'uk', 3, timestamptz '2026-11-09 10:20:00Z', 50.4474, 30.5219),
+  ('АА 1234 ВС', 'Київ, Майдан Незалежності, 1',     'uk', 3, timestamptz '2026-11-04 15:05:00Z', 50.4501, 30.5234),
+  ('КА 7781 АМ', 'Київ, просп. Перемоги, 37',        'uk', 6, timestamptz '2026-11-07 08:40:00Z', 50.4489, 30.4569),
+  ('ВС 4502 ІК', 'Львів, пл. Ринок, 1',              'uk', 2, timestamptz '2026-11-08 17:30:00Z', 49.8419, 24.0316),
+  ('ВС 4502 ІК', 'Львів, просп. Свободи, 28',        'uk', 2, timestamptz '2026-10-31 12:10:00Z', 49.8429, 24.0293),
+  ('ВН 3388 ЕК', 'Одеса, вул. Дерибасівська, 10',    'uk', 9, timestamptz '2026-11-05 19:45:00Z', 46.4846, 30.7385),
+  ('АХ 9061 НІ', 'Харків, вул. Сумська, 46',         'uk', 5, timestamptz '2026-11-02 07:15:00Z', 50.0035, 36.231),
+  ('京A·12345',  '北京, 东城区东长安街1号',           'zh', 4, timestamptz '2026-11-09 03:30:00Z', 39.9085, 116.4108),
+  ('京A·12345',  '北京, 朝阳区建国路87号',            'zh', 4, timestamptz '2026-11-01 09:00:00Z', 39.9087, 116.474),
+  ('沪B·67890',  '上海, 黄浦区南京东路100号',         'zh', 7, timestamptz '2026-11-06 11:50:00Z', 31.24, 121.488),
+  ('粤B·D1234',  '深圳, 福田区深南大道6008号',        'zh', 1, timestamptz '2026-11-03 06:25:00Z', 22.542, 114.057),
+  ('AB-123-CD',  'Paris, 8 Rue de Rivoli',           'fr', 10, timestamptz '2026-11-06 16:00:00Z', 48.8559, 2.3593),
+  ('WA 12345',   'Warszawa, ul. Marszałkowska 104',  'pl', 8, timestamptz '2026-10-28 13:35:00Z', 52.2319, 21.0103)
+) AS v (plate, address, locale, photo, created_at, lat, lon)
 JOIN plates p ON p.plate = v.plate;
+
+-- Страховка: у каждой тестовой фиксации должны быть координаты — иначе на странице номера нет карты.
+-- +goose StatementBegin
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM plate_sightings WHERE is_test_data AND lat IS NULL) THEN
+    RAISE EXCEPTION 'тестовые фиксации без координат: добавьте lat/lon в 0002_test_data.sql';
+  END IF;
+END $$;
+-- +goose StatementEnd
 
 -- Уточнения: к фиксации Т789УХ 116 предложили Т789УХ 716 (принято), к М456ОР 178 — М456ОР 198 (не принято).
 INSERT INTO clarifications (sighting_id, plate, status, created_at, is_test_data) VALUES

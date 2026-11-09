@@ -2,7 +2,7 @@
 import { ApiError, plateSightings, seeAlso, type Car } from "./api";
 import { mountQuickSearch, type QuickSearchHandlers } from "./quicksearch";
 import { plateHref } from "./router";
-import { escapeHtml, formatAgo, formatDate, formatShortDate, formatTime, icon, miniCardHtml, miniSkeletonHtml, photoAttrs, plateHtml } from "./ui";
+import { escapeHtml, fitPlates, formatAgo, formatDate, formatShortDate, formatTime, icon, miniCardHtml, miniSkeletonHtml, photoAttrs, plateHtml } from "./ui";
 import { t, tp } from "./i18n/i18n";
 import { mountSettings } from "./settings";
 import { openLightbox } from "./lightbox";
@@ -164,6 +164,7 @@ async function loadSeeAlso($main: HTMLElement, id: string, signal: AbortSignal):
     $grid.innerHTML = items.length
       ? items.map((c, i) => miniCardHtml(c, i)).join("")
       : `<p class="pp-more__note">${t("seeAlso.none")}</p>`;
+    fitPlates($grid);
   } catch {
     if (signal.aborted) return;
     $grid.innerHTML = `
