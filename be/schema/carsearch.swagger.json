@@ -16,6 +16,33 @@
     "application/json"
   ],
   "paths": {
+    "/carsearch.CarSearchService/Clarify": {
+      "post": {
+        "summary": "Clarify — уточнение номера к фиксации («на самом деле номер такой»). Создаётся со статусом «не принят».",
+        "operationId": "CarSearchService_Clarify",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchClarifyResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchClarifyRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
     "/carsearch.CarSearchService/Get": {
       "post": {
         "summary": "Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.",
@@ -45,7 +72,7 @@
     },
     "/carsearch.CarSearchService/Search": {
       "post": {
-        "summary": "Search ищет фиксации номеров. Результаты — от новых к старым, постранично.",
+        "summary": "Search ищет номера: по самому номеру и по уточнениям (clarifications) к его фиксациям.\nОдин номер — одна строка (последняя подходящая фиксация). От новых к старым, постранично.",
         "operationId": "CarSearchService_Search",
         "responses": {
           "200": {
@@ -69,9 +96,91 @@
           "CarSearchService"
         ]
       }
+    },
+    "/carsearch.CarSearchService/SeeAlso": {
+      "post": {
+        "summary": "SeeAlso — свежие фиксации других номеров (блок внизу страницы номера): один номер — одна\nкарточка, номер открытой фиксации исключён. Не более 21.",
+        "operationId": "CarSearchService_SeeAlso",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchSeeAlsoResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchSeeAlsoRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
     }
   },
   "definitions": {
+    "carsearchClarification": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "sightingId": {
+          "type": "string",
+          "description": "uuid фиксации, к которой уточнение."
+        },
+        "plate": {
+          "type": "string",
+          "description": "Предложенный номер, как ввели."
+        },
+        "status": {
+          "$ref": "#/definitions/carsearchClarificationStatus"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "Clarification — уточнение номера к фиксации."
+    },
+    "carsearchClarificationStatus": {
+      "type": "string",
+      "enum": [
+        "CLARIFICATION_STATUS_UNSPECIFIED",
+        "CLARIFICATION_STATUS_NOT_ACCEPTED",
+        "CLARIFICATION_STATUS_ACCEPTED"
+      ],
+      "default": "CLARIFICATION_STATUS_UNSPECIFIED",
+      "description": "Статус уточнения."
+    },
+    "carsearchClarifyRequest": {
+      "type": "object",
+      "properties": {
+        "sightingId": {
+          "type": "string",
+          "description": "uuid фиксации."
+        },
+        "plate": {
+          "type": "string",
+          "description": "Номер, 1..32 символа."
+        }
+      }
+    },
+    "carsearchClarifyResponse": {
+      "type": "object",
+      "properties": {
+        "clarification": {
+          "$ref": "#/definitions/carsearchClarification"
+        }
+      }
+    },
     "carsearchGetRequest": {
       "type": "object",
       "properties": {
@@ -154,12 +263,37 @@
         "total": {
           "type": "integer",
           "format": "int32",
-          "description": "Всего найдено по запросу."
+          "description": "Всего найдено номеров по запросу."
         },
         "nextOffset": {
           "type": "integer",
           "format": "int32",
           "description": "Смещение следующей страницы; не задано — дальше ничего нет."
+        }
+      }
+    },
+    "carsearchSeeAlsoRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "uuid открытой фиксации: её номер в выдачу не попадает. Пусто — без исключения."
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Сколько карточек, 1..21; 0 — 21."
+        }
+      }
+    },
+    "carsearchSeeAlsoResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchPlateSighting"
+          }
         }
       }
     }

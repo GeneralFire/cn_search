@@ -19,6 +19,13 @@ type PlateSightingsMock struct {
 	t          minimock.Tester
 	finishOnce sync.Once
 
+	funcClarify          func(ctx context.Context, o models.ClarifyOpts) (c2 models.Clarification, err error)
+	funcClarifyOrigin    string
+	inspectFuncClarify   func(ctx context.Context, o models.ClarifyOpts)
+	afterClarifyCounter  uint64
+	beforeClarifyCounter uint64
+	ClarifyMock          mPlateSightingsMockClarify
+
 	funcListSamePlate          func(ctx context.Context, o models.SamePlateOpts) (pa1 []models.PlateSighting, err error)
 	funcListSamePlateOrigin    string
 	inspectFuncListSamePlate   func(ctx context.Context, o models.SamePlateOpts)
@@ -32,6 +39,13 @@ type PlateSightingsMock struct {
 	afterSearchCounter  uint64
 	beforeSearchCounter uint64
 	SearchMock          mPlateSightingsMockSearch
+
+	funcSeeAlso          func(ctx context.Context, o models.SeeAlsoOpts) (pa1 []models.PlateSighting, err error)
+	funcSeeAlsoOrigin    string
+	inspectFuncSeeAlso   func(ctx context.Context, o models.SeeAlsoOpts)
+	afterSeeAlsoCounter  uint64
+	beforeSeeAlsoCounter uint64
+	SeeAlsoMock          mPlateSightingsMockSeeAlso
 }
 
 // NewPlateSightingsMock returns a mock for mm_implementation.plateSightings
@@ -42,15 +56,364 @@ func NewPlateSightingsMock(t minimock.Tester) *PlateSightingsMock {
 		controller.RegisterMocker(m)
 	}
 
+	m.ClarifyMock = mPlateSightingsMockClarify{mock: m}
+	m.ClarifyMock.callArgs = []*PlateSightingsMockClarifyParams{}
+
 	m.ListSamePlateMock = mPlateSightingsMockListSamePlate{mock: m}
 	m.ListSamePlateMock.callArgs = []*PlateSightingsMockListSamePlateParams{}
 
 	m.SearchMock = mPlateSightingsMockSearch{mock: m}
 	m.SearchMock.callArgs = []*PlateSightingsMockSearchParams{}
 
+	m.SeeAlsoMock = mPlateSightingsMockSeeAlso{mock: m}
+	m.SeeAlsoMock.callArgs = []*PlateSightingsMockSeeAlsoParams{}
+
 	t.Cleanup(m.MinimockFinish)
 
 	return m
+}
+
+type mPlateSightingsMockClarify struct {
+	optional           bool
+	mock               *PlateSightingsMock
+	defaultExpectation *PlateSightingsMockClarifyExpectation
+	expectations       []*PlateSightingsMockClarifyExpectation
+
+	callArgs []*PlateSightingsMockClarifyParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// PlateSightingsMockClarifyExpectation specifies expectation struct of the plateSightings.Clarify
+type PlateSightingsMockClarifyExpectation struct {
+	mock               *PlateSightingsMock
+	params             *PlateSightingsMockClarifyParams
+	paramPtrs          *PlateSightingsMockClarifyParamPtrs
+	expectationOrigins PlateSightingsMockClarifyExpectationOrigins
+	results            *PlateSightingsMockClarifyResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// PlateSightingsMockClarifyParams contains parameters of the plateSightings.Clarify
+type PlateSightingsMockClarifyParams struct {
+	ctx context.Context
+	o   models.ClarifyOpts
+}
+
+// PlateSightingsMockClarifyParamPtrs contains pointers to parameters of the plateSightings.Clarify
+type PlateSightingsMockClarifyParamPtrs struct {
+	ctx *context.Context
+	o   *models.ClarifyOpts
+}
+
+// PlateSightingsMockClarifyResults contains results of the plateSightings.Clarify
+type PlateSightingsMockClarifyResults struct {
+	c2  models.Clarification
+	err error
+}
+
+// PlateSightingsMockClarifyOrigins contains origins of expectations of the plateSightings.Clarify
+type PlateSightingsMockClarifyExpectationOrigins struct {
+	origin    string
+	originCtx string
+	originO   string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmClarify *mPlateSightingsMockClarify) Optional() *mPlateSightingsMockClarify {
+	mmClarify.optional = true
+	return mmClarify
+}
+
+// Expect sets up expected params for plateSightings.Clarify
+func (mmClarify *mPlateSightingsMockClarify) Expect(ctx context.Context, o models.ClarifyOpts) *mPlateSightingsMockClarify {
+	if mmClarify.mock.funcClarify != nil {
+		mmClarify.mock.t.Fatalf("PlateSightingsMock.Clarify mock is already set by Set")
+	}
+
+	if mmClarify.defaultExpectation == nil {
+		mmClarify.defaultExpectation = &PlateSightingsMockClarifyExpectation{}
+	}
+
+	if mmClarify.defaultExpectation.paramPtrs != nil {
+		mmClarify.mock.t.Fatalf("PlateSightingsMock.Clarify mock is already set by ExpectParams functions")
+	}
+
+	mmClarify.defaultExpectation.params = &PlateSightingsMockClarifyParams{ctx, o}
+	mmClarify.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmClarify.expectations {
+		if minimock.Equal(e.params, mmClarify.defaultExpectation.params) {
+			mmClarify.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmClarify.defaultExpectation.params)
+		}
+	}
+
+	return mmClarify
+}
+
+// ExpectCtxParam1 sets up expected param ctx for plateSightings.Clarify
+func (mmClarify *mPlateSightingsMockClarify) ExpectCtxParam1(ctx context.Context) *mPlateSightingsMockClarify {
+	if mmClarify.mock.funcClarify != nil {
+		mmClarify.mock.t.Fatalf("PlateSightingsMock.Clarify mock is already set by Set")
+	}
+
+	if mmClarify.defaultExpectation == nil {
+		mmClarify.defaultExpectation = &PlateSightingsMockClarifyExpectation{}
+	}
+
+	if mmClarify.defaultExpectation.params != nil {
+		mmClarify.mock.t.Fatalf("PlateSightingsMock.Clarify mock is already set by Expect")
+	}
+
+	if mmClarify.defaultExpectation.paramPtrs == nil {
+		mmClarify.defaultExpectation.paramPtrs = &PlateSightingsMockClarifyParamPtrs{}
+	}
+	mmClarify.defaultExpectation.paramPtrs.ctx = &ctx
+	mmClarify.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmClarify
+}
+
+// ExpectOParam2 sets up expected param o for plateSightings.Clarify
+func (mmClarify *mPlateSightingsMockClarify) ExpectOParam2(o models.ClarifyOpts) *mPlateSightingsMockClarify {
+	if mmClarify.mock.funcClarify != nil {
+		mmClarify.mock.t.Fatalf("PlateSightingsMock.Clarify mock is already set by Set")
+	}
+
+	if mmClarify.defaultExpectation == nil {
+		mmClarify.defaultExpectation = &PlateSightingsMockClarifyExpectation{}
+	}
+
+	if mmClarify.defaultExpectation.params != nil {
+		mmClarify.mock.t.Fatalf("PlateSightingsMock.Clarify mock is already set by Expect")
+	}
+
+	if mmClarify.defaultExpectation.paramPtrs == nil {
+		mmClarify.defaultExpectation.paramPtrs = &PlateSightingsMockClarifyParamPtrs{}
+	}
+	mmClarify.defaultExpectation.paramPtrs.o = &o
+	mmClarify.defaultExpectation.expectationOrigins.originO = minimock.CallerInfo(1)
+
+	return mmClarify
+}
+
+// Inspect accepts an inspector function that has same arguments as the plateSightings.Clarify
+func (mmClarify *mPlateSightingsMockClarify) Inspect(f func(ctx context.Context, o models.ClarifyOpts)) *mPlateSightingsMockClarify {
+	if mmClarify.mock.inspectFuncClarify != nil {
+		mmClarify.mock.t.Fatalf("Inspect function is already set for PlateSightingsMock.Clarify")
+	}
+
+	mmClarify.mock.inspectFuncClarify = f
+
+	return mmClarify
+}
+
+// Return sets up results that will be returned by plateSightings.Clarify
+func (mmClarify *mPlateSightingsMockClarify) Return(c2 models.Clarification, err error) *PlateSightingsMock {
+	if mmClarify.mock.funcClarify != nil {
+		mmClarify.mock.t.Fatalf("PlateSightingsMock.Clarify mock is already set by Set")
+	}
+
+	if mmClarify.defaultExpectation == nil {
+		mmClarify.defaultExpectation = &PlateSightingsMockClarifyExpectation{mock: mmClarify.mock}
+	}
+	mmClarify.defaultExpectation.results = &PlateSightingsMockClarifyResults{c2, err}
+	mmClarify.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmClarify.mock
+}
+
+// Set uses given function f to mock the plateSightings.Clarify method
+func (mmClarify *mPlateSightingsMockClarify) Set(f func(ctx context.Context, o models.ClarifyOpts) (c2 models.Clarification, err error)) *PlateSightingsMock {
+	if mmClarify.defaultExpectation != nil {
+		mmClarify.mock.t.Fatalf("Default expectation is already set for the plateSightings.Clarify method")
+	}
+
+	if len(mmClarify.expectations) > 0 {
+		mmClarify.mock.t.Fatalf("Some expectations are already set for the plateSightings.Clarify method")
+	}
+
+	mmClarify.mock.funcClarify = f
+	mmClarify.mock.funcClarifyOrigin = minimock.CallerInfo(1)
+	return mmClarify.mock
+}
+
+// When sets expectation for the plateSightings.Clarify which will trigger the result defined by the following
+// Then helper
+func (mmClarify *mPlateSightingsMockClarify) When(ctx context.Context, o models.ClarifyOpts) *PlateSightingsMockClarifyExpectation {
+	if mmClarify.mock.funcClarify != nil {
+		mmClarify.mock.t.Fatalf("PlateSightingsMock.Clarify mock is already set by Set")
+	}
+
+	expectation := &PlateSightingsMockClarifyExpectation{
+		mock:               mmClarify.mock,
+		params:             &PlateSightingsMockClarifyParams{ctx, o},
+		expectationOrigins: PlateSightingsMockClarifyExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmClarify.expectations = append(mmClarify.expectations, expectation)
+	return expectation
+}
+
+// Then sets up plateSightings.Clarify return parameters for the expectation previously defined by the When method
+func (e *PlateSightingsMockClarifyExpectation) Then(c2 models.Clarification, err error) *PlateSightingsMock {
+	e.results = &PlateSightingsMockClarifyResults{c2, err}
+	return e.mock
+}
+
+// Times sets number of times plateSightings.Clarify should be invoked
+func (mmClarify *mPlateSightingsMockClarify) Times(n uint64) *mPlateSightingsMockClarify {
+	if n == 0 {
+		mmClarify.mock.t.Fatalf("Times of PlateSightingsMock.Clarify mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmClarify.expectedInvocations, n)
+	mmClarify.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmClarify
+}
+
+func (mmClarify *mPlateSightingsMockClarify) invocationsDone() bool {
+	if len(mmClarify.expectations) == 0 && mmClarify.defaultExpectation == nil && mmClarify.mock.funcClarify == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmClarify.mock.afterClarifyCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmClarify.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// Clarify implements mm_implementation.plateSightings
+func (mmClarify *PlateSightingsMock) Clarify(ctx context.Context, o models.ClarifyOpts) (c2 models.Clarification, err error) {
+	mm_atomic.AddUint64(&mmClarify.beforeClarifyCounter, 1)
+	defer mm_atomic.AddUint64(&mmClarify.afterClarifyCounter, 1)
+
+	mmClarify.t.Helper()
+
+	if mmClarify.inspectFuncClarify != nil {
+		mmClarify.inspectFuncClarify(ctx, o)
+	}
+
+	mm_params := PlateSightingsMockClarifyParams{ctx, o}
+
+	// Record call args
+	mmClarify.ClarifyMock.mutex.Lock()
+	mmClarify.ClarifyMock.callArgs = append(mmClarify.ClarifyMock.callArgs, &mm_params)
+	mmClarify.ClarifyMock.mutex.Unlock()
+
+	for _, e := range mmClarify.ClarifyMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.c2, e.results.err
+		}
+	}
+
+	if mmClarify.ClarifyMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmClarify.ClarifyMock.defaultExpectation.Counter, 1)
+		mm_want := mmClarify.ClarifyMock.defaultExpectation.params
+		mm_want_ptrs := mmClarify.ClarifyMock.defaultExpectation.paramPtrs
+
+		mm_got := PlateSightingsMockClarifyParams{ctx, o}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmClarify.t.Errorf("PlateSightingsMock.Clarify got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmClarify.ClarifyMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.o != nil && !minimock.Equal(*mm_want_ptrs.o, mm_got.o) {
+				mmClarify.t.Errorf("PlateSightingsMock.Clarify got unexpected parameter o, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmClarify.ClarifyMock.defaultExpectation.expectationOrigins.originO, *mm_want_ptrs.o, mm_got.o, minimock.Diff(*mm_want_ptrs.o, mm_got.o))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmClarify.t.Errorf("PlateSightingsMock.Clarify got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmClarify.ClarifyMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmClarify.ClarifyMock.defaultExpectation.results
+		if mm_results == nil {
+			mmClarify.t.Fatal("No results are set for the PlateSightingsMock.Clarify")
+		}
+		return (*mm_results).c2, (*mm_results).err
+	}
+	if mmClarify.funcClarify != nil {
+		return mmClarify.funcClarify(ctx, o)
+	}
+	mmClarify.t.Fatalf("Unexpected call to PlateSightingsMock.Clarify. %v %v", ctx, o)
+	return
+}
+
+// ClarifyAfterCounter returns a count of finished PlateSightingsMock.Clarify invocations
+func (mmClarify *PlateSightingsMock) ClarifyAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmClarify.afterClarifyCounter)
+}
+
+// ClarifyBeforeCounter returns a count of PlateSightingsMock.Clarify invocations
+func (mmClarify *PlateSightingsMock) ClarifyBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmClarify.beforeClarifyCounter)
+}
+
+// Calls returns a list of arguments used in each call to PlateSightingsMock.Clarify.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmClarify *mPlateSightingsMockClarify) Calls() []*PlateSightingsMockClarifyParams {
+	mmClarify.mutex.RLock()
+
+	argCopy := make([]*PlateSightingsMockClarifyParams, len(mmClarify.callArgs))
+	copy(argCopy, mmClarify.callArgs)
+
+	mmClarify.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockClarifyDone returns true if the count of the Clarify invocations corresponds
+// the number of defined expectations
+func (m *PlateSightingsMock) MinimockClarifyDone() bool {
+	if m.ClarifyMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.ClarifyMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.ClarifyMock.invocationsDone()
+}
+
+// MinimockClarifyInspect logs each unmet expectation
+func (m *PlateSightingsMock) MinimockClarifyInspect() {
+	for _, e := range m.ClarifyMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to PlateSightingsMock.Clarify at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterClarifyCounter := mm_atomic.LoadUint64(&m.afterClarifyCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.ClarifyMock.defaultExpectation != nil && afterClarifyCounter < 1 {
+		if m.ClarifyMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to PlateSightingsMock.Clarify at\n%s", m.ClarifyMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to PlateSightingsMock.Clarify at\n%s with params: %#v", m.ClarifyMock.defaultExpectation.expectationOrigins.origin, *m.ClarifyMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcClarify != nil && afterClarifyCounter < 1 {
+		m.t.Errorf("Expected call to PlateSightingsMock.Clarify at\n%s", m.funcClarifyOrigin)
+	}
+
+	if !m.ClarifyMock.invocationsDone() && afterClarifyCounter > 0 {
+		m.t.Errorf("Expected %d calls to PlateSightingsMock.Clarify at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.ClarifyMock.expectedInvocations), m.ClarifyMock.expectedInvocationsOrigin, afterClarifyCounter)
+	}
 }
 
 type mPlateSightingsMockListSamePlate struct {
@@ -739,13 +1102,360 @@ func (m *PlateSightingsMock) MinimockSearchInspect() {
 	}
 }
 
+type mPlateSightingsMockSeeAlso struct {
+	optional           bool
+	mock               *PlateSightingsMock
+	defaultExpectation *PlateSightingsMockSeeAlsoExpectation
+	expectations       []*PlateSightingsMockSeeAlsoExpectation
+
+	callArgs []*PlateSightingsMockSeeAlsoParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// PlateSightingsMockSeeAlsoExpectation specifies expectation struct of the plateSightings.SeeAlso
+type PlateSightingsMockSeeAlsoExpectation struct {
+	mock               *PlateSightingsMock
+	params             *PlateSightingsMockSeeAlsoParams
+	paramPtrs          *PlateSightingsMockSeeAlsoParamPtrs
+	expectationOrigins PlateSightingsMockSeeAlsoExpectationOrigins
+	results            *PlateSightingsMockSeeAlsoResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// PlateSightingsMockSeeAlsoParams contains parameters of the plateSightings.SeeAlso
+type PlateSightingsMockSeeAlsoParams struct {
+	ctx context.Context
+	o   models.SeeAlsoOpts
+}
+
+// PlateSightingsMockSeeAlsoParamPtrs contains pointers to parameters of the plateSightings.SeeAlso
+type PlateSightingsMockSeeAlsoParamPtrs struct {
+	ctx *context.Context
+	o   *models.SeeAlsoOpts
+}
+
+// PlateSightingsMockSeeAlsoResults contains results of the plateSightings.SeeAlso
+type PlateSightingsMockSeeAlsoResults struct {
+	pa1 []models.PlateSighting
+	err error
+}
+
+// PlateSightingsMockSeeAlsoOrigins contains origins of expectations of the plateSightings.SeeAlso
+type PlateSightingsMockSeeAlsoExpectationOrigins struct {
+	origin    string
+	originCtx string
+	originO   string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmSeeAlso *mPlateSightingsMockSeeAlso) Optional() *mPlateSightingsMockSeeAlso {
+	mmSeeAlso.optional = true
+	return mmSeeAlso
+}
+
+// Expect sets up expected params for plateSightings.SeeAlso
+func (mmSeeAlso *mPlateSightingsMockSeeAlso) Expect(ctx context.Context, o models.SeeAlsoOpts) *mPlateSightingsMockSeeAlso {
+	if mmSeeAlso.mock.funcSeeAlso != nil {
+		mmSeeAlso.mock.t.Fatalf("PlateSightingsMock.SeeAlso mock is already set by Set")
+	}
+
+	if mmSeeAlso.defaultExpectation == nil {
+		mmSeeAlso.defaultExpectation = &PlateSightingsMockSeeAlsoExpectation{}
+	}
+
+	if mmSeeAlso.defaultExpectation.paramPtrs != nil {
+		mmSeeAlso.mock.t.Fatalf("PlateSightingsMock.SeeAlso mock is already set by ExpectParams functions")
+	}
+
+	mmSeeAlso.defaultExpectation.params = &PlateSightingsMockSeeAlsoParams{ctx, o}
+	mmSeeAlso.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmSeeAlso.expectations {
+		if minimock.Equal(e.params, mmSeeAlso.defaultExpectation.params) {
+			mmSeeAlso.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmSeeAlso.defaultExpectation.params)
+		}
+	}
+
+	return mmSeeAlso
+}
+
+// ExpectCtxParam1 sets up expected param ctx for plateSightings.SeeAlso
+func (mmSeeAlso *mPlateSightingsMockSeeAlso) ExpectCtxParam1(ctx context.Context) *mPlateSightingsMockSeeAlso {
+	if mmSeeAlso.mock.funcSeeAlso != nil {
+		mmSeeAlso.mock.t.Fatalf("PlateSightingsMock.SeeAlso mock is already set by Set")
+	}
+
+	if mmSeeAlso.defaultExpectation == nil {
+		mmSeeAlso.defaultExpectation = &PlateSightingsMockSeeAlsoExpectation{}
+	}
+
+	if mmSeeAlso.defaultExpectation.params != nil {
+		mmSeeAlso.mock.t.Fatalf("PlateSightingsMock.SeeAlso mock is already set by Expect")
+	}
+
+	if mmSeeAlso.defaultExpectation.paramPtrs == nil {
+		mmSeeAlso.defaultExpectation.paramPtrs = &PlateSightingsMockSeeAlsoParamPtrs{}
+	}
+	mmSeeAlso.defaultExpectation.paramPtrs.ctx = &ctx
+	mmSeeAlso.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmSeeAlso
+}
+
+// ExpectOParam2 sets up expected param o for plateSightings.SeeAlso
+func (mmSeeAlso *mPlateSightingsMockSeeAlso) ExpectOParam2(o models.SeeAlsoOpts) *mPlateSightingsMockSeeAlso {
+	if mmSeeAlso.mock.funcSeeAlso != nil {
+		mmSeeAlso.mock.t.Fatalf("PlateSightingsMock.SeeAlso mock is already set by Set")
+	}
+
+	if mmSeeAlso.defaultExpectation == nil {
+		mmSeeAlso.defaultExpectation = &PlateSightingsMockSeeAlsoExpectation{}
+	}
+
+	if mmSeeAlso.defaultExpectation.params != nil {
+		mmSeeAlso.mock.t.Fatalf("PlateSightingsMock.SeeAlso mock is already set by Expect")
+	}
+
+	if mmSeeAlso.defaultExpectation.paramPtrs == nil {
+		mmSeeAlso.defaultExpectation.paramPtrs = &PlateSightingsMockSeeAlsoParamPtrs{}
+	}
+	mmSeeAlso.defaultExpectation.paramPtrs.o = &o
+	mmSeeAlso.defaultExpectation.expectationOrigins.originO = minimock.CallerInfo(1)
+
+	return mmSeeAlso
+}
+
+// Inspect accepts an inspector function that has same arguments as the plateSightings.SeeAlso
+func (mmSeeAlso *mPlateSightingsMockSeeAlso) Inspect(f func(ctx context.Context, o models.SeeAlsoOpts)) *mPlateSightingsMockSeeAlso {
+	if mmSeeAlso.mock.inspectFuncSeeAlso != nil {
+		mmSeeAlso.mock.t.Fatalf("Inspect function is already set for PlateSightingsMock.SeeAlso")
+	}
+
+	mmSeeAlso.mock.inspectFuncSeeAlso = f
+
+	return mmSeeAlso
+}
+
+// Return sets up results that will be returned by plateSightings.SeeAlso
+func (mmSeeAlso *mPlateSightingsMockSeeAlso) Return(pa1 []models.PlateSighting, err error) *PlateSightingsMock {
+	if mmSeeAlso.mock.funcSeeAlso != nil {
+		mmSeeAlso.mock.t.Fatalf("PlateSightingsMock.SeeAlso mock is already set by Set")
+	}
+
+	if mmSeeAlso.defaultExpectation == nil {
+		mmSeeAlso.defaultExpectation = &PlateSightingsMockSeeAlsoExpectation{mock: mmSeeAlso.mock}
+	}
+	mmSeeAlso.defaultExpectation.results = &PlateSightingsMockSeeAlsoResults{pa1, err}
+	mmSeeAlso.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmSeeAlso.mock
+}
+
+// Set uses given function f to mock the plateSightings.SeeAlso method
+func (mmSeeAlso *mPlateSightingsMockSeeAlso) Set(f func(ctx context.Context, o models.SeeAlsoOpts) (pa1 []models.PlateSighting, err error)) *PlateSightingsMock {
+	if mmSeeAlso.defaultExpectation != nil {
+		mmSeeAlso.mock.t.Fatalf("Default expectation is already set for the plateSightings.SeeAlso method")
+	}
+
+	if len(mmSeeAlso.expectations) > 0 {
+		mmSeeAlso.mock.t.Fatalf("Some expectations are already set for the plateSightings.SeeAlso method")
+	}
+
+	mmSeeAlso.mock.funcSeeAlso = f
+	mmSeeAlso.mock.funcSeeAlsoOrigin = minimock.CallerInfo(1)
+	return mmSeeAlso.mock
+}
+
+// When sets expectation for the plateSightings.SeeAlso which will trigger the result defined by the following
+// Then helper
+func (mmSeeAlso *mPlateSightingsMockSeeAlso) When(ctx context.Context, o models.SeeAlsoOpts) *PlateSightingsMockSeeAlsoExpectation {
+	if mmSeeAlso.mock.funcSeeAlso != nil {
+		mmSeeAlso.mock.t.Fatalf("PlateSightingsMock.SeeAlso mock is already set by Set")
+	}
+
+	expectation := &PlateSightingsMockSeeAlsoExpectation{
+		mock:               mmSeeAlso.mock,
+		params:             &PlateSightingsMockSeeAlsoParams{ctx, o},
+		expectationOrigins: PlateSightingsMockSeeAlsoExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmSeeAlso.expectations = append(mmSeeAlso.expectations, expectation)
+	return expectation
+}
+
+// Then sets up plateSightings.SeeAlso return parameters for the expectation previously defined by the When method
+func (e *PlateSightingsMockSeeAlsoExpectation) Then(pa1 []models.PlateSighting, err error) *PlateSightingsMock {
+	e.results = &PlateSightingsMockSeeAlsoResults{pa1, err}
+	return e.mock
+}
+
+// Times sets number of times plateSightings.SeeAlso should be invoked
+func (mmSeeAlso *mPlateSightingsMockSeeAlso) Times(n uint64) *mPlateSightingsMockSeeAlso {
+	if n == 0 {
+		mmSeeAlso.mock.t.Fatalf("Times of PlateSightingsMock.SeeAlso mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmSeeAlso.expectedInvocations, n)
+	mmSeeAlso.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmSeeAlso
+}
+
+func (mmSeeAlso *mPlateSightingsMockSeeAlso) invocationsDone() bool {
+	if len(mmSeeAlso.expectations) == 0 && mmSeeAlso.defaultExpectation == nil && mmSeeAlso.mock.funcSeeAlso == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmSeeAlso.mock.afterSeeAlsoCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmSeeAlso.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// SeeAlso implements mm_implementation.plateSightings
+func (mmSeeAlso *PlateSightingsMock) SeeAlso(ctx context.Context, o models.SeeAlsoOpts) (pa1 []models.PlateSighting, err error) {
+	mm_atomic.AddUint64(&mmSeeAlso.beforeSeeAlsoCounter, 1)
+	defer mm_atomic.AddUint64(&mmSeeAlso.afterSeeAlsoCounter, 1)
+
+	mmSeeAlso.t.Helper()
+
+	if mmSeeAlso.inspectFuncSeeAlso != nil {
+		mmSeeAlso.inspectFuncSeeAlso(ctx, o)
+	}
+
+	mm_params := PlateSightingsMockSeeAlsoParams{ctx, o}
+
+	// Record call args
+	mmSeeAlso.SeeAlsoMock.mutex.Lock()
+	mmSeeAlso.SeeAlsoMock.callArgs = append(mmSeeAlso.SeeAlsoMock.callArgs, &mm_params)
+	mmSeeAlso.SeeAlsoMock.mutex.Unlock()
+
+	for _, e := range mmSeeAlso.SeeAlsoMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.pa1, e.results.err
+		}
+	}
+
+	if mmSeeAlso.SeeAlsoMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmSeeAlso.SeeAlsoMock.defaultExpectation.Counter, 1)
+		mm_want := mmSeeAlso.SeeAlsoMock.defaultExpectation.params
+		mm_want_ptrs := mmSeeAlso.SeeAlsoMock.defaultExpectation.paramPtrs
+
+		mm_got := PlateSightingsMockSeeAlsoParams{ctx, o}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmSeeAlso.t.Errorf("PlateSightingsMock.SeeAlso got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmSeeAlso.SeeAlsoMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.o != nil && !minimock.Equal(*mm_want_ptrs.o, mm_got.o) {
+				mmSeeAlso.t.Errorf("PlateSightingsMock.SeeAlso got unexpected parameter o, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmSeeAlso.SeeAlsoMock.defaultExpectation.expectationOrigins.originO, *mm_want_ptrs.o, mm_got.o, minimock.Diff(*mm_want_ptrs.o, mm_got.o))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmSeeAlso.t.Errorf("PlateSightingsMock.SeeAlso got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmSeeAlso.SeeAlsoMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmSeeAlso.SeeAlsoMock.defaultExpectation.results
+		if mm_results == nil {
+			mmSeeAlso.t.Fatal("No results are set for the PlateSightingsMock.SeeAlso")
+		}
+		return (*mm_results).pa1, (*mm_results).err
+	}
+	if mmSeeAlso.funcSeeAlso != nil {
+		return mmSeeAlso.funcSeeAlso(ctx, o)
+	}
+	mmSeeAlso.t.Fatalf("Unexpected call to PlateSightingsMock.SeeAlso. %v %v", ctx, o)
+	return
+}
+
+// SeeAlsoAfterCounter returns a count of finished PlateSightingsMock.SeeAlso invocations
+func (mmSeeAlso *PlateSightingsMock) SeeAlsoAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmSeeAlso.afterSeeAlsoCounter)
+}
+
+// SeeAlsoBeforeCounter returns a count of PlateSightingsMock.SeeAlso invocations
+func (mmSeeAlso *PlateSightingsMock) SeeAlsoBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmSeeAlso.beforeSeeAlsoCounter)
+}
+
+// Calls returns a list of arguments used in each call to PlateSightingsMock.SeeAlso.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmSeeAlso *mPlateSightingsMockSeeAlso) Calls() []*PlateSightingsMockSeeAlsoParams {
+	mmSeeAlso.mutex.RLock()
+
+	argCopy := make([]*PlateSightingsMockSeeAlsoParams, len(mmSeeAlso.callArgs))
+	copy(argCopy, mmSeeAlso.callArgs)
+
+	mmSeeAlso.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockSeeAlsoDone returns true if the count of the SeeAlso invocations corresponds
+// the number of defined expectations
+func (m *PlateSightingsMock) MinimockSeeAlsoDone() bool {
+	if m.SeeAlsoMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.SeeAlsoMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.SeeAlsoMock.invocationsDone()
+}
+
+// MinimockSeeAlsoInspect logs each unmet expectation
+func (m *PlateSightingsMock) MinimockSeeAlsoInspect() {
+	for _, e := range m.SeeAlsoMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to PlateSightingsMock.SeeAlso at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterSeeAlsoCounter := mm_atomic.LoadUint64(&m.afterSeeAlsoCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.SeeAlsoMock.defaultExpectation != nil && afterSeeAlsoCounter < 1 {
+		if m.SeeAlsoMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to PlateSightingsMock.SeeAlso at\n%s", m.SeeAlsoMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to PlateSightingsMock.SeeAlso at\n%s with params: %#v", m.SeeAlsoMock.defaultExpectation.expectationOrigins.origin, *m.SeeAlsoMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcSeeAlso != nil && afterSeeAlsoCounter < 1 {
+		m.t.Errorf("Expected call to PlateSightingsMock.SeeAlso at\n%s", m.funcSeeAlsoOrigin)
+	}
+
+	if !m.SeeAlsoMock.invocationsDone() && afterSeeAlsoCounter > 0 {
+		m.t.Errorf("Expected %d calls to PlateSightingsMock.SeeAlso at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.SeeAlsoMock.expectedInvocations), m.SeeAlsoMock.expectedInvocationsOrigin, afterSeeAlsoCounter)
+	}
+}
+
 // MinimockFinish checks that all mocked methods have been called the expected number of times
 func (m *PlateSightingsMock) MinimockFinish() {
 	m.finishOnce.Do(func() {
 		if !m.minimockDone() {
+			m.MinimockClarifyInspect()
+
 			m.MinimockListSamePlateInspect()
 
 			m.MinimockSearchInspect()
+
+			m.MinimockSeeAlsoInspect()
 		}
 	})
 }
@@ -769,6 +1479,8 @@ func (m *PlateSightingsMock) MinimockWait(timeout mm_time.Duration) {
 func (m *PlateSightingsMock) minimockDone() bool {
 	done := true
 	return done &&
+		m.MinimockClarifyDone() &&
 		m.MinimockListSamePlateDone() &&
-		m.MinimockSearchDone()
+		m.MinimockSearchDone() &&
+		m.MinimockSeeAlsoDone()
 }

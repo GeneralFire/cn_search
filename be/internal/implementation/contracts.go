@@ -12,4 +12,6 @@ import (
 type plateSightings interface {
 	Search(ctx context.Context, q models.SearchOpts) (models.SearchPage, error)
 	ListSamePlate(ctx context.Context, o models.SamePlateOpts) ([]models.PlateSighting, error)
+	SeeAlso(ctx context.Context, o models.SeeAlsoOpts) ([]models.PlateSighting, error)
+	Clarify(ctx context.Context, o models.ClarifyOpts) (models.Clarification, error)
 }

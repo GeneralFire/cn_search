@@ -198,6 +198,100 @@ func (d *CarSearchServiceDesc) RegisterHTTP(mux transport.Router) {
 		}
 	}
 
+	{
+		// Handler for SeeAlso, binding: POST /carsearch.CarSearchService/SeeAlso
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_SeeAlso_0(r)
+			rsp, err := _CarSearchService_SeeAlso_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_SeeAlso_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_SeeAlso_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
+	{
+		// Handler for Clarify, binding: POST /carsearch.CarSearchService/Clarify
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_Clarify_0(r)
+			rsp, err := _CarSearchService_Clarify_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_Clarify_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_Clarify_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
 }
 
 type CarSearchService_httpClient struct {
@@ -316,6 +410,108 @@ func (c *CarSearchService_httpClient) Get(ctx context.Context, in *GetRequest, o
 	return &ret, errors.Wrap(err, "can't unmarshal response")
 }
 
+func (c *CarSearchService_httpClient) SeeAlso(ctx context.Context, in *SeeAlsoRequest, opts ...grpc.CallOption) (*SeeAlsoResponse, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_SeeAlso_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := SeeAlsoResponse{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
+func (c *CarSearchService_httpClient) Clarify(ctx context.Context, in *ClarifyRequest, opts ...grpc.CallOption) (*ClarifyResponse, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_Clarify_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := ClarifyResponse{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
 // patterns for CarSearchService
 var (
 	pattern_goclay_CarSearchService_Search_0 = "/carsearch.CarSearchService/Search"
@@ -345,6 +541,34 @@ var (
 	}
 
 	unmarshaler_goclay_CarSearchService_Get_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
+	pattern_goclay_CarSearchService_SeeAlso_0 = "/carsearch.CarSearchService/SeeAlso"
+
+	pattern_goclay_CarSearchService_SeeAlso_0_builder = func(in *SeeAlsoRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/SeeAlso"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_SeeAlso_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
+	pattern_goclay_CarSearchService_Clarify_0 = "/carsearch.CarSearchService/Clarify"
+
+	pattern_goclay_CarSearchService_Clarify_0_builder = func(in *ClarifyRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/Clarify"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_Clarify_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
 // marshalers for CarSearchService
@@ -380,6 +604,38 @@ var (
 			return nil
 		}
 	}
+
+	unmarshaler_goclay_CarSearchService_SeeAlso_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*SeeAlsoRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_SeeAlso_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
+
+	unmarshaler_goclay_CarSearchService_Clarify_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*ClarifyRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_Clarify_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
 )
 
 var _swaggerDef_carsearch_carsearch_proto = []byte(`{
@@ -400,6 +656,33 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
     "application/json"
   ],
   "paths": {
+    "/carsearch.CarSearchService/Clarify": {
+      "post": {
+        "summary": "Clarify — уточнение номера к фиксации («на самом деле номер такой»). Создаётся со статусом «не принят».",
+        "operationId": "CarSearchService_Clarify",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchClarifyResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchClarifyRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
     "/carsearch.CarSearchService/Get": {
       "post": {
         "summary": "Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.",
@@ -429,7 +712,7 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
     },
     "/carsearch.CarSearchService/Search": {
       "post": {
-        "summary": "Search ищет фиксации номеров. Результаты — от новых к старым, постранично.",
+        "summary": "Search ищет номера: по самому номеру и по уточнениям (clarifications) к его фиксациям.\nОдин номер — одна строка (последняя подходящая фиксация). От новых к старым, постранично.",
         "operationId": "CarSearchService_Search",
         "responses": {
           "200": {
@@ -453,9 +736,91 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
           "CarSearchService"
         ]
       }
+    },
+    "/carsearch.CarSearchService/SeeAlso": {
+      "post": {
+        "summary": "SeeAlso — свежие фиксации других номеров (блок внизу страницы номера): один номер — одна\nкарточка, номер открытой фиксации исключён. Не более 21.",
+        "operationId": "CarSearchService_SeeAlso",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchSeeAlsoResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchSeeAlsoRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
     }
   },
   "definitions": {
+    "carsearchClarification": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "sightingId": {
+          "type": "string",
+          "description": "uuid фиксации, к которой уточнение."
+        },
+        "plate": {
+          "type": "string",
+          "description": "Предложенный номер, как ввели."
+        },
+        "status": {
+          "$ref": "#/definitions/carsearchClarificationStatus"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "Clarification — уточнение номера к фиксации."
+    },
+    "carsearchClarificationStatus": {
+      "type": "string",
+      "enum": [
+        "CLARIFICATION_STATUS_UNSPECIFIED",
+        "CLARIFICATION_STATUS_NOT_ACCEPTED",
+        "CLARIFICATION_STATUS_ACCEPTED"
+      ],
+      "default": "CLARIFICATION_STATUS_UNSPECIFIED",
+      "description": "Статус уточнения."
+    },
+    "carsearchClarifyRequest": {
+      "type": "object",
+      "properties": {
+        "sightingId": {
+          "type": "string",
+          "description": "uuid фиксации."
+        },
+        "plate": {
+          "type": "string",
+          "description": "Номер, 1..32 символа."
+        }
+      }
+    },
+    "carsearchClarifyResponse": {
+      "type": "object",
+      "properties": {
+        "clarification": {
+          "$ref": "#/definitions/carsearchClarification"
+        }
+      }
+    },
     "carsearchGetRequest": {
       "type": "object",
       "properties": {
@@ -538,12 +903,37 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         "total": {
           "type": "integer",
           "format": "int32",
-          "description": "Всего найдено по запросу."
+          "description": "Всего найдено номеров по запросу."
         },
         "nextOffset": {
           "type": "integer",
           "format": "int32",
           "description": "Смещение следующей страницы; не задано — дальше ничего нет."
+        }
+      }
+    },
+    "carsearchSeeAlsoRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "uuid открытой фиксации: её номер в выдачу не попадает. Пусто — без исключения."
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Сколько карточек, 1..21; 0 — 21."
+        }
+      }
+    },
+    "carsearchSeeAlsoResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchPlateSighting"
+          }
         }
       }
     }

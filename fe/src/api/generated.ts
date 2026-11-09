@@ -10,9 +10,48 @@
  * ---------------------------------------------------------------
  */
 
+export type CarSearchServiceClarifyData = CarsearchClarifyResponse;
+
 export type CarSearchServiceGetData = CarsearchGetResponse;
 
 export type CarSearchServiceSearchData = CarsearchSearchResponse;
+
+export type CarSearchServiceSeeAlsoData = CarsearchSeeAlsoResponse;
+
+/** Clarification — уточнение номера к фиксации. */
+export interface CarsearchClarification {
+  /** @format date-time */
+  createdAt?: string;
+  id?: string;
+  /** Предложенный номер, как ввели. */
+  plate?: string;
+  /** uuid фиксации, к которой уточнение. */
+  sightingId?: string;
+  /** Статус уточнения. */
+  status?: CarsearchClarificationStatus;
+}
+
+/**
+ * Статус уточнения.
+ * @default "CLARIFICATION_STATUS_UNSPECIFIED"
+ */
+export enum CarsearchClarificationStatus {
+  CLARIFICATION_STATUS_UNSPECIFIED = "CLARIFICATION_STATUS_UNSPECIFIED",
+  CLARIFICATION_STATUS_NOT_ACCEPTED = "CLARIFICATION_STATUS_NOT_ACCEPTED",
+  CLARIFICATION_STATUS_ACCEPTED = "CLARIFICATION_STATUS_ACCEPTED",
+}
+
+export interface CarsearchClarifyRequest {
+  /** Номер, 1..32 символа. */
+  plate?: string;
+  /** uuid фиксации. */
+  sightingId?: string;
+}
+
+export interface CarsearchClarifyResponse {
+  /** Clarification — уточнение номера к фиксации. */
+  clarification?: CarsearchClarification;
+}
 
 export interface CarsearchGetRequest {
   /** uuid любой фиксации номера. */
@@ -69,10 +108,24 @@ export interface CarsearchSearchResponse {
    */
   nextOffset?: number;
   /**
-   * Всего найдено по запросу.
+   * Всего найдено номеров по запросу.
    * @format int32
    */
   total?: number;
+}
+
+export interface CarsearchSeeAlsoRequest {
+  /** uuid открытой фиксации: её номер в выдачу не попадает. Пусто — без исключения. */
+  id?: string;
+  /**
+   * Сколько карточек, 1..21; 0 — 21.
+   * @format int32
+   */
+  limit?: number;
+}
+
+export interface CarsearchSeeAlsoResponse {
+  items?: CarsearchPlateSighting[];
 }
 
 export type QueryParamsType = Record<string | number, any>;
@@ -342,6 +395,27 @@ export class CarSearchApi<
      * No description
      *
      * @tags CarSearchService
+     * @name CarSearchServiceClarify
+     * @summary Clarify — уточнение номера к фиксации («на самом деле номер такой»). Создаётся со статусом «не принят».
+     * @request POST:/carsearch.CarSearchService/Clarify
+     */
+    carSearchServiceClarify: (
+      body: CarsearchClarifyRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceClarifyData, any>({
+        path: `/carsearch.CarSearchService/Clarify`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
      * @name CarSearchServiceGet
      * @summary Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.
      * @request POST:/carsearch.CarSearchService/Get
@@ -364,7 +438,7 @@ export class CarSearchApi<
      *
      * @tags CarSearchService
      * @name CarSearchServiceSearch
-     * @summary Search ищет фиксации номеров. Результаты — от новых к старым, постранично.
+     * @summary Search ищет номера: по самому номеру и по уточнениям (clarifications) к его фиксациям. Один номер — одна строка (последняя подходящая фиксация). От новых к старым, постранично.
      * @request POST:/carsearch.CarSearchService/Search
      */
     carSearchServiceSearch: (
@@ -373,6 +447,27 @@ export class CarSearchApi<
     ) =>
       this.request<CarSearchServiceSearchData, any>({
         path: `/carsearch.CarSearchService/Search`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
+     * @name CarSearchServiceSeeAlso
+     * @summary SeeAlso — свежие фиксации других номеров (блок внизу страницы номера): один номер — одна карточка, номер открытой фиксации исключён. Не более 21.
+     * @request POST:/carsearch.CarSearchService/SeeAlso
+     */
+    carSearchServiceSeeAlso: (
+      body: CarsearchSeeAlsoRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceSeeAlsoData, any>({
+        path: `/carsearch.CarSearchService/SeeAlso`,
         method: "POST",
         body: body,
         type: ContentType.Json,

@@ -20,4 +20,6 @@ type transactor interface {
 type repository interface {
 	Search(ctx context.Context, tx db.Executor, q models.SearchOpts) (models.SearchPage, error)
 	ListSamePlate(ctx context.Context, tx db.Executor, o models.SamePlateOpts) ([]models.PlateSighting, error)
+	SeeAlso(ctx context.Context, tx db.Executor, o models.SeeAlsoOpts) ([]models.PlateSighting, error)
+	CreateClarification(ctx context.Context, tx db.Executor, o models.ClarifyOpts) (models.Clarification, error)
 }

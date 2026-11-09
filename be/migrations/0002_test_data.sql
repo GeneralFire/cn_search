@@ -75,6 +75,12 @@ FROM (SELECT g, 1 + floor(random() * (SELECT count(*) FROM pool))::int AS pi FRO
 JOIN pool ON pool.rn = r.pi
 JOIN cities c ON c.name = pool.city;
 
+-- Уточнения: к фиксации Т789УХ 116 предложили Т789УХ 716 (принято), к М456ОР 178 — М456ОР 198 (не принято).
+INSERT INTO clarifications (sighting_id, plate, status, created_at, is_test_data) VALUES
+  ('00000000-0000-0000-0000-000000000003', 'Т789УХ 716', 'accepted',     timestamptz '2026-11-08 13:00:00Z', true),
+  ('00000000-0000-0000-0000-000000000002', 'М456ОР 198', 'not_accepted', timestamptz '2026-10-28 10:00:00Z', true);
+
 -- +goose Down
+DELETE FROM clarifications WHERE is_test_data;
 DELETE FROM plate_sightings WHERE is_test_data;
 DELETE FROM plates WHERE is_test_data;

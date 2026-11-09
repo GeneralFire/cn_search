@@ -36,3 +36,21 @@ func (u *PlateSightings) ListSamePlate(ctx context.Context, o models.SamePlateOp
 	})
 	return items, err
 }
+
+// SeeAlso — свежие фиксации других номеров.
+func (u *PlateSightings) SeeAlso(ctx context.Context, o models.SeeAlsoOpts) (items []models.PlateSighting, err error) {
+	err = u.tx.InReadTx(ctx, func(ctx context.Context, tx db.Executor) error {
+		items, err = u.repo.SeeAlso(ctx, tx, o)
+		return err
+	})
+	return items, err
+}
+
+// Clarify — новое уточнение номера к фиксации (транзакция на запись).
+func (u *PlateSightings) Clarify(ctx context.Context, o models.ClarifyOpts) (c models.Clarification, err error) {
+	err = u.tx.InWriteTx(ctx, func(ctx context.Context, tx db.Executor) error {
+		c, err = u.repo.CreateClarification(ctx, tx, o)
+		return err
+	})
+	return c, err
+}

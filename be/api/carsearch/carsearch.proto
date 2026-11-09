@@ -12,11 +12,19 @@ option go_package = "github.com/GeneralFire/cn_search/be/pkg/carsearch;carsearch
 // generate_unbound_methods — каждый метод доступен как
 // POST /carsearch.CarSearchService/<Method> с JSON-телом запроса.
 service CarSearchService {
-  // Search ищет фиксации номеров. Результаты — от новых к старым, постранично.
+  // Search ищет номера: по самому номеру и по уточнениям (clarifications) к его фиксациям.
+  // Один номер — одна строка (последняя подходящая фиксация). От новых к старым, постранично.
   rpc Search(SearchRequest) returns (SearchResponse);
 
   // Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.
   rpc Get(GetRequest) returns (GetResponse);
+
+  // SeeAlso — свежие фиксации других номеров (блок внизу страницы номера): один номер — одна
+  // карточка, номер открытой фиксации исключён. Не более 21.
+  rpc SeeAlso(SeeAlsoRequest) returns (SeeAlsoResponse);
+
+  // Clarify — уточнение номера к фиксации («на самом деле номер такой»). Создаётся со статусом «не принят».
+  rpc Clarify(ClarifyRequest) returns (ClarifyResponse);
 }
 
 // PlateSighting — фиксация номера: где и когда замечена машина.
@@ -47,7 +55,7 @@ message SearchRequest {
 
 message SearchResponse {
   repeated PlateSighting items = 1;
-  // Всего найдено по запросу.
+  // Всего найдено номеров по запросу.
   int32 total = 2;
   // Смещение следующей страницы; не задано — дальше ничего нет.
   optional int32 next_offset = 3;
@@ -61,4 +69,44 @@ message GetRequest {
 message GetResponse {
   // Все фиксации номера, от новых к старым; первая по id всегда среди них.
   repeated PlateSighting items = 1;
+}
+
+message SeeAlsoRequest {
+  // uuid открытой фиксации: её номер в выдачу не попадает. Пусто — без исключения.
+  string id = 1;
+  // Сколько карточек, 1..21; 0 — 21.
+  int32 limit = 2;
+}
+
+message SeeAlsoResponse {
+  repeated PlateSighting items = 1;
+}
+
+// Статус уточнения.
+enum ClarificationStatus {
+  CLARIFICATION_STATUS_UNSPECIFIED = 0;
+  CLARIFICATION_STATUS_NOT_ACCEPTED = 1;
+  CLARIFICATION_STATUS_ACCEPTED = 2;
+}
+
+// Clarification — уточнение номера к фиксации.
+message Clarification {
+  string id = 1;
+  // uuid фиксации, к которой уточнение.
+  string sighting_id = 2;
+  // Предложенный номер, как ввели.
+  string plate = 3;
+  ClarificationStatus status = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message ClarifyRequest {
+  // uuid фиксации.
+  string sighting_id = 1;
+  // Номер, 1..32 символа.
+  string plate = 2;
+}
+
+message ClarifyResponse {
+  Clarification clarification = 1;
 }

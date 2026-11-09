@@ -52,3 +52,29 @@ func TestErrorPropagates(t *testing.T) {
 		t.Errorf("err = %v, want ErrNotFound", err)
 	}
 }
+
+func TestClarifyInWriteTx(t *testing.T) {
+	tx := dbmocks.NewExecutorMock(t)
+	m := mocks.NewTransactorMock(t)
+	m.InWriteTxMock.Set(func(ctx context.Context, fn db.TxFunc) error { return fn(ctx, tx) })
+	repo := mocks.NewRepositoryMock(t)
+	o := models.ClarifyOpts{SightingID: "s1", Plate: "А1"}
+	repo.CreateClarificationMock.Expect(minimock.AnyContext, tx, o).Return(models.Clarification{ID: "c1"}, nil)
+
+	c, err := New(m, repo).Clarify(context.Background(), o)
+	if err != nil || c.ID != "c1" {
+		t.Fatalf("Clarify: %+v %v", c, err)
+	}
+}
+
+func TestSeeAlsoInReadTx(t *testing.T) {
+	tx := dbmocks.NewExecutorMock(t)
+	repo := mocks.NewRepositoryMock(t)
+	o := models.SeeAlsoOpts{Limit: 21}
+	repo.SeeAlsoMock.Expect(minimock.AnyContext, tx, o).Return([]models.PlateSighting{{ID: "x"}}, nil)
+
+	items, err := New(readTx(t, tx), repo).SeeAlso(context.Background(), o)
+	if err != nil || len(items) != 1 {
+		t.Fatalf("SeeAlso: %v %v", items, err)
+	}
+}

@@ -27,3 +27,10 @@ type SearchPage struct {
 	Limit      int
 	NextOffset *int // nil — дальше ничего нет
 }
+
+// SeeAlsoOpts — параметры блока «свежие фиксации» на странице номера.
+type SeeAlsoOpts struct {
+	ExcludeSightingID string // номер этой фиксации исключить; пусто — без исключения
+	Limit             int
+	IncludeTestData   bool
+}

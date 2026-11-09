@@ -20,6 +20,13 @@ type RepositoryMock struct {
 	t          minimock.Tester
 	finishOnce sync.Once
 
+	funcCreateClarification          func(ctx context.Context, tx db.Executor, o models.ClarifyOpts) (c2 models.Clarification, err error)
+	funcCreateClarificationOrigin    string
+	inspectFuncCreateClarification   func(ctx context.Context, tx db.Executor, o models.ClarifyOpts)
+	afterCreateClarificationCounter  uint64
+	beforeCreateClarificationCounter uint64
+	CreateClarificationMock          mRepositoryMockCreateClarification
+
 	funcListSamePlate          func(ctx context.Context, tx db.Executor, o models.SamePlateOpts) (pa1 []models.PlateSighting, err error)
 	funcListSamePlateOrigin    string
 	inspectFuncListSamePlate   func(ctx context.Context, tx db.Executor, o models.SamePlateOpts)
@@ -33,6 +40,13 @@ type RepositoryMock struct {
 	afterSearchCounter  uint64
 	beforeSearchCounter uint64
 	SearchMock          mRepositoryMockSearch
+
+	funcSeeAlso          func(ctx context.Context, tx db.Executor, o models.SeeAlsoOpts) (pa1 []models.PlateSighting, err error)
+	funcSeeAlsoOrigin    string
+	inspectFuncSeeAlso   func(ctx context.Context, tx db.Executor, o models.SeeAlsoOpts)
+	afterSeeAlsoCounter  uint64
+	beforeSeeAlsoCounter uint64
+	SeeAlsoMock          mRepositoryMockSeeAlso
 }
 
 // NewRepositoryMock returns a mock for mm_usecase.repository
@@ -43,15 +57,395 @@ func NewRepositoryMock(t minimock.Tester) *RepositoryMock {
 		controller.RegisterMocker(m)
 	}
 
+	m.CreateClarificationMock = mRepositoryMockCreateClarification{mock: m}
+	m.CreateClarificationMock.callArgs = []*RepositoryMockCreateClarificationParams{}
+
 	m.ListSamePlateMock = mRepositoryMockListSamePlate{mock: m}
 	m.ListSamePlateMock.callArgs = []*RepositoryMockListSamePlateParams{}
 
 	m.SearchMock = mRepositoryMockSearch{mock: m}
 	m.SearchMock.callArgs = []*RepositoryMockSearchParams{}
 
+	m.SeeAlsoMock = mRepositoryMockSeeAlso{mock: m}
+	m.SeeAlsoMock.callArgs = []*RepositoryMockSeeAlsoParams{}
+
 	t.Cleanup(m.MinimockFinish)
 
 	return m
+}
+
+type mRepositoryMockCreateClarification struct {
+	optional           bool
+	mock               *RepositoryMock
+	defaultExpectation *RepositoryMockCreateClarificationExpectation
+	expectations       []*RepositoryMockCreateClarificationExpectation
+
+	callArgs []*RepositoryMockCreateClarificationParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// RepositoryMockCreateClarificationExpectation specifies expectation struct of the repository.CreateClarification
+type RepositoryMockCreateClarificationExpectation struct {
+	mock               *RepositoryMock
+	params             *RepositoryMockCreateClarificationParams
+	paramPtrs          *RepositoryMockCreateClarificationParamPtrs
+	expectationOrigins RepositoryMockCreateClarificationExpectationOrigins
+	results            *RepositoryMockCreateClarificationResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// RepositoryMockCreateClarificationParams contains parameters of the repository.CreateClarification
+type RepositoryMockCreateClarificationParams struct {
+	ctx context.Context
+	tx  db.Executor
+	o   models.ClarifyOpts
+}
+
+// RepositoryMockCreateClarificationParamPtrs contains pointers to parameters of the repository.CreateClarification
+type RepositoryMockCreateClarificationParamPtrs struct {
+	ctx *context.Context
+	tx  *db.Executor
+	o   *models.ClarifyOpts
+}
+
+// RepositoryMockCreateClarificationResults contains results of the repository.CreateClarification
+type RepositoryMockCreateClarificationResults struct {
+	c2  models.Clarification
+	err error
+}
+
+// RepositoryMockCreateClarificationOrigins contains origins of expectations of the repository.CreateClarification
+type RepositoryMockCreateClarificationExpectationOrigins struct {
+	origin    string
+	originCtx string
+	originTx  string
+	originO   string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmCreateClarification *mRepositoryMockCreateClarification) Optional() *mRepositoryMockCreateClarification {
+	mmCreateClarification.optional = true
+	return mmCreateClarification
+}
+
+// Expect sets up expected params for repository.CreateClarification
+func (mmCreateClarification *mRepositoryMockCreateClarification) Expect(ctx context.Context, tx db.Executor, o models.ClarifyOpts) *mRepositoryMockCreateClarification {
+	if mmCreateClarification.mock.funcCreateClarification != nil {
+		mmCreateClarification.mock.t.Fatalf("RepositoryMock.CreateClarification mock is already set by Set")
+	}
+
+	if mmCreateClarification.defaultExpectation == nil {
+		mmCreateClarification.defaultExpectation = &RepositoryMockCreateClarificationExpectation{}
+	}
+
+	if mmCreateClarification.defaultExpectation.paramPtrs != nil {
+		mmCreateClarification.mock.t.Fatalf("RepositoryMock.CreateClarification mock is already set by ExpectParams functions")
+	}
+
+	mmCreateClarification.defaultExpectation.params = &RepositoryMockCreateClarificationParams{ctx, tx, o}
+	mmCreateClarification.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmCreateClarification.expectations {
+		if minimock.Equal(e.params, mmCreateClarification.defaultExpectation.params) {
+			mmCreateClarification.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmCreateClarification.defaultExpectation.params)
+		}
+	}
+
+	return mmCreateClarification
+}
+
+// ExpectCtxParam1 sets up expected param ctx for repository.CreateClarification
+func (mmCreateClarification *mRepositoryMockCreateClarification) ExpectCtxParam1(ctx context.Context) *mRepositoryMockCreateClarification {
+	if mmCreateClarification.mock.funcCreateClarification != nil {
+		mmCreateClarification.mock.t.Fatalf("RepositoryMock.CreateClarification mock is already set by Set")
+	}
+
+	if mmCreateClarification.defaultExpectation == nil {
+		mmCreateClarification.defaultExpectation = &RepositoryMockCreateClarificationExpectation{}
+	}
+
+	if mmCreateClarification.defaultExpectation.params != nil {
+		mmCreateClarification.mock.t.Fatalf("RepositoryMock.CreateClarification mock is already set by Expect")
+	}
+
+	if mmCreateClarification.defaultExpectation.paramPtrs == nil {
+		mmCreateClarification.defaultExpectation.paramPtrs = &RepositoryMockCreateClarificationParamPtrs{}
+	}
+	mmCreateClarification.defaultExpectation.paramPtrs.ctx = &ctx
+	mmCreateClarification.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmCreateClarification
+}
+
+// ExpectTxParam2 sets up expected param tx for repository.CreateClarification
+func (mmCreateClarification *mRepositoryMockCreateClarification) ExpectTxParam2(tx db.Executor) *mRepositoryMockCreateClarification {
+	if mmCreateClarification.mock.funcCreateClarification != nil {
+		mmCreateClarification.mock.t.Fatalf("RepositoryMock.CreateClarification mock is already set by Set")
+	}
+
+	if mmCreateClarification.defaultExpectation == nil {
+		mmCreateClarification.defaultExpectation = &RepositoryMockCreateClarificationExpectation{}
+	}
+
+	if mmCreateClarification.defaultExpectation.params != nil {
+		mmCreateClarification.mock.t.Fatalf("RepositoryMock.CreateClarification mock is already set by Expect")
+	}
+
+	if mmCreateClarification.defaultExpectation.paramPtrs == nil {
+		mmCreateClarification.defaultExpectation.paramPtrs = &RepositoryMockCreateClarificationParamPtrs{}
+	}
+	mmCreateClarification.defaultExpectation.paramPtrs.tx = &tx
+	mmCreateClarification.defaultExpectation.expectationOrigins.originTx = minimock.CallerInfo(1)
+
+	return mmCreateClarification
+}
+
+// ExpectOParam3 sets up expected param o for repository.CreateClarification
+func (mmCreateClarification *mRepositoryMockCreateClarification) ExpectOParam3(o models.ClarifyOpts) *mRepositoryMockCreateClarification {
+	if mmCreateClarification.mock.funcCreateClarification != nil {
+		mmCreateClarification.mock.t.Fatalf("RepositoryMock.CreateClarification mock is already set by Set")
+	}
+
+	if mmCreateClarification.defaultExpectation == nil {
+		mmCreateClarification.defaultExpectation = &RepositoryMockCreateClarificationExpectation{}
+	}
+
+	if mmCreateClarification.defaultExpectation.params != nil {
+		mmCreateClarification.mock.t.Fatalf("RepositoryMock.CreateClarification mock is already set by Expect")
+	}
+
+	if mmCreateClarification.defaultExpectation.paramPtrs == nil {
+		mmCreateClarification.defaultExpectation.paramPtrs = &RepositoryMockCreateClarificationParamPtrs{}
+	}
+	mmCreateClarification.defaultExpectation.paramPtrs.o = &o
+	mmCreateClarification.defaultExpectation.expectationOrigins.originO = minimock.CallerInfo(1)
+
+	return mmCreateClarification
+}
+
+// Inspect accepts an inspector function that has same arguments as the repository.CreateClarification
+func (mmCreateClarification *mRepositoryMockCreateClarification) Inspect(f func(ctx context.Context, tx db.Executor, o models.ClarifyOpts)) *mRepositoryMockCreateClarification {
+	if mmCreateClarification.mock.inspectFuncCreateClarification != nil {
+		mmCreateClarification.mock.t.Fatalf("Inspect function is already set for RepositoryMock.CreateClarification")
+	}
+
+	mmCreateClarification.mock.inspectFuncCreateClarification = f
+
+	return mmCreateClarification
+}
+
+// Return sets up results that will be returned by repository.CreateClarification
+func (mmCreateClarification *mRepositoryMockCreateClarification) Return(c2 models.Clarification, err error) *RepositoryMock {
+	if mmCreateClarification.mock.funcCreateClarification != nil {
+		mmCreateClarification.mock.t.Fatalf("RepositoryMock.CreateClarification mock is already set by Set")
+	}
+
+	if mmCreateClarification.defaultExpectation == nil {
+		mmCreateClarification.defaultExpectation = &RepositoryMockCreateClarificationExpectation{mock: mmCreateClarification.mock}
+	}
+	mmCreateClarification.defaultExpectation.results = &RepositoryMockCreateClarificationResults{c2, err}
+	mmCreateClarification.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmCreateClarification.mock
+}
+
+// Set uses given function f to mock the repository.CreateClarification method
+func (mmCreateClarification *mRepositoryMockCreateClarification) Set(f func(ctx context.Context, tx db.Executor, o models.ClarifyOpts) (c2 models.Clarification, err error)) *RepositoryMock {
+	if mmCreateClarification.defaultExpectation != nil {
+		mmCreateClarification.mock.t.Fatalf("Default expectation is already set for the repository.CreateClarification method")
+	}
+
+	if len(mmCreateClarification.expectations) > 0 {
+		mmCreateClarification.mock.t.Fatalf("Some expectations are already set for the repository.CreateClarification method")
+	}
+
+	mmCreateClarification.mock.funcCreateClarification = f
+	mmCreateClarification.mock.funcCreateClarificationOrigin = minimock.CallerInfo(1)
+	return mmCreateClarification.mock
+}
+
+// When sets expectation for the repository.CreateClarification which will trigger the result defined by the following
+// Then helper
+func (mmCreateClarification *mRepositoryMockCreateClarification) When(ctx context.Context, tx db.Executor, o models.ClarifyOpts) *RepositoryMockCreateClarificationExpectation {
+	if mmCreateClarification.mock.funcCreateClarification != nil {
+		mmCreateClarification.mock.t.Fatalf("RepositoryMock.CreateClarification mock is already set by Set")
+	}
+
+	expectation := &RepositoryMockCreateClarificationExpectation{
+		mock:               mmCreateClarification.mock,
+		params:             &RepositoryMockCreateClarificationParams{ctx, tx, o},
+		expectationOrigins: RepositoryMockCreateClarificationExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmCreateClarification.expectations = append(mmCreateClarification.expectations, expectation)
+	return expectation
+}
+
+// Then sets up repository.CreateClarification return parameters for the expectation previously defined by the When method
+func (e *RepositoryMockCreateClarificationExpectation) Then(c2 models.Clarification, err error) *RepositoryMock {
+	e.results = &RepositoryMockCreateClarificationResults{c2, err}
+	return e.mock
+}
+
+// Times sets number of times repository.CreateClarification should be invoked
+func (mmCreateClarification *mRepositoryMockCreateClarification) Times(n uint64) *mRepositoryMockCreateClarification {
+	if n == 0 {
+		mmCreateClarification.mock.t.Fatalf("Times of RepositoryMock.CreateClarification mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmCreateClarification.expectedInvocations, n)
+	mmCreateClarification.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmCreateClarification
+}
+
+func (mmCreateClarification *mRepositoryMockCreateClarification) invocationsDone() bool {
+	if len(mmCreateClarification.expectations) == 0 && mmCreateClarification.defaultExpectation == nil && mmCreateClarification.mock.funcCreateClarification == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmCreateClarification.mock.afterCreateClarificationCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmCreateClarification.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// CreateClarification implements mm_usecase.repository
+func (mmCreateClarification *RepositoryMock) CreateClarification(ctx context.Context, tx db.Executor, o models.ClarifyOpts) (c2 models.Clarification, err error) {
+	mm_atomic.AddUint64(&mmCreateClarification.beforeCreateClarificationCounter, 1)
+	defer mm_atomic.AddUint64(&mmCreateClarification.afterCreateClarificationCounter, 1)
+
+	mmCreateClarification.t.Helper()
+
+	if mmCreateClarification.inspectFuncCreateClarification != nil {
+		mmCreateClarification.inspectFuncCreateClarification(ctx, tx, o)
+	}
+
+	mm_params := RepositoryMockCreateClarificationParams{ctx, tx, o}
+
+	// Record call args
+	mmCreateClarification.CreateClarificationMock.mutex.Lock()
+	mmCreateClarification.CreateClarificationMock.callArgs = append(mmCreateClarification.CreateClarificationMock.callArgs, &mm_params)
+	mmCreateClarification.CreateClarificationMock.mutex.Unlock()
+
+	for _, e := range mmCreateClarification.CreateClarificationMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.c2, e.results.err
+		}
+	}
+
+	if mmCreateClarification.CreateClarificationMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmCreateClarification.CreateClarificationMock.defaultExpectation.Counter, 1)
+		mm_want := mmCreateClarification.CreateClarificationMock.defaultExpectation.params
+		mm_want_ptrs := mmCreateClarification.CreateClarificationMock.defaultExpectation.paramPtrs
+
+		mm_got := RepositoryMockCreateClarificationParams{ctx, tx, o}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmCreateClarification.t.Errorf("RepositoryMock.CreateClarification got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmCreateClarification.CreateClarificationMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.tx != nil && !minimock.Equal(*mm_want_ptrs.tx, mm_got.tx) {
+				mmCreateClarification.t.Errorf("RepositoryMock.CreateClarification got unexpected parameter tx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmCreateClarification.CreateClarificationMock.defaultExpectation.expectationOrigins.originTx, *mm_want_ptrs.tx, mm_got.tx, minimock.Diff(*mm_want_ptrs.tx, mm_got.tx))
+			}
+
+			if mm_want_ptrs.o != nil && !minimock.Equal(*mm_want_ptrs.o, mm_got.o) {
+				mmCreateClarification.t.Errorf("RepositoryMock.CreateClarification got unexpected parameter o, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmCreateClarification.CreateClarificationMock.defaultExpectation.expectationOrigins.originO, *mm_want_ptrs.o, mm_got.o, minimock.Diff(*mm_want_ptrs.o, mm_got.o))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmCreateClarification.t.Errorf("RepositoryMock.CreateClarification got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmCreateClarification.CreateClarificationMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmCreateClarification.CreateClarificationMock.defaultExpectation.results
+		if mm_results == nil {
+			mmCreateClarification.t.Fatal("No results are set for the RepositoryMock.CreateClarification")
+		}
+		return (*mm_results).c2, (*mm_results).err
+	}
+	if mmCreateClarification.funcCreateClarification != nil {
+		return mmCreateClarification.funcCreateClarification(ctx, tx, o)
+	}
+	mmCreateClarification.t.Fatalf("Unexpected call to RepositoryMock.CreateClarification. %v %v %v", ctx, tx, o)
+	return
+}
+
+// CreateClarificationAfterCounter returns a count of finished RepositoryMock.CreateClarification invocations
+func (mmCreateClarification *RepositoryMock) CreateClarificationAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmCreateClarification.afterCreateClarificationCounter)
+}
+
+// CreateClarificationBeforeCounter returns a count of RepositoryMock.CreateClarification invocations
+func (mmCreateClarification *RepositoryMock) CreateClarificationBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmCreateClarification.beforeCreateClarificationCounter)
+}
+
+// Calls returns a list of arguments used in each call to RepositoryMock.CreateClarification.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmCreateClarification *mRepositoryMockCreateClarification) Calls() []*RepositoryMockCreateClarificationParams {
+	mmCreateClarification.mutex.RLock()
+
+	argCopy := make([]*RepositoryMockCreateClarificationParams, len(mmCreateClarification.callArgs))
+	copy(argCopy, mmCreateClarification.callArgs)
+
+	mmCreateClarification.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockCreateClarificationDone returns true if the count of the CreateClarification invocations corresponds
+// the number of defined expectations
+func (m *RepositoryMock) MinimockCreateClarificationDone() bool {
+	if m.CreateClarificationMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.CreateClarificationMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.CreateClarificationMock.invocationsDone()
+}
+
+// MinimockCreateClarificationInspect logs each unmet expectation
+func (m *RepositoryMock) MinimockCreateClarificationInspect() {
+	for _, e := range m.CreateClarificationMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to RepositoryMock.CreateClarification at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterCreateClarificationCounter := mm_atomic.LoadUint64(&m.afterCreateClarificationCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.CreateClarificationMock.defaultExpectation != nil && afterCreateClarificationCounter < 1 {
+		if m.CreateClarificationMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to RepositoryMock.CreateClarification at\n%s", m.CreateClarificationMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to RepositoryMock.CreateClarification at\n%s with params: %#v", m.CreateClarificationMock.defaultExpectation.expectationOrigins.origin, *m.CreateClarificationMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcCreateClarification != nil && afterCreateClarificationCounter < 1 {
+		m.t.Errorf("Expected call to RepositoryMock.CreateClarification at\n%s", m.funcCreateClarificationOrigin)
+	}
+
+	if !m.CreateClarificationMock.invocationsDone() && afterCreateClarificationCounter > 0 {
+		m.t.Errorf("Expected %d calls to RepositoryMock.CreateClarification at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.CreateClarificationMock.expectedInvocations), m.CreateClarificationMock.expectedInvocationsOrigin, afterCreateClarificationCounter)
+	}
 }
 
 type mRepositoryMockListSamePlate struct {
@@ -802,13 +1196,391 @@ func (m *RepositoryMock) MinimockSearchInspect() {
 	}
 }
 
+type mRepositoryMockSeeAlso struct {
+	optional           bool
+	mock               *RepositoryMock
+	defaultExpectation *RepositoryMockSeeAlsoExpectation
+	expectations       []*RepositoryMockSeeAlsoExpectation
+
+	callArgs []*RepositoryMockSeeAlsoParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// RepositoryMockSeeAlsoExpectation specifies expectation struct of the repository.SeeAlso
+type RepositoryMockSeeAlsoExpectation struct {
+	mock               *RepositoryMock
+	params             *RepositoryMockSeeAlsoParams
+	paramPtrs          *RepositoryMockSeeAlsoParamPtrs
+	expectationOrigins RepositoryMockSeeAlsoExpectationOrigins
+	results            *RepositoryMockSeeAlsoResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// RepositoryMockSeeAlsoParams contains parameters of the repository.SeeAlso
+type RepositoryMockSeeAlsoParams struct {
+	ctx context.Context
+	tx  db.Executor
+	o   models.SeeAlsoOpts
+}
+
+// RepositoryMockSeeAlsoParamPtrs contains pointers to parameters of the repository.SeeAlso
+type RepositoryMockSeeAlsoParamPtrs struct {
+	ctx *context.Context
+	tx  *db.Executor
+	o   *models.SeeAlsoOpts
+}
+
+// RepositoryMockSeeAlsoResults contains results of the repository.SeeAlso
+type RepositoryMockSeeAlsoResults struct {
+	pa1 []models.PlateSighting
+	err error
+}
+
+// RepositoryMockSeeAlsoOrigins contains origins of expectations of the repository.SeeAlso
+type RepositoryMockSeeAlsoExpectationOrigins struct {
+	origin    string
+	originCtx string
+	originTx  string
+	originO   string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmSeeAlso *mRepositoryMockSeeAlso) Optional() *mRepositoryMockSeeAlso {
+	mmSeeAlso.optional = true
+	return mmSeeAlso
+}
+
+// Expect sets up expected params for repository.SeeAlso
+func (mmSeeAlso *mRepositoryMockSeeAlso) Expect(ctx context.Context, tx db.Executor, o models.SeeAlsoOpts) *mRepositoryMockSeeAlso {
+	if mmSeeAlso.mock.funcSeeAlso != nil {
+		mmSeeAlso.mock.t.Fatalf("RepositoryMock.SeeAlso mock is already set by Set")
+	}
+
+	if mmSeeAlso.defaultExpectation == nil {
+		mmSeeAlso.defaultExpectation = &RepositoryMockSeeAlsoExpectation{}
+	}
+
+	if mmSeeAlso.defaultExpectation.paramPtrs != nil {
+		mmSeeAlso.mock.t.Fatalf("RepositoryMock.SeeAlso mock is already set by ExpectParams functions")
+	}
+
+	mmSeeAlso.defaultExpectation.params = &RepositoryMockSeeAlsoParams{ctx, tx, o}
+	mmSeeAlso.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmSeeAlso.expectations {
+		if minimock.Equal(e.params, mmSeeAlso.defaultExpectation.params) {
+			mmSeeAlso.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmSeeAlso.defaultExpectation.params)
+		}
+	}
+
+	return mmSeeAlso
+}
+
+// ExpectCtxParam1 sets up expected param ctx for repository.SeeAlso
+func (mmSeeAlso *mRepositoryMockSeeAlso) ExpectCtxParam1(ctx context.Context) *mRepositoryMockSeeAlso {
+	if mmSeeAlso.mock.funcSeeAlso != nil {
+		mmSeeAlso.mock.t.Fatalf("RepositoryMock.SeeAlso mock is already set by Set")
+	}
+
+	if mmSeeAlso.defaultExpectation == nil {
+		mmSeeAlso.defaultExpectation = &RepositoryMockSeeAlsoExpectation{}
+	}
+
+	if mmSeeAlso.defaultExpectation.params != nil {
+		mmSeeAlso.mock.t.Fatalf("RepositoryMock.SeeAlso mock is already set by Expect")
+	}
+
+	if mmSeeAlso.defaultExpectation.paramPtrs == nil {
+		mmSeeAlso.defaultExpectation.paramPtrs = &RepositoryMockSeeAlsoParamPtrs{}
+	}
+	mmSeeAlso.defaultExpectation.paramPtrs.ctx = &ctx
+	mmSeeAlso.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmSeeAlso
+}
+
+// ExpectTxParam2 sets up expected param tx for repository.SeeAlso
+func (mmSeeAlso *mRepositoryMockSeeAlso) ExpectTxParam2(tx db.Executor) *mRepositoryMockSeeAlso {
+	if mmSeeAlso.mock.funcSeeAlso != nil {
+		mmSeeAlso.mock.t.Fatalf("RepositoryMock.SeeAlso mock is already set by Set")
+	}
+
+	if mmSeeAlso.defaultExpectation == nil {
+		mmSeeAlso.defaultExpectation = &RepositoryMockSeeAlsoExpectation{}
+	}
+
+	if mmSeeAlso.defaultExpectation.params != nil {
+		mmSeeAlso.mock.t.Fatalf("RepositoryMock.SeeAlso mock is already set by Expect")
+	}
+
+	if mmSeeAlso.defaultExpectation.paramPtrs == nil {
+		mmSeeAlso.defaultExpectation.paramPtrs = &RepositoryMockSeeAlsoParamPtrs{}
+	}
+	mmSeeAlso.defaultExpectation.paramPtrs.tx = &tx
+	mmSeeAlso.defaultExpectation.expectationOrigins.originTx = minimock.CallerInfo(1)
+
+	return mmSeeAlso
+}
+
+// ExpectOParam3 sets up expected param o for repository.SeeAlso
+func (mmSeeAlso *mRepositoryMockSeeAlso) ExpectOParam3(o models.SeeAlsoOpts) *mRepositoryMockSeeAlso {
+	if mmSeeAlso.mock.funcSeeAlso != nil {
+		mmSeeAlso.mock.t.Fatalf("RepositoryMock.SeeAlso mock is already set by Set")
+	}
+
+	if mmSeeAlso.defaultExpectation == nil {
+		mmSeeAlso.defaultExpectation = &RepositoryMockSeeAlsoExpectation{}
+	}
+
+	if mmSeeAlso.defaultExpectation.params != nil {
+		mmSeeAlso.mock.t.Fatalf("RepositoryMock.SeeAlso mock is already set by Expect")
+	}
+
+	if mmSeeAlso.defaultExpectation.paramPtrs == nil {
+		mmSeeAlso.defaultExpectation.paramPtrs = &RepositoryMockSeeAlsoParamPtrs{}
+	}
+	mmSeeAlso.defaultExpectation.paramPtrs.o = &o
+	mmSeeAlso.defaultExpectation.expectationOrigins.originO = minimock.CallerInfo(1)
+
+	return mmSeeAlso
+}
+
+// Inspect accepts an inspector function that has same arguments as the repository.SeeAlso
+func (mmSeeAlso *mRepositoryMockSeeAlso) Inspect(f func(ctx context.Context, tx db.Executor, o models.SeeAlsoOpts)) *mRepositoryMockSeeAlso {
+	if mmSeeAlso.mock.inspectFuncSeeAlso != nil {
+		mmSeeAlso.mock.t.Fatalf("Inspect function is already set for RepositoryMock.SeeAlso")
+	}
+
+	mmSeeAlso.mock.inspectFuncSeeAlso = f
+
+	return mmSeeAlso
+}
+
+// Return sets up results that will be returned by repository.SeeAlso
+func (mmSeeAlso *mRepositoryMockSeeAlso) Return(pa1 []models.PlateSighting, err error) *RepositoryMock {
+	if mmSeeAlso.mock.funcSeeAlso != nil {
+		mmSeeAlso.mock.t.Fatalf("RepositoryMock.SeeAlso mock is already set by Set")
+	}
+
+	if mmSeeAlso.defaultExpectation == nil {
+		mmSeeAlso.defaultExpectation = &RepositoryMockSeeAlsoExpectation{mock: mmSeeAlso.mock}
+	}
+	mmSeeAlso.defaultExpectation.results = &RepositoryMockSeeAlsoResults{pa1, err}
+	mmSeeAlso.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmSeeAlso.mock
+}
+
+// Set uses given function f to mock the repository.SeeAlso method
+func (mmSeeAlso *mRepositoryMockSeeAlso) Set(f func(ctx context.Context, tx db.Executor, o models.SeeAlsoOpts) (pa1 []models.PlateSighting, err error)) *RepositoryMock {
+	if mmSeeAlso.defaultExpectation != nil {
+		mmSeeAlso.mock.t.Fatalf("Default expectation is already set for the repository.SeeAlso method")
+	}
+
+	if len(mmSeeAlso.expectations) > 0 {
+		mmSeeAlso.mock.t.Fatalf("Some expectations are already set for the repository.SeeAlso method")
+	}
+
+	mmSeeAlso.mock.funcSeeAlso = f
+	mmSeeAlso.mock.funcSeeAlsoOrigin = minimock.CallerInfo(1)
+	return mmSeeAlso.mock
+}
+
+// When sets expectation for the repository.SeeAlso which will trigger the result defined by the following
+// Then helper
+func (mmSeeAlso *mRepositoryMockSeeAlso) When(ctx context.Context, tx db.Executor, o models.SeeAlsoOpts) *RepositoryMockSeeAlsoExpectation {
+	if mmSeeAlso.mock.funcSeeAlso != nil {
+		mmSeeAlso.mock.t.Fatalf("RepositoryMock.SeeAlso mock is already set by Set")
+	}
+
+	expectation := &RepositoryMockSeeAlsoExpectation{
+		mock:               mmSeeAlso.mock,
+		params:             &RepositoryMockSeeAlsoParams{ctx, tx, o},
+		expectationOrigins: RepositoryMockSeeAlsoExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmSeeAlso.expectations = append(mmSeeAlso.expectations, expectation)
+	return expectation
+}
+
+// Then sets up repository.SeeAlso return parameters for the expectation previously defined by the When method
+func (e *RepositoryMockSeeAlsoExpectation) Then(pa1 []models.PlateSighting, err error) *RepositoryMock {
+	e.results = &RepositoryMockSeeAlsoResults{pa1, err}
+	return e.mock
+}
+
+// Times sets number of times repository.SeeAlso should be invoked
+func (mmSeeAlso *mRepositoryMockSeeAlso) Times(n uint64) *mRepositoryMockSeeAlso {
+	if n == 0 {
+		mmSeeAlso.mock.t.Fatalf("Times of RepositoryMock.SeeAlso mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmSeeAlso.expectedInvocations, n)
+	mmSeeAlso.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmSeeAlso
+}
+
+func (mmSeeAlso *mRepositoryMockSeeAlso) invocationsDone() bool {
+	if len(mmSeeAlso.expectations) == 0 && mmSeeAlso.defaultExpectation == nil && mmSeeAlso.mock.funcSeeAlso == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmSeeAlso.mock.afterSeeAlsoCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmSeeAlso.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// SeeAlso implements mm_usecase.repository
+func (mmSeeAlso *RepositoryMock) SeeAlso(ctx context.Context, tx db.Executor, o models.SeeAlsoOpts) (pa1 []models.PlateSighting, err error) {
+	mm_atomic.AddUint64(&mmSeeAlso.beforeSeeAlsoCounter, 1)
+	defer mm_atomic.AddUint64(&mmSeeAlso.afterSeeAlsoCounter, 1)
+
+	mmSeeAlso.t.Helper()
+
+	if mmSeeAlso.inspectFuncSeeAlso != nil {
+		mmSeeAlso.inspectFuncSeeAlso(ctx, tx, o)
+	}
+
+	mm_params := RepositoryMockSeeAlsoParams{ctx, tx, o}
+
+	// Record call args
+	mmSeeAlso.SeeAlsoMock.mutex.Lock()
+	mmSeeAlso.SeeAlsoMock.callArgs = append(mmSeeAlso.SeeAlsoMock.callArgs, &mm_params)
+	mmSeeAlso.SeeAlsoMock.mutex.Unlock()
+
+	for _, e := range mmSeeAlso.SeeAlsoMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.pa1, e.results.err
+		}
+	}
+
+	if mmSeeAlso.SeeAlsoMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmSeeAlso.SeeAlsoMock.defaultExpectation.Counter, 1)
+		mm_want := mmSeeAlso.SeeAlsoMock.defaultExpectation.params
+		mm_want_ptrs := mmSeeAlso.SeeAlsoMock.defaultExpectation.paramPtrs
+
+		mm_got := RepositoryMockSeeAlsoParams{ctx, tx, o}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmSeeAlso.t.Errorf("RepositoryMock.SeeAlso got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmSeeAlso.SeeAlsoMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.tx != nil && !minimock.Equal(*mm_want_ptrs.tx, mm_got.tx) {
+				mmSeeAlso.t.Errorf("RepositoryMock.SeeAlso got unexpected parameter tx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmSeeAlso.SeeAlsoMock.defaultExpectation.expectationOrigins.originTx, *mm_want_ptrs.tx, mm_got.tx, minimock.Diff(*mm_want_ptrs.tx, mm_got.tx))
+			}
+
+			if mm_want_ptrs.o != nil && !minimock.Equal(*mm_want_ptrs.o, mm_got.o) {
+				mmSeeAlso.t.Errorf("RepositoryMock.SeeAlso got unexpected parameter o, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmSeeAlso.SeeAlsoMock.defaultExpectation.expectationOrigins.originO, *mm_want_ptrs.o, mm_got.o, minimock.Diff(*mm_want_ptrs.o, mm_got.o))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmSeeAlso.t.Errorf("RepositoryMock.SeeAlso got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmSeeAlso.SeeAlsoMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmSeeAlso.SeeAlsoMock.defaultExpectation.results
+		if mm_results == nil {
+			mmSeeAlso.t.Fatal("No results are set for the RepositoryMock.SeeAlso")
+		}
+		return (*mm_results).pa1, (*mm_results).err
+	}
+	if mmSeeAlso.funcSeeAlso != nil {
+		return mmSeeAlso.funcSeeAlso(ctx, tx, o)
+	}
+	mmSeeAlso.t.Fatalf("Unexpected call to RepositoryMock.SeeAlso. %v %v %v", ctx, tx, o)
+	return
+}
+
+// SeeAlsoAfterCounter returns a count of finished RepositoryMock.SeeAlso invocations
+func (mmSeeAlso *RepositoryMock) SeeAlsoAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmSeeAlso.afterSeeAlsoCounter)
+}
+
+// SeeAlsoBeforeCounter returns a count of RepositoryMock.SeeAlso invocations
+func (mmSeeAlso *RepositoryMock) SeeAlsoBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmSeeAlso.beforeSeeAlsoCounter)
+}
+
+// Calls returns a list of arguments used in each call to RepositoryMock.SeeAlso.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmSeeAlso *mRepositoryMockSeeAlso) Calls() []*RepositoryMockSeeAlsoParams {
+	mmSeeAlso.mutex.RLock()
+
+	argCopy := make([]*RepositoryMockSeeAlsoParams, len(mmSeeAlso.callArgs))
+	copy(argCopy, mmSeeAlso.callArgs)
+
+	mmSeeAlso.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockSeeAlsoDone returns true if the count of the SeeAlso invocations corresponds
+// the number of defined expectations
+func (m *RepositoryMock) MinimockSeeAlsoDone() bool {
+	if m.SeeAlsoMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.SeeAlsoMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.SeeAlsoMock.invocationsDone()
+}
+
+// MinimockSeeAlsoInspect logs each unmet expectation
+func (m *RepositoryMock) MinimockSeeAlsoInspect() {
+	for _, e := range m.SeeAlsoMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to RepositoryMock.SeeAlso at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterSeeAlsoCounter := mm_atomic.LoadUint64(&m.afterSeeAlsoCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.SeeAlsoMock.defaultExpectation != nil && afterSeeAlsoCounter < 1 {
+		if m.SeeAlsoMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to RepositoryMock.SeeAlso at\n%s", m.SeeAlsoMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to RepositoryMock.SeeAlso at\n%s with params: %#v", m.SeeAlsoMock.defaultExpectation.expectationOrigins.origin, *m.SeeAlsoMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcSeeAlso != nil && afterSeeAlsoCounter < 1 {
+		m.t.Errorf("Expected call to RepositoryMock.SeeAlso at\n%s", m.funcSeeAlsoOrigin)
+	}
+
+	if !m.SeeAlsoMock.invocationsDone() && afterSeeAlsoCounter > 0 {
+		m.t.Errorf("Expected %d calls to RepositoryMock.SeeAlso at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.SeeAlsoMock.expectedInvocations), m.SeeAlsoMock.expectedInvocationsOrigin, afterSeeAlsoCounter)
+	}
+}
+
 // MinimockFinish checks that all mocked methods have been called the expected number of times
 func (m *RepositoryMock) MinimockFinish() {
 	m.finishOnce.Do(func() {
 		if !m.minimockDone() {
+			m.MinimockCreateClarificationInspect()
+
 			m.MinimockListSamePlateInspect()
 
 			m.MinimockSearchInspect()
+
+			m.MinimockSeeAlsoInspect()
 		}
 	})
 }
@@ -832,6 +1604,8 @@ func (m *RepositoryMock) MinimockWait(timeout mm_time.Duration) {
 func (m *RepositoryMock) minimockDone() bool {
 	done := true
 	return done &&
+		m.MinimockCreateClarificationDone() &&
 		m.MinimockListSamePlateDone() &&
-		m.MinimockSearchDone()
+		m.MinimockSearchDone() &&
+		m.MinimockSeeAlsoDone()
 }

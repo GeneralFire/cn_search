@@ -19,8 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CarSearchService_Search_FullMethodName = "/carsearch.CarSearchService/Search"
-	CarSearchService_Get_FullMethodName    = "/carsearch.CarSearchService/Get"
+	CarSearchService_Search_FullMethodName  = "/carsearch.CarSearchService/Search"
+	CarSearchService_Get_FullMethodName     = "/carsearch.CarSearchService/Get"
+	CarSearchService_SeeAlso_FullMethodName = "/carsearch.CarSearchService/SeeAlso"
+	CarSearchService_Clarify_FullMethodName = "/carsearch.CarSearchService/Clarify"
 )
 
 // CarSearchServiceClient is the client API for CarSearchService service.
@@ -33,10 +35,16 @@ const (
 // generate_unbound_methods — каждый метод доступен как
 // POST /carsearch.CarSearchService/<Method> с JSON-телом запроса.
 type CarSearchServiceClient interface {
-	// Search ищет фиксации номеров. Результаты — от новых к старым, постранично.
+	// Search ищет номера: по самому номеру и по уточнениям (clarifications) к его фиксациям.
+	// Один номер — одна строка (последняя подходящая фиксация). От новых к старым, постранично.
 	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
 	// Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	// SeeAlso — свежие фиксации других номеров (блок внизу страницы номера): один номер — одна
+	// карточка, номер открытой фиксации исключён. Не более 21.
+	SeeAlso(ctx context.Context, in *SeeAlsoRequest, opts ...grpc.CallOption) (*SeeAlsoResponse, error)
+	// Clarify — уточнение номера к фиксации («на самом деле номер такой»). Создаётся со статусом «не принят».
+	Clarify(ctx context.Context, in *ClarifyRequest, opts ...grpc.CallOption) (*ClarifyResponse, error)
 }
 
 type carSearchServiceClient struct {
@@ -67,6 +75,26 @@ func (c *carSearchServiceClient) Get(ctx context.Context, in *GetRequest, opts .
 	return out, nil
 }
 
+func (c *carSearchServiceClient) SeeAlso(ctx context.Context, in *SeeAlsoRequest, opts ...grpc.CallOption) (*SeeAlsoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SeeAlsoResponse)
+	err := c.cc.Invoke(ctx, CarSearchService_SeeAlso_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carSearchServiceClient) Clarify(ctx context.Context, in *ClarifyRequest, opts ...grpc.CallOption) (*ClarifyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ClarifyResponse)
+	err := c.cc.Invoke(ctx, CarSearchService_Clarify_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CarSearchServiceServer is the server API for CarSearchService service.
 // All implementations must embed UnimplementedCarSearchServiceServer
 // for forward compatibility.
@@ -77,10 +105,16 @@ func (c *carSearchServiceClient) Get(ctx context.Context, in *GetRequest, opts .
 // generate_unbound_methods — каждый метод доступен как
 // POST /carsearch.CarSearchService/<Method> с JSON-телом запроса.
 type CarSearchServiceServer interface {
-	// Search ищет фиксации номеров. Результаты — от новых к старым, постранично.
+	// Search ищет номера: по самому номеру и по уточнениям (clarifications) к его фиксациям.
+	// Один номер — одна строка (последняя подходящая фиксация). От новых к старым, постранично.
 	Search(context.Context, *SearchRequest) (*SearchResponse, error)
 	// Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.
 	Get(context.Context, *GetRequest) (*GetResponse, error)
+	// SeeAlso — свежие фиксации других номеров (блок внизу страницы номера): один номер — одна
+	// карточка, номер открытой фиксации исключён. Не более 21.
+	SeeAlso(context.Context, *SeeAlsoRequest) (*SeeAlsoResponse, error)
+	// Clarify — уточнение номера к фиксации («на самом деле номер такой»). Создаётся со статусом «не принят».
+	Clarify(context.Context, *ClarifyRequest) (*ClarifyResponse, error)
 	mustEmbedUnimplementedCarSearchServiceServer()
 }
 
@@ -96,6 +130,12 @@ func (UnimplementedCarSearchServiceServer) Search(context.Context, *SearchReques
 }
 func (UnimplementedCarSearchServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedCarSearchServiceServer) SeeAlso(context.Context, *SeeAlsoRequest) (*SeeAlsoResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SeeAlso not implemented")
+}
+func (UnimplementedCarSearchServiceServer) Clarify(context.Context, *ClarifyRequest) (*ClarifyResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Clarify not implemented")
 }
 func (UnimplementedCarSearchServiceServer) mustEmbedUnimplementedCarSearchServiceServer() {}
 func (UnimplementedCarSearchServiceServer) testEmbeddedByValue()                          {}
@@ -154,6 +194,42 @@ func _CarSearchService_Get_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CarSearchService_SeeAlso_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SeeAlsoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).SeeAlso(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_SeeAlso_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).SeeAlso(ctx, req.(*SeeAlsoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarSearchService_Clarify_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClarifyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).Clarify(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_Clarify_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).Clarify(ctx, req.(*ClarifyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CarSearchService_ServiceDesc is the grpc.ServiceDesc for CarSearchService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -168,6 +244,14 @@ var CarSearchService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Get",
 			Handler:    _CarSearchService_Get_Handler,
+		},
+		{
+			MethodName: "SeeAlso",
+			Handler:    _CarSearchService_SeeAlso_Handler,
+		},
+		{
+			MethodName: "Clarify",
+			Handler:    _CarSearchService_Clarify_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
