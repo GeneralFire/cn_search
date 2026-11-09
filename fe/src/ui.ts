@@ -1,3 +1,4 @@
+import "./card.css";
 import { plateHref } from "./router";
 import "./plate-formats.css";
 
@@ -11,6 +12,7 @@ export const icon = {
   plate: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M16 7v10"/></svg>`,
   clear: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>`,
   pin: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>`,
+  edit: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="m13.5 6.5 4 4"/></svg>`,
   cal: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>`,
   car: `<svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path d="M10 22h-4a2 2 0 0 1-2-2v-4c0-1.5 1-2.6 2.4-3l6.6-1.8 6-5.4A6 6 0 0 1 23 4.5h14a6 6 0 0 1 4.3 1.8L47 12l9 1.6c1.8.3 3 1.9 3 3.6V20a2 2 0 0 1-2 2h-3"/><circle cx="16" cy="23" r="5"/><circle cx="48" cy="23" r="5"/></svg>`,
 };
@@ -139,18 +141,17 @@ export function cardHtml(
   const city = c.address.split(",")[0] ?? "";
   const { src } = photoAttrs(c); // в карточках — только миниатюра, без превью по наведению
   const photo = src ? `<img src="${escapeHtml(src)}" alt="" loading="lazy" />` : icon.car;
+  const label = escapeHtml(t("card.clarify"));
+  // Компактная карточка: номер поверх нижнего края фото, адрес и дата — одной строкой.
   return `
     <article class="card" style="animation-delay:${Math.min(i, 14) * 30}ms">
       <a class="card__link" href="${plateHref(c.id)}" data-link aria-label="${escapeHtml(t("card.allSightings", { plate: c.plate }))}"></a>
-      <a class="card__photo" href="${plateHref(c.id)}" data-link tabindex="-1">${photo}<span class="card__badge">${escapeHtml(city)}</span></a>
-      <div class="card__body">
-        <p class="card__address">${icon.pin}${escapeHtml(c.address)}</p>
-        <div class="card__row">${plateHtml(c)}</div>
-        <div class="card__foot">
-          <span class="card__date">${icon.cal}<time datetime="${escapeHtml(c.createdAt)}">${formatDate(c.createdAt)}</time></span>
-          ${opts.clarify ? `<button class="btn btn--ghost" type="button" data-clarify="${escapeHtml(c.id)}">${t("card.clarify")}</button>` : ""}
-        </div>
-      </div>
+      <a class="card__photo" href="${plateHref(c.id)}" data-link tabindex="-1">${photo}<span class="card__badge">${escapeHtml(city)}</span><span class="card__plate">${plateHtml(c)}</span></a>
+      ${opts.clarify ? `<button class="card__clarify" type="button" data-clarify="${escapeHtml(c.id)}" aria-label="${label}" title="${label}">${icon.edit}</button>` : ""}
+      <p class="card__meta">
+        ${icon.pin}<span class="card__address" title="${escapeHtml(c.address)}">${escapeHtml(c.address)}</span>
+        <time class="card__date" datetime="${escapeHtml(c.createdAt)}" title="${escapeHtml(formatDate(c.createdAt))}">${escapeHtml(formatShortDate(c.createdAt))}, ${escapeHtml(formatTime(c.createdAt))}</time>
+      </p>
     </article>`;
 }
 
