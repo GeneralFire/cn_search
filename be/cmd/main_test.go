@@ -79,11 +79,29 @@ func TestHTTPEmptySearchOmitsZeroFields(t *testing.T) {
 	}
 }
 
+// Заголовок include-test-data доходит через clay (HTTP-заголовки → gRPC metadata) до опций usecase.
+func TestHTTPIncludeTestDataHeader(t *testing.T) {
+	srv, uc := newHTTP(t)
+	uc.SearchMock.Expect(minimock.AnyContext, models.SearchOpts{Limit: 35, IncludeTestData: true}).
+		Return(models.SearchPage{}, nil)
+
+	req, _ := http.NewRequest(http.MethodPost, srv.URL+apiPrefix+"/carsearch.CarSearchService/Search", strings.NewReader(`{}`))
+	req.Header.Set("Include-Test-Data", "true")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("status %d", res.StatusCode)
+	}
+}
+
 func TestHTTPGet(t *testing.T) {
 	srv, uc := newHTTP(t)
 	second := sighting
 	second.ID = "00000000-0000-0000-0000-000000000004"
-	uc.ListSamePlateMock.Expect(minimock.AnyContext, "00000000-0000-0000-0000-000000000001").Return([]models.PlateSighting{second, sighting}, nil)
+	uc.ListSamePlateMock.Expect(minimock.AnyContext, models.SamePlateOpts{ID: "00000000-0000-0000-0000-000000000001"}).Return([]models.PlateSighting{second, sighting}, nil)
 
 	code, out := call(t, srv, "Get", `{"id":"00000000-0000-0000-0000-000000000001"}`)
 	items, _ := out["items"].([]any)
@@ -94,8 +112,8 @@ func TestHTTPGet(t *testing.T) {
 
 func TestHTTPErrors(t *testing.T) {
 	srv, uc := newHTTP(t)
-	uc.ListSamePlateMock.When(minimock.AnyContext, "00000000-0000-0000-0000-0000000a0500").Then(nil, models.ErrNotFound)
-	uc.ListSamePlateMock.When(minimock.AnyContext, "00000000-0000-0000-0000-000000000004").Then(nil, errors.New("db down"))
+	uc.ListSamePlateMock.When(minimock.AnyContext, models.SamePlateOpts{ID: "00000000-0000-0000-0000-0000000a0500"}).Then(nil, models.ErrNotFound)
+	uc.ListSamePlateMock.When(minimock.AnyContext, models.SamePlateOpts{ID: "00000000-0000-0000-0000-000000000004"}).Then(nil, errors.New("db down"))
 
 	tests := []struct {
 		method, body string

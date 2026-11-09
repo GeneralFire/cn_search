@@ -20,9 +20,9 @@ type RepositoryMock struct {
 	t          minimock.Tester
 	finishOnce sync.Once
 
-	funcListSamePlate          func(ctx context.Context, tx db.Executor, id string) (pa1 []models.PlateSighting, err error)
+	funcListSamePlate          func(ctx context.Context, tx db.Executor, o models.SamePlateOpts) (pa1 []models.PlateSighting, err error)
 	funcListSamePlateOrigin    string
-	inspectFuncListSamePlate   func(ctx context.Context, tx db.Executor, id string)
+	inspectFuncListSamePlate   func(ctx context.Context, tx db.Executor, o models.SamePlateOpts)
 	afterListSamePlateCounter  uint64
 	beforeListSamePlateCounter uint64
 	ListSamePlateMock          mRepositoryMockListSamePlate
@@ -82,14 +82,14 @@ type RepositoryMockListSamePlateExpectation struct {
 type RepositoryMockListSamePlateParams struct {
 	ctx context.Context
 	tx  db.Executor
-	id  string
+	o   models.SamePlateOpts
 }
 
 // RepositoryMockListSamePlateParamPtrs contains pointers to parameters of the repository.ListSamePlate
 type RepositoryMockListSamePlateParamPtrs struct {
 	ctx *context.Context
 	tx  *db.Executor
-	id  *string
+	o   *models.SamePlateOpts
 }
 
 // RepositoryMockListSamePlateResults contains results of the repository.ListSamePlate
@@ -103,7 +103,7 @@ type RepositoryMockListSamePlateExpectationOrigins struct {
 	origin    string
 	originCtx string
 	originTx  string
-	originId  string
+	originO   string
 }
 
 // Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
@@ -117,7 +117,7 @@ func (mmListSamePlate *mRepositoryMockListSamePlate) Optional() *mRepositoryMock
 }
 
 // Expect sets up expected params for repository.ListSamePlate
-func (mmListSamePlate *mRepositoryMockListSamePlate) Expect(ctx context.Context, tx db.Executor, id string) *mRepositoryMockListSamePlate {
+func (mmListSamePlate *mRepositoryMockListSamePlate) Expect(ctx context.Context, tx db.Executor, o models.SamePlateOpts) *mRepositoryMockListSamePlate {
 	if mmListSamePlate.mock.funcListSamePlate != nil {
 		mmListSamePlate.mock.t.Fatalf("RepositoryMock.ListSamePlate mock is already set by Set")
 	}
@@ -130,7 +130,7 @@ func (mmListSamePlate *mRepositoryMockListSamePlate) Expect(ctx context.Context,
 		mmListSamePlate.mock.t.Fatalf("RepositoryMock.ListSamePlate mock is already set by ExpectParams functions")
 	}
 
-	mmListSamePlate.defaultExpectation.params = &RepositoryMockListSamePlateParams{ctx, tx, id}
+	mmListSamePlate.defaultExpectation.params = &RepositoryMockListSamePlateParams{ctx, tx, o}
 	mmListSamePlate.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
 	for _, e := range mmListSamePlate.expectations {
 		if minimock.Equal(e.params, mmListSamePlate.defaultExpectation.params) {
@@ -187,8 +187,8 @@ func (mmListSamePlate *mRepositoryMockListSamePlate) ExpectTxParam2(tx db.Execut
 	return mmListSamePlate
 }
 
-// ExpectIdParam3 sets up expected param id for repository.ListSamePlate
-func (mmListSamePlate *mRepositoryMockListSamePlate) ExpectIdParam3(id string) *mRepositoryMockListSamePlate {
+// ExpectOParam3 sets up expected param o for repository.ListSamePlate
+func (mmListSamePlate *mRepositoryMockListSamePlate) ExpectOParam3(o models.SamePlateOpts) *mRepositoryMockListSamePlate {
 	if mmListSamePlate.mock.funcListSamePlate != nil {
 		mmListSamePlate.mock.t.Fatalf("RepositoryMock.ListSamePlate mock is already set by Set")
 	}
@@ -204,14 +204,14 @@ func (mmListSamePlate *mRepositoryMockListSamePlate) ExpectIdParam3(id string) *
 	if mmListSamePlate.defaultExpectation.paramPtrs == nil {
 		mmListSamePlate.defaultExpectation.paramPtrs = &RepositoryMockListSamePlateParamPtrs{}
 	}
-	mmListSamePlate.defaultExpectation.paramPtrs.id = &id
-	mmListSamePlate.defaultExpectation.expectationOrigins.originId = minimock.CallerInfo(1)
+	mmListSamePlate.defaultExpectation.paramPtrs.o = &o
+	mmListSamePlate.defaultExpectation.expectationOrigins.originO = minimock.CallerInfo(1)
 
 	return mmListSamePlate
 }
 
 // Inspect accepts an inspector function that has same arguments as the repository.ListSamePlate
-func (mmListSamePlate *mRepositoryMockListSamePlate) Inspect(f func(ctx context.Context, tx db.Executor, id string)) *mRepositoryMockListSamePlate {
+func (mmListSamePlate *mRepositoryMockListSamePlate) Inspect(f func(ctx context.Context, tx db.Executor, o models.SamePlateOpts)) *mRepositoryMockListSamePlate {
 	if mmListSamePlate.mock.inspectFuncListSamePlate != nil {
 		mmListSamePlate.mock.t.Fatalf("Inspect function is already set for RepositoryMock.ListSamePlate")
 	}
@@ -236,7 +236,7 @@ func (mmListSamePlate *mRepositoryMockListSamePlate) Return(pa1 []models.PlateSi
 }
 
 // Set uses given function f to mock the repository.ListSamePlate method
-func (mmListSamePlate *mRepositoryMockListSamePlate) Set(f func(ctx context.Context, tx db.Executor, id string) (pa1 []models.PlateSighting, err error)) *RepositoryMock {
+func (mmListSamePlate *mRepositoryMockListSamePlate) Set(f func(ctx context.Context, tx db.Executor, o models.SamePlateOpts) (pa1 []models.PlateSighting, err error)) *RepositoryMock {
 	if mmListSamePlate.defaultExpectation != nil {
 		mmListSamePlate.mock.t.Fatalf("Default expectation is already set for the repository.ListSamePlate method")
 	}
@@ -252,14 +252,14 @@ func (mmListSamePlate *mRepositoryMockListSamePlate) Set(f func(ctx context.Cont
 
 // When sets expectation for the repository.ListSamePlate which will trigger the result defined by the following
 // Then helper
-func (mmListSamePlate *mRepositoryMockListSamePlate) When(ctx context.Context, tx db.Executor, id string) *RepositoryMockListSamePlateExpectation {
+func (mmListSamePlate *mRepositoryMockListSamePlate) When(ctx context.Context, tx db.Executor, o models.SamePlateOpts) *RepositoryMockListSamePlateExpectation {
 	if mmListSamePlate.mock.funcListSamePlate != nil {
 		mmListSamePlate.mock.t.Fatalf("RepositoryMock.ListSamePlate mock is already set by Set")
 	}
 
 	expectation := &RepositoryMockListSamePlateExpectation{
 		mock:               mmListSamePlate.mock,
-		params:             &RepositoryMockListSamePlateParams{ctx, tx, id},
+		params:             &RepositoryMockListSamePlateParams{ctx, tx, o},
 		expectationOrigins: RepositoryMockListSamePlateExpectationOrigins{origin: minimock.CallerInfo(1)},
 	}
 	mmListSamePlate.expectations = append(mmListSamePlate.expectations, expectation)
@@ -294,17 +294,17 @@ func (mmListSamePlate *mRepositoryMockListSamePlate) invocationsDone() bool {
 }
 
 // ListSamePlate implements mm_usecase.repository
-func (mmListSamePlate *RepositoryMock) ListSamePlate(ctx context.Context, tx db.Executor, id string) (pa1 []models.PlateSighting, err error) {
+func (mmListSamePlate *RepositoryMock) ListSamePlate(ctx context.Context, tx db.Executor, o models.SamePlateOpts) (pa1 []models.PlateSighting, err error) {
 	mm_atomic.AddUint64(&mmListSamePlate.beforeListSamePlateCounter, 1)
 	defer mm_atomic.AddUint64(&mmListSamePlate.afterListSamePlateCounter, 1)
 
 	mmListSamePlate.t.Helper()
 
 	if mmListSamePlate.inspectFuncListSamePlate != nil {
-		mmListSamePlate.inspectFuncListSamePlate(ctx, tx, id)
+		mmListSamePlate.inspectFuncListSamePlate(ctx, tx, o)
 	}
 
-	mm_params := RepositoryMockListSamePlateParams{ctx, tx, id}
+	mm_params := RepositoryMockListSamePlateParams{ctx, tx, o}
 
 	// Record call args
 	mmListSamePlate.ListSamePlateMock.mutex.Lock()
@@ -323,7 +323,7 @@ func (mmListSamePlate *RepositoryMock) ListSamePlate(ctx context.Context, tx db.
 		mm_want := mmListSamePlate.ListSamePlateMock.defaultExpectation.params
 		mm_want_ptrs := mmListSamePlate.ListSamePlateMock.defaultExpectation.paramPtrs
 
-		mm_got := RepositoryMockListSamePlateParams{ctx, tx, id}
+		mm_got := RepositoryMockListSamePlateParams{ctx, tx, o}
 
 		if mm_want_ptrs != nil {
 
@@ -337,9 +337,9 @@ func (mmListSamePlate *RepositoryMock) ListSamePlate(ctx context.Context, tx db.
 					mmListSamePlate.ListSamePlateMock.defaultExpectation.expectationOrigins.originTx, *mm_want_ptrs.tx, mm_got.tx, minimock.Diff(*mm_want_ptrs.tx, mm_got.tx))
 			}
 
-			if mm_want_ptrs.id != nil && !minimock.Equal(*mm_want_ptrs.id, mm_got.id) {
-				mmListSamePlate.t.Errorf("RepositoryMock.ListSamePlate got unexpected parameter id, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
-					mmListSamePlate.ListSamePlateMock.defaultExpectation.expectationOrigins.originId, *mm_want_ptrs.id, mm_got.id, minimock.Diff(*mm_want_ptrs.id, mm_got.id))
+			if mm_want_ptrs.o != nil && !minimock.Equal(*mm_want_ptrs.o, mm_got.o) {
+				mmListSamePlate.t.Errorf("RepositoryMock.ListSamePlate got unexpected parameter o, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmListSamePlate.ListSamePlateMock.defaultExpectation.expectationOrigins.originO, *mm_want_ptrs.o, mm_got.o, minimock.Diff(*mm_want_ptrs.o, mm_got.o))
 			}
 
 		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
@@ -354,9 +354,9 @@ func (mmListSamePlate *RepositoryMock) ListSamePlate(ctx context.Context, tx db.
 		return (*mm_results).pa1, (*mm_results).err
 	}
 	if mmListSamePlate.funcListSamePlate != nil {
-		return mmListSamePlate.funcListSamePlate(ctx, tx, id)
+		return mmListSamePlate.funcListSamePlate(ctx, tx, o)
 	}
-	mmListSamePlate.t.Fatalf("Unexpected call to RepositoryMock.ListSamePlate. %v %v %v", ctx, tx, id)
+	mmListSamePlate.t.Fatalf("Unexpected call to RepositoryMock.ListSamePlate. %v %v %v", ctx, tx, o)
 	return
 }
 

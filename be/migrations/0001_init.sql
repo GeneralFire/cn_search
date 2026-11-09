@@ -4,7 +4,8 @@
 CREATE TABLE plates (
     id    uuid  PRIMARY KEY DEFAULT gen_random_uuid(),
     plate text  NOT NULL UNIQUE, -- госномер кириллицей: "А123ВС 777"
-    meta  jsonb NOT NULL DEFAULT '{}'
+    meta  jsonb NOT NULL DEFAULT '{}',
+    is_test_data boolean NOT NULL DEFAULT false -- тестовые данные (миграция 0002_test_data)
 );
 
 -- Поиск по номеру (rpc Search). Выражение должно совпадать с запросом в internal/repository/postgres.go.
@@ -15,7 +16,8 @@ CREATE TABLE plate_sightings (
     plate_id   uuid        NOT NULL REFERENCES plates (id),
     address    text        NOT NULL,
     photo_key  text        NOT NULL DEFAULT '', -- ключ объекта в S3-бакете
-    created_at timestamptz NOT NULL DEFAULT now() -- когда номер зафиксирован
+    created_at timestamptz NOT NULL DEFAULT now(), -- когда номер зафиксирован
+    is_test_data boolean   NOT NULL DEFAULT false  -- тестовые данные (миграция 0002_test_data)
 );
 
 -- Выдача: от новых к старым.

@@ -1,12 +1,9 @@
 -- Тестовые данные: 600 фиксаций номеров из пула (~ треть от числа фиксаций), у номера обычно
--- несколько фиксаций в разных местах его города. Применяется `make sample-data` поверх схемы
--- (be/migrations); версии — в отдельной таблице goose_test_data_version.
--- Картинки car-1..5.png заливает в S3 сервис sample-data-s3 (см. docker-compose.yml).
+-- несколько фиксаций в разных местах его города. Все строки помечены is_test_data = true:
+-- Down удаляет только их, а в бою их можно отфильтровать или удалить тем же условием.
+-- Картинки car-1..5.png заливает в S3 сервис s3-init (be/internal/test_utils/s3, docker-compose.yml).
 
 -- +goose Up
--- Заменяет всё, что было в таблицах (make sample-data заливает набор заново).
-TRUNCATE plate_sightings, plates;
-
 SELECT setseed(0.20261109); -- одинаковый набор при каждой заливке
 
 CREATE TEMP TABLE cities (n int PRIMARY KEY, name text, regions text[], streets text[]) ON COMMIT DROP;
@@ -24,14 +21,14 @@ INSERT INTO cities VALUES
 
 -- Фиксированные записи для ручной проверки: у А123ВС 777 три фиксации
 -- (id …0001, …0004, …0005). id фиксированных — предсказуемые uuid, остальных — gen_random_uuid().
-INSERT INTO plates (plate, meta) VALUES
-  ('А123ВС 777', '{"city": "Москва"}'),
-  ('М456ОР 178', '{"city": "Санкт-Петербург"}'),
-  ('Т789УХ 116', '{"city": "Казань"}');
+INSERT INTO plates (plate, meta, is_test_data) VALUES
+  ('А123ВС 777', '{"city": "Москва"}', true),
+  ('М456ОР 178', '{"city": "Санкт-Петербург"}', true),
+  ('Т789УХ 116', '{"city": "Казань"}', true);
 
-INSERT INTO plate_sightings (id, plate_id, address, photo_key, created_at)
+INSERT INTO plate_sightings (id, plate_id, address, photo_key, created_at, is_test_data)
 SELECT ('00000000-0000-0000-0000-00000000000' || v.n)::uuid, p.id, v.address,
-       'car-' || ((v.n * 7) % 5 + 1) || '.png', v.created_at
+       'car-' || ((v.n * 7) % 5 + 1) || '.png', v.created_at, true
 FROM (VALUES
   (1, 'А123ВС 777', 'Москва, Пресненская наб., 10',     timestamptz '2026-11-02 09:15:00Z'),
   (2, 'М456ОР 178', 'Санкт-Петербург, Невский пр., 28', timestamptz '2026-10-27 18:40:00Z'),
@@ -42,8 +39,8 @@ FROM (VALUES
 JOIN plates p ON p.plate = v.plate;
 
 -- Пул случайных номеров: корректные буквы (12 «латинских» кириллицы) и коды регионов города.
-INSERT INTO plates (plate, meta)
-SELECT DISTINCT ON (plate) plate, jsonb_build_object('city', name)
+INSERT INTO plates (plate, meta, is_test_data)
+SELECT DISTINCT ON (plate) plate, jsonb_build_object('city', name), true
 FROM (
   SELECT c.name,
          substr(l, 1 + floor(random() * 12)::int, 1)
@@ -62,18 +59,20 @@ LIMIT 198;
 -- 595 случайных фиксаций: номер из пула, адрес в его городе, время — за 180 дней до 09.11.2026 21:00 UTC.
 CREATE TEMP TABLE pool ON COMMIT DROP AS
 SELECT row_number() OVER (ORDER BY plate) AS rn, id, meta ->> 'city' AS city
-FROM plates WHERE plate NOT IN ('А123ВС 777', 'М456ОР 178', 'Т789УХ 116');
+FROM plates WHERE is_test_data AND plate NOT IN ('А123ВС 777', 'М456ОР 178', 'Т789УХ 116');
 
-INSERT INTO plate_sightings (id, plate_id, address, photo_key, created_at)
+INSERT INTO plate_sightings (id, plate_id, address, photo_key, created_at, is_test_data)
 SELECT gen_random_uuid(),
        pool.id,
        c.name || ', ' || c.streets[1 + floor(random() * array_length(c.streets, 1))::int]
               || ', ' || (1 + floor(random() * 150))::int,
        'car-' || (((5 + r.g) * 7) % 5 + 1) || '.png',
-       date_trunc('second', timestamptz '2026-11-09 21:00:00Z' - random() * interval '180 days')
+       date_trunc('second', timestamptz '2026-11-09 21:00:00Z' - random() * interval '180 days'),
+       true
 FROM (SELECT g, 1 + floor(random() * (SELECT count(*) FROM pool))::int AS pi FROM generate_series(1, 595) g) r
 JOIN pool ON pool.rn = r.pi
 JOIN cities c ON c.name = pool.city;
 
 -- +goose Down
-TRUNCATE plate_sightings, plates;
+DELETE FROM plate_sightings WHERE is_test_data;
+DELETE FROM plates WHERE is_test_data;

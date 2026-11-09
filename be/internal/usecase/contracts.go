@@ -19,5 +19,5 @@ type transactor interface {
 // repository — запросы к БД внутри переданной транзакции (реализация — repository.New()).
 type repository interface {
 	Search(ctx context.Context, tx db.Executor, q models.SearchOpts) (models.SearchPage, error)
-	ListSamePlate(ctx context.Context, tx db.Executor, id string) ([]models.PlateSighting, error)
+	ListSamePlate(ctx context.Context, tx db.Executor, o models.SamePlateOpts) ([]models.PlateSighting, error)
 }

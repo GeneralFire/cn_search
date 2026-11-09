@@ -1,5 +1,11 @@
 // Обёртка над сгенерированным клиентом (generated.ts — не править руками, см. `make gen-ts`).
-import { CarSearchApi, type CarsearchPlateSighting, type CarsearchSearchRequest, type CarsearchSearchResponse } from "./generated";
+import {
+  CarSearchApi,
+  type CarsearchGetResponse,
+  type CarsearchPlateSighting,
+  type CarsearchSearchRequest,
+  type CarsearchSearchResponse,
+} from "./generated";
 
 /** Фиксация номера: где и когда замечена машина. createdAt — ISO 8601 (RFC 3339). */
 export type Car = Required<Pick<CarsearchPlateSighting, "id" | "plate" | "address" | "createdAt">> &
@@ -11,10 +17,18 @@ export interface CarsPage {
   nextOffset: number | null;
 }
 
-const api = new CarSearchApi({ baseUrl: "/api" });
+// include-test-data: бэк отдаёт и строки с is_test_data (сейчас в базе только тестовые данные).
+const headers: Record<string, string> =
+  import.meta.env.VITE_INCLUDE_TEST_DATA === "true" ? { "include-test-data": "true" } : {};
 
-/** Ошибка API с сообщением для пользователя. */
-export class ApiError extends Error {}
+const api = new CarSearchApi({ baseUrl: "/api", baseApiParams: { headers } });
+
+/** Ошибка API с сообщением для пользователя; status — HTTP-код (0 — сеть). */
+export class ApiError extends Error {
+  constructor(message: string, readonly status = 0) {
+    super(message);
+  }
+}
 
 function toCar(c: CarsearchPlateSighting): Car {
   return {
@@ -42,8 +56,20 @@ export async function search(req: CarsearchSearchRequest, signal?: AbortSignal):
   };
 }
 
+/** Все фиксации номера, к которому относится фиксация id; от новых к старым. */
+export async function plateSightings(id: string, signal?: AbortSignal): Promise<Car[]> {
+  let data: CarsearchGetResponse;
+  try {
+    ({ data } = await api.carsearchCarSearchService.carSearchServiceGet({ id }, { signal }));
+  } catch (e) {
+    if (signal?.aborted) throw e;
+    throw new ApiError(await errorMessage(e), e instanceof Response ? e.status : 0);
+  }
+  return (data.items ?? []).map(toCar);
+}
+
 async function errorMessage(e: unknown): Promise<string> {
-  // Клиент бросает сам Response при не-2xx; в теле clay отдаёт {"error": "...", "code": N}.
+  // Клиент бросает сам Response при не-2xx; clay отдаёт {"error": "rpc error: code = … desc = …"}.
   if (e instanceof Response) {
     const body = (await e.json().catch(() => null)) as { error?: string; message?: string } | null;
     return body?.error || body?.message || `HTTP ${e.status}`;

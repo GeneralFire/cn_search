@@ -28,10 +28,10 @@ func (u *PlateSightings) Search(ctx context.Context, q models.SearchOpts) (page 
 	return page, err
 }
 
-// ListSamePlate — все фиксации номера, к которому относится фиксация id.
-func (u *PlateSightings) ListSamePlate(ctx context.Context, id string) (items []models.PlateSighting, err error) {
+// ListSamePlate — все фиксации номера, к которому относится фиксация o.ID.
+func (u *PlateSightings) ListSamePlate(ctx context.Context, o models.SamePlateOpts) (items []models.PlateSighting, err error) {
 	err = u.tx.InReadTx(ctx, func(ctx context.Context, tx db.Executor) error {
-		items, err = u.repo.ListSamePlate(ctx, tx, id)
+		items, err = u.repo.ListSamePlate(ctx, tx, o)
 		return err
 	})
 	return items, err

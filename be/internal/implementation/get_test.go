@@ -17,7 +17,7 @@ func TestGet(t *testing.T) {
 	svc, uc := newSvc(t)
 	second := sighting
 	second.ID, second.Address = "00000000-0000-0000-0000-000000000004", "Москва, ул. Тверская, 7"
-	uc.ListSamePlateMock.Expect(minimock.AnyContext, "00000000-0000-0000-0000-000000000001").Return([]models.PlateSighting{second, sighting}, nil)
+	uc.ListSamePlateMock.Expect(minimock.AnyContext, models.SamePlateOpts{ID: "00000000-0000-0000-0000-000000000001"}).Return([]models.PlateSighting{second, sighting}, nil)
 
 	resp, err := svc.Get(context.Background(), &pb.GetRequest{Id: "00000000-0000-0000-0000-000000000001"})
 	if err != nil {

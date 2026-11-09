@@ -11,5 +11,5 @@ import (
 // plateSightings — сценарии, которые вызывают RPC (реализация — usecase.PlateSightings).
 type plateSightings interface {
 	Search(ctx context.Context, q models.SearchOpts) (models.SearchPage, error)
-	ListSamePlate(ctx context.Context, id string) ([]models.PlateSighting, error)
+	ListSamePlate(ctx context.Context, o models.SamePlateOpts) ([]models.PlateSighting, error)
 }

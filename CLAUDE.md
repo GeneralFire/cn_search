@@ -34,17 +34,21 @@
   Применяет сервис `migrate` в docker-compose (при `make etc` / `make run`), вручную — `make migrate [CMD=status|down|…]`.
   В коде `be` миграций нет. До первого выката схему правим прямо в `0001_init.sql`; после — новая
   миграция (`make migration NAME=…`), применённые не менять.
-- Тестовые данные — `be/internal/test_utils` (goose-миграция `migrations/` с отдельной таблицей версий +
-  `s3/upload.sh` через aws-cli), заливает `make sample-data`. `fe` ничего из `be` не импортирует.
-- БД: `plates` (id uuid, plate, meta jsonb) и `plate_sightings` (id uuid, `plate_id → plates.id`).
-  Поиск — `to_tsvector('simple', p.plate) @@ plainto_tsquery('simple', <строка из rpc>)` с GIN-индексом,
-  без pg_trgm и без обработки ввода в Go. `Get(id)` — все фиксации того же номера.
+- Тестовые данные — миграция `be/migrations/0002_test_data.sql`, строки с `is_test_data = true`;
+  картинки — `be/internal/test_utils/s3` (сервис `s3-init`, aws-cli). Всё при `make etc`.
+  Бэк отдаёт тестовые данные только с заголовком `include-test-data` (metadata; clay кладёт туда
+  HTTP-заголовки) → `SearchOpts`/`SamePlateOpts.IncludeTestData` → фильтр в repository.
+  `fe` ничего из `be` не импортирует; шлёт заголовок при `VITE_INCLUDE_TEST_DATA=true`.
+- БД: `plates` (id uuid, plate, meta jsonb, is_test_data) и `plate_sightings` (id uuid, `plate_id → plates.id`,
+  is_test_data). Поиск — по началу слов: `to_tsvector('simple', p.plate) @@ to_tsquery(<слова:* через &>)`,
+  запрос собирается в SQL (не в Go), GIN-индекс, без pg_trgm. `Get(id)` — все фиксации того же номера.
 - Данные БД и S3 — bind mount в `./.data` (не коммитится), удаляет `make reset`.
 - `fe/` — TypeScript + Vite. TS-клиент `fe/src/api/generated.ts` генерируется из swagger: `make gen-ts`.
-  Поиск по номеру, бесконечная прокрутка + «Загрузить ещё», модалка «Уточнить» (заглушка).
+  Поиск по номеру, бесконечная прокрутка + «Загрузить ещё», модалка «Уточнить» (заглушка),
+  страница номера `/plate/<id фиксации>` (`src/plate.ts`, роутер на History API — `src/router.ts`).
 - `docker-compose.yml`: db (Postgres), s3 (RustFS — minio/minio больше нет на Docker Hub), be, fe.
   Запуск: `make run` (всё) или по частям `make etc` (db+s3+миграции), `make run-be`, `make run-fe`.
-  Тестовые данные: `make sample-data`.
+  Тестовые данные приходят миграцией при `make etc`.
 - Порядок при изменении API: proto → `make gen` → `implementation` → `usecase` → `repository`
   → `fe/src/api/index.ts` → `make test`.
 - Подробности — в `README.md`, особенности локальной машины — в `CLAUDE.local.md`.

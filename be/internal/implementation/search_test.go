@@ -7,6 +7,7 @@ import (
 
 	"github.com/gojuno/minimock/v3"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/GeneralFire/cn_search/be/internal/models"
@@ -30,6 +31,16 @@ func TestSearch(t *testing.T) {
 	it := resp.GetItems()[0]
 	if it.GetPhotoUrl() != "/s3/cars/car-1.png" || it.GetPlate() != "А123ВС 777" || !it.GetCreatedAt().AsTime().Equal(sighting.CreatedAt) {
 		t.Errorf("маппинг: %v", it)
+	}
+}
+
+func TestSearchPassesIncludeTestData(t *testing.T) {
+	svc, uc := newSvc(t)
+	uc.SearchMock.Expect(minimock.AnyContext, models.SearchOpts{Limit: DefaultLimit, IncludeTestData: true}).
+		Return(models.SearchPage{}, nil)
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("include-test-data", "1"))
+	if _, err := svc.Search(ctx, &pb.SearchRequest{}); err != nil {
+		t.Fatal(err)
 	}
 }
 

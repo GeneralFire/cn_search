@@ -35,9 +35,9 @@ func TestSearchInReadTx(t *testing.T) {
 func TestListSamePlateInReadTx(t *testing.T) {
 	tx := dbmocks.NewExecutorMock(t)
 	repo := mocks.NewRepositoryMock(t)
-	repo.ListSamePlateMock.Expect(minimock.AnyContext, tx, "id-1").Return([]models.PlateSighting{{ID: "id-4"}, {ID: "id-1"}}, nil)
+	repo.ListSamePlateMock.Expect(minimock.AnyContext, tx, models.SamePlateOpts{ID: "id-1", IncludeTestData: true}).Return([]models.PlateSighting{{ID: "id-4"}, {ID: "id-1"}}, nil)
 
-	items, err := New(readTx(t, tx), repo).ListSamePlate(context.Background(), "id-1")
+	items, err := New(readTx(t, tx), repo).ListSamePlate(context.Background(), models.SamePlateOpts{ID: "id-1", IncludeTestData: true})
 	if err != nil || len(items) != 2 {
 		t.Fatalf("ListSamePlate: %v %v", items, err)
 	}
@@ -48,7 +48,7 @@ func TestErrorPropagates(t *testing.T) {
 	repo := mocks.NewRepositoryMock(t)
 	repo.ListSamePlateMock.Return(nil, models.ErrNotFound)
 
-	if _, err := New(readTx(t, tx), repo).ListSamePlate(context.Background(), "id-1"); !errors.Is(err, models.ErrNotFound) {
+	if _, err := New(readTx(t, tx), repo).ListSamePlate(context.Background(), models.SamePlateOpts{ID: "id-1"}); !errors.Is(err, models.ErrNotFound) {
 		t.Errorf("err = %v, want ErrNotFound", err)
 	}
 }

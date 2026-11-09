@@ -5,7 +5,7 @@ import "time"
 
 // PlateSighting — фиксация номера: где и когда замечена машина (таблица plate_sightings).
 type PlateSighting struct {
-	ID        string    `db:"id"` // uuid
+	ID        string    `db:"id"`       // uuid
 	PlateID   string    `db:"plate_id"` // uuid номера в plates
 	Plate     string    `db:"plate"`    // госномер кириллицей: "А123ВС 777" (plates.plate, через JOIN)
 	PhotoKey  string    `db:"photo_key"`

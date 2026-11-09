@@ -1,5 +1,8 @@
 import "./style.css";
 import { ApiError, search, type Car } from "./api";
+import { onRoute, plateHref } from "./router";
+import { renderPlatePage } from "./plate";
+import { escapeHtml, formatDate, icon, plateHtml, plural } from "./ui";
 
 const PAGE_SIZE = 35; // кратно 5 и 7 — по числу колонок сетки
 const DEBOUNCE_MS = 250;
@@ -8,14 +11,6 @@ const DEBOUNCE_MS = 250;
 // Разметка
 // ---------------------------------------------------------------------------
 
-const icon = {
-  search: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>`,
-  plate: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M16 7v10"/></svg>`,
-  clear: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>`,
-  pin: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>`,
-  cal: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>`,
-  car: `<svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path d="M10 22h-4a2 2 0 0 1-2-2v-4c0-1.5 1-2.6 2.4-3l6.6-1.8 6-5.4A6 6 0 0 1 23 4.5h14a6 6 0 0 1 4.3 1.8L47 12l9 1.6c1.8.3 3 1.9 3 3.6V20a2 2 0 0 1-2 2h-3"/><circle cx="16" cy="23" r="5"/><circle cx="48" cy="23" r="5"/></svg>`,
-};
 
 function field(id: string, label: string, ico: string, placeholder: string): string {
   return `
@@ -31,10 +26,11 @@ function field(id: string, label: string, ico: string, placeholder: string): str
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
+  <div class="view" id="view-search">
   <header class="hero">
     <div class="hero__inner">
       <h1>Поиск по авто</h1>
-      <p>Введите госномер целиком или его часть: серию «А123ВС» или регион «777»</p>
+      <p>Введите госномер или его начало: «У54», «А123ВС 777», регион «77»</p>
       <form class="searchbar" role="search" onsubmit="return false">
         ${field("q-plate", "Номер", icon.plate, "А123ВС 777")}
         <span class="searchbar__go" aria-hidden="true">${icon.search}</span>
@@ -53,6 +49,9 @@ app.innerHTML = `
       <span class="more__info"></span>
     </div>
   </main>
+  </div>
+
+  <div class="view" id="view-plate" hidden></div>
 
   <dialog class="modal" aria-labelledby="modal-title">
     <form method="dialog" class="modal__inner">
@@ -77,27 +76,12 @@ const $moreInfo = app.querySelector<HTMLElement>(".more__info")!;
 const $modal = app.querySelector<HTMLDialogElement>(".modal")!;
 const $modalBody = app.querySelector<HTMLElement>(".modal__body")!;
 
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!
-  );
-}
-
-const dateFmt = new Intl.DateTimeFormat("ru-RU", {
-  day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit",
-});
-const formatDate = (iso: string) => (iso ? dateFmt.format(new Date(iso)) : "");
-
-function plateHtml(plate: string): string {
-  const [num = "", reg = ""] = plate.split(" ");
-  return `<span class="plate" aria-label="Госномер ${escapeHtml(plate)}"><span class="plate__num">${escapeHtml(num)}</span><span class="plate__reg">${escapeHtml(reg)}<span class="plate__rus">RUS<i class="plate__flag"></i></span></span></span>`;
-}
-
 function cardHtml(c: Car, i: number): string {
   const city = c.address.split(",")[0] ?? "";
   const photo = c.photoUrl ? `<img src="${escapeHtml(c.photoUrl)}" alt="" loading="lazy" />` : icon.car;
   return `
     <article class="card" style="animation-delay:${Math.min(i, 14) * 30}ms">
+      <a class="card__link" href="${plateHref(c.id)}" data-link aria-label="${escapeHtml(c.plate)}: все фиксации"></a>
       <div class="card__photo">${photo}<span class="card__badge">${escapeHtml(city)}</span></div>
       <div class="card__body">
         <p class="card__address">${icon.pin}${escapeHtml(c.address)}</p>
@@ -110,12 +94,6 @@ function cardHtml(c: Car, i: number): string {
     </article>`;
 }
 
-const plural = (n: number, one: string, few: string, many: string) => {
-  const m10 = n % 10, m100 = n % 100;
-  if (m10 === 1 && m100 !== 11) return one;
-  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
-  return many;
-};
 
 // ---------------------------------------------------------------------------
 // Состояние и загрузка страниц
@@ -191,7 +169,7 @@ async function loadMore(): Promise<void> {
 }
 
 function renderEmpty(): void {
-  $grid.innerHTML = `<div class="empty"><strong>Ничего не найдено</strong>Проверьте номер — ищется по серии целиком и региону</div>`;
+  $grid.innerHTML = `<div class="empty"><strong>Ничего не найдено</strong>Проверьте номер — ищется по началу серии и региона</div>`;
 }
 
 function newSearch(): void {
@@ -277,4 +255,31 @@ $moreBtn.addEventListener("click", () => {
   void loadMore();
 });
 
-newSearch();
+// ---------------------------------------------------------------------------
+// Маршруты: поиск ↔ страница номера. Поиск не пересоздаётся — только скрывается,
+// поэтому при возврате остаются запрос, загруженные карточки и позиция прокрутки.
+// ---------------------------------------------------------------------------
+
+const $viewSearch = app.querySelector<HTMLElement>("#view-search")!;
+const $viewPlate = app.querySelector<HTMLElement>("#view-plate")!;
+let searchStarted = false;
+let searchScroll = 0;
+
+onRoute((route) => {
+  if (route.name === "plate") {
+    if (!$viewSearch.hidden) searchScroll = window.scrollY;
+    $viewSearch.hidden = true;
+    $viewPlate.hidden = false;
+    void renderPlatePage($viewPlate, route.id);
+    return;
+  }
+  $viewPlate.hidden = true;
+  $viewPlate.innerHTML = "";
+  $viewSearch.hidden = false;
+  document.title = "Поиск по авто";
+  if (!searchStarted) {
+    searchStarted = true;
+    newSearch();
+  }
+  requestAnimationFrame(() => window.scrollTo({ top: searchScroll }));
+});

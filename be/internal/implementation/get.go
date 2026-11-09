@@ -17,7 +17,7 @@ func (s *CarSearch) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespons
 	if err := uuid.Validate(req.GetId()); err != nil {
 		return nil, status.Error(codes.InvalidArgument, "id: нужен uuid фиксации")
 	}
-	items, err := s.uc.ListSamePlate(ctx, req.GetId())
+	items, err := s.uc.ListSamePlate(ctx, models.SamePlateOpts{ID: req.GetId(), IncludeTestData: includeTestData(ctx)})
 	switch {
 	case errors.Is(err, models.ErrNotFound):
 		return nil, status.Error(codes.NotFound, "фиксация не найдена")

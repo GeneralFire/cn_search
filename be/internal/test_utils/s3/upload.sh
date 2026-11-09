@@ -1,6 +1,6 @@
 #!/bin/sh
 # Заливка тестовых картинок в S3: бакет cars с анонимным чтением, car-1..5.png.
-# Запускается сервисом sample-data-s3 (образ amazon/aws-cli), см. docker-compose.yml.
+# Запускается сервисом s3-init (образ amazon/aws-cli) при make etc; идемпотентен.
 set -eu
 aws() { command aws --endpoint-url "$S3_URL" "$@"; }
 

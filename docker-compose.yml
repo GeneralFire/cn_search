@@ -48,7 +48,7 @@ services:
       retries: 20
     restart: unless-stopped
 
-  # --- Миграции БД (goose): применяются при каждом `up`, be стартует после них ---
+  # --- Миграции БД (goose, вместе с тестовыми данными 0002_test_data): при `make etc` / `up` ---
   migrate:
     image: kukymbr/goose-docker:3.28.0
     environment:
@@ -63,26 +63,9 @@ services:
         condition: service_healthy
     restart: "no"
 
-  # --- Тестовые данные (make sample-data): миграция goose из be/internal/test_utils ---
-  # Отдельная таблица версий, чтобы не смешиваться со схемой (be/migrations).
-  sample-data-db:
-    image: kukymbr/goose-docker:3.28.0
-    profiles: [sample-data]
-    environment:
-      GOOSE_DRIVER: postgres
-      GOOSE_DBSTRING: *db-url
-      GOOSE_COMMAND: ${GOOSE_COMMAND:-up}
-      GOOSE_EXTRA_ARGS: -table=goose_test_data_version
-    volumes:
-      - ./be/internal/test_utils/migrations:/migrations:ro
-    depends_on:
-      db:
-        condition: service_healthy
-
-  # --- Тестовые картинки в S3 (make sample-data): бакет cars с анонимным чтением ---
-  sample-data-s3:
+  # --- Бакет cars с анонимным чтением + тестовые картинки (make etc), затем завершается ---
+  s3-init:
     image: amazon/aws-cli:2.39.7
-    profiles: [sample-data]
     entrypoint: ["/seed/upload.sh"]
     environment:
       S3_URL: http://s3:9000
@@ -102,7 +85,7 @@ services:
       PORT: "8080"
       GRPC_PORT: "8082"
       DATABASE_URL: *db-url
-      S3_PUBLIC_URL: /s3/cars # браузер получает картинки через прокси фронта (бакет заливает sample-data-s3)
+      S3_PUBLIC_URL: /s3/cars # браузер получает картинки через прокси фронта (бакет и картинки — s3-init)
     ports:
       - "127.0.0.1:8080:8080" # HTTP: /api/...
       - "127.0.0.1:8082:8082" # gRPC
@@ -113,6 +96,8 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+      s3-init:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   # --- Фронтенд (Vite, hot-reload) ---
@@ -120,6 +105,7 @@ services:
     build: ./fe
     environment:
       VITE_USE_POLLING: "true" # надёжный hot-reload с bind-mount на macOS
+      VITE_INCLUDE_TEST_DATA: "true" # фронт шлёт include-test-data: в базе пока только тестовые данные
       API_URL: http://be:8080
       S3_URL: http://s3:9000
     ports:

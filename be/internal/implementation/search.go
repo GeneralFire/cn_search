@@ -28,9 +28,10 @@ func (s *CarSearch) Search(ctx context.Context, req *pb.SearchRequest) (*pb.Sear
 	}
 
 	page, err := s.uc.Search(ctx, models.SearchOpts{
-		Plate:  req.GetPlate(),
-		Offset: int(req.GetOffset()),
-		Limit:  limit,
+		Plate:           req.GetPlate(),
+		Offset:          int(req.GetOffset()),
+		Limit:           limit,
+		IncludeTestData: includeTestData(ctx),
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, "не удалось выполнить поиск")

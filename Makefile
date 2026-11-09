@@ -35,12 +35,13 @@ help: ## список команд
 # ---------------------------------------------------------------- запуск
 
 .PHONY: run
-run: etc run-be run-fe ## поднять всё: БД и S3 (+ миграции), бэк, фронт
+run: etc run-be run-fe ## поднять всё: БД и S3 (+ миграции и тестовые данные), бэк, фронт
 
 .PHONY: etc
-etc: ## поднять БД и S3 и применить миграции (goose)
+etc: ## поднять БД и S3: миграции goose (схема + тестовые данные) и бакет с картинками
 	$(DC) up -d --wait db s3
 	$(DC) run --rm migrate
+	$(DC) run --rm s3-init
 
 .PHONY: run-be
 run-be: ## собрать и поднять только бэк (нужен `make etc`)
@@ -90,11 +91,6 @@ migration: ## создать миграцию: make migration NAME=add_vin
 	@n=$$(ls $(BE)/migrations/[0-9][0-9][0-9][0-9]_*.sql 2>/dev/null | wc -l | tr -d ' '); \
 	f=$(BE)/migrations/$$(printf '%04d' $$((n+1)))_$(NAME).sql; \
 	printf -- '-- +goose Up\n\n-- +goose Down\n' > $$f; echo "создан $$f"
-
-.PHONY: sample-data
-sample-data: etc ## тестовые данные из be/internal/test_utils: 600 фиксаций в БД + картинки в S3 [CMD=redo|down|status]
-	$(DC) run --rm -e GOOSE_COMMAND=$(or $(CMD),up) sample-data-db
-	$(DC) run --rm sample-data-s3
 
 .PHONY: psql
 psql: ## консоль БД
