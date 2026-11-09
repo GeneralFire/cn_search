@@ -21,21 +21,26 @@ type repository struct{}
 // New возвращает репозиторий; в usecase он передаётся как интерфейс из usecase/contracts.go.
 func New() *repository { return &repository{} }
 
-// tsQueryFrom — tsquery «по началу слов» из сырой строки ($1): слова по пробелам, в каждом только
-// буквы и цифры (остальное ломает синтаксис tsquery), к каждому ":*", слова через "&".
-// "А12 77" → to_tsquery('simple', 'А12:* & 77:*').
+// tsQueryFrom — tsquery «по началу слов» из сырой строки ($1): ключ plate_search_key (миграция 0001:
+// похожие символы сведены к одному — О/0, кириллица/латиница, дефис/пробел), слова по пробелам, в каждом
+// только буквы и цифры (остальное ломает синтаксис tsquery), к каждому ":*", слова через "&".
+// "о12 77" → to_tsquery('simple', '012:* & 77:*').
 const tsQueryFrom = `(
 	SELECT to_tsquery('simple', string_agg(w || ':*', ' & '))
-	FROM regexp_split_to_table(regexp_replace($1, '[^[:alnum:][:space:]]', '', 'g'), '\s+') AS w
+	FROM regexp_split_to_table(regexp_replace(plate_search_key($1), '[^[:alnum:][:space:]]', '', 'g'), '\s+') AS w
 	WHERE w <> ''
 )`
 
+// plateTSVector — tsvector номера для поиска. Индексы plates_plate_gin_idx и clarifications_plate_gin_idx
+// построены по этому же выражению (migrations/0001_init.sql) — иначе GIN не используется.
+func plateTSVector(col string) string {
+	return `to_tsvector('simple', plate_search_key(` + col + `))`
+}
+
 // plateMatch — фиксация подходит, если с запросом совпал её номер или номер в любом уточнении к ней.
-// Индексы plates_plate_gin_idx и clarifications_plate_gin_idx — выражения to_tsvector('simple', …)
-// должны совпадать с миграцией.
-const plateMatch = `(to_tsvector('simple', p.plate) @@ ` + tsQueryFrom + `
+var plateMatch = `(` + plateTSVector("p.plate") + ` @@ ` + tsQueryFrom + `
 	OR EXISTS (SELECT 1 FROM ` + clarificationsTable + ` c
-		WHERE c.sighting_id = s.id AND to_tsvector('simple', c.plate) @@ ` + tsQueryFrom + `))`
+		WHERE c.sighting_id = s.id AND ` + plateTSVector("c.plate") + ` @@ ` + tsQueryFrom + `))`
 
 // notTestData — без include-test-data строки с is_test_data не отдаются (ни фиксации, ни номера).
 const notTestData = `NOT s.is_test_data AND NOT p.is_test_data`

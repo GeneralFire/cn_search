@@ -1,6 +1,18 @@
 -- Номера (plates) и их фиксации (plate_sightings): где и когда замечена машина.
 
 -- +goose Up
+-- Ключ поиска по номеру: похожие символы сводятся к одному. Кириллические буквы номера
+-- (А В Е К М Н О Р С Т У Х) → латинские двойники, буква О (кир. и лат.) → цифра 0, дефис → пробел
+-- (иначе парсер tsvector читает "KDT-4419" как 'kdt' и '-4419'); регистр снимает
+-- to_tsvector/to_tsquery ('simple' приводит к нижнему). "О515НХ 52" → "0515HX 52", запросы
+-- "0515", "O515hx", "о515нх" дают тот же ключ. Применяется и в индексах, и к строке запроса
+-- (internal/repository/postgres.go) — выражения должны совпадать, иначе GIN не используется.
+-- +goose StatementBegin
+CREATE FUNCTION plate_search_key(s text) RETURNS text
+LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE
+RETURN translate(s, 'АВЕКМНОРСТУХавекмнорстухOo-', 'ABEKMH0PCTYXabekmh0pctyx00 ');
+-- +goose StatementEnd
+
 CREATE TABLE plates (
     id    uuid  PRIMARY KEY DEFAULT gen_random_uuid(),
     plate text  NOT NULL UNIQUE, -- госномер кириллицей: "А123ВС 777"
@@ -9,7 +21,7 @@ CREATE TABLE plates (
 );
 
 -- Поиск по номеру (rpc Search). Выражение должно совпадать с запросом в internal/repository/postgres.go.
-CREATE INDEX plates_plate_gin_idx ON plates USING gin (to_tsvector('simple', plate));
+CREATE INDEX plates_plate_gin_idx ON plates USING gin (to_tsvector('simple', plate_search_key(plate)));
 
 CREATE TABLE plate_sightings (
     id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -42,10 +54,11 @@ CREATE TABLE clarifications (
 
 CREATE INDEX clarifications_sighting_id_idx ON clarifications (sighting_id);
 -- Поиск по уточнённым номерам (rpc Search) — то же выражение, что для plates.
-CREATE INDEX clarifications_plate_gin_idx ON clarifications USING gin (to_tsvector('simple', plate));
+CREATE INDEX clarifications_plate_gin_idx ON clarifications USING gin (to_tsvector('simple', plate_search_key(plate)));
 
 -- +goose Down
 DROP TABLE clarifications;
 DROP TYPE clarification_status;
 DROP TABLE plate_sightings;
 DROP TABLE plates;
+DROP FUNCTION plate_search_key(text);
