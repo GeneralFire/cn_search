@@ -1,6 +1,6 @@
 import "./style.css";
 import { ApiError, search, type Car } from "./api";
-import { onRoute, plateHref } from "./router";
+import { navigate, onRoute, plateHref } from "./router";
 import { renderPlatePage } from "./plate";
 import { escapeHtml, formatDate, icon, plateHtml, plural } from "./ui";
 
@@ -270,11 +270,22 @@ onRoute((route) => {
     if (!$viewSearch.hidden) searchScroll = window.scrollY;
     $viewSearch.hidden = true;
     $viewPlate.hidden = false;
-    void renderPlatePage($viewPlate, route.id);
+    void renderPlatePage($viewPlate, route.id, {
+      open: (id) => navigate(plateHref(id)),
+      // Enter в поиске шапки — полная выдача на главной с этим запросом.
+      submit: (query) => {
+        $plate.value = query;
+        app.querySelector<HTMLButtonElement>(`[data-clear="${$plate.id}"]`)!.hidden = !query;
+        searchStarted = true;
+        searchScroll = 0;
+        newSearch();
+        navigate("/");
+      },
+    });
     return;
   }
   $viewPlate.hidden = true;
-  $viewPlate.innerHTML = "";
+  $viewPlate.querySelector(".pp")?.replaceChildren(); // шапку с поиском оставляем
   $viewSearch.hidden = false;
   document.title = "Поиск по авто";
   if (!searchStarted) {

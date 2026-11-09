@@ -1,18 +1,25 @@
 // Страница номера: все фиксации номера — где и когда его видели.
 import { ApiError, plateSightings, type Car } from "./api";
-import { back } from "./router";
+import { mountQuickSearch, type QuickSearchHandlers } from "./quicksearch";
 import { escapeHtml, formatAgo, formatDate, formatShortDate, formatTime, icon, plateHtml, plural } from "./ui";
 
 let ctrl: AbortController | null = null;
 
 const city = (address: string) => address.split(",")[0]?.trim() ?? "";
 
-/** Рисует страницу номера в root по id любой его фиксации. */
-export async function renderPlatePage(root: HTMLElement, id: string): Promise<void> {
+/** Рисует страницу номера в root по id любой его фиксации. Шапка с поиском создаётся один раз
+ *  и не перерисовывается при переходе между номерами — меняется только содержимое main. */
+export async function renderPlatePage(root: HTMLElement, id: string, handlers: QuickSearchHandlers): Promise<void> {
   ctrl?.abort();
   const my = (ctrl = new AbortController());
 
-  root.innerHTML = shell(`
+  if (!root.querySelector(".pp-bar")) {
+    root.innerHTML = `<header class="pp-bar"></header><main class="pp"></main>`;
+    mountQuickSearch(root.querySelector<HTMLElement>(".pp-bar")!, handlers);
+  }
+  const $main = root.querySelector<HTMLElement>(".pp")!;
+
+  $main.innerHTML = `
     <div class="pp-hero pp-hero--loading">
       <div class="skeleton skeleton--plate"></div>
       <div class="skeleton skeleton--line"></div>
@@ -20,39 +27,24 @@ export async function renderPlatePage(root: HTMLElement, id: string): Promise<vo
     <div class="pp-grid">
       <div class="skeleton skeleton--photo"></div>
       <div class="skeleton skeleton--photo"></div>
-    </div>`);
-  bindBack(root);
+    </div>`;
   document.title = "Номер — Поиск по авто";
+  window.scrollTo({ top: 0 });
 
   try {
     const items = await plateSightings(id, my.signal);
     if (my.signal.aborted) return;
-    root.innerHTML = shell(pageHtml(items, id));
+    $main.innerHTML = pageHtml(items, id);
     document.title = `${items[0].plate} — Поиск по авто`;
-    root.querySelector(".tl__item.is-current")?.scrollIntoView({ block: "nearest" });
   } catch (e) {
     if (my.signal.aborted) return;
     const notFound = e instanceof ApiError && e.status === 404;
-    root.innerHTML = shell(`
+    $main.innerHTML = `
       <div class="empty pp-empty">
         <strong>${notFound ? "Фиксация не найдена" : "Не удалось загрузить"}</strong>
         ${notFound ? "Возможно, ссылка устарела." : escapeHtml(e instanceof ApiError ? e.message : "Сервер недоступен")}
-      </div>`);
+      </div>`;
   }
-  bindBack(root);
-  window.scrollTo({ top: 0 });
-}
-
-function shell(body: string): string {
-  return `
-    <header class="pp-bar">
-      <button class="pp-back" type="button">${icon.back}К поиску</button>
-    </header>
-    <main class="pp">${body}</main>`;
-}
-
-function bindBack(root: HTMLElement): void {
-  root.querySelector(".pp-back")?.addEventListener("click", back);
 }
 
 function pageHtml(items: Car[], currentId: string): string {

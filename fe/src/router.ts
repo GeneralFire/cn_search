@@ -24,12 +24,6 @@ export function navigate(path: string): void {
   listener(parseRoute());
 }
 
-/** Назад к поиску: если пришли из приложения — history.back() (вернутся запрос и прокрутка). */
-export function back(): void {
-  if (history.state?.fromApp) history.back();
-  else navigate("/");
-}
-
 addEventListener("popstate", () => listener(parseRoute()));
 
 // Ссылки с data-link открываются без перезагрузки страницы (кроме Ctrl/⌘/Shift-кликов).
