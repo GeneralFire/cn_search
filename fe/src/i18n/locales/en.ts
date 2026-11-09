@@ -83,4 +83,11 @@ export const en: Dict = {
   "lightbox.counter": "{n} / {total}",
   "lightbox.open": "Open this sighting →",
   "lightbox.here": "This sighting is open",
+
+  // Карта на странице номера (map.ts)
+  "map.title": "On the map",
+  "map.aria": "Map of plate sightings",
+  "map.marker": "{n}. {date} — {address}",
+  "map.partial": "{shown} of {total} sightings on the map: the rest have no coordinates",
+  "map.failed": "Could not load the map",
 };

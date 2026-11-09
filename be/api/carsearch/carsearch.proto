@@ -50,6 +50,9 @@ message PlateSighting {
   string plate_region = 8;
   // Язык, на котором записан адрес: "ru", "en", "de", …
   string address_locale = 9;
+  // Координаты места фиксации (WGS 84, градусы); не заданы — точка неизвестна.
+  optional double lat = 10;
+  optional double lon = 11;
 }
 
 // Формат номерного знака — от него зависит, как его рисовать.

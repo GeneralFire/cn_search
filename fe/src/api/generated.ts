@@ -85,6 +85,13 @@ export interface CarsearchPlateSighting {
   createdAt?: string;
   /** uuid фиксации. */
   id?: string;
+  /**
+   * Координаты места фиксации (WGS 84, градусы); не заданы — точка неизвестна.
+   * @format double
+   */
+  lat?: number;
+  /** @format double */
+  lon?: number;
   /** URL полного фото (S3). */
   photoUrl?: string;
   /** Госномер кириллицей: "А123ВС 777". */

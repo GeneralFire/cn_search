@@ -83,4 +83,11 @@ export const de: Dict = {
   "lightbox.counter": "{n} / {total}",
   "lightbox.open": "Diese Sichtung öffnen →",
   "lightbox.here": "Diese Sichtung ist geöffnet",
+
+  // Карта на странице номера (map.ts)
+  "map.title": "Auf der Karte",
+  "map.aria": "Karte der Sichtungen",
+  "map.marker": "{n}. {date} — {address}",
+  "map.partial": "{shown} von {total} Sichtungen auf der Karte: die übrigen haben keine Koordinaten",
+  "map.failed": "Karte konnte nicht geladen werden",
 };

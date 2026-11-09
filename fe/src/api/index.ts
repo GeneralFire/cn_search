@@ -16,6 +16,9 @@ export type Car = Required<Pick<CarsearchPlateSighting, "id" | "plate" | "addres
   Pick<CarsearchPlateSighting, "photoUrl" | "thumbUrl" | "addressLocale" | "plateRegion"> & {
     /** Формат номера: "ru" | "eu" | "us" | "" (неизвестен). */
     plateType: string;
+    /** Координаты места фиксации (WGS 84); нет — точка неизвестна (на карте не показывается). */
+    lat?: number;
+    lon?: number;
   };
 
 const plateTypes: Record<string, string> = {
@@ -55,6 +58,8 @@ function toCar(c: CarsearchPlateSighting): Car {
     thumbUrl: c.thumbUrl,
     plateType: plateTypes[c.plateType ?? ""] ?? "",
     plateRegion: c.plateRegion,
+    // Координаты — только парой: optional double в proto3 JSON приходит, только если задан.
+    ...(c.lat != null && c.lon != null ? { lat: c.lat, lon: c.lon } : {}),
   };
 }
 

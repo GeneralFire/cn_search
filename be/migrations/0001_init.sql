@@ -31,7 +31,10 @@ CREATE TABLE plate_sightings (
     photo_key       text   NOT NULL DEFAULT '', -- ключ полного фото в S3-бакете
     photo_thumb_key text   NOT NULL DEFAULT '', -- ключ миниатюры в S3-бакете
     created_at timestamptz NOT NULL DEFAULT now(), -- когда номер зафиксирован
-    is_test_data boolean   NOT NULL DEFAULT false  -- тестовые данные (миграция 0002_test_data)
+    lat        double precision, -- координаты места фиксации (WGS 84, градусы); NULL — неизвестны
+    lon        double precision,
+    is_test_data boolean   NOT NULL DEFAULT false, -- тестовые данные (миграция 0002_test_data)
+    CHECK ((lat IS NULL) = (lon IS NULL) AND lat BETWEEN -90 AND 90 AND lon BETWEEN -180 AND 180)
 );
 
 -- Выдача: от новых к старым.

@@ -16,4 +16,7 @@ type PlateSighting struct {
 	PlateType     string `db:"plate_type"`     // plates.meta->>'type': "ru", "eu", "us"; "" — неизвестен
 	PlateRegion   string `db:"plate_region"`   // plates.meta->>'region': "D", "CA", …
 	AddressLocale string `db:"address_locale"` // язык адреса: "ru", "en", "de", …
+
+	Lat *float64 `db:"lat"` // широта места фиксации (WGS 84); nil — координат нет
+	Lon *float64 `db:"lon"` // долгота
 }

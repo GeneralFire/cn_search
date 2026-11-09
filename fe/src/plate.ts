@@ -6,6 +6,7 @@ import { escapeHtml, formatAgo, formatDate, formatShortDate, formatTime, icon, m
 import { t, tp } from "./i18n/i18n";
 import { mountSettings } from "./settings";
 import { openLightbox } from "./lightbox";
+import { mountPlateMap, plateMapHtml } from "./map";
 
 /** Сколько карточек показывать в «Свежих фиксациях» (ручка отдаёт не больше). */
 const SEE_ALSO_LIMIT = 21;
@@ -51,6 +52,7 @@ export async function renderPlatePage(root: HTMLElement, id: string, handlers: Q
     if (my.signal.aborted) return;
     $main.innerHTML = pageHtml(items, id);
     void loadSeeAlso($main, id, my.signal);
+    void mountPlateMap($main, items, id, my.signal);
     $main.querySelector<HTMLButtonElement>("[data-zoom]")?.addEventListener("click", (e) =>
       openLightbox(items, id, e.currentTarget as HTMLElement)
     );
@@ -95,6 +97,7 @@ function pageHtml(items: Car[], currentId: string): string {
     </section>
 
     <div class="pp-grid">
+      <div class="pp-aside">
       <figure class="pp-photo">
         ${
           shown.photoUrl
@@ -109,6 +112,8 @@ function pageHtml(items: Car[], currentId: string): string {
           <time datetime="${escapeHtml(shown.createdAt)}">${escapeHtml(formatDate(shown.createdAt))}</time>
         </figcaption>
       </figure>
+      ${plateMapHtml(items)}
+      </div>
 
       <section class="pp-history" aria-labelledby="pp-history-title">
         <h2 id="pp-history-title">${t("history.title")}</h2>
@@ -129,7 +134,7 @@ function timelineItem(c: Car, current: boolean): string {
   const { src, full } = photoAttrs(c);
   const thumb = src ? `<img src="${escapeHtml(src)}" alt="" loading="lazy" />` : icon.car;
   return `
-    <li class="tl__item${current ? " is-current" : ""}">
+    <li class="tl__item${current ? " is-current" : ""}" data-id="${escapeHtml(c.id)}">
       <a class="tl__link" href="${plateHref(c.id)}" data-link${current ? ` aria-current="page"` : ""}
          aria-label="${escapeHtml(t("history.item", { date: formatShortDate(c.createdAt), address: c.address }))}"></a>
       <a class="tl__thumb" href="${plateHref(c.id)}" data-link tabindex="-1"${full ? ` data-full="${escapeHtml(full)}"` : ""}>${thumb}</a>

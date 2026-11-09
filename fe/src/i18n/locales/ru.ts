@@ -83,4 +83,11 @@ export const ru = {
   "lightbox.counter": "{n} / {total}",
   "lightbox.open": "Открыть эту фиксацию →",
   "lightbox.here": "Эта фиксация открыта",
+
+  // Карта на странице номера (map.ts)
+  "map.title": "На карте",
+  "map.aria": "Карта фиксаций номера",
+  "map.marker": "{n}. {date} — {address}",
+  "map.partial": "На карте {shown} из {total} фиксаций: у остальных нет координат",
+  "map.failed": "Не удалось загрузить карту",
 } as const;

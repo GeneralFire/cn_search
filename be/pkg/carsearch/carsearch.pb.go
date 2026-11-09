@@ -145,6 +145,9 @@ type PlateSighting struct {
 	PlateRegion string `protobuf:"bytes,8,opt,name=plate_region,json=plateRegion,proto3" json:"plate_region,omitempty"`
 	// Язык, на котором записан адрес: "ru", "en", "de", …
 	AddressLocale string `protobuf:"bytes,9,opt,name=address_locale,json=addressLocale,proto3" json:"address_locale,omitempty"`
+	// Координаты места фиксации (WGS 84, градусы); не заданы — точка неизвестна.
+	Lat           *float64 `protobuf:"fixed64,10,opt,name=lat,proto3,oneof" json:"lat,omitempty"`
+	Lon           *float64 `protobuf:"fixed64,11,opt,name=lon,proto3,oneof" json:"lon,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -240,6 +243,20 @@ func (x *PlateSighting) GetAddressLocale() string {
 		return x.AddressLocale
 	}
 	return ""
+}
+
+func (x *PlateSighting) GetLat() float64 {
+	if x != nil && x.Lat != nil {
+		return *x.Lat
+	}
+	return 0
+}
+
+func (x *PlateSighting) GetLon() float64 {
+	if x != nil && x.Lon != nil {
+		return *x.Lon
+	}
+	return 0
 }
 
 type SearchRequest struct {
@@ -774,7 +791,7 @@ var File_carsearch_carsearch_proto protoreflect.FileDescriptor
 
 const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\n" +
-	"\x19carsearch/carsearch.proto\x12\tcarsearch\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc3\x02\n" +
+	"\x19carsearch/carsearch.proto\x12\tcarsearch\x1a\x1fgoogle/protobuf/timestamp.proto\"\x81\x03\n" +
 	"\rPlateSighting\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tphoto_url\x18\x02 \x01(\tR\bphotoUrl\x12\x18\n" +
@@ -786,7 +803,12 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\n" +
 	"plate_type\x18\a \x01(\x0e2\x14.carsearch.PlateTypeR\tplateType\x12!\n" +
 	"\fplate_region\x18\b \x01(\tR\vplateRegion\x12%\n" +
-	"\x0eaddress_locale\x18\t \x01(\tR\raddressLocale\"S\n" +
+	"\x0eaddress_locale\x18\t \x01(\tR\raddressLocale\x12\x15\n" +
+	"\x03lat\x18\n" +
+	" \x01(\x01H\x00R\x03lat\x88\x01\x01\x12\x15\n" +
+	"\x03lon\x18\v \x01(\x01H\x01R\x03lon\x88\x01\x01B\x06\n" +
+	"\x04_latB\x06\n" +
+	"\x04_lon\"S\n" +
 	"\rSearchRequest\x12\x14\n" +
 	"\x05plate\x18\x01 \x01(\tR\x05plate\x12\x16\n" +
 	"\x06offset\x18\x02 \x01(\x05R\x06offset\x12\x14\n" +
@@ -902,6 +924,7 @@ func file_carsearch_carsearch_proto_init() {
 	if File_carsearch_carsearch_proto != nil {
 		return
 	}
+	file_carsearch_carsearch_proto_msgTypes[0].OneofWrappers = []any{}
 	file_carsearch_carsearch_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

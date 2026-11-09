@@ -83,4 +83,11 @@ export const uk: Dict = {
   "lightbox.counter": "{n} / {total}",
   "lightbox.open": "Відкрити цю фіксацію →",
   "lightbox.here": "Цю фіксацію відкрито",
+
+  // Карта на странице номера (map.ts)
+  "map.title": "На мапі",
+  "map.aria": "Мапа фіксацій номера",
+  "map.marker": "{n}. {date} — {address}",
+  "map.partial": "На мапі {shown} з {total} фіксацій: решта без координат",
+  "map.failed": "Не вдалося завантажити мапу",
 };

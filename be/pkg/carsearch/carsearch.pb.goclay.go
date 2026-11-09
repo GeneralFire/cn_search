@@ -895,6 +895,15 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         "addressLocale": {
           "type": "string",
           "title": "Язык, на котором записан адрес: \"ru\", \"en\", \"de\", …"
+        },
+        "lat": {
+          "type": "number",
+          "format": "double",
+          "description": "Координаты места фиксации (WGS 84, градусы); не заданы — точка неизвестна."
+        },
+        "lon": {
+          "type": "number",
+          "format": "double"
         }
       },
       "description": "PlateSighting — фиксация номера: где и когда замечена машина."

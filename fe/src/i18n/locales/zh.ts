@@ -84,4 +84,11 @@ export const zh: Dict = {
   "lightbox.counter": "{n} / {total}",
   "lightbox.open": "打开此记录 →",
   "lightbox.here": "当前已打开此记录",
+
+  // Карта на странице номера (map.ts)
+  "map.title": "地图",
+  "map.aria": "车牌记录地图",
+  "map.marker": "{n}. {date} — {address}",
+  "map.partial": "地图上显示 {shown}/{total} 条记录：其余没有坐标",
+  "map.failed": "无法加载地图",
 };
