@@ -63,8 +63,14 @@ export function tabsHtml(active: Market, panelId: string): string {
   }).join("");
 }
 
-/** Сколько колонок сейчас у CSS-сетки (auto-fill даёт дорожки и без карточек). */
+/** Сколько колонок помещается в сетку .grid — по тем же переменным, что и CSS (--min-card, --max-cols,
+ *  --gap): floor((ширина + gap) / (min-card + gap)), от 1 до max-cols. Считается от ширины, а не от
+ *  grid-template-columns: блок «для вас» — flex (неполный последний ряд растягивается), дорожек у него нет. */
 export function gridColumns(grid: HTMLElement): number {
-  const cols = getComputedStyle(grid).gridTemplateColumns.split(" ").filter((s) => s && s !== "none");
-  return Math.max(1, cols.length);
+  const cs = getComputedStyle(grid);
+  const px = (name: string, def: number) => parseFloat(cs.getPropertyValue(name)) || def;
+  const gap = px("--gap", 16);
+  const min = Math.min(px("--min-card", 400), grid.clientWidth);
+  const cols = Math.floor((grid.clientWidth + gap) / (min + gap));
+  return Math.max(1, Math.min(cols, px("--max-cols", 7)));
 }

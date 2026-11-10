@@ -29,6 +29,14 @@
 .fy__title .flag { width: 20px; height: 13px; border-radius: 2px; }
 .fy__market { color: var(--accent); }
 .fy__sub { color: var(--muted); font-size: 0.9rem; }
+/* «Для вас» — не grid, а flex с переносом: в полных рядах столько же карточек той же ширины, что и в
+   сетке ленты (flex-basis = ширина колонки .grid), а неполный последний ряд растягивается на всю ширину.
+   Колонки для запроса «2 ряда» считает gridColumns() в home.ts по тем же переменным. */
+.grid.fy__grid { display: flex; flex-wrap: wrap; }
+.fy__grid > .card {
+  flex: 1 1 calc(max(min(var(--min-card), 100%), (100% - (var(--max-cols) - 1) * var(--gap)) / var(--max-cols)) - 0.05px);
+  min-width: 0;
+}
 /* Пока «для вас» грузится — место под два ряда не прыгает */
 .fy__grid:empty { min-height: 120px; }
 
