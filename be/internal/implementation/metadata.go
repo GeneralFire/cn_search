@@ -4,10 +4,15 @@ import (
 	"context"
 	"crypto/sha256"
 	"crypto/subtle"
+	"errors"
+	"net/http"
+	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+
+	"github.com/GeneralFire/cn_search/be/internal/models"
 )
 
 // includeTestDataHeader — заголовок (gRPC metadata), с которым ответы включают тестовые данные
@@ -49,4 +54,52 @@ func requireAdmin(ctx context.Context, want string) error {
 		return denied
 	}
 	return nil
+}
+
+// userTokenCookie — cookie с токеном пользователя (ставит фронт); clay кладёт заголовок cookie в metadata.
+const userTokenCookie = "cs_token"
+
+// userToken — токен пользователя из metadata: сначала cookie cs_token, затем authorization: Bearer <токен>.
+// "" — токена нет.
+func userToken(ctx context.Context) string {
+	md, _ := metadata.FromIncomingContext(ctx)
+	for _, line := range md.Get("cookie") {
+		cookies, err := http.ParseCookie(line)
+		if err != nil {
+			continue
+		}
+		for _, c := range cookies {
+			if c.Name == userTokenCookie && c.Value != "" {
+				return c.Value
+			}
+		}
+	}
+	for _, v := range md.Get("authorization") {
+		if scheme, tok, ok := strings.Cut(strings.TrimSpace(v), " "); ok && strings.EqualFold(scheme, "Bearer") {
+			if tok = strings.TrimSpace(tok); tok != "" {
+				return tok
+			}
+		}
+	}
+	return ""
+}
+
+// currentUser — пользователь по токену из metadata (userToken). Нет токена или он неверный —
+// Unauthenticated; сбой БД — Internal. Тестовые пользователи — только с заголовком include-test-data.
+func (s *CarSearch) currentUser(ctx context.Context) (models.User, error) {
+	if s.accounts == nil {
+		return models.User{}, status.Error(codes.Unimplemented, "аккаунты не включены")
+	}
+	tok := userToken(ctx)
+	if tok == "" {
+		return models.User{}, status.Error(codes.Unauthenticated, "нужен токен: cookie cs_token или Authorization: Bearer")
+	}
+	u, err := s.accounts.UserByToken(ctx, tok, includeTestData(ctx))
+	switch {
+	case errors.Is(err, models.ErrNotFound):
+		return models.User{}, status.Error(codes.Unauthenticated, "неверный токен")
+	case err != nil:
+		return models.User{}, status.Error(codes.Internal, "не удалось проверить токен")
+	}
+	return u, nil
 }

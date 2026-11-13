@@ -1,6 +1,7 @@
 package implementation
 
 //go:generate minimock -i plateSightings -o ./mocks/plate_sightings_mock.go -n PlateSightingsMock -p mocks
+//go:generate minimock -i accounts -o ./mocks/accounts_mock.go -n AccountsMock -p mocks
 //go:generate minimock -i complaints -o ./mocks/complaints_mock.go -n ComplaintsMock -p mocks
 //go:generate minimock -i admin -o ./mocks/admin_mock.go -n AdminMock -p mocks
 
@@ -30,4 +31,14 @@ type admin interface {
 	HideSighting(ctx context.Context, id string, hidden bool) (models.PlateSighting, error)
 	SetClarificationStatus(ctx context.Context, id string, st models.ClarificationStatus) (models.Clarification, error)
 	ListClarifications(ctx context.Context, o models.ListClarificationsOpts) (models.ClarificationsPage, error)
+}
+
+// accounts — пользователи, тарифы и мок-оплата (реализация — usecase.Accounts).
+type accounts interface {
+	Register(ctx context.Context, email string) (string, models.User, error)
+	UserByToken(ctx context.Context, token string, includeTestData bool) (models.User, error)
+	Plans() []models.PlanInfo
+	CreatePayment(ctx context.Context, userID string, plan models.Plan) (models.Payment, error)
+	ConfirmMockPayment(ctx context.Context, userID, paymentID string, success bool) (models.Payment, error)
+	ListPayments(ctx context.Context, userID string) ([]models.Payment, error)
 }

@@ -14,6 +14,10 @@ export type CarSearchServiceClarifyData = CarsearchClarifyResponse;
 
 export type CarSearchServiceComplainData = CarsearchComplaint;
 
+export type CarSearchServiceConfirmMockPaymentData = CarsearchPayment;
+
+export type CarSearchServiceCreatePaymentData = CarsearchCreatePaymentResponse;
+
 export type CarSearchServiceGetData = CarsearchGetResponse;
 
 export type CarSearchServiceHideSightingData = CarsearchPlateSighting;
@@ -24,7 +28,14 @@ export type CarSearchServiceListClarificationsData =
 export type CarSearchServiceListComplaintsData =
   CarsearchListComplaintsResponse;
 
+export type CarSearchServiceListMyPaymentsData =
+  CarsearchListMyPaymentsResponse;
+
 export type CarSearchServiceMeData = CarsearchMeResponse;
+
+export type CarSearchServicePlansData = CarsearchPlansResponse;
+
+export type CarSearchServiceRegisterData = CarsearchRegisterResponse;
 
 export type CarSearchServiceResolveComplaintData = CarsearchComplaint;
 
@@ -128,6 +139,25 @@ export enum CarsearchComplaintStatus {
   COMPLAINT_STATUS_RESOLVED = "COMPLAINT_STATUS_RESOLVED",
 }
 
+export interface CarsearchConfirmMockPaymentRequest {
+  paymentId?: string;
+  /** true — «Оплатить», false — «Отменить». */
+  success?: boolean;
+}
+
+export interface CarsearchCreatePaymentRequest {
+  /** Покупаемый тариф; сейчас только PRO. */
+  plan?: CarsearchUserPlan;
+}
+
+export interface CarsearchCreatePaymentResponse {
+  /** Куда перейти для оплаты: "/pay/mock/<id>". */
+  checkoutUrl?: string;
+  /** Payment — платёж за тариф. */
+  payment?: CarsearchPayment;
+  paymentId?: string;
+}
+
 export interface CarsearchGetRequest {
   /** uuid любой фиксации номера. */
   id?: string;
@@ -207,11 +237,85 @@ export interface CarsearchListComplaintsResponse {
   total?: number;
 }
 
+export type CarsearchListMyPaymentsRequest = object;
+
+export interface CarsearchListMyPaymentsResponse {
+  items?: CarsearchPayment[];
+}
+
 export type CarsearchMeRequest = object;
 
 export interface CarsearchMeResponse {
-  /** Заголовок admin-token верный: можно включать админ-режим. */
+  /** Токен пользователя верный; иначе user не задан. */
+  authenticated?: boolean;
+  /** Заголовок admin-token верный. */
   isAdmin?: boolean;
+  /** User — пользователь. */
+  user?: CarsearchUser;
+}
+
+/** Payment — платёж за тариф. */
+export interface CarsearchPayment {
+  /** @format int32 */
+  amountCents?: number;
+  /**
+   * Когда оплачен или отменён.
+   * @format date-time
+   */
+  confirmedAt?: string;
+  /** @format date-time */
+  createdAt?: string;
+  currency?: string;
+  id?: string;
+  /** Тариф пользователя. */
+  plan?: CarsearchUserPlan;
+  /** Платёжный провайдер; пока только "mock". */
+  provider?: string;
+  /** Статус платежа. */
+  status?: CarsearchPaymentStatus;
+}
+
+/**
+ * Статус платежа.
+ * @default "PAYMENT_STATUS_UNSPECIFIED"
+ */
+export enum CarsearchPaymentStatus {
+  PAYMENT_STATUS_UNSPECIFIED = "PAYMENT_STATUS_UNSPECIFIED",
+  PAYMENT_STATUS_PENDING = "PAYMENT_STATUS_PENDING",
+  PAYMENT_STATUS_SUCCEEDED = "PAYMENT_STATUS_SUCCEEDED",
+  PAYMENT_STATUS_CANCELED = "PAYMENT_STATUS_CANCELED",
+}
+
+/** PlanInfo — тариф. */
+export interface CarsearchPlanInfo {
+  /**
+   * Цена за период в копейках/центах; 0 — бесплатно.
+   * @format int32
+   */
+  amountCents?: number;
+  /** Валюта ISO 4217: "RUB". */
+  currency?: string;
+  /** Ключи возможностей: "search", "uploads_limited", "pro_badge", "unlimited_uploads", "notifications". */
+  features?: string[];
+  /**
+   * Период в днях; 0 — бессрочно.
+   * @format int32
+   */
+  periodDays?: number;
+  /** Тариф пользователя. */
+  plan?: CarsearchUserPlan;
+  title?: string;
+  /**
+   * Лимит загрузок фото в сутки; 0 — без ограничений.
+   * @format int32
+   */
+  uploadsPerDay?: number;
+}
+
+export type CarsearchPlansRequest = object;
+
+export interface CarsearchPlansResponse {
+  items?: CarsearchPlanInfo[];
 }
 
 /** PlateSighting — фиксация номера: где и когда замечена машина. */
@@ -258,6 +362,18 @@ export enum CarsearchPlateType {
   PLATE_TYPE_US = "PLATE_TYPE_US",
   PLATE_TYPE_UA = "PLATE_TYPE_UA",
   PLATE_TYPE_CN = "PLATE_TYPE_CN",
+}
+
+export interface CarsearchRegisterRequest {
+  /** Необязательно; уникален. */
+  email?: string;
+}
+
+export interface CarsearchRegisterResponse {
+  /** Токен входа "cs_…" — показывается один раз, восстановить нельзя. */
+  token?: string;
+  /** User — пользователь. */
+  user?: CarsearchUser;
 }
 
 export interface CarsearchResolveComplaintRequest {
@@ -330,6 +446,33 @@ export interface CarsearchSetClarificationStatusRequest {
   id?: string;
   /** ACCEPTED или NOT_ACCEPTED. */
   status?: CarsearchClarificationStatus;
+}
+
+/** User — пользователь. */
+export interface CarsearchUser {
+  /** @format date-time */
+  createdAt?: string;
+  /** E-mail; пусто — не указан. */
+  email?: string;
+  /** uuid пользователя. */
+  id?: string;
+  /** Действующий тариф (Pro с истёкшим сроком — уже Free). */
+  plan?: CarsearchUserPlan;
+  /**
+   * До какого момента действует Pro; не задано — не покупал.
+   * @format date-time
+   */
+  proUntil?: string;
+}
+
+/**
+ * Тариф пользователя.
+ * @default "USER_PLAN_UNSPECIFIED"
+ */
+export enum CarsearchUserPlan {
+  USER_PLAN_UNSPECIFIED = "USER_PLAN_UNSPECIFIED",
+  USER_PLAN_FREE = "USER_PLAN_FREE",
+  USER_PLAN_PRO = "USER_PLAN_PRO",
 }
 
 export type QueryParamsType = Record<string | number, any>;
@@ -641,6 +784,48 @@ export class CarSearchApi<
      * No description
      *
      * @tags CarSearchService
+     * @name CarSearchServiceConfirmMockPayment
+     * @summary ConfirmMockPayment — итог демо-оплаты: success — платёж оплачен, Pro продлён на 30 дней от max(сейчас, pro_until); иначе — отменён. Только свой платёж в статусе pending. Нужен токен.
+     * @request POST:/carsearch.CarSearchService/ConfirmMockPayment
+     */
+    carSearchServiceConfirmMockPayment: (
+      body: CarsearchConfirmMockPaymentRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceConfirmMockPaymentData, any>({
+        path: `/carsearch.CarSearchService/ConfirmMockPayment`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
+     * @name CarSearchServiceCreatePayment
+     * @summary CreatePayment — платёж за тариф и адрес кассы (пока демо-касса /pay/mock/<id>). Нужен токен пользователя, иначе UNAUTHENTICATED.
+     * @request POST:/carsearch.CarSearchService/CreatePayment
+     */
+    carSearchServiceCreatePayment: (
+      body: CarsearchCreatePaymentRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceCreatePaymentData, any>({
+        path: `/carsearch.CarSearchService/CreatePayment`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
      * @name CarSearchServiceGet
      * @summary Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.
      * @request POST:/carsearch.CarSearchService/Get
@@ -725,8 +910,29 @@ export class CarSearchApi<
      * No description
      *
      * @tags CarSearchService
+     * @name CarSearchServiceListMyPayments
+     * @summary ListMyPayments — история платежей пользователя, от новых к старым (последние 50). Нужен токен.
+     * @request POST:/carsearch.CarSearchService/ListMyPayments
+     */
+    carSearchServiceListMyPayments: (
+      body: CarsearchListMyPaymentsRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceListMyPaymentsData, any>({
+        path: `/carsearch.CarSearchService/ListMyPayments`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
      * @name CarSearchServiceMe
-     * @summary Me — кто спрашивает: is_admin, если заголовок admin-token верный. Без токена или с неверным — is_admin = false (не ошибка): фронт так решает, включать ли админ-режим.
+     * @summary Me — кто я: is_admin — верный заголовок admin-token; authenticated и user — по токену пользователя (cookie cs_token или Authorization: Bearer). Нет токена или он неверный — authenticated = false.
      * @request POST:/carsearch.CarSearchService/Me
      */
     carSearchServiceMe: (
@@ -735,6 +941,48 @@ export class CarSearchApi<
     ) =>
       this.request<CarSearchServiceMeData, any>({
         path: `/carsearch.CarSearchService/Me`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
+     * @name CarSearchServicePlans
+     * @summary Plans — тарифы: цена, период, состав.
+     * @request POST:/carsearch.CarSearchService/Plans
+     */
+    carSearchServicePlans: (
+      body: CarsearchPlansRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServicePlansData, any>({
+        path: `/carsearch.CarSearchService/Plans`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
+     * @name CarSearchServiceRegister
+     * @summary Register — новый пользователь (тариф Free). Токен входа возвращается один раз — в базе только его sha256.
+     * @request POST:/carsearch.CarSearchService/Register
+     */
+    carSearchServiceRegister: (
+      body: CarsearchRegisterRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceRegisterData, any>({
+        path: `/carsearch.CarSearchService/Register`,
         method: "POST",
         body: body,
         type: ContentType.Json,

@@ -40,10 +40,6 @@ service CarSearchService {
   // ResolveComplaint — отметить жалобу решённой. Нужен заголовок admin-token.
   rpc ResolveComplaint(ResolveComplaintRequest) returns (Complaint);
 
-  // Me — кто спрашивает: is_admin, если заголовок admin-token верный. Без токена или с неверным —
-  // is_admin = false (не ошибка): фронт так решает, включать ли админ-режим.
-  rpc Me(MeRequest) returns (MeResponse);
-
   // SetClarificationStatus — принять или отклонить уточнение вручную. Нужен заголовок admin-token.
   rpc SetClarificationStatus(SetClarificationStatusRequest) returns (Clarification);
 
@@ -54,6 +50,27 @@ service CarSearchService {
   // ListClarifications — уточнения для админ-панели, от новых к старым, постранично, вместе с фиксацией.
   // Нужен заголовок admin-token.
   rpc ListClarifications(ListClarificationsRequest) returns (ListClarificationsResponse);
+
+  // Me — кто я: is_admin — верный заголовок admin-token; authenticated и user — по токену пользователя
+  // (cookie cs_token или Authorization: Bearer). Нет токена или он неверный — authenticated = false.
+  rpc Me(MeRequest) returns (MeResponse);
+
+  // Register — новый пользователь (тариф Free). Токен входа возвращается один раз — в базе только его sha256.
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+
+  // Plans — тарифы: цена, период, состав.
+  rpc Plans(PlansRequest) returns (PlansResponse);
+
+  // CreatePayment — платёж за тариф и адрес кассы (пока демо-касса /pay/mock/<id>). Нужен токен
+  // пользователя, иначе UNAUTHENTICATED.
+  rpc CreatePayment(CreatePaymentRequest) returns (CreatePaymentResponse);
+
+  // ConfirmMockPayment — итог демо-оплаты: success — платёж оплачен, Pro продлён на 30 дней от
+  // max(сейчас, pro_until); иначе — отменён. Только свой платёж в статусе pending. Нужен токен.
+  rpc ConfirmMockPayment(ConfirmMockPaymentRequest) returns (Payment);
+
+  // ListMyPayments — история платежей пользователя, от новых к старым (последние 50). Нужен токен.
+  rpc ListMyPayments(ListMyPaymentsRequest) returns (ListMyPaymentsResponse);
 }
 
 // PlateSighting — фиксация номера: где и когда замечена машина.
@@ -242,13 +259,6 @@ message ResolveComplaintRequest {
   string id = 1;
 }
 
-message MeRequest {}
-
-message MeResponse {
-  // Заголовок admin-token верный: можно включать админ-режим.
-  bool is_admin = 1;
-}
-
 message SetClarificationStatusRequest {
   // uuid уточнения.
   string id = 1;
@@ -280,4 +290,115 @@ message ListClarificationsResponse {
   int32 total = 2;
   // Смещение следующей страницы; не задано — дальше ничего нет.
   optional int32 next_offset = 3;
+}
+
+// ---------------------------------------------------------------- аккаунт, тарифы, оплата
+
+// Тариф пользователя.
+enum UserPlan {
+  USER_PLAN_UNSPECIFIED = 0;
+  USER_PLAN_FREE = 1;
+  USER_PLAN_PRO = 2;
+}
+
+// User — пользователь.
+message User {
+  // uuid пользователя.
+  string id = 1;
+  // E-mail; пусто — не указан.
+  string email = 2;
+  // Действующий тариф (Pro с истёкшим сроком — уже Free).
+  UserPlan plan = 3;
+  // До какого момента действует Pro; не задано — не покупал.
+  google.protobuf.Timestamp pro_until = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message MeRequest {}
+
+message MeResponse {
+  // Заголовок admin-token верный.
+  bool is_admin = 1;
+  // Токен пользователя верный; иначе user не задан.
+  bool authenticated = 2;
+  User user = 3;
+}
+
+message RegisterRequest {
+  // Необязательно; уникален.
+  string email = 1;
+}
+
+message RegisterResponse {
+  // Токен входа "cs_…" — показывается один раз, восстановить нельзя.
+  string token = 1;
+  User user = 2;
+}
+
+message PlansRequest {}
+
+// PlanInfo — тариф.
+message PlanInfo {
+  UserPlan plan = 1;
+  string title = 2;
+  // Цена за период в копейках/центах; 0 — бесплатно.
+  int32 amount_cents = 3;
+  // Валюта ISO 4217: "RUB".
+  string currency = 4;
+  // Период в днях; 0 — бессрочно.
+  int32 period_days = 5;
+  // Ключи возможностей: "search", "uploads_limited", "pro_badge", "unlimited_uploads", "notifications".
+  repeated string features = 6;
+  // Лимит загрузок фото в сутки; 0 — без ограничений.
+  int32 uploads_per_day = 7;
+}
+
+message PlansResponse {
+  repeated PlanInfo items = 1;
+}
+
+// Статус платежа.
+enum PaymentStatus {
+  PAYMENT_STATUS_UNSPECIFIED = 0;
+  PAYMENT_STATUS_PENDING = 1;
+  PAYMENT_STATUS_SUCCEEDED = 2;
+  PAYMENT_STATUS_CANCELED = 3;
+}
+
+// Payment — платёж за тариф.
+message Payment {
+  string id = 1;
+  UserPlan plan = 2;
+  int32 amount_cents = 3;
+  string currency = 4;
+  PaymentStatus status = 5;
+  // Платёжный провайдер; пока только "mock".
+  string provider = 6;
+  google.protobuf.Timestamp created_at = 7;
+  // Когда оплачен или отменён.
+  google.protobuf.Timestamp confirmed_at = 8;
+}
+
+message CreatePaymentRequest {
+  // Покупаемый тариф; сейчас только PRO.
+  UserPlan plan = 1;
+}
+
+message CreatePaymentResponse {
+  string payment_id = 1;
+  // Куда перейти для оплаты: "/pay/mock/<id>".
+  string checkout_url = 2;
+  Payment payment = 3;
+}
+
+message ConfirmMockPaymentRequest {
+  string payment_id = 1;
+  // true — «Оплатить», false — «Отменить».
+  bool success = 2;
+}
+
+message ListMyPaymentsRequest {}
+
+message ListMyPaymentsResponse {
+  repeated Payment items = 1;
 }

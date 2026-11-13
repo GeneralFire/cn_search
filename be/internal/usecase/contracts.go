@@ -2,11 +2,13 @@ package usecase
 
 //go:generate minimock -i transactor -o ./mocks/transactor_mock.go -n TransactorMock -p mocks
 //go:generate minimock -i repository -o ./mocks/repository_mock.go -n RepositoryMock -p mocks
+//go:generate minimock -i accountsRepository -o ./mocks/accounts_repository_mock.go -n AccountsRepositoryMock -p mocks
 //go:generate minimock -i complaintsRepository -o ./mocks/complaints_repository_mock.go -n ComplaintsRepositoryMock -p mocks
 //go:generate minimock -i adminRepository -o ./mocks/admin_repository_mock.go -n AdminRepositoryMock -p mocks
 
 import (
 	"context"
+	"time"
 
 	"github.com/GeneralFire/cn_search/be/internal/db"
 	"github.com/GeneralFire/cn_search/be/internal/models"
@@ -42,4 +44,15 @@ type adminRepository interface {
 	HideSighting(ctx context.Context, tx db.Executor, id string, hidden bool) (models.PlateSighting, error)
 	SetClarificationStatus(ctx context.Context, tx db.Executor, id string, st models.ClarificationStatus) (models.Clarification, error)
 	ListClarifications(ctx context.Context, tx db.Executor, o models.ListClarificationsOpts) (models.ClarificationsPage, error)
+}
+
+// accountsRepository — пользователи и платежи (реализация — repository.New()).
+type accountsRepository interface {
+	CreateUser(ctx context.Context, tx db.Executor, tokenHash, email string) (models.User, error)
+	UserByTokenHash(ctx context.Context, tx db.Executor, tokenHash string, includeTestData bool) (models.User, error)
+	CreatePayment(ctx context.Context, tx db.Executor, o models.NewPaymentOpts) (models.Payment, error)
+	PaymentForUpdate(ctx context.Context, tx db.Executor, userID, paymentID string) (models.Payment, error)
+	SetPaymentStatus(ctx context.Context, tx db.Executor, paymentID string, st models.PaymentStatus) (models.Payment, error)
+	ExtendPro(ctx context.Context, tx db.Executor, userID string, period time.Duration) (models.User, error)
+	ListPayments(ctx context.Context, tx db.Executor, userID string, limit int) ([]models.Payment, error)
 }

@@ -373,3 +373,15 @@ Vite слушает все интерфейсы (`server.host: true`), Docker п
 
 Dev-сервер виден всем в сети — в публичных Wi-Fi так не делайте.
 Чужие (корпоративные) правила файрвола не отключайте — выберите разрешённый порт.
+
+## Аккаунт и оплата (демо)
+
+Логина и пароля нет: `/signup` выдаёт токен `cs_…` один раз (в БД — только его sha256), вход — поле «Токен»
+в панели на логотипе; токен хранится в cookie `cs_token`. Бэк читает cookie или `Authorization: Bearer <токен>`.
+Тарифы — `/pricing` (Free / Pro 299 ₽ в месяц, константы в `be/internal/usecase/accounts.go`), оплата —
+демо-касса `/pay/mock/<id>` (деньги не списываются), история — `/account`.
+Тестовый пользователь Pro (миграция 0002): токен `demo-token`, только с заголовком `include-test-data`:
+
+```sh
+curl -s -XPOST localhost:8080/api/carsearch.CarSearchService/Me -H 'include-test-data: true' -b 'cs_token=demo-token' -d '{}'
+```

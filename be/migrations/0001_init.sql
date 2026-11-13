@@ -90,7 +90,40 @@ CREATE INDEX complaints_sighting_id_idx ON complaints (sighting_id);
 CREATE INDEX complaints_status_created_at_idx ON complaints (status, created_at DESC, id);
 CREATE INDEX complaints_created_at_idx ON complaints (created_at DESC, id);
 
+-- Пользователи: вход по токену (cookie cs_token или Authorization: Bearer). Сам токен не храним —
+-- только sha256 (hex). Логина и пароля нет; e-mail необязателен.
+CREATE TABLE users (
+    id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    token_hash   text        NOT NULL UNIQUE,
+    email        text,
+    plan         text        NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'pro')),
+    pro_until    timestamptz, -- до какого момента действует Pro; NULL — не покупал
+    created_at   timestamptz NOT NULL DEFAULT now(),
+    is_test_data boolean     NOT NULL DEFAULT false
+);
+
+CREATE UNIQUE INDEX users_email_idx ON users (lower(email)) WHERE email IS NOT NULL;
+
+-- Платежи за тариф. Провайдер пока один — 'mock' (демо-касса /pay/mock/<id>, деньги не списываются).
+CREATE TABLE payments (
+    id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id      uuid        NOT NULL REFERENCES users (id),
+    plan         text        NOT NULL CHECK (plan IN ('pro')),
+    amount_cents int         NOT NULL CHECK (amount_cents >= 0),
+    currency     text        NOT NULL,
+    status       text        NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'succeeded', 'canceled')),
+    provider     text        NOT NULL DEFAULT 'mock',
+    created_at   timestamptz NOT NULL DEFAULT now(),
+    confirmed_at timestamptz,
+    is_test_data boolean     NOT NULL DEFAULT false -- как у пользователя
+);
+
+-- История платежей пользователя (rpc ListMyPayments).
+CREATE INDEX payments_user_created_at_idx ON payments (user_id, created_at DESC, id);
+
 -- +goose Down
+DROP TABLE payments;
+DROP TABLE users;
 DROP TABLE complaints;
 DROP TYPE complaint_status;
 DROP TYPE complaint_reason;

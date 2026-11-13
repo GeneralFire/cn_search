@@ -70,6 +70,60 @@
         ]
       }
     },
+    "/carsearch.CarSearchService/ConfirmMockPayment": {
+      "post": {
+        "summary": "ConfirmMockPayment — итог демо-оплаты: success — платёж оплачен, Pro продлён на 30 дней от\nmax(сейчас, pro_until); иначе — отменён. Только свой платёж в статусе pending. Нужен токен.",
+        "operationId": "CarSearchService_ConfirmMockPayment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchPayment"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchConfirmMockPaymentRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/CreatePayment": {
+      "post": {
+        "summary": "CreatePayment — платёж за тариф и адрес кассы (пока демо-касса /pay/mock/\u003cid\u003e). Нужен токен\nпользователя, иначе UNAUTHENTICATED.",
+        "operationId": "CarSearchService_CreatePayment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchCreatePaymentResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchCreatePaymentRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
     "/carsearch.CarSearchService/Get": {
       "post": {
         "summary": "Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.",
@@ -178,9 +232,36 @@
         ]
       }
     },
+    "/carsearch.CarSearchService/ListMyPayments": {
+      "post": {
+        "summary": "ListMyPayments — история платежей пользователя, от новых к старым (последние 50). Нужен токен.",
+        "operationId": "CarSearchService_ListMyPayments",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchListMyPaymentsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchListMyPaymentsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
     "/carsearch.CarSearchService/Me": {
       "post": {
-        "summary": "Me — кто спрашивает: is_admin, если заголовок admin-token верный. Без токена или с неверным —\nis_admin = false (не ошибка): фронт так решает, включать ли админ-режим.",
+        "summary": "Me — кто я: is_admin — верный заголовок admin-token; authenticated и user — по токену пользователя\n(cookie cs_token или Authorization: Bearer). Нет токена или он неверный — authenticated = false.",
         "operationId": "CarSearchService_Me",
         "responses": {
           "200": {
@@ -197,6 +278,60 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/carsearchMeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/Plans": {
+      "post": {
+        "summary": "Plans — тарифы: цена, период, состав.",
+        "operationId": "CarSearchService_Plans",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchPlansResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchPlansRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/Register": {
+      "post": {
+        "summary": "Register — новый пользователь (тариф Free). Токен входа возвращается один раз — в базе только его sha256.",
+        "operationId": "CarSearchService_Register",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchRegisterResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchRegisterRequest"
             }
           }
         ],
@@ -458,6 +593,42 @@
       "default": "COMPLAINT_STATUS_UNSPECIFIED",
       "description": "Статус жалобы."
     },
+    "carsearchConfirmMockPaymentRequest": {
+      "type": "object",
+      "properties": {
+        "paymentId": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean",
+          "description": "true — «Оплатить», false — «Отменить»."
+        }
+      }
+    },
+    "carsearchCreatePaymentRequest": {
+      "type": "object",
+      "properties": {
+        "plan": {
+          "$ref": "#/definitions/carsearchUserPlan",
+          "description": "Покупаемый тариф; сейчас только PRO."
+        }
+      }
+    },
+    "carsearchCreatePaymentResponse": {
+      "type": "object",
+      "properties": {
+        "paymentId": {
+          "type": "string"
+        },
+        "checkoutUrl": {
+          "type": "string",
+          "description": "Куда перейти для оплаты: \"/pay/mock/\u003cid\u003e\"."
+        },
+        "payment": {
+          "$ref": "#/definitions/carsearchPayment"
+        }
+      }
+    },
     "carsearchGetRequest": {
       "type": "object",
       "properties": {
@@ -580,6 +751,20 @@
         }
       }
     },
+    "carsearchListMyPaymentsRequest": {
+      "type": "object"
+    },
+    "carsearchListMyPaymentsResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchPayment"
+          }
+        }
+      }
+    },
     "carsearchMeRequest": {
       "type": "object"
     },
@@ -588,7 +773,112 @@
       "properties": {
         "isAdmin": {
           "type": "boolean",
-          "description": "Заголовок admin-token верный: можно включать админ-режим."
+          "description": "Заголовок admin-token верный."
+        },
+        "authenticated": {
+          "type": "boolean",
+          "description": "Токен пользователя верный; иначе user не задан."
+        },
+        "user": {
+          "$ref": "#/definitions/carsearchUser"
+        }
+      }
+    },
+    "carsearchPayment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "plan": {
+          "$ref": "#/definitions/carsearchUserPlan"
+        },
+        "amountCents": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/carsearchPaymentStatus"
+        },
+        "provider": {
+          "type": "string",
+          "description": "Платёжный провайдер; пока только \"mock\"."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "confirmedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Когда оплачен или отменён."
+        }
+      },
+      "description": "Payment — платёж за тариф."
+    },
+    "carsearchPaymentStatus": {
+      "type": "string",
+      "enum": [
+        "PAYMENT_STATUS_UNSPECIFIED",
+        "PAYMENT_STATUS_PENDING",
+        "PAYMENT_STATUS_SUCCEEDED",
+        "PAYMENT_STATUS_CANCELED"
+      ],
+      "default": "PAYMENT_STATUS_UNSPECIFIED",
+      "description": "Статус платежа."
+    },
+    "carsearchPlanInfo": {
+      "type": "object",
+      "properties": {
+        "plan": {
+          "$ref": "#/definitions/carsearchUserPlan"
+        },
+        "title": {
+          "type": "string"
+        },
+        "amountCents": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Цена за период в копейках/центах; 0 — бесплатно."
+        },
+        "currency": {
+          "type": "string",
+          "description": "Валюта ISO 4217: \"RUB\"."
+        },
+        "periodDays": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Период в днях; 0 — бессрочно."
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Ключи возможностей: \"search\", \"uploads_limited\", \"pro_badge\", \"unlimited_uploads\", \"notifications\"."
+        },
+        "uploadsPerDay": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Лимит загрузок фото в сутки; 0 — без ограничений."
+        }
+      },
+      "description": "PlanInfo — тариф."
+    },
+    "carsearchPlansRequest": {
+      "type": "object"
+    },
+    "carsearchPlansResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchPlanInfo"
+          }
         }
       }
     },
@@ -659,6 +949,27 @@
       ],
       "default": "PLATE_TYPE_DEFAULT",
       "description": "Формат номерного знака — от него зависит, как его рисовать."
+    },
+    "carsearchRegisterRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "Необязательно; уникален."
+        }
+      }
+    },
+    "carsearchRegisterResponse": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string",
+          "description": "Токен входа \"cs_…\" — показывается один раз, восстановить нельзя."
+        },
+        "user": {
+          "$ref": "#/definitions/carsearchUser"
+        }
+      }
     },
     "carsearchResolveComplaintRequest": {
       "type": "object",
@@ -757,6 +1068,43 @@
           "description": "ACCEPTED или NOT_ACCEPTED."
         }
       }
+    },
+    "carsearchUser": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "uuid пользователя."
+        },
+        "email": {
+          "type": "string",
+          "description": "E-mail; пусто — не указан."
+        },
+        "plan": {
+          "$ref": "#/definitions/carsearchUserPlan",
+          "description": "Действующий тариф (Pro с истёкшим сроком — уже Free)."
+        },
+        "proUntil": {
+          "type": "string",
+          "format": "date-time",
+          "description": "До какого момента действует Pro; не задано — не покупал."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "User — пользователь."
+    },
+    "carsearchUserPlan": {
+      "type": "string",
+      "enum": [
+        "USER_PLAN_UNSPECIFIED",
+        "USER_PLAN_FREE",
+        "USER_PLAN_PRO"
+      ],
+      "default": "USER_PLAN_UNSPECIFIED",
+      "description": "Тариф пользователя."
     }
   }
 }

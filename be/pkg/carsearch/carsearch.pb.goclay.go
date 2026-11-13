@@ -434,53 +434,6 @@ func (d *CarSearchServiceDesc) RegisterHTTP(mux transport.Router) {
 	}
 
 	{
-		// Handler for Me, binding: POST /carsearch.CarSearchService/Me
-		var h http.HandlerFunc
-		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			defer r.Body.Close()
-
-			unmFunc := unmarshaler_goclay_CarSearchService_Me_0(r)
-			rsp, err := _CarSearchService_Me_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
-
-			if err != nil {
-				if err, ok := err.(httptransport.MarshalerError); ok {
-					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
-					return
-				}
-				httpruntime.SetError(r.Context(), r, w, err)
-				return
-			}
-
-			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
-				w.WriteHeader(499) // Client Closed Request
-				return
-			}
-
-			_, outbound := httpruntime.MarshalerForRequest(r)
-			w.Header().Set("Content-Type", outbound.ContentType())
-			err = outbound.Marshal(w, rsp)
-			if err != nil {
-				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
-				return
-			}
-		})
-
-		h = httpmw.DefaultChain(h)
-
-		if isChi {
-			chiMux.Method("POST", pattern_goclay_CarSearchService_Me_0, h)
-		} else {
-			mux.Handle(pattern_goclay_CarSearchService_Me_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if r.Method != "POST" {
-					w.WriteHeader(http.StatusMethodNotAllowed)
-					return
-				}
-				h(w, r)
-			}))
-		}
-	}
-
-	{
 		// Handler for SetClarificationStatus, binding: POST /carsearch.CarSearchService/SetClarificationStatus
 		var h http.HandlerFunc
 		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -612,6 +565,288 @@ func (d *CarSearchServiceDesc) RegisterHTTP(mux transport.Router) {
 			chiMux.Method("POST", pattern_goclay_CarSearchService_ListClarifications_0, h)
 		} else {
 			mux.Handle(pattern_goclay_CarSearchService_ListClarifications_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
+	{
+		// Handler for Me, binding: POST /carsearch.CarSearchService/Me
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_Me_0(r)
+			rsp, err := _CarSearchService_Me_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_Me_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_Me_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
+	{
+		// Handler for Register, binding: POST /carsearch.CarSearchService/Register
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_Register_0(r)
+			rsp, err := _CarSearchService_Register_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_Register_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_Register_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
+	{
+		// Handler for Plans, binding: POST /carsearch.CarSearchService/Plans
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_Plans_0(r)
+			rsp, err := _CarSearchService_Plans_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_Plans_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_Plans_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
+	{
+		// Handler for CreatePayment, binding: POST /carsearch.CarSearchService/CreatePayment
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_CreatePayment_0(r)
+			rsp, err := _CarSearchService_CreatePayment_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_CreatePayment_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_CreatePayment_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
+	{
+		// Handler for ConfirmMockPayment, binding: POST /carsearch.CarSearchService/ConfirmMockPayment
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_ConfirmMockPayment_0(r)
+			rsp, err := _CarSearchService_ConfirmMockPayment_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_ConfirmMockPayment_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_ConfirmMockPayment_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
+	{
+		// Handler for ListMyPayments, binding: POST /carsearch.CarSearchService/ListMyPayments
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_ListMyPayments_0(r)
+			rsp, err := _CarSearchService_ListMyPayments_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_ListMyPayments_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_ListMyPayments_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if r.Method != "POST" {
 					w.WriteHeader(http.StatusMethodNotAllowed)
 					return
@@ -994,57 +1229,6 @@ func (c *CarSearchService_httpClient) ResolveComplaint(ctx context.Context, in *
 	return &ret, errors.Wrap(err, "can't unmarshal response")
 }
 
-func (c *CarSearchService_httpClient) Me(ctx context.Context, in *MeRequest, opts ...grpc.CallOption) (*MeResponse, error) {
-	mw, err := httpclient.NewMiddlewareGRPC(opts)
-	if err != nil {
-		return nil, err
-	}
-
-	path := pattern_goclay_CarSearchService_Me_0_builder(in)
-
-	buf := bytes.NewBuffer(nil)
-
-	m := httpruntime.DefaultMarshaler(nil)
-
-	if err = m.Marshal(buf, in); err != nil {
-		return nil, errors.Wrap(err, "can't marshal request")
-	}
-
-	req, err := http.NewRequest("POST", c.host+path, buf)
-	if err != nil {
-		return nil, errors.Wrap(err, "can't initiate HTTP request")
-	}
-	req = req.WithContext(ctx)
-
-	req.Header.Add("Accept", m.ContentType())
-
-	req, err = mw.ProcessRequest(req)
-	if err != nil {
-		return nil, err
-	}
-	rsp, err := c.c.Do(req)
-	if err != nil {
-		return nil, errors.Wrap(err, "error from client")
-	}
-	defer rsp.Body.Close()
-
-	rsp, err = mw.ProcessResponse(rsp)
-	if err != nil {
-		return nil, err
-	}
-
-	if rsp.StatusCode >= 400 {
-		b, _ := ioutil.ReadAll(rsp.Body)
-		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
-	}
-
-	ret := MeResponse{}
-
-	err = m.Unmarshal(rsp.Body, &ret)
-
-	return &ret, errors.Wrap(err, "can't unmarshal response")
-}
-
 func (c *CarSearchService_httpClient) SetClarificationStatus(ctx context.Context, in *SetClarificationStatusRequest, opts ...grpc.CallOption) (*Clarification, error) {
 	mw, err := httpclient.NewMiddlewareGRPC(opts)
 	if err != nil {
@@ -1198,6 +1382,312 @@ func (c *CarSearchService_httpClient) ListClarifications(ctx context.Context, in
 	return &ret, errors.Wrap(err, "can't unmarshal response")
 }
 
+func (c *CarSearchService_httpClient) Me(ctx context.Context, in *MeRequest, opts ...grpc.CallOption) (*MeResponse, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_Me_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := MeResponse{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
+func (c *CarSearchService_httpClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_Register_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := RegisterResponse{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
+func (c *CarSearchService_httpClient) Plans(ctx context.Context, in *PlansRequest, opts ...grpc.CallOption) (*PlansResponse, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_Plans_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := PlansResponse{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
+func (c *CarSearchService_httpClient) CreatePayment(ctx context.Context, in *CreatePaymentRequest, opts ...grpc.CallOption) (*CreatePaymentResponse, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_CreatePayment_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := CreatePaymentResponse{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
+func (c *CarSearchService_httpClient) ConfirmMockPayment(ctx context.Context, in *ConfirmMockPaymentRequest, opts ...grpc.CallOption) (*Payment, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_ConfirmMockPayment_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := Payment{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
+func (c *CarSearchService_httpClient) ListMyPayments(ctx context.Context, in *ListMyPaymentsRequest, opts ...grpc.CallOption) (*ListMyPaymentsResponse, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_ListMyPayments_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := ListMyPaymentsResponse{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
 // patterns for CarSearchService
 var (
 	pattern_goclay_CarSearchService_Search_0 = "/carsearch.CarSearchService/Search"
@@ -1298,20 +1788,6 @@ var (
 
 	unmarshaler_goclay_CarSearchService_ResolveComplaint_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 
-	pattern_goclay_CarSearchService_Me_0 = "/carsearch.CarSearchService/Me"
-
-	pattern_goclay_CarSearchService_Me_0_builder = func(in *MeRequest) string {
-		values := url.Values{}
-
-		u := url.URL{
-			Path:     fmt.Sprintf("/carsearch.CarSearchService/Me"),
-			RawQuery: values.Encode(),
-		}
-		return u.String()
-	}
-
-	unmarshaler_goclay_CarSearchService_Me_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
-
 	pattern_goclay_CarSearchService_SetClarificationStatus_0 = "/carsearch.CarSearchService/SetClarificationStatus"
 
 	pattern_goclay_CarSearchService_SetClarificationStatus_0_builder = func(in *SetClarificationStatusRequest) string {
@@ -1353,6 +1829,90 @@ var (
 	}
 
 	unmarshaler_goclay_CarSearchService_ListClarifications_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
+	pattern_goclay_CarSearchService_Me_0 = "/carsearch.CarSearchService/Me"
+
+	pattern_goclay_CarSearchService_Me_0_builder = func(in *MeRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/Me"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_Me_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
+	pattern_goclay_CarSearchService_Register_0 = "/carsearch.CarSearchService/Register"
+
+	pattern_goclay_CarSearchService_Register_0_builder = func(in *RegisterRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/Register"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_Register_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
+	pattern_goclay_CarSearchService_Plans_0 = "/carsearch.CarSearchService/Plans"
+
+	pattern_goclay_CarSearchService_Plans_0_builder = func(in *PlansRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/Plans"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_Plans_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
+	pattern_goclay_CarSearchService_CreatePayment_0 = "/carsearch.CarSearchService/CreatePayment"
+
+	pattern_goclay_CarSearchService_CreatePayment_0_builder = func(in *CreatePaymentRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/CreatePayment"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_CreatePayment_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
+	pattern_goclay_CarSearchService_ConfirmMockPayment_0 = "/carsearch.CarSearchService/ConfirmMockPayment"
+
+	pattern_goclay_CarSearchService_ConfirmMockPayment_0_builder = func(in *ConfirmMockPaymentRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/ConfirmMockPayment"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_ConfirmMockPayment_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
+	pattern_goclay_CarSearchService_ListMyPayments_0 = "/carsearch.CarSearchService/ListMyPayments"
+
+	pattern_goclay_CarSearchService_ListMyPayments_0_builder = func(in *ListMyPaymentsRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/ListMyPayments"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_ListMyPayments_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
 // marshalers for CarSearchService
@@ -1469,22 +2029,6 @@ var (
 		}
 	}
 
-	unmarshaler_goclay_CarSearchService_Me_0 = func(r *http.Request) func(interface{}) error {
-		return func(rif interface{}) error {
-			req := rif.(*MeRequest)
-
-			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_Me_0_boundParams), "couldn't populate query parameters"); err != nil {
-				return httpruntime.TransformUnmarshalerError(err)
-			}
-
-			inbound, _ := httpruntime.MarshalerForRequest(r)
-			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
-				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
-			}
-			return nil
-		}
-	}
-
 	unmarshaler_goclay_CarSearchService_SetClarificationStatus_0 = func(r *http.Request) func(interface{}) error {
 		return func(rif interface{}) error {
 			req := rif.(*SetClarificationStatusRequest)
@@ -1522,6 +2066,102 @@ var (
 			req := rif.(*ListClarificationsRequest)
 
 			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_ListClarifications_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
+
+	unmarshaler_goclay_CarSearchService_Me_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*MeRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_Me_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
+
+	unmarshaler_goclay_CarSearchService_Register_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*RegisterRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_Register_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
+
+	unmarshaler_goclay_CarSearchService_Plans_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*PlansRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_Plans_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
+
+	unmarshaler_goclay_CarSearchService_CreatePayment_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*CreatePaymentRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_CreatePayment_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
+
+	unmarshaler_goclay_CarSearchService_ConfirmMockPayment_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*ConfirmMockPaymentRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_ConfirmMockPayment_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
+
+	unmarshaler_goclay_CarSearchService_ListMyPayments_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*ListMyPaymentsRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_ListMyPayments_0_boundParams), "couldn't populate query parameters"); err != nil {
 				return httpruntime.TransformUnmarshalerError(err)
 			}
 
@@ -1598,6 +2238,60 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
             "required": true,
             "schema": {
               "$ref": "#/definitions/carsearchComplainRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/ConfirmMockPayment": {
+      "post": {
+        "summary": "ConfirmMockPayment — итог демо-оплаты: success — платёж оплачен, Pro продлён на 30 дней от\nmax(сейчас, pro_until); иначе — отменён. Только свой платёж в статусе pending. Нужен токен.",
+        "operationId": "CarSearchService_ConfirmMockPayment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchPayment"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchConfirmMockPaymentRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/CreatePayment": {
+      "post": {
+        "summary": "CreatePayment — платёж за тариф и адрес кассы (пока демо-касса /pay/mock/\u003cid\u003e). Нужен токен\nпользователя, иначе UNAUTHENTICATED.",
+        "operationId": "CarSearchService_CreatePayment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchCreatePaymentResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchCreatePaymentRequest"
             }
           }
         ],
@@ -1714,9 +2408,36 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         ]
       }
     },
+    "/carsearch.CarSearchService/ListMyPayments": {
+      "post": {
+        "summary": "ListMyPayments — история платежей пользователя, от новых к старым (последние 50). Нужен токен.",
+        "operationId": "CarSearchService_ListMyPayments",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchListMyPaymentsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchListMyPaymentsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
     "/carsearch.CarSearchService/Me": {
       "post": {
-        "summary": "Me — кто спрашивает: is_admin, если заголовок admin-token верный. Без токена или с неверным —\nis_admin = false (не ошибка): фронт так решает, включать ли админ-режим.",
+        "summary": "Me — кто я: is_admin — верный заголовок admin-token; authenticated и user — по токену пользователя\n(cookie cs_token или Authorization: Bearer). Нет токена или он неверный — authenticated = false.",
         "operationId": "CarSearchService_Me",
         "responses": {
           "200": {
@@ -1733,6 +2454,60 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
             "required": true,
             "schema": {
               "$ref": "#/definitions/carsearchMeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/Plans": {
+      "post": {
+        "summary": "Plans — тарифы: цена, период, состав.",
+        "operationId": "CarSearchService_Plans",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchPlansResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchPlansRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/Register": {
+      "post": {
+        "summary": "Register — новый пользователь (тариф Free). Токен входа возвращается один раз — в базе только его sha256.",
+        "operationId": "CarSearchService_Register",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchRegisterResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchRegisterRequest"
             }
           }
         ],
@@ -1994,6 +2769,42 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
       "default": "COMPLAINT_STATUS_UNSPECIFIED",
       "description": "Статус жалобы."
     },
+    "carsearchConfirmMockPaymentRequest": {
+      "type": "object",
+      "properties": {
+        "paymentId": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean",
+          "description": "true — «Оплатить», false — «Отменить»."
+        }
+      }
+    },
+    "carsearchCreatePaymentRequest": {
+      "type": "object",
+      "properties": {
+        "plan": {
+          "$ref": "#/definitions/carsearchUserPlan",
+          "description": "Покупаемый тариф; сейчас только PRO."
+        }
+      }
+    },
+    "carsearchCreatePaymentResponse": {
+      "type": "object",
+      "properties": {
+        "paymentId": {
+          "type": "string"
+        },
+        "checkoutUrl": {
+          "type": "string",
+          "description": "Куда перейти для оплаты: \"/pay/mock/\u003cid\u003e\"."
+        },
+        "payment": {
+          "$ref": "#/definitions/carsearchPayment"
+        }
+      }
+    },
     "carsearchGetRequest": {
       "type": "object",
       "properties": {
@@ -2116,6 +2927,20 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         }
       }
     },
+    "carsearchListMyPaymentsRequest": {
+      "type": "object"
+    },
+    "carsearchListMyPaymentsResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchPayment"
+          }
+        }
+      }
+    },
     "carsearchMeRequest": {
       "type": "object"
     },
@@ -2124,7 +2949,112 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
       "properties": {
         "isAdmin": {
           "type": "boolean",
-          "description": "Заголовок admin-token верный: можно включать админ-режим."
+          "description": "Заголовок admin-token верный."
+        },
+        "authenticated": {
+          "type": "boolean",
+          "description": "Токен пользователя верный; иначе user не задан."
+        },
+        "user": {
+          "$ref": "#/definitions/carsearchUser"
+        }
+      }
+    },
+    "carsearchPayment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "plan": {
+          "$ref": "#/definitions/carsearchUserPlan"
+        },
+        "amountCents": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/carsearchPaymentStatus"
+        },
+        "provider": {
+          "type": "string",
+          "description": "Платёжный провайдер; пока только \"mock\"."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "confirmedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Когда оплачен или отменён."
+        }
+      },
+      "description": "Payment — платёж за тариф."
+    },
+    "carsearchPaymentStatus": {
+      "type": "string",
+      "enum": [
+        "PAYMENT_STATUS_UNSPECIFIED",
+        "PAYMENT_STATUS_PENDING",
+        "PAYMENT_STATUS_SUCCEEDED",
+        "PAYMENT_STATUS_CANCELED"
+      ],
+      "default": "PAYMENT_STATUS_UNSPECIFIED",
+      "description": "Статус платежа."
+    },
+    "carsearchPlanInfo": {
+      "type": "object",
+      "properties": {
+        "plan": {
+          "$ref": "#/definitions/carsearchUserPlan"
+        },
+        "title": {
+          "type": "string"
+        },
+        "amountCents": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Цена за период в копейках/центах; 0 — бесплатно."
+        },
+        "currency": {
+          "type": "string",
+          "description": "Валюта ISO 4217: \"RUB\"."
+        },
+        "periodDays": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Период в днях; 0 — бессрочно."
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Ключи возможностей: \"search\", \"uploads_limited\", \"pro_badge\", \"unlimited_uploads\", \"notifications\"."
+        },
+        "uploadsPerDay": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Лимит загрузок фото в сутки; 0 — без ограничений."
+        }
+      },
+      "description": "PlanInfo — тариф."
+    },
+    "carsearchPlansRequest": {
+      "type": "object"
+    },
+    "carsearchPlansResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchPlanInfo"
+          }
         }
       }
     },
@@ -2195,6 +3125,27 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
       ],
       "default": "PLATE_TYPE_DEFAULT",
       "description": "Формат номерного знака — от него зависит, как его рисовать."
+    },
+    "carsearchRegisterRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "Необязательно; уникален."
+        }
+      }
+    },
+    "carsearchRegisterResponse": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string",
+          "description": "Токен входа \"cs_…\" — показывается один раз, восстановить нельзя."
+        },
+        "user": {
+          "$ref": "#/definitions/carsearchUser"
+        }
+      }
     },
     "carsearchResolveComplaintRequest": {
       "type": "object",
@@ -2293,6 +3244,43 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
           "description": "ACCEPTED или NOT_ACCEPTED."
         }
       }
+    },
+    "carsearchUser": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "uuid пользователя."
+        },
+        "email": {
+          "type": "string",
+          "description": "E-mail; пусто — не указан."
+        },
+        "plan": {
+          "$ref": "#/definitions/carsearchUserPlan",
+          "description": "Действующий тариф (Pro с истёкшим сроком — уже Free)."
+        },
+        "proUntil": {
+          "type": "string",
+          "format": "date-time",
+          "description": "До какого момента действует Pro; не задано — не покупал."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "User — пользователь."
+    },
+    "carsearchUserPlan": {
+      "type": "string",
+      "enum": [
+        "USER_PLAN_UNSPECIFIED",
+        "USER_PLAN_FREE",
+        "USER_PLAN_PRO"
+      ],
+      "default": "USER_PLAN_UNSPECIFIED",
+      "description": "Тариф пользователя."
     }
   }
 }

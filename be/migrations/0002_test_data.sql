@@ -201,7 +201,17 @@ INSERT INTO complaints (id, sighting_id, reason, comment, status, created_at, is
   ('00000000-0000-0000-0000-0000000c0003', '00000000-0000-0000-0000-000000000004', 'wrong_plate',
    'На фото другая машина', 'new', timestamptz '2026-11-06 09:00:00Z', true);
 
+-- Тестовый пользователь Pro: вход по токену «demo-token» (в базе — его sha256), с одним оплаченным платежом.
+INSERT INTO users (id, token_hash, email, plan, pro_until, created_at, is_test_data) VALUES
+  ('00000000-0000-0000-0000-0000000a0001', '7c43ef5ae21d43ce2743f770c68e24def1a43ee2f416d2438410c8af7af2ff2c',
+   'demo@example.com', 'pro', timestamptz '2030-01-01 00:00:00Z', timestamptz '2026-11-01 10:00:00Z', true);
+INSERT INTO payments (id, user_id, plan, amount_cents, currency, status, provider, created_at, confirmed_at, is_test_data) VALUES
+  ('00000000-0000-0000-0000-0000000b0001', '00000000-0000-0000-0000-0000000a0001', 'pro', 29900, 'RUB', 'succeeded', 'mock',
+   timestamptz '2026-11-01 10:05:00Z', timestamptz '2026-11-01 10:06:00Z', true);
+
 -- +goose Down
+DELETE FROM payments WHERE is_test_data;
+DELETE FROM users WHERE is_test_data;
 DELETE FROM complaints WHERE is_test_data;
 DELETE FROM clarifications WHERE is_test_data;
 DELETE FROM plate_sightings WHERE is_test_data;

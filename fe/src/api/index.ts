@@ -4,9 +4,13 @@ import {
   CarsearchClarificationStatus,
   CarsearchComplaintReason,
   CarsearchComplaintStatus,
+  CarsearchPaymentStatus,
   CarsearchPlateType,
   type CarsearchClarification,
+  CarsearchUserPlan,
   type CarsearchGetResponse,
+  type CarsearchPayment,
+  type CarsearchUser,
   type CarsearchPlateSighting,
   type CarsearchSearchRequest,
   type CarsearchSearchResponse,
@@ -350,4 +354,119 @@ async function errorMessage(e: unknown): Promise<string> {
   }
   // Не Response — сеть недоступна (fetch бросил TypeError).
   return t("error.serverDown");
+}
+
+// ---------------------------------------------------------------------------
+// Аккаунт, тарифы, мок-оплата. Токен пользователя — cookie cs_token (auth.ts); браузер шлёт её сам
+// (credentials: same-origin), бэк читает её из заголовка cookie.
+// ---------------------------------------------------------------------------
+
+export type UserPlan = "free" | "pro";
+export type PaymentStatus = "pending" | "succeeded" | "canceled";
+
+export interface User {
+  id: string;
+  email: string;
+  plan: UserPlan;
+  proUntil: string | null;
+}
+
+export interface Me {
+  isAdmin: boolean;
+  user: User | null; // null — не вошёл (нет токена или он неверный)
+}
+
+export interface PlanInfo {
+  plan: UserPlan;
+  title: string;
+  amountCents: number;
+  currency: string;
+  periodDays: number;
+  features: string[];
+  uploadsPerDay: number;
+}
+
+export interface Payment {
+  id: string;
+  plan: UserPlan;
+  amountCents: number;
+  currency: string;
+  status: PaymentStatus;
+  createdAt: string;
+  confirmedAt: string | null;
+}
+
+const planName = (p?: CarsearchUserPlan): UserPlan => (p === CarsearchUserPlan.USER_PLAN_PRO ? "pro" : "free");
+const paymentStatusName: Record<string, PaymentStatus> = {
+  [CarsearchPaymentStatus.PAYMENT_STATUS_SUCCEEDED]: "succeeded",
+  [CarsearchPaymentStatus.PAYMENT_STATUS_CANCELED]: "canceled",
+};
+
+function toUser(u: CarsearchUser): User {
+  return { id: u.id ?? "", email: u.email ?? "", plan: planName(u.plan), proUntil: u.proUntil ?? null };
+}
+
+function toPayment(p: CarsearchPayment): Payment {
+  return {
+    id: p.id ?? "",
+    plan: planName(p.plan),
+    amountCents: p.amountCents ?? 0,
+    currency: p.currency ?? "RUB",
+    status: paymentStatusName[p.status ?? ""] ?? "pending",
+    createdAt: p.createdAt ?? "",
+    confirmedAt: p.confirmedAt ?? null,
+  };
+}
+
+async function call<T>(fn: () => Promise<{ data: T }>): Promise<T> {
+  try {
+    return (await fn()).data;
+  } catch (e) {
+    throw new ApiError(await errorMessage(e), e instanceof Response ? e.status : 0);
+  }
+}
+
+/** Кто я. token — проверить конкретный токен (вход, ещё до cookie); иначе — по cookie. */
+export async function me(token?: string): Promise<Me> {
+  const params = { headers: { ...headers, ...(getAdminToken() ? { "admin-token": getAdminToken() } : {}),
+    ...(token ? { authorization: `Bearer ${token}` } : {}) } };
+  // С явным токеном cookie не отправляем: иначе бэк проверит её, а не введённый токен.
+  const d = await call(() => api.carsearchCarSearchService.carSearchServiceMe({}, token ? { ...params, credentials: "omit" } : params));
+  return { isAdmin: !!d.isAdmin, user: d.authenticated && d.user ? toUser(d.user) : null };
+}
+
+/** Регистрация: токен показывается один раз. */
+export async function register(email: string): Promise<{ token: string; user: User }> {
+  const d = await call(() => api.carsearchCarSearchService.carSearchServiceRegister({ email }));
+  return { token: d.token ?? "", user: toUser(d.user ?? {}) };
+}
+
+export async function plans(): Promise<PlanInfo[]> {
+  const d = await call(() => api.carsearchCarSearchService.carSearchServicePlans({}));
+  return (d.items ?? []).map((p) => ({
+    plan: planName(p.plan),
+    title: p.title ?? "",
+    amountCents: p.amountCents ?? 0,
+    currency: p.currency ?? "RUB",
+    periodDays: p.periodDays ?? 0,
+    features: p.features ?? [],
+    uploadsPerDay: p.uploadsPerDay ?? 0,
+  }));
+}
+
+/** Платёж за Pro → адрес демо-кассы. 401 — не вошёл. */
+export async function createPayment(): Promise<string> {
+  const d = await call(() =>
+    api.carsearchCarSearchService.carSearchServiceCreatePayment({ plan: CarsearchUserPlan.USER_PLAN_PRO })
+  );
+  return d.checkoutUrl ?? "/account";
+}
+
+export async function confirmMockPayment(paymentId: string, success: boolean): Promise<Payment> {
+  return toPayment(await call(() => api.carsearchCarSearchService.carSearchServiceConfirmMockPayment({ paymentId, success })));
+}
+
+export async function myPayments(): Promise<Payment[]> {
+  const d = await call(() => api.carsearchCarSearchService.carSearchServiceListMyPayments({}));
+  return (d.items ?? []).map(toPayment);
 }

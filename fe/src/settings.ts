@@ -5,6 +5,7 @@ import { getLang, LANGS, setLang, t, type Lang } from "./i18n/i18n";
 import { logoHtml } from "./ui";
 import { adminSettingsHtml, bindAdminSettings } from "./adminmode";
 import { getTheme, setTheme, THEMES, type Theme } from "./theme";
+import { mountAccountSection, mountProBadge } from "./auth";
 
 // ---------- Секция «Тема» (переключатель auto/light/dark) ----------
 
@@ -71,6 +72,7 @@ export function mountSettings(root: HTMLElement): void {
           ).join("")}
         </div>
         ${themeSectionHtml(id)}
+        <div class="st-acc"></div>
       </div>
     </div>`;
 
@@ -133,4 +135,7 @@ export function mountSettings(root: HTMLElement): void {
   });
   bindThemeSection($panel);
   bindAdminSettings($panel);
+  // Секция «Аккаунт» и значок PRO у логотипа — auth.ts.
+  mountAccountSection($panel.querySelector<HTMLElement>(".st-acc")!, () => setOpen(false));
+  mountProBadge($box);
 }

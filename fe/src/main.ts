@@ -6,6 +6,7 @@ import { ApiError, clarify, search, type Car } from "./api";
 import { navigate, onRoute, plateHref } from "./router";
 import { renderPlatePage } from "./plate";
 import { renderAdminPage } from "./admin";
+import { isAuthRoute, renderAuthPage } from "./auth";
 import { cardHtml, escapeHtml, formatDate, icon, plateHtml } from "./ui";
 import { t, tp } from "./i18n/i18n";
 import { highlightPlate } from "./searchkey";
@@ -74,6 +75,7 @@ app.innerHTML = `
 
   <div class="view" id="view-plate" hidden></div>
   <div class="view" id="view-admin" hidden></div>
+  <div class="view" id="view-auth" hidden></div>
   ${footerHtml()}
 
   <dialog class="modal" aria-labelledby="modal-title">
@@ -506,7 +508,16 @@ let searchScroll = 0;
 const $viewAdmin = app.querySelector<HTMLElement>("#view-admin")!;
 void mountHomeAdmin(app.querySelector<HTMLElement>("#view-search .content")!); // админ-режим: полоса «Админ»
 
+const $viewAuth = app.querySelector<HTMLElement>("#view-auth")!;
+
 onRoute((route) => {
+  $viewAuth.hidden = !isAuthRoute(route);
+  if (isAuthRoute(route)) {
+    if (!$viewSearch.hidden) searchScroll = window.scrollY;
+    $viewSearch.hidden = $viewPlate.hidden = $viewAdmin.hidden = true;
+    renderAuthPage($viewAuth, route);
+    return;
+  }
   $viewAdmin.hidden = route.name !== "admin";
   if (route.name === "admin") {
     if (!$viewSearch.hidden) searchScroll = window.scrollY;

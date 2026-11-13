@@ -22,6 +22,8 @@ type CarSearch struct {
 	complaints complaints // жалобы на фото (WithComplaints); nil — методы жалоб недоступны
 	adminToken string     // ADMIN_TOKEN: пусто — админские методы выключены
 	admin      admin      // админские сценарии (WithAdmin); nil — HideSighting и разбор уточнений недоступны
+
+	accounts accounts // пользователи и оплата (WithAccounts); nil — методы аккаунта недоступны
 }
 
 // Option — необязательная часть сервиса.
@@ -42,6 +44,11 @@ func WithAdmin(a admin, adminToken string) Option {
 // isAdmin — запрос с верным admin-token: ему отдаются и скрытые фиксации.
 func (s *CarSearch) isAdmin(ctx context.Context) bool {
 	return requireAdmin(ctx, s.adminToken) == nil
+}
+
+// WithAccounts включает пользователей (вход по токену), тарифы и мок-оплату.
+func WithAccounts(a accounts) Option {
+	return func(s *CarSearch) { s.accounts = a }
 }
 
 func NewCarSearch(uc plateSightings, photoBaseURL string, opts ...Option) *CarSearch {
