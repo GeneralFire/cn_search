@@ -10,6 +10,8 @@ TypeScript + Vite с TS-клиентом, сгенерированным по `s
 > (npmjs.org, proxy.golang.org, Docker Hub). Подробнее — в
 > [«Зависимости и окружение»](#зависимости-и-окружение) и `CLAUDE.md`.
 
+Документация: идеи развития продукта (100 штук, топ-10 по волнам) — [`docs/IDEAS.md`](docs/IDEAS.md).
+
 ## Быстрый старт
 
 Нужны Docker (Docker Desktop / Colima / OrbStack), Docker Compose и `make`.
