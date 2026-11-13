@@ -8,6 +8,7 @@ const (
 	plateSightingsTable = "plate_sightings"
 	clarificationsTable = "clarifications"
 	complaintsTable     = "complaints"
+	cameraRequestsTable = "camera_requests"
 )
 
 // clarificationColumns — колонки clarifications; совпадают с тегами db models.Clarification.

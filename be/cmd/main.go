@@ -91,7 +91,8 @@ func serve(ctx context.Context, log *slog.Logger, cfg config) error {
 		svc := implementation.NewCarSearch(uc, cfg.PhotoBase,
 			implementation.WithComplaints(usecase.NewComplaints(cluster, repo), cfg.AdminToken),
 			implementation.WithAdmin(usecase.NewAdmin(cluster, repo), cfg.AdminToken),
-			implementation.WithAccounts(usecase.NewAccounts(cluster, repo)))
+			implementation.WithAccounts(usecase.NewAccounts(cluster, repo)),
+			implementation.WithCameraRequests(usecase.NewCameraRequests(cluster, repo)))
 		desc := pb.NewCarSearchServiceServiceDesc(svc)
 
 		// HTTP: ручки clay под /api + health + swagger.

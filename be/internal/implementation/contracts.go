@@ -4,6 +4,7 @@ package implementation
 //go:generate minimock -i accounts -o ./mocks/accounts_mock.go -n AccountsMock -p mocks
 //go:generate minimock -i complaints -o ./mocks/complaints_mock.go -n ComplaintsMock -p mocks
 //go:generate minimock -i admin -o ./mocks/admin_mock.go -n AdminMock -p mocks
+//go:generate minimock -i cameraRequests -o ./mocks/camera_requests_mock.go -n CameraRequestsMock -p mocks
 
 import (
 	"context"
@@ -41,4 +42,12 @@ type accounts interface {
 	CreatePayment(ctx context.Context, userID string, plan models.Plan) (models.Payment, error)
 	ConfirmMockPayment(ctx context.Context, userID, paymentID string, success bool) (models.Payment, error)
 	ListPayments(ctx context.Context, userID string) ([]models.Payment, error)
+}
+
+// cameraRequests — сценарии заявок на камеры (реализация — usecase.CameraRequests).
+type cameraRequests interface {
+	Submit(ctx context.Context, o models.SubmitCameraRequestOpts) (models.CameraRequest, error)
+	List(ctx context.Context, o models.ListCameraRequestsOpts) (models.CameraRequestsPage, error)
+	Vote(ctx context.Context, o models.VoteCameraRequestOpts) (models.CameraRequest, error)
+	SetStatus(ctx context.Context, id string, st models.CameraRequestStatus) (models.CameraRequest, error)
 }

@@ -1,6 +1,7 @@
 // Обёртка над сгенерированным клиентом (generated.ts — не править руками, см. `make gen-ts`).
 import {
   CarSearchApi,
+  CarsearchCameraRequestStatus,
   CarsearchClarificationStatus,
   CarsearchComplaintReason,
   CarsearchComplaintStatus,
@@ -8,6 +9,7 @@ import {
   CarsearchPlateType,
   type CarsearchClarification,
   CarsearchUserPlan,
+  type CarsearchCameraRequest,
   type CarsearchGetResponse,
   type CarsearchPayment,
   type CarsearchUser,
@@ -374,6 +376,120 @@ export async function setClarificationStatus(id: string, status: ClarificationSt
     return toClarification(data);
   } catch (e) {
     throw new ApiError(await errorMessage(e), e instanceof Response ? e.status : 0);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Заявки на расположение камер (страница /cameras и вкладка админки)
+// ---------------------------------------------------------------------------
+
+export type CameraStatus = "new" | "approved" | "rejected" | "installed";
+export const CAMERA_STATUSES: CameraStatus[] = ["new", "approved", "rejected", "installed"];
+
+const cameraStatusEnum: Record<CameraStatus, CarsearchCameraRequestStatus> = {
+  new: CarsearchCameraRequestStatus.CAMERA_REQUEST_STATUS_NEW,
+  approved: CarsearchCameraRequestStatus.CAMERA_REQUEST_STATUS_APPROVED,
+  rejected: CarsearchCameraRequestStatus.CAMERA_REQUEST_STATUS_REJECTED,
+  installed: CarsearchCameraRequestStatus.CAMERA_REQUEST_STATUS_INSTALLED,
+};
+const cameraStatusName = Object.fromEntries(Object.entries(cameraStatusEnum).map(([k, v]) => [v, k])) as Record<string, CameraStatus>;
+
+/** Заявка на камеру; contact — только в админском списке. */
+export interface CameraRequest {
+  id: string;
+  lat: number;
+  lon: number;
+  address: string;
+  reason: string;
+  contact: string;
+  status: CameraStatus;
+  votes: number;
+  createdAt: string;
+}
+
+export interface CameraRequestsPage {
+  items: CameraRequest[];
+  total: number;
+  nextOffset: number | null;
+}
+
+function toCameraRequest(c: CarsearchCameraRequest): CameraRequest {
+  return {
+    id: c.id ?? "",
+    lat: c.lat ?? 0,
+    lon: c.lon ?? 0,
+    address: c.address ?? "",
+    reason: c.reason ?? "",
+    contact: c.contact ?? "",
+    status: cameraStatusName[c.status ?? ""] ?? "new",
+    votes: c.votes ?? 0,
+    createdAt: c.createdAt ?? "",
+  };
+}
+
+const apiError = async (e: unknown) => new ApiError(await errorMessage(e), e instanceof Response ? e.status : 0);
+
+/** Новая заявка на камеру (статус «новая»). */
+export async function submitCameraRequest(req: {
+  lat: number;
+  lon: number;
+  address: string;
+  reason: string;
+  contact: string;
+}): Promise<CameraRequest> {
+  try {
+    const { data } = await api.carsearchCarSearchService.carSearchServiceSubmitCameraRequest(req);
+    return toCameraRequest(data);
+  } catch (e) {
+    throw await apiError(e);
+  }
+}
+
+/** Страница заявок; admin — с контактами (заголовок admin-token, 403 — неверный токен). */
+export async function listCameraRequests(
+  opts: { status?: CameraStatus | ""; offset?: number; limit?: number; admin?: boolean },
+  signal?: AbortSignal
+): Promise<CameraRequestsPage> {
+  try {
+    const { data } = await api.carsearchCarSearchService.carSearchServiceListCameraRequests(
+      {
+        status: opts.status ? cameraStatusEnum[opts.status] : CarsearchCameraRequestStatus.CAMERA_REQUEST_STATUS_UNSPECIFIED,
+        offset: opts.offset ?? 0,
+        limit: opts.limit ?? 0,
+      },
+      { signal, ...(opts.admin ? adminParams() : {}) }
+    );
+    return {
+      items: (data.items ?? []).map(toCameraRequest),
+      total: data.total ?? 0,
+      nextOffset: data.nextOffset ?? null,
+    };
+  } catch (e) {
+    if (signal?.aborted) throw e;
+    throw await apiError(e);
+  }
+}
+
+/** Голос «+1» за заявку; ответ — заявка с новым числом голосов. */
+export async function voteCameraRequest(id: string): Promise<CameraRequest> {
+  try {
+    const { data } = await api.carsearchCarSearchService.carSearchServiceVoteCameraRequest({ id });
+    return toCameraRequest(data);
+  } catch (e) {
+    throw await apiError(e);
+  }
+}
+
+/** Сменить статус заявки (админ). */
+export async function setCameraRequestStatus(id: string, status: CameraStatus): Promise<CameraRequest> {
+  try {
+    const { data } = await api.carsearchCarSearchService.carSearchServiceSetCameraRequestStatus(
+      { id, status: cameraStatusEnum[status] },
+      adminParams()
+    );
+    return toCameraRequest(data);
+  } catch (e) {
+    throw await apiError(e);
   }
 }
 

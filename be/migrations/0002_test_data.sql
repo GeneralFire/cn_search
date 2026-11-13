@@ -209,7 +209,21 @@ INSERT INTO payments (id, user_id, plan, amount_cents, currency, status, provide
   ('00000000-0000-0000-0000-0000000b0001', '00000000-0000-0000-0000-0000000a0001', 'pro', 29900, 'RUB', 'succeeded', 'mock',
    timestamptz '2026-11-01 10:05:00Z', timestamptz '2026-11-01 10:06:00Z', true);
 
+-- Заявки на камеры: Москва, Берлин, Киев; разные статусы.
+INSERT INTO camera_requests (id, lat, lon, address, reason, contact, status, votes, created_at, is_test_data) VALUES
+  ('00000000-0000-0000-0000-0000000ca001', 55.7601, 37.6186, 'Москва, ул. Тверская, 7',
+   'Оживлённый перекрёсток, часто паркуются во втором ряду', 'test@example.com', 'new', 12, timestamptz '2026-11-10 09:00:00Z', true),
+  ('00000000-0000-0000-0000-0000000ca002', 55.7520, 37.5920, 'Москва, ул. Арбат, 30',
+   'Пешеходная улица, машины заезжают под запрет', '@test_user', 'approved', 31, timestamptz '2026-11-05 12:00:00Z', true),
+  ('00000000-0000-0000-0000-0000000ca003', 52.5163, 13.3777, 'Berlin, Pariser Platz',
+   'Viele Touristen, Falschparker am Brandenburger Tor', '', 'installed', 8, timestamptz '2026-10-30 08:30:00Z', true),
+  ('00000000-0000-0000-0000-0000000ca004', 50.4501, 30.5234, 'Київ, Хрещатик, 22',
+   'Центральна вулиця, порушення правил паркування', '', 'rejected', 2, timestamptz '2026-10-25 17:45:00Z', true),
+  ('00000000-0000-0000-0000-0000000ca005', 50.4547, 30.5038, 'Київ, вул. Володимирська, 40',
+   'Біля університету — немає жодної камери', 'test@example.org', 'new', 5, timestamptz '2026-11-11 10:15:00Z', true);
+
 -- +goose Down
+DELETE FROM camera_requests WHERE is_test_data;
 DELETE FROM payments WHERE is_test_data;
 DELETE FROM users WHERE is_test_data;
 DELETE FROM complaints WHERE is_test_data;

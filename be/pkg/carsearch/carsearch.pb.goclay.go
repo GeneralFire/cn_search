@@ -856,6 +856,194 @@ func (d *CarSearchServiceDesc) RegisterHTTP(mux transport.Router) {
 		}
 	}
 
+	{
+		// Handler for SubmitCameraRequest, binding: POST /carsearch.CarSearchService/SubmitCameraRequest
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_SubmitCameraRequest_0(r)
+			rsp, err := _CarSearchService_SubmitCameraRequest_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_SubmitCameraRequest_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_SubmitCameraRequest_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
+	{
+		// Handler for ListCameraRequests, binding: POST /carsearch.CarSearchService/ListCameraRequests
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_ListCameraRequests_0(r)
+			rsp, err := _CarSearchService_ListCameraRequests_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_ListCameraRequests_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_ListCameraRequests_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
+	{
+		// Handler for VoteCameraRequest, binding: POST /carsearch.CarSearchService/VoteCameraRequest
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_VoteCameraRequest_0(r)
+			rsp, err := _CarSearchService_VoteCameraRequest_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_VoteCameraRequest_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_VoteCameraRequest_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
+	{
+		// Handler for SetCameraRequestStatus, binding: POST /carsearch.CarSearchService/SetCameraRequestStatus
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_SetCameraRequestStatus_0(r)
+			rsp, err := _CarSearchService_SetCameraRequestStatus_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_SetCameraRequestStatus_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_SetCameraRequestStatus_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
 }
 
 type CarSearchService_httpClient struct {
@@ -1688,6 +1876,210 @@ func (c *CarSearchService_httpClient) ListMyPayments(ctx context.Context, in *Li
 	return &ret, errors.Wrap(err, "can't unmarshal response")
 }
 
+func (c *CarSearchService_httpClient) SubmitCameraRequest(ctx context.Context, in *SubmitCameraRequestRequest, opts ...grpc.CallOption) (*CameraRequest, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_SubmitCameraRequest_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := CameraRequest{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
+func (c *CarSearchService_httpClient) ListCameraRequests(ctx context.Context, in *ListCameraRequestsRequest, opts ...grpc.CallOption) (*ListCameraRequestsResponse, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_ListCameraRequests_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := ListCameraRequestsResponse{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
+func (c *CarSearchService_httpClient) VoteCameraRequest(ctx context.Context, in *VoteCameraRequestRequest, opts ...grpc.CallOption) (*CameraRequest, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_VoteCameraRequest_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := CameraRequest{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
+func (c *CarSearchService_httpClient) SetCameraRequestStatus(ctx context.Context, in *SetCameraRequestStatusRequest, opts ...grpc.CallOption) (*CameraRequest, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_SetCameraRequestStatus_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := CameraRequest{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
 // patterns for CarSearchService
 var (
 	pattern_goclay_CarSearchService_Search_0 = "/carsearch.CarSearchService/Search"
@@ -1913,6 +2305,62 @@ var (
 	}
 
 	unmarshaler_goclay_CarSearchService_ListMyPayments_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
+	pattern_goclay_CarSearchService_SubmitCameraRequest_0 = "/carsearch.CarSearchService/SubmitCameraRequest"
+
+	pattern_goclay_CarSearchService_SubmitCameraRequest_0_builder = func(in *SubmitCameraRequestRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/SubmitCameraRequest"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_SubmitCameraRequest_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
+	pattern_goclay_CarSearchService_ListCameraRequests_0 = "/carsearch.CarSearchService/ListCameraRequests"
+
+	pattern_goclay_CarSearchService_ListCameraRequests_0_builder = func(in *ListCameraRequestsRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/ListCameraRequests"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_ListCameraRequests_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
+	pattern_goclay_CarSearchService_VoteCameraRequest_0 = "/carsearch.CarSearchService/VoteCameraRequest"
+
+	pattern_goclay_CarSearchService_VoteCameraRequest_0_builder = func(in *VoteCameraRequestRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/VoteCameraRequest"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_VoteCameraRequest_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
+	pattern_goclay_CarSearchService_SetCameraRequestStatus_0 = "/carsearch.CarSearchService/SetCameraRequestStatus"
+
+	pattern_goclay_CarSearchService_SetCameraRequestStatus_0_builder = func(in *SetCameraRequestStatusRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/SetCameraRequestStatus"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_SetCameraRequestStatus_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
 // marshalers for CarSearchService
@@ -2172,6 +2620,70 @@ var (
 			return nil
 		}
 	}
+
+	unmarshaler_goclay_CarSearchService_SubmitCameraRequest_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*SubmitCameraRequestRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_SubmitCameraRequest_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
+
+	unmarshaler_goclay_CarSearchService_ListCameraRequests_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*ListCameraRequestsRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_ListCameraRequests_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
+
+	unmarshaler_goclay_CarSearchService_VoteCameraRequest_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*VoteCameraRequestRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_VoteCameraRequest_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
+
+	unmarshaler_goclay_CarSearchService_SetCameraRequestStatus_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*SetCameraRequestStatusRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_SetCameraRequestStatus_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
 )
 
 var _swaggerDef_carsearch_carsearch_proto = []byte(`{
@@ -2346,6 +2858,33 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
             "required": true,
             "schema": {
               "$ref": "#/definitions/carsearchHideSightingRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/ListCameraRequests": {
+      "post": {
+        "summary": "ListCameraRequests — заявки на камеры, от новых к старым, постранично; рамка карты и статус — фильтры.\nПубличный: contact не отдаётся. С заголовком admin-token — с contact (неверный токен — PERMISSION_DENIED).",
+        "operationId": "CarSearchService_ListCameraRequests",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchListCameraRequestsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchListCameraRequestsRequest"
             }
           }
         ],
@@ -2597,6 +3136,33 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         ]
       }
     },
+    "/carsearch.CarSearchService/SetCameraRequestStatus": {
+      "post": {
+        "summary": "SetCameraRequestStatus — сменить статус заявки. Нужен заголовок admin-token.",
+        "operationId": "CarSearchService_SetCameraRequestStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchCameraRequest"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchSetCameraRequestStatusRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
     "/carsearch.CarSearchService/SetClarificationStatus": {
       "post": {
         "summary": "SetClarificationStatus — принять или отклонить уточнение вручную. Нужен заголовок admin-token.",
@@ -2623,9 +3189,114 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
           "CarSearchService"
         ]
       }
+    },
+    "/carsearch.CarSearchService/SubmitCameraRequest": {
+      "post": {
+        "summary": "SubmitCameraRequest — заявка на расположение камеры (страница /cameras). Создаётся со статусом NEW.",
+        "operationId": "CarSearchService_SubmitCameraRequest",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchCameraRequest"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchSubmitCameraRequestRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/VoteCameraRequest": {
+      "post": {
+        "summary": "VoteCameraRequest — голос «+1» за заявку. Без авторизации; повторный голос с того же браузера\nотсекает фронт (localStorage).",
+        "operationId": "CarSearchService_VoteCameraRequest",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchCameraRequest"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchVoteCameraRequestRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
     }
   },
   "definitions": {
+    "carsearchCameraRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "lat": {
+          "type": "number",
+          "format": "double",
+          "description": "Точка (WGS 84, градусы)."
+        },
+        "lon": {
+          "type": "number",
+          "format": "double"
+        },
+        "address": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "contact": {
+          "type": "string",
+          "description": "Контакт автора (e-mail/телеграм) — только администратору (ListCameraRequests с admin-token)."
+        },
+        "status": {
+          "$ref": "#/definitions/carsearchCameraRequestStatus"
+        },
+        "votes": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "CameraRequest — заявка на расположение камеры."
+    },
+    "carsearchCameraRequestStatus": {
+      "type": "string",
+      "enum": [
+        "CAMERA_REQUEST_STATUS_UNSPECIFIED",
+        "CAMERA_REQUEST_STATUS_NEW",
+        "CAMERA_REQUEST_STATUS_APPROVED",
+        "CAMERA_REQUEST_STATUS_REJECTED",
+        "CAMERA_REQUEST_STATUS_INSTALLED"
+      ],
+      "default": "CAMERA_REQUEST_STATUS_UNSPECIFIED",
+      "description": "Статус заявки на камеру."
+    },
     "carsearchClarification": {
       "type": "object",
       "properties": {
@@ -2805,6 +3476,28 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         }
       }
     },
+    "carsearchGeoBox": {
+      "type": "object",
+      "properties": {
+        "minLat": {
+          "type": "number",
+          "format": "double"
+        },
+        "minLon": {
+          "type": "number",
+          "format": "double"
+        },
+        "maxLat": {
+          "type": "number",
+          "format": "double"
+        },
+        "maxLon": {
+          "type": "number",
+          "format": "double"
+        }
+      },
+      "description": "Рамка карты: заявки с min_lat \u003c= lat \u003c= max_lat и min_lon \u003c= lon \u003c= max_lon."
+    },
     "carsearchGetRequest": {
       "type": "object",
       "properties": {
@@ -2843,6 +3536,50 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         "hidden": {
           "type": "boolean",
           "description": "true — скрыть, false — показать снова."
+        }
+      }
+    },
+    "carsearchListCameraRequestsRequest": {
+      "type": "object",
+      "properties": {
+        "bbox": {
+          "$ref": "#/definitions/carsearchGeoBox",
+          "description": "Рамка карты; не задана — все."
+        },
+        "status": {
+          "$ref": "#/definitions/carsearchCameraRequestStatus",
+          "description": "Фильтр по статусу; UNSPECIFIED — все."
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Сколько заявок пропустить («Загрузить ещё»)."
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Размер страницы, 1..500; 0 — по умолчанию (100)."
+        }
+      }
+    },
+    "carsearchListCameraRequestsResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchCameraRequest"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Всего заявок по фильтру."
+        },
+        "nextOffset": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Смещение следующей страницы; не задано — дальше ничего нет."
         }
       }
     },
@@ -3278,6 +4015,19 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         }
       }
     },
+    "carsearchSetCameraRequestStatusRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "uuid заявки."
+        },
+        "status": {
+          "$ref": "#/definitions/carsearchCameraRequestStatus",
+          "description": "Новый статус (не UNSPECIFIED)."
+        }
+      }
+    },
     "carsearchSetClarificationStatusRequest": {
       "type": "object",
       "properties": {
@@ -3288,6 +4038,32 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         "status": {
           "$ref": "#/definitions/carsearchClarificationStatus",
           "description": "ACCEPTED или NOT_ACCEPTED."
+        }
+      }
+    },
+    "carsearchSubmitCameraRequestRequest": {
+      "type": "object",
+      "properties": {
+        "lat": {
+          "type": "number",
+          "format": "double",
+          "description": "Точка, обязательна: lat -90..90, lon -180..180."
+        },
+        "lon": {
+          "type": "number",
+          "format": "double"
+        },
+        "address": {
+          "type": "string",
+          "description": "Адрес, до 300 символов; можно пусто."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Почему здесь нужна камера, 1..1000 символов."
+        },
+        "contact": {
+          "type": "string",
+          "description": "E-mail/телеграм для связи, до 200 символов; можно пусто."
         }
       }
     },
@@ -3327,6 +4103,15 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
       ],
       "default": "USER_PLAN_UNSPECIFIED",
       "description": "Тариф пользователя."
+    },
+    "carsearchVoteCameraRequestRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "uuid заявки."
+        }
+      }
     }
   }
 }

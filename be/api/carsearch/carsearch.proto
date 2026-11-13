@@ -71,6 +71,20 @@ service CarSearchService {
 
   // ListMyPayments — история платежей пользователя, от новых к старым (последние 50). Нужен токен.
   rpc ListMyPayments(ListMyPaymentsRequest) returns (ListMyPaymentsResponse);
+
+  // SubmitCameraRequest — заявка на расположение камеры (страница /cameras). Создаётся со статусом NEW.
+  rpc SubmitCameraRequest(SubmitCameraRequestRequest) returns (CameraRequest);
+
+  // ListCameraRequests — заявки на камеры, от новых к старым, постранично; рамка карты и статус — фильтры.
+  // Публичный: contact не отдаётся. С заголовком admin-token — с contact (неверный токен — PERMISSION_DENIED).
+  rpc ListCameraRequests(ListCameraRequestsRequest) returns (ListCameraRequestsResponse);
+
+  // VoteCameraRequest — голос «+1» за заявку. Без авторизации; повторный голос с того же браузера
+  // отсекает фронт (localStorage).
+  rpc VoteCameraRequest(VoteCameraRequestRequest) returns (CameraRequest);
+
+  // SetCameraRequestStatus — сменить статус заявки. Нужен заголовок admin-token.
+  rpc SetCameraRequestStatus(SetCameraRequestStatusRequest) returns (CameraRequest);
 }
 
 // PlateSighting — фиксация номера: где и когда замечена машина.
@@ -420,4 +434,79 @@ message ListMyPaymentsRequest {}
 
 message ListMyPaymentsResponse {
   repeated Payment items = 1;
+}
+
+// Статус заявки на камеру.
+enum CameraRequestStatus {
+  CAMERA_REQUEST_STATUS_UNSPECIFIED = 0; // в фильтре ListCameraRequests — все
+  CAMERA_REQUEST_STATUS_NEW = 1;
+  CAMERA_REQUEST_STATUS_APPROVED = 2;
+  CAMERA_REQUEST_STATUS_REJECTED = 3;
+  CAMERA_REQUEST_STATUS_INSTALLED = 4;
+}
+
+// CameraRequest — заявка на расположение камеры.
+message CameraRequest {
+  string id = 1;
+  // Точка (WGS 84, градусы).
+  double lat = 2;
+  double lon = 3;
+  string address = 4;
+  string reason = 5;
+  // Контакт автора (e-mail/телеграм) — только администратору (ListCameraRequests с admin-token).
+  string contact = 6;
+  CameraRequestStatus status = 7;
+  int32 votes = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+message SubmitCameraRequestRequest {
+  // Точка, обязательна: lat -90..90, lon -180..180.
+  double lat = 1;
+  double lon = 2;
+  // Адрес, до 300 символов; можно пусто.
+  string address = 3;
+  // Почему здесь нужна камера, 1..1000 символов.
+  string reason = 4;
+  // E-mail/телеграм для связи, до 200 символов; можно пусто.
+  string contact = 5;
+}
+
+// Рамка карты: заявки с min_lat <= lat <= max_lat и min_lon <= lon <= max_lon.
+message GeoBox {
+  double min_lat = 1;
+  double min_lon = 2;
+  double max_lat = 3;
+  double max_lon = 4;
+}
+
+message ListCameraRequestsRequest {
+  // Рамка карты; не задана — все.
+  GeoBox bbox = 1;
+  // Фильтр по статусу; UNSPECIFIED — все.
+  CameraRequestStatus status = 2;
+  // Сколько заявок пропустить («Загрузить ещё»).
+  int32 offset = 3;
+  // Размер страницы, 1..500; 0 — по умолчанию (100).
+  int32 limit = 4;
+}
+
+message ListCameraRequestsResponse {
+  repeated CameraRequest items = 1;
+  // Всего заявок по фильтру.
+  int32 total = 2;
+  // Смещение следующей страницы; не задано — дальше ничего нет.
+  optional int32 next_offset = 3;
+}
+
+message VoteCameraRequestRequest {
+  // uuid заявки.
+  string id = 1;
+}
+
+message SetCameraRequestStatusRequest {
+  // uuid заявки.
+  string id = 1;
+  // Новый статус (не UNSPECIFIED).
+  CameraRequestStatus status = 2;
 }

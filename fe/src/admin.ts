@@ -1,4 +1,4 @@
-// Админ-панель /admin: вкладки (реестр — admintabs.ts): «Жалобы» (здесь), «Уточнения» (adminclar.ts),
+// Админ-панель /admin: вкладки (реестр — admintabs.ts): «Жалобы» (здесь), «Уточнения» (adminclar.ts), «Заявки на камеры» (admin-cameras.ts),
 // заявки на камеры подключаются своей вкладкой. Вход — токен admin-token, проверяется rpc Me и включает
 // админ-режим (adminmode.ts); без токена или с неверным (бэк ответил 403) — форма ввода.
 // Жалобы: таблица с фильтром по статусу, «Загрузить ещё», кнопка «Решено»; ?sighting=<id> — только
@@ -8,6 +8,7 @@ import { ApiError, getAdminToken, listComplaints, resolveComplaint, type Complai
 import { enterAdminMode, exitAdminMode, shieldIcon } from "./adminmode";
 import { adminTabs, registerAdminTab } from "./admintabs";
 import "./adminclar";
+import "./admin-cameras";
 import { plateHref } from "./router";
 import { escapeHtml, formatDate, photoAttrs, plateHtml } from "./ui";
 import { t } from "./i18n/i18n";

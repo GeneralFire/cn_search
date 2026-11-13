@@ -121,7 +121,30 @@ CREATE TABLE payments (
 -- История платежей пользователя (rpc ListMyPayments).
 CREATE INDEX payments_user_created_at_idx ON payments (user_id, created_at DESC, id);
 
+-- Заявки на расположение камеры (страница /cameras): пользователь предлагает точку, другие голосуют «+1»,
+-- администратор меняет статус. contact (e-mail/телеграм) видит только администратор.
+CREATE TYPE camera_request_status AS ENUM ('new', 'approved', 'rejected', 'installed');
+
+CREATE TABLE camera_requests (
+    id           uuid                  PRIMARY KEY DEFAULT gen_random_uuid(),
+    lat          double precision      NOT NULL CHECK (lat BETWEEN -90 AND 90), -- точка (WGS 84, градусы)
+    lon          double precision      NOT NULL CHECK (lon BETWEEN -180 AND 180),
+    address      text                  NOT NULL DEFAULT '' CHECK (char_length(address) <= 300),
+    reason       text                  NOT NULL CHECK (char_length(reason) BETWEEN 1 AND 1000), -- зачем камера здесь
+    contact      text                  NOT NULL DEFAULT '' CHECK (char_length(contact) <= 200), -- e-mail/телеграм, необязательно
+    status       camera_request_status NOT NULL DEFAULT 'new',
+    votes        int                   NOT NULL DEFAULT 0 CHECK (votes >= 0),
+    created_at   timestamptz           NOT NULL DEFAULT now(),
+    is_test_data boolean               NOT NULL DEFAULT false
+);
+
+-- Список (rpc ListCameraRequests): от новых к старым; рамка карты — фильтр по lat/lon.
+CREATE INDEX camera_requests_created_at_idx ON camera_requests (created_at DESC, id);
+CREATE INDEX camera_requests_lat_lon_idx ON camera_requests (lat, lon);
+
 -- +goose Down
+DROP TABLE camera_requests;
+DROP TYPE camera_request_status;
 DROP TABLE payments;
 DROP TABLE users;
 DROP TABLE complaints;

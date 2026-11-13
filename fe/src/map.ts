@@ -11,10 +11,10 @@ import { navigate, plateHref } from "./router";
 import { escapeHtml, formatShortDate, formatTime } from "./ui";
 
 /** Тайлы OpenStreetMap: по их tile usage policy атрибуция обязательна. */
-const TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-const ATTRIBUTION = `&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors`;
+export const TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+export const ATTRIBUTION = `&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors`;
 /** Максимальный зум тайлов OSM. */
-const MAX_ZOOM = 19;
+export const MAX_ZOOM = 19;
 /** Зум для единственной точки и верхняя граница для fitBounds — уровень квартала. */
 const POINT_ZOOM = 15;
 

@@ -340,6 +340,62 @@ func (PaymentStatus) EnumDescriptor() ([]byte, []int) {
 	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{5}
 }
 
+// Статус заявки на камеру.
+type CameraRequestStatus int32
+
+const (
+	CameraRequestStatus_CAMERA_REQUEST_STATUS_UNSPECIFIED CameraRequestStatus = 0 // в фильтре ListCameraRequests — все
+	CameraRequestStatus_CAMERA_REQUEST_STATUS_NEW         CameraRequestStatus = 1
+	CameraRequestStatus_CAMERA_REQUEST_STATUS_APPROVED    CameraRequestStatus = 2
+	CameraRequestStatus_CAMERA_REQUEST_STATUS_REJECTED    CameraRequestStatus = 3
+	CameraRequestStatus_CAMERA_REQUEST_STATUS_INSTALLED   CameraRequestStatus = 4
+)
+
+// Enum value maps for CameraRequestStatus.
+var (
+	CameraRequestStatus_name = map[int32]string{
+		0: "CAMERA_REQUEST_STATUS_UNSPECIFIED",
+		1: "CAMERA_REQUEST_STATUS_NEW",
+		2: "CAMERA_REQUEST_STATUS_APPROVED",
+		3: "CAMERA_REQUEST_STATUS_REJECTED",
+		4: "CAMERA_REQUEST_STATUS_INSTALLED",
+	}
+	CameraRequestStatus_value = map[string]int32{
+		"CAMERA_REQUEST_STATUS_UNSPECIFIED": 0,
+		"CAMERA_REQUEST_STATUS_NEW":         1,
+		"CAMERA_REQUEST_STATUS_APPROVED":    2,
+		"CAMERA_REQUEST_STATUS_REJECTED":    3,
+		"CAMERA_REQUEST_STATUS_INSTALLED":   4,
+	}
+)
+
+func (x CameraRequestStatus) Enum() *CameraRequestStatus {
+	p := new(CameraRequestStatus)
+	*p = x
+	return p
+}
+
+func (x CameraRequestStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (CameraRequestStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_carsearch_carsearch_proto_enumTypes[6].Descriptor()
+}
+
+func (CameraRequestStatus) Type() protoreflect.EnumType {
+	return &file_carsearch_carsearch_proto_enumTypes[6]
+}
+
+func (x CameraRequestStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use CameraRequestStatus.Descriptor instead.
+func (CameraRequestStatus) EnumDescriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{6}
+}
+
 // PlateSighting — фиксация номера: где и когда замечена машина.
 type PlateSighting struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -2527,6 +2583,499 @@ func (x *ListMyPaymentsResponse) GetItems() []*Payment {
 	return nil
 }
 
+// CameraRequest — заявка на расположение камеры.
+type CameraRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Точка (WGS 84, градусы).
+	Lat     float64 `protobuf:"fixed64,2,opt,name=lat,proto3" json:"lat,omitempty"`
+	Lon     float64 `protobuf:"fixed64,3,opt,name=lon,proto3" json:"lon,omitempty"`
+	Address string  `protobuf:"bytes,4,opt,name=address,proto3" json:"address,omitempty"`
+	Reason  string  `protobuf:"bytes,5,opt,name=reason,proto3" json:"reason,omitempty"`
+	// Контакт автора (e-mail/телеграм) — только администратору (ListCameraRequests с admin-token).
+	Contact       string                 `protobuf:"bytes,6,opt,name=contact,proto3" json:"contact,omitempty"`
+	Status        CameraRequestStatus    `protobuf:"varint,7,opt,name=status,proto3,enum=carsearch.CameraRequestStatus" json:"status,omitempty"`
+	Votes         int32                  `protobuf:"varint,8,opt,name=votes,proto3" json:"votes,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CameraRequest) Reset() {
+	*x = CameraRequest{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CameraRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CameraRequest) ProtoMessage() {}
+
+func (x *CameraRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CameraRequest.ProtoReflect.Descriptor instead.
+func (*CameraRequest) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *CameraRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *CameraRequest) GetLat() float64 {
+	if x != nil {
+		return x.Lat
+	}
+	return 0
+}
+
+func (x *CameraRequest) GetLon() float64 {
+	if x != nil {
+		return x.Lon
+	}
+	return 0
+}
+
+func (x *CameraRequest) GetAddress() string {
+	if x != nil {
+		return x.Address
+	}
+	return ""
+}
+
+func (x *CameraRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+func (x *CameraRequest) GetContact() string {
+	if x != nil {
+		return x.Contact
+	}
+	return ""
+}
+
+func (x *CameraRequest) GetStatus() CameraRequestStatus {
+	if x != nil {
+		return x.Status
+	}
+	return CameraRequestStatus_CAMERA_REQUEST_STATUS_UNSPECIFIED
+}
+
+func (x *CameraRequest) GetVotes() int32 {
+	if x != nil {
+		return x.Votes
+	}
+	return 0
+}
+
+func (x *CameraRequest) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+type SubmitCameraRequestRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Точка, обязательна: lat -90..90, lon -180..180.
+	Lat float64 `protobuf:"fixed64,1,opt,name=lat,proto3" json:"lat,omitempty"`
+	Lon float64 `protobuf:"fixed64,2,opt,name=lon,proto3" json:"lon,omitempty"`
+	// Адрес, до 300 символов; можно пусто.
+	Address string `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
+	// Почему здесь нужна камера, 1..1000 символов.
+	Reason string `protobuf:"bytes,4,opt,name=reason,proto3" json:"reason,omitempty"`
+	// E-mail/телеграм для связи, до 200 символов; можно пусто.
+	Contact       string `protobuf:"bytes,5,opt,name=contact,proto3" json:"contact,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SubmitCameraRequestRequest) Reset() {
+	*x = SubmitCameraRequestRequest{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SubmitCameraRequestRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SubmitCameraRequestRequest) ProtoMessage() {}
+
+func (x *SubmitCameraRequestRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SubmitCameraRequestRequest.ProtoReflect.Descriptor instead.
+func (*SubmitCameraRequestRequest) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *SubmitCameraRequestRequest) GetLat() float64 {
+	if x != nil {
+		return x.Lat
+	}
+	return 0
+}
+
+func (x *SubmitCameraRequestRequest) GetLon() float64 {
+	if x != nil {
+		return x.Lon
+	}
+	return 0
+}
+
+func (x *SubmitCameraRequestRequest) GetAddress() string {
+	if x != nil {
+		return x.Address
+	}
+	return ""
+}
+
+func (x *SubmitCameraRequestRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+func (x *SubmitCameraRequestRequest) GetContact() string {
+	if x != nil {
+		return x.Contact
+	}
+	return ""
+}
+
+// Рамка карты: заявки с min_lat <= lat <= max_lat и min_lon <= lon <= max_lon.
+type GeoBox struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MinLat        float64                `protobuf:"fixed64,1,opt,name=min_lat,json=minLat,proto3" json:"min_lat,omitempty"`
+	MinLon        float64                `protobuf:"fixed64,2,opt,name=min_lon,json=minLon,proto3" json:"min_lon,omitempty"`
+	MaxLat        float64                `protobuf:"fixed64,3,opt,name=max_lat,json=maxLat,proto3" json:"max_lat,omitempty"`
+	MaxLon        float64                `protobuf:"fixed64,4,opt,name=max_lon,json=maxLon,proto3" json:"max_lon,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GeoBox) Reset() {
+	*x = GeoBox{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GeoBox) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GeoBox) ProtoMessage() {}
+
+func (x *GeoBox) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GeoBox.ProtoReflect.Descriptor instead.
+func (*GeoBox) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *GeoBox) GetMinLat() float64 {
+	if x != nil {
+		return x.MinLat
+	}
+	return 0
+}
+
+func (x *GeoBox) GetMinLon() float64 {
+	if x != nil {
+		return x.MinLon
+	}
+	return 0
+}
+
+func (x *GeoBox) GetMaxLat() float64 {
+	if x != nil {
+		return x.MaxLat
+	}
+	return 0
+}
+
+func (x *GeoBox) GetMaxLon() float64 {
+	if x != nil {
+		return x.MaxLon
+	}
+	return 0
+}
+
+type ListCameraRequestsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Рамка карты; не задана — все.
+	Bbox *GeoBox `protobuf:"bytes,1,opt,name=bbox,proto3" json:"bbox,omitempty"`
+	// Фильтр по статусу; UNSPECIFIED — все.
+	Status CameraRequestStatus `protobuf:"varint,2,opt,name=status,proto3,enum=carsearch.CameraRequestStatus" json:"status,omitempty"`
+	// Сколько заявок пропустить («Загрузить ещё»).
+	Offset int32 `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
+	// Размер страницы, 1..500; 0 — по умолчанию (100).
+	Limit         int32 `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCameraRequestsRequest) Reset() {
+	*x = ListCameraRequestsRequest{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCameraRequestsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCameraRequestsRequest) ProtoMessage() {}
+
+func (x *ListCameraRequestsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCameraRequestsRequest.ProtoReflect.Descriptor instead.
+func (*ListCameraRequestsRequest) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *ListCameraRequestsRequest) GetBbox() *GeoBox {
+	if x != nil {
+		return x.Bbox
+	}
+	return nil
+}
+
+func (x *ListCameraRequestsRequest) GetStatus() CameraRequestStatus {
+	if x != nil {
+		return x.Status
+	}
+	return CameraRequestStatus_CAMERA_REQUEST_STATUS_UNSPECIFIED
+}
+
+func (x *ListCameraRequestsRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+func (x *ListCameraRequestsRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+type ListCameraRequestsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Items []*CameraRequest       `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	// Всего заявок по фильтру.
+	Total int32 `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	// Смещение следующей страницы; не задано — дальше ничего нет.
+	NextOffset    *int32 `protobuf:"varint,3,opt,name=next_offset,json=nextOffset,proto3,oneof" json:"next_offset,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCameraRequestsResponse) Reset() {
+	*x = ListCameraRequestsResponse{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCameraRequestsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCameraRequestsResponse) ProtoMessage() {}
+
+func (x *ListCameraRequestsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCameraRequestsResponse.ProtoReflect.Descriptor instead.
+func (*ListCameraRequestsResponse) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *ListCameraRequestsResponse) GetItems() []*CameraRequest {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+func (x *ListCameraRequestsResponse) GetTotal() int32 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+func (x *ListCameraRequestsResponse) GetNextOffset() int32 {
+	if x != nil && x.NextOffset != nil {
+		return *x.NextOffset
+	}
+	return 0
+}
+
+type VoteCameraRequestRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// uuid заявки.
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VoteCameraRequestRequest) Reset() {
+	*x = VoteCameraRequestRequest{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VoteCameraRequestRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VoteCameraRequestRequest) ProtoMessage() {}
+
+func (x *VoteCameraRequestRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VoteCameraRequestRequest.ProtoReflect.Descriptor instead.
+func (*VoteCameraRequestRequest) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *VoteCameraRequestRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type SetCameraRequestStatusRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// uuid заявки.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Новый статус (не UNSPECIFIED).
+	Status        CameraRequestStatus `protobuf:"varint,2,opt,name=status,proto3,enum=carsearch.CameraRequestStatus" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetCameraRequestStatusRequest) Reset() {
+	*x = SetCameraRequestStatusRequest{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetCameraRequestStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetCameraRequestStatusRequest) ProtoMessage() {}
+
+func (x *SetCameraRequestStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetCameraRequestStatusRequest.ProtoReflect.Descriptor instead.
+func (*SetCameraRequestStatusRequest) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *SetCameraRequestStatusRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *SetCameraRequestStatusRequest) GetStatus() CameraRequestStatus {
+	if x != nil {
+		return x.Status
+	}
+	return CameraRequestStatus_CAMERA_REQUEST_STATUS_UNSPECIFIED
+}
+
 var File_carsearch_carsearch_proto protoreflect.FileDescriptor
 
 const file_carsearch_carsearch_proto_rawDesc = "" +
@@ -2703,7 +3252,45 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\"\x17\n" +
 	"\x15ListMyPaymentsRequest\"B\n" +
 	"\x16ListMyPaymentsResponse\x12(\n" +
-	"\x05items\x18\x01 \x03(\v2\x12.carsearch.PaymentR\x05items*\x82\x01\n" +
+	"\x05items\x18\x01 \x03(\v2\x12.carsearch.PaymentR\x05items\"\x98\x02\n" +
+	"\rCameraRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x10\n" +
+	"\x03lat\x18\x02 \x01(\x01R\x03lat\x12\x10\n" +
+	"\x03lon\x18\x03 \x01(\x01R\x03lon\x12\x18\n" +
+	"\aaddress\x18\x04 \x01(\tR\aaddress\x12\x16\n" +
+	"\x06reason\x18\x05 \x01(\tR\x06reason\x12\x18\n" +
+	"\acontact\x18\x06 \x01(\tR\acontact\x126\n" +
+	"\x06status\x18\a \x01(\x0e2\x1e.carsearch.CameraRequestStatusR\x06status\x12\x14\n" +
+	"\x05votes\x18\b \x01(\x05R\x05votes\x129\n" +
+	"\n" +
+	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\x8c\x01\n" +
+	"\x1aSubmitCameraRequestRequest\x12\x10\n" +
+	"\x03lat\x18\x01 \x01(\x01R\x03lat\x12\x10\n" +
+	"\x03lon\x18\x02 \x01(\x01R\x03lon\x12\x18\n" +
+	"\aaddress\x18\x03 \x01(\tR\aaddress\x12\x16\n" +
+	"\x06reason\x18\x04 \x01(\tR\x06reason\x12\x18\n" +
+	"\acontact\x18\x05 \x01(\tR\acontact\"l\n" +
+	"\x06GeoBox\x12\x17\n" +
+	"\amin_lat\x18\x01 \x01(\x01R\x06minLat\x12\x17\n" +
+	"\amin_lon\x18\x02 \x01(\x01R\x06minLon\x12\x17\n" +
+	"\amax_lat\x18\x03 \x01(\x01R\x06maxLat\x12\x17\n" +
+	"\amax_lon\x18\x04 \x01(\x01R\x06maxLon\"\xa8\x01\n" +
+	"\x19ListCameraRequestsRequest\x12%\n" +
+	"\x04bbox\x18\x01 \x01(\v2\x11.carsearch.GeoBoxR\x04bbox\x126\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x1e.carsearch.CameraRequestStatusR\x06status\x12\x16\n" +
+	"\x06offset\x18\x03 \x01(\x05R\x06offset\x12\x14\n" +
+	"\x05limit\x18\x04 \x01(\x05R\x05limit\"\x98\x01\n" +
+	"\x1aListCameraRequestsResponse\x12.\n" +
+	"\x05items\x18\x01 \x03(\v2\x18.carsearch.CameraRequestR\x05items\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x05R\x05total\x12$\n" +
+	"\vnext_offset\x18\x03 \x01(\x05H\x00R\n" +
+	"nextOffset\x88\x01\x01B\x0e\n" +
+	"\f_next_offset\"*\n" +
+	"\x18VoteCameraRequestRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"g\n" +
+	"\x1dSetCameraRequestStatusRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x126\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x1e.carsearch.CameraRequestStatusR\x06status*\x82\x01\n" +
 	"\tPlateType\x12\x16\n" +
 	"\x12PLATE_TYPE_DEFAULT\x10\x00\x12\x11\n" +
 	"\rPLATE_TYPE_RU\x10\x01\x12\x11\n" +
@@ -2733,7 +3320,13 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\x1aPAYMENT_STATUS_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16PAYMENT_STATUS_PENDING\x10\x01\x12\x1c\n" +
 	"\x18PAYMENT_STATUS_SUCCEEDED\x10\x02\x12\x1b\n" +
-	"\x17PAYMENT_STATUS_CANCELED\x10\x032\xa8\t\n" +
+	"\x17PAYMENT_STATUS_CANCELED\x10\x03*\xc8\x01\n" +
+	"\x13CameraRequestStatus\x12%\n" +
+	"!CAMERA_REQUEST_STATUS_UNSPECIFIED\x10\x00\x12\x1d\n" +
+	"\x19CAMERA_REQUEST_STATUS_NEW\x10\x01\x12\"\n" +
+	"\x1eCAMERA_REQUEST_STATUS_APPROVED\x10\x02\x12\"\n" +
+	"\x1eCAMERA_REQUEST_STATUS_REJECTED\x10\x03\x12#\n" +
+	"\x1fCAMERA_REQUEST_STATUS_INSTALLED\x10\x042\x95\f\n" +
 	"\x10CarSearchService\x12=\n" +
 	"\x06Search\x12\x18.carsearch.SearchRequest\x1a\x19.carsearch.SearchResponse\x124\n" +
 	"\x03Get\x12\x15.carsearch.GetRequest\x1a\x16.carsearch.GetResponse\x12@\n" +
@@ -2750,7 +3343,11 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\x05Plans\x12\x17.carsearch.PlansRequest\x1a\x18.carsearch.PlansResponse\x12R\n" +
 	"\rCreatePayment\x12\x1f.carsearch.CreatePaymentRequest\x1a .carsearch.CreatePaymentResponse\x12N\n" +
 	"\x12ConfirmMockPayment\x12$.carsearch.ConfirmMockPaymentRequest\x1a\x12.carsearch.Payment\x12U\n" +
-	"\x0eListMyPayments\x12 .carsearch.ListMyPaymentsRequest\x1a!.carsearch.ListMyPaymentsResponseB=Z;github.com/GeneralFire/cn_search/be/pkg/carsearch;carsearchb\x06proto3"
+	"\x0eListMyPayments\x12 .carsearch.ListMyPaymentsRequest\x1a!.carsearch.ListMyPaymentsResponse\x12V\n" +
+	"\x13SubmitCameraRequest\x12%.carsearch.SubmitCameraRequestRequest\x1a\x18.carsearch.CameraRequest\x12a\n" +
+	"\x12ListCameraRequests\x12$.carsearch.ListCameraRequestsRequest\x1a%.carsearch.ListCameraRequestsResponse\x12R\n" +
+	"\x11VoteCameraRequest\x12#.carsearch.VoteCameraRequestRequest\x1a\x18.carsearch.CameraRequest\x12\\\n" +
+	"\x16SetCameraRequestStatus\x12(.carsearch.SetCameraRequestStatusRequest\x1a\x18.carsearch.CameraRequestB=Z;github.com/GeneralFire/cn_search/be/pkg/carsearch;carsearchb\x06proto3"
 
 var (
 	file_carsearch_carsearch_proto_rawDescOnce sync.Once
@@ -2764,8 +3361,8 @@ func file_carsearch_carsearch_proto_rawDescGZIP() []byte {
 	return file_carsearch_carsearch_proto_rawDescData
 }
 
-var file_carsearch_carsearch_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
-var file_carsearch_carsearch_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
+var file_carsearch_carsearch_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
+var file_carsearch_carsearch_proto_msgTypes = make([]protoimpl.MessageInfo, 41)
 var file_carsearch_carsearch_proto_goTypes = []any{
 	(PlateType)(0),                        // 0: carsearch.PlateType
 	(ClarificationStatus)(0),              // 1: carsearch.ClarificationStatus
@@ -2773,120 +3370,142 @@ var file_carsearch_carsearch_proto_goTypes = []any{
 	(ComplaintStatus)(0),                  // 3: carsearch.ComplaintStatus
 	(UserPlan)(0),                         // 4: carsearch.UserPlan
 	(PaymentStatus)(0),                    // 5: carsearch.PaymentStatus
-	(*PlateSighting)(nil),                 // 6: carsearch.PlateSighting
-	(*SearchRequest)(nil),                 // 7: carsearch.SearchRequest
-	(*SearchResponse)(nil),                // 8: carsearch.SearchResponse
-	(*GetRequest)(nil),                    // 9: carsearch.GetRequest
-	(*GetResponse)(nil),                   // 10: carsearch.GetResponse
-	(*PlateClarification)(nil),            // 11: carsearch.PlateClarification
-	(*SeeAlsoRequest)(nil),                // 12: carsearch.SeeAlsoRequest
-	(*SeeAlsoResponse)(nil),               // 13: carsearch.SeeAlsoResponse
-	(*Clarification)(nil),                 // 14: carsearch.Clarification
-	(*ClarifyRequest)(nil),                // 15: carsearch.ClarifyRequest
-	(*ClarifyResponse)(nil),               // 16: carsearch.ClarifyResponse
-	(*Complaint)(nil),                     // 17: carsearch.Complaint
-	(*ComplainRequest)(nil),               // 18: carsearch.ComplainRequest
-	(*ListComplaintsRequest)(nil),         // 19: carsearch.ListComplaintsRequest
-	(*ListComplaintsResponse)(nil),        // 20: carsearch.ListComplaintsResponse
-	(*ResolveComplaintRequest)(nil),       // 21: carsearch.ResolveComplaintRequest
-	(*SetClarificationStatusRequest)(nil), // 22: carsearch.SetClarificationStatusRequest
-	(*HideSightingRequest)(nil),           // 23: carsearch.HideSightingRequest
-	(*ListClarificationsRequest)(nil),     // 24: carsearch.ListClarificationsRequest
-	(*ListClarificationsResponse)(nil),    // 25: carsearch.ListClarificationsResponse
-	(*User)(nil),                          // 26: carsearch.User
-	(*MeRequest)(nil),                     // 27: carsearch.MeRequest
-	(*MeResponse)(nil),                    // 28: carsearch.MeResponse
-	(*RegisterRequest)(nil),               // 29: carsearch.RegisterRequest
-	(*RegisterResponse)(nil),              // 30: carsearch.RegisterResponse
-	(*PlansRequest)(nil),                  // 31: carsearch.PlansRequest
-	(*PlanInfo)(nil),                      // 32: carsearch.PlanInfo
-	(*PlansResponse)(nil),                 // 33: carsearch.PlansResponse
-	(*Payment)(nil),                       // 34: carsearch.Payment
-	(*CreatePaymentRequest)(nil),          // 35: carsearch.CreatePaymentRequest
-	(*CreatePaymentResponse)(nil),         // 36: carsearch.CreatePaymentResponse
-	(*ConfirmMockPaymentRequest)(nil),     // 37: carsearch.ConfirmMockPaymentRequest
-	(*ListMyPaymentsRequest)(nil),         // 38: carsearch.ListMyPaymentsRequest
-	(*ListMyPaymentsResponse)(nil),        // 39: carsearch.ListMyPaymentsResponse
-	(*timestamppb.Timestamp)(nil),         // 40: google.protobuf.Timestamp
+	(CameraRequestStatus)(0),              // 6: carsearch.CameraRequestStatus
+	(*PlateSighting)(nil),                 // 7: carsearch.PlateSighting
+	(*SearchRequest)(nil),                 // 8: carsearch.SearchRequest
+	(*SearchResponse)(nil),                // 9: carsearch.SearchResponse
+	(*GetRequest)(nil),                    // 10: carsearch.GetRequest
+	(*GetResponse)(nil),                   // 11: carsearch.GetResponse
+	(*PlateClarification)(nil),            // 12: carsearch.PlateClarification
+	(*SeeAlsoRequest)(nil),                // 13: carsearch.SeeAlsoRequest
+	(*SeeAlsoResponse)(nil),               // 14: carsearch.SeeAlsoResponse
+	(*Clarification)(nil),                 // 15: carsearch.Clarification
+	(*ClarifyRequest)(nil),                // 16: carsearch.ClarifyRequest
+	(*ClarifyResponse)(nil),               // 17: carsearch.ClarifyResponse
+	(*Complaint)(nil),                     // 18: carsearch.Complaint
+	(*ComplainRequest)(nil),               // 19: carsearch.ComplainRequest
+	(*ListComplaintsRequest)(nil),         // 20: carsearch.ListComplaintsRequest
+	(*ListComplaintsResponse)(nil),        // 21: carsearch.ListComplaintsResponse
+	(*ResolveComplaintRequest)(nil),       // 22: carsearch.ResolveComplaintRequest
+	(*SetClarificationStatusRequest)(nil), // 23: carsearch.SetClarificationStatusRequest
+	(*HideSightingRequest)(nil),           // 24: carsearch.HideSightingRequest
+	(*ListClarificationsRequest)(nil),     // 25: carsearch.ListClarificationsRequest
+	(*ListClarificationsResponse)(nil),    // 26: carsearch.ListClarificationsResponse
+	(*User)(nil),                          // 27: carsearch.User
+	(*MeRequest)(nil),                     // 28: carsearch.MeRequest
+	(*MeResponse)(nil),                    // 29: carsearch.MeResponse
+	(*RegisterRequest)(nil),               // 30: carsearch.RegisterRequest
+	(*RegisterResponse)(nil),              // 31: carsearch.RegisterResponse
+	(*PlansRequest)(nil),                  // 32: carsearch.PlansRequest
+	(*PlanInfo)(nil),                      // 33: carsearch.PlanInfo
+	(*PlansResponse)(nil),                 // 34: carsearch.PlansResponse
+	(*Payment)(nil),                       // 35: carsearch.Payment
+	(*CreatePaymentRequest)(nil),          // 36: carsearch.CreatePaymentRequest
+	(*CreatePaymentResponse)(nil),         // 37: carsearch.CreatePaymentResponse
+	(*ConfirmMockPaymentRequest)(nil),     // 38: carsearch.ConfirmMockPaymentRequest
+	(*ListMyPaymentsRequest)(nil),         // 39: carsearch.ListMyPaymentsRequest
+	(*ListMyPaymentsResponse)(nil),        // 40: carsearch.ListMyPaymentsResponse
+	(*CameraRequest)(nil),                 // 41: carsearch.CameraRequest
+	(*SubmitCameraRequestRequest)(nil),    // 42: carsearch.SubmitCameraRequestRequest
+	(*GeoBox)(nil),                        // 43: carsearch.GeoBox
+	(*ListCameraRequestsRequest)(nil),     // 44: carsearch.ListCameraRequestsRequest
+	(*ListCameraRequestsResponse)(nil),    // 45: carsearch.ListCameraRequestsResponse
+	(*VoteCameraRequestRequest)(nil),      // 46: carsearch.VoteCameraRequestRequest
+	(*SetCameraRequestStatusRequest)(nil), // 47: carsearch.SetCameraRequestStatusRequest
+	(*timestamppb.Timestamp)(nil),         // 48: google.protobuf.Timestamp
 }
 var file_carsearch_carsearch_proto_depIdxs = []int32{
-	40, // 0: carsearch.PlateSighting.created_at:type_name -> google.protobuf.Timestamp
+	48, // 0: carsearch.PlateSighting.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 1: carsearch.PlateSighting.plate_type:type_name -> carsearch.PlateType
-	6,  // 2: carsearch.SearchResponse.items:type_name -> carsearch.PlateSighting
-	6,  // 3: carsearch.SearchResponse.suggestions:type_name -> carsearch.PlateSighting
-	6,  // 4: carsearch.GetResponse.items:type_name -> carsearch.PlateSighting
-	11, // 5: carsearch.GetResponse.clarifications:type_name -> carsearch.PlateClarification
+	7,  // 2: carsearch.SearchResponse.items:type_name -> carsearch.PlateSighting
+	7,  // 3: carsearch.SearchResponse.suggestions:type_name -> carsearch.PlateSighting
+	7,  // 4: carsearch.GetResponse.items:type_name -> carsearch.PlateSighting
+	12, // 5: carsearch.GetResponse.clarifications:type_name -> carsearch.PlateClarification
 	0,  // 6: carsearch.PlateClarification.plate_type:type_name -> carsearch.PlateType
 	1,  // 7: carsearch.PlateClarification.status:type_name -> carsearch.ClarificationStatus
-	14, // 8: carsearch.PlateClarification.items:type_name -> carsearch.Clarification
-	6,  // 9: carsearch.SeeAlsoResponse.items:type_name -> carsearch.PlateSighting
+	15, // 8: carsearch.PlateClarification.items:type_name -> carsearch.Clarification
+	7,  // 9: carsearch.SeeAlsoResponse.items:type_name -> carsearch.PlateSighting
 	1,  // 10: carsearch.Clarification.status:type_name -> carsearch.ClarificationStatus
-	40, // 11: carsearch.Clarification.created_at:type_name -> google.protobuf.Timestamp
+	48, // 11: carsearch.Clarification.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 12: carsearch.Clarification.plate_type:type_name -> carsearch.PlateType
-	6,  // 13: carsearch.Clarification.sighting:type_name -> carsearch.PlateSighting
+	7,  // 13: carsearch.Clarification.sighting:type_name -> carsearch.PlateSighting
 	0,  // 14: carsearch.ClarifyRequest.plate_type:type_name -> carsearch.PlateType
-	14, // 15: carsearch.ClarifyResponse.clarification:type_name -> carsearch.Clarification
+	15, // 15: carsearch.ClarifyResponse.clarification:type_name -> carsearch.Clarification
 	2,  // 16: carsearch.Complaint.reason:type_name -> carsearch.ComplaintReason
 	3,  // 17: carsearch.Complaint.status:type_name -> carsearch.ComplaintStatus
-	40, // 18: carsearch.Complaint.created_at:type_name -> google.protobuf.Timestamp
-	6,  // 19: carsearch.Complaint.sighting:type_name -> carsearch.PlateSighting
+	48, // 18: carsearch.Complaint.created_at:type_name -> google.protobuf.Timestamp
+	7,  // 19: carsearch.Complaint.sighting:type_name -> carsearch.PlateSighting
 	2,  // 20: carsearch.ComplainRequest.reason:type_name -> carsearch.ComplaintReason
 	3,  // 21: carsearch.ListComplaintsRequest.status:type_name -> carsearch.ComplaintStatus
-	17, // 22: carsearch.ListComplaintsResponse.items:type_name -> carsearch.Complaint
+	18, // 22: carsearch.ListComplaintsResponse.items:type_name -> carsearch.Complaint
 	1,  // 23: carsearch.SetClarificationStatusRequest.status:type_name -> carsearch.ClarificationStatus
 	1,  // 24: carsearch.ListClarificationsRequest.status:type_name -> carsearch.ClarificationStatus
-	14, // 25: carsearch.ListClarificationsResponse.items:type_name -> carsearch.Clarification
+	15, // 25: carsearch.ListClarificationsResponse.items:type_name -> carsearch.Clarification
 	4,  // 26: carsearch.User.plan:type_name -> carsearch.UserPlan
-	40, // 27: carsearch.User.pro_until:type_name -> google.protobuf.Timestamp
-	40, // 28: carsearch.User.created_at:type_name -> google.protobuf.Timestamp
-	26, // 29: carsearch.MeResponse.user:type_name -> carsearch.User
-	26, // 30: carsearch.RegisterResponse.user:type_name -> carsearch.User
+	48, // 27: carsearch.User.pro_until:type_name -> google.protobuf.Timestamp
+	48, // 28: carsearch.User.created_at:type_name -> google.protobuf.Timestamp
+	27, // 29: carsearch.MeResponse.user:type_name -> carsearch.User
+	27, // 30: carsearch.RegisterResponse.user:type_name -> carsearch.User
 	4,  // 31: carsearch.PlanInfo.plan:type_name -> carsearch.UserPlan
-	32, // 32: carsearch.PlansResponse.items:type_name -> carsearch.PlanInfo
+	33, // 32: carsearch.PlansResponse.items:type_name -> carsearch.PlanInfo
 	4,  // 33: carsearch.Payment.plan:type_name -> carsearch.UserPlan
 	5,  // 34: carsearch.Payment.status:type_name -> carsearch.PaymentStatus
-	40, // 35: carsearch.Payment.created_at:type_name -> google.protobuf.Timestamp
-	40, // 36: carsearch.Payment.confirmed_at:type_name -> google.protobuf.Timestamp
+	48, // 35: carsearch.Payment.created_at:type_name -> google.protobuf.Timestamp
+	48, // 36: carsearch.Payment.confirmed_at:type_name -> google.protobuf.Timestamp
 	4,  // 37: carsearch.CreatePaymentRequest.plan:type_name -> carsearch.UserPlan
-	34, // 38: carsearch.CreatePaymentResponse.payment:type_name -> carsearch.Payment
-	34, // 39: carsearch.ListMyPaymentsResponse.items:type_name -> carsearch.Payment
-	7,  // 40: carsearch.CarSearchService.Search:input_type -> carsearch.SearchRequest
-	9,  // 41: carsearch.CarSearchService.Get:input_type -> carsearch.GetRequest
-	12, // 42: carsearch.CarSearchService.SeeAlso:input_type -> carsearch.SeeAlsoRequest
-	15, // 43: carsearch.CarSearchService.Clarify:input_type -> carsearch.ClarifyRequest
-	18, // 44: carsearch.CarSearchService.Complain:input_type -> carsearch.ComplainRequest
-	19, // 45: carsearch.CarSearchService.ListComplaints:input_type -> carsearch.ListComplaintsRequest
-	21, // 46: carsearch.CarSearchService.ResolveComplaint:input_type -> carsearch.ResolveComplaintRequest
-	22, // 47: carsearch.CarSearchService.SetClarificationStatus:input_type -> carsearch.SetClarificationStatusRequest
-	23, // 48: carsearch.CarSearchService.HideSighting:input_type -> carsearch.HideSightingRequest
-	24, // 49: carsearch.CarSearchService.ListClarifications:input_type -> carsearch.ListClarificationsRequest
-	27, // 50: carsearch.CarSearchService.Me:input_type -> carsearch.MeRequest
-	29, // 51: carsearch.CarSearchService.Register:input_type -> carsearch.RegisterRequest
-	31, // 52: carsearch.CarSearchService.Plans:input_type -> carsearch.PlansRequest
-	35, // 53: carsearch.CarSearchService.CreatePayment:input_type -> carsearch.CreatePaymentRequest
-	37, // 54: carsearch.CarSearchService.ConfirmMockPayment:input_type -> carsearch.ConfirmMockPaymentRequest
-	38, // 55: carsearch.CarSearchService.ListMyPayments:input_type -> carsearch.ListMyPaymentsRequest
-	8,  // 56: carsearch.CarSearchService.Search:output_type -> carsearch.SearchResponse
-	10, // 57: carsearch.CarSearchService.Get:output_type -> carsearch.GetResponse
-	13, // 58: carsearch.CarSearchService.SeeAlso:output_type -> carsearch.SeeAlsoResponse
-	16, // 59: carsearch.CarSearchService.Clarify:output_type -> carsearch.ClarifyResponse
-	17, // 60: carsearch.CarSearchService.Complain:output_type -> carsearch.Complaint
-	20, // 61: carsearch.CarSearchService.ListComplaints:output_type -> carsearch.ListComplaintsResponse
-	17, // 62: carsearch.CarSearchService.ResolveComplaint:output_type -> carsearch.Complaint
-	14, // 63: carsearch.CarSearchService.SetClarificationStatus:output_type -> carsearch.Clarification
-	6,  // 64: carsearch.CarSearchService.HideSighting:output_type -> carsearch.PlateSighting
-	25, // 65: carsearch.CarSearchService.ListClarifications:output_type -> carsearch.ListClarificationsResponse
-	28, // 66: carsearch.CarSearchService.Me:output_type -> carsearch.MeResponse
-	30, // 67: carsearch.CarSearchService.Register:output_type -> carsearch.RegisterResponse
-	33, // 68: carsearch.CarSearchService.Plans:output_type -> carsearch.PlansResponse
-	36, // 69: carsearch.CarSearchService.CreatePayment:output_type -> carsearch.CreatePaymentResponse
-	34, // 70: carsearch.CarSearchService.ConfirmMockPayment:output_type -> carsearch.Payment
-	39, // 71: carsearch.CarSearchService.ListMyPayments:output_type -> carsearch.ListMyPaymentsResponse
-	56, // [56:72] is the sub-list for method output_type
-	40, // [40:56] is the sub-list for method input_type
-	40, // [40:40] is the sub-list for extension type_name
-	40, // [40:40] is the sub-list for extension extendee
-	0,  // [0:40] is the sub-list for field type_name
+	35, // 38: carsearch.CreatePaymentResponse.payment:type_name -> carsearch.Payment
+	35, // 39: carsearch.ListMyPaymentsResponse.items:type_name -> carsearch.Payment
+	6,  // 40: carsearch.CameraRequest.status:type_name -> carsearch.CameraRequestStatus
+	48, // 41: carsearch.CameraRequest.created_at:type_name -> google.protobuf.Timestamp
+	43, // 42: carsearch.ListCameraRequestsRequest.bbox:type_name -> carsearch.GeoBox
+	6,  // 43: carsearch.ListCameraRequestsRequest.status:type_name -> carsearch.CameraRequestStatus
+	41, // 44: carsearch.ListCameraRequestsResponse.items:type_name -> carsearch.CameraRequest
+	6,  // 45: carsearch.SetCameraRequestStatusRequest.status:type_name -> carsearch.CameraRequestStatus
+	8,  // 46: carsearch.CarSearchService.Search:input_type -> carsearch.SearchRequest
+	10, // 47: carsearch.CarSearchService.Get:input_type -> carsearch.GetRequest
+	13, // 48: carsearch.CarSearchService.SeeAlso:input_type -> carsearch.SeeAlsoRequest
+	16, // 49: carsearch.CarSearchService.Clarify:input_type -> carsearch.ClarifyRequest
+	19, // 50: carsearch.CarSearchService.Complain:input_type -> carsearch.ComplainRequest
+	20, // 51: carsearch.CarSearchService.ListComplaints:input_type -> carsearch.ListComplaintsRequest
+	22, // 52: carsearch.CarSearchService.ResolveComplaint:input_type -> carsearch.ResolveComplaintRequest
+	23, // 53: carsearch.CarSearchService.SetClarificationStatus:input_type -> carsearch.SetClarificationStatusRequest
+	24, // 54: carsearch.CarSearchService.HideSighting:input_type -> carsearch.HideSightingRequest
+	25, // 55: carsearch.CarSearchService.ListClarifications:input_type -> carsearch.ListClarificationsRequest
+	28, // 56: carsearch.CarSearchService.Me:input_type -> carsearch.MeRequest
+	30, // 57: carsearch.CarSearchService.Register:input_type -> carsearch.RegisterRequest
+	32, // 58: carsearch.CarSearchService.Plans:input_type -> carsearch.PlansRequest
+	36, // 59: carsearch.CarSearchService.CreatePayment:input_type -> carsearch.CreatePaymentRequest
+	38, // 60: carsearch.CarSearchService.ConfirmMockPayment:input_type -> carsearch.ConfirmMockPaymentRequest
+	39, // 61: carsearch.CarSearchService.ListMyPayments:input_type -> carsearch.ListMyPaymentsRequest
+	42, // 62: carsearch.CarSearchService.SubmitCameraRequest:input_type -> carsearch.SubmitCameraRequestRequest
+	44, // 63: carsearch.CarSearchService.ListCameraRequests:input_type -> carsearch.ListCameraRequestsRequest
+	46, // 64: carsearch.CarSearchService.VoteCameraRequest:input_type -> carsearch.VoteCameraRequestRequest
+	47, // 65: carsearch.CarSearchService.SetCameraRequestStatus:input_type -> carsearch.SetCameraRequestStatusRequest
+	9,  // 66: carsearch.CarSearchService.Search:output_type -> carsearch.SearchResponse
+	11, // 67: carsearch.CarSearchService.Get:output_type -> carsearch.GetResponse
+	14, // 68: carsearch.CarSearchService.SeeAlso:output_type -> carsearch.SeeAlsoResponse
+	17, // 69: carsearch.CarSearchService.Clarify:output_type -> carsearch.ClarifyResponse
+	18, // 70: carsearch.CarSearchService.Complain:output_type -> carsearch.Complaint
+	21, // 71: carsearch.CarSearchService.ListComplaints:output_type -> carsearch.ListComplaintsResponse
+	18, // 72: carsearch.CarSearchService.ResolveComplaint:output_type -> carsearch.Complaint
+	15, // 73: carsearch.CarSearchService.SetClarificationStatus:output_type -> carsearch.Clarification
+	7,  // 74: carsearch.CarSearchService.HideSighting:output_type -> carsearch.PlateSighting
+	26, // 75: carsearch.CarSearchService.ListClarifications:output_type -> carsearch.ListClarificationsResponse
+	29, // 76: carsearch.CarSearchService.Me:output_type -> carsearch.MeResponse
+	31, // 77: carsearch.CarSearchService.Register:output_type -> carsearch.RegisterResponse
+	34, // 78: carsearch.CarSearchService.Plans:output_type -> carsearch.PlansResponse
+	37, // 79: carsearch.CarSearchService.CreatePayment:output_type -> carsearch.CreatePaymentResponse
+	35, // 80: carsearch.CarSearchService.ConfirmMockPayment:output_type -> carsearch.Payment
+	40, // 81: carsearch.CarSearchService.ListMyPayments:output_type -> carsearch.ListMyPaymentsResponse
+	41, // 82: carsearch.CarSearchService.SubmitCameraRequest:output_type -> carsearch.CameraRequest
+	45, // 83: carsearch.CarSearchService.ListCameraRequests:output_type -> carsearch.ListCameraRequestsResponse
+	41, // 84: carsearch.CarSearchService.VoteCameraRequest:output_type -> carsearch.CameraRequest
+	41, // 85: carsearch.CarSearchService.SetCameraRequestStatus:output_type -> carsearch.CameraRequest
+	66, // [66:86] is the sub-list for method output_type
+	46, // [46:66] is the sub-list for method input_type
+	46, // [46:46] is the sub-list for extension type_name
+	46, // [46:46] is the sub-list for extension extendee
+	0,  // [0:46] is the sub-list for field type_name
 }
 
 func init() { file_carsearch_carsearch_proto_init() }
@@ -2898,13 +3517,14 @@ func file_carsearch_carsearch_proto_init() {
 	file_carsearch_carsearch_proto_msgTypes[2].OneofWrappers = []any{}
 	file_carsearch_carsearch_proto_msgTypes[14].OneofWrappers = []any{}
 	file_carsearch_carsearch_proto_msgTypes[19].OneofWrappers = []any{}
+	file_carsearch_carsearch_proto_msgTypes[38].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_carsearch_carsearch_proto_rawDesc), len(file_carsearch_carsearch_proto_rawDesc)),
-			NumEnums:      6,
-			NumMessages:   34,
+			NumEnums:      7,
+			NumMessages:   41,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

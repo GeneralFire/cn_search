@@ -1,5 +1,6 @@
 // Маршруты на History API: "/" — поиск, "/plate/<id фиксации>" — страница номера,
-// "/admin" — админ-панель (жалобы на фото; ссылки в интерфейсе нет — вход по прямому адресу).
+// "/admin" — админ-панель (жалобы на фото; ссылки в интерфейсе нет — вход по прямому адресу),
+// "/cameras" — заявки на расположение камер.
 // Vite (dev и preview) отдаёт index.html на любой путь, поэтому прямые ссылки работают.
 
 // Аккаунт (auth.ts): "/signup", "/pricing", "/account", "/pay/mock/<id платежа>" — демо-касса.
@@ -7,11 +8,13 @@ export type Route =
   | { name: "search" }
   | { name: "plate"; id: string }
   | { name: "admin" }
+  | { name: "cameras" }
   | { name: "signup" | "pricing" | "account" }
   | { name: "pay"; id: string };
 
 export function parseRoute(path = location.pathname): Route {
   if (/^\/admin\/?$/.test(path)) return { name: "admin" };
+  if (/^\/cameras\/?$/.test(path)) return { name: "cameras" };
   const acc = path.match(/^\/(signup|pricing|account)\/?$/);
   if (acc) return { name: acc[1] as "signup" | "pricing" | "account" };
   const pay = path.match(/^\/pay\/mock\/([^/]+)\/?$/);

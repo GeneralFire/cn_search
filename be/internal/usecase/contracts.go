@@ -5,6 +5,7 @@ package usecase
 //go:generate minimock -i accountsRepository -o ./mocks/accounts_repository_mock.go -n AccountsRepositoryMock -p mocks
 //go:generate minimock -i complaintsRepository -o ./mocks/complaints_repository_mock.go -n ComplaintsRepositoryMock -p mocks
 //go:generate minimock -i adminRepository -o ./mocks/admin_repository_mock.go -n AdminRepositoryMock -p mocks
+//go:generate minimock -i cameraRequestsRepository -o ./mocks/camera_requests_repository_mock.go -n CameraRequestsRepositoryMock -p mocks
 
 import (
 	"context"
@@ -56,4 +57,12 @@ type accountsRepository interface {
 	SetPaymentStatus(ctx context.Context, tx db.Executor, paymentID string, st models.PaymentStatus) (models.Payment, error)
 	ExtendPro(ctx context.Context, tx db.Executor, userID string, period time.Duration) (models.User, error)
 	ListPayments(ctx context.Context, tx db.Executor, userID string, limit int) ([]models.Payment, error)
+}
+
+// cameraRequestsRepository — запросы к заявкам на камеры (реализация — repository.New()).
+type cameraRequestsRepository interface {
+	CreateCameraRequest(ctx context.Context, tx db.Executor, o models.SubmitCameraRequestOpts) (models.CameraRequest, error)
+	ListCameraRequests(ctx context.Context, tx db.Executor, o models.ListCameraRequestsOpts) (models.CameraRequestsPage, error)
+	VoteCameraRequest(ctx context.Context, tx db.Executor, o models.VoteCameraRequestOpts) (models.CameraRequest, error)
+	SetCameraRequestStatus(ctx context.Context, tx db.Executor, id string, st models.CameraRequestStatus) (models.CameraRequest, error)
 }

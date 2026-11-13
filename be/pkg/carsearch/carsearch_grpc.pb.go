@@ -35,6 +35,10 @@ const (
 	CarSearchService_CreatePayment_FullMethodName          = "/carsearch.CarSearchService/CreatePayment"
 	CarSearchService_ConfirmMockPayment_FullMethodName     = "/carsearch.CarSearchService/ConfirmMockPayment"
 	CarSearchService_ListMyPayments_FullMethodName         = "/carsearch.CarSearchService/ListMyPayments"
+	CarSearchService_SubmitCameraRequest_FullMethodName    = "/carsearch.CarSearchService/SubmitCameraRequest"
+	CarSearchService_ListCameraRequests_FullMethodName     = "/carsearch.CarSearchService/ListCameraRequests"
+	CarSearchService_VoteCameraRequest_FullMethodName      = "/carsearch.CarSearchService/VoteCameraRequest"
+	CarSearchService_SetCameraRequestStatus_FullMethodName = "/carsearch.CarSearchService/SetCameraRequestStatus"
 )
 
 // CarSearchServiceClient is the client API for CarSearchService service.
@@ -91,6 +95,16 @@ type CarSearchServiceClient interface {
 	ConfirmMockPayment(ctx context.Context, in *ConfirmMockPaymentRequest, opts ...grpc.CallOption) (*Payment, error)
 	// ListMyPayments — история платежей пользователя, от новых к старым (последние 50). Нужен токен.
 	ListMyPayments(ctx context.Context, in *ListMyPaymentsRequest, opts ...grpc.CallOption) (*ListMyPaymentsResponse, error)
+	// SubmitCameraRequest — заявка на расположение камеры (страница /cameras). Создаётся со статусом NEW.
+	SubmitCameraRequest(ctx context.Context, in *SubmitCameraRequestRequest, opts ...grpc.CallOption) (*CameraRequest, error)
+	// ListCameraRequests — заявки на камеры, от новых к старым, постранично; рамка карты и статус — фильтры.
+	// Публичный: contact не отдаётся. С заголовком admin-token — с contact (неверный токен — PERMISSION_DENIED).
+	ListCameraRequests(ctx context.Context, in *ListCameraRequestsRequest, opts ...grpc.CallOption) (*ListCameraRequestsResponse, error)
+	// VoteCameraRequest — голос «+1» за заявку. Без авторизации; повторный голос с того же браузера
+	// отсекает фронт (localStorage).
+	VoteCameraRequest(ctx context.Context, in *VoteCameraRequestRequest, opts ...grpc.CallOption) (*CameraRequest, error)
+	// SetCameraRequestStatus — сменить статус заявки. Нужен заголовок admin-token.
+	SetCameraRequestStatus(ctx context.Context, in *SetCameraRequestStatusRequest, opts ...grpc.CallOption) (*CameraRequest, error)
 }
 
 type carSearchServiceClient struct {
@@ -261,6 +275,46 @@ func (c *carSearchServiceClient) ListMyPayments(ctx context.Context, in *ListMyP
 	return out, nil
 }
 
+func (c *carSearchServiceClient) SubmitCameraRequest(ctx context.Context, in *SubmitCameraRequestRequest, opts ...grpc.CallOption) (*CameraRequest, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CameraRequest)
+	err := c.cc.Invoke(ctx, CarSearchService_SubmitCameraRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carSearchServiceClient) ListCameraRequests(ctx context.Context, in *ListCameraRequestsRequest, opts ...grpc.CallOption) (*ListCameraRequestsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListCameraRequestsResponse)
+	err := c.cc.Invoke(ctx, CarSearchService_ListCameraRequests_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carSearchServiceClient) VoteCameraRequest(ctx context.Context, in *VoteCameraRequestRequest, opts ...grpc.CallOption) (*CameraRequest, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CameraRequest)
+	err := c.cc.Invoke(ctx, CarSearchService_VoteCameraRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carSearchServiceClient) SetCameraRequestStatus(ctx context.Context, in *SetCameraRequestStatusRequest, opts ...grpc.CallOption) (*CameraRequest, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CameraRequest)
+	err := c.cc.Invoke(ctx, CarSearchService_SetCameraRequestStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CarSearchServiceServer is the server API for CarSearchService service.
 // All implementations must embed UnimplementedCarSearchServiceServer
 // for forward compatibility.
@@ -315,6 +369,16 @@ type CarSearchServiceServer interface {
 	ConfirmMockPayment(context.Context, *ConfirmMockPaymentRequest) (*Payment, error)
 	// ListMyPayments — история платежей пользователя, от новых к старым (последние 50). Нужен токен.
 	ListMyPayments(context.Context, *ListMyPaymentsRequest) (*ListMyPaymentsResponse, error)
+	// SubmitCameraRequest — заявка на расположение камеры (страница /cameras). Создаётся со статусом NEW.
+	SubmitCameraRequest(context.Context, *SubmitCameraRequestRequest) (*CameraRequest, error)
+	// ListCameraRequests — заявки на камеры, от новых к старым, постранично; рамка карты и статус — фильтры.
+	// Публичный: contact не отдаётся. С заголовком admin-token — с contact (неверный токен — PERMISSION_DENIED).
+	ListCameraRequests(context.Context, *ListCameraRequestsRequest) (*ListCameraRequestsResponse, error)
+	// VoteCameraRequest — голос «+1» за заявку. Без авторизации; повторный голос с того же браузера
+	// отсекает фронт (localStorage).
+	VoteCameraRequest(context.Context, *VoteCameraRequestRequest) (*CameraRequest, error)
+	// SetCameraRequestStatus — сменить статус заявки. Нужен заголовок admin-token.
+	SetCameraRequestStatus(context.Context, *SetCameraRequestStatusRequest) (*CameraRequest, error)
 	mustEmbedUnimplementedCarSearchServiceServer()
 }
 
@@ -372,6 +436,18 @@ func (UnimplementedCarSearchServiceServer) ConfirmMockPayment(context.Context, *
 }
 func (UnimplementedCarSearchServiceServer) ListMyPayments(context.Context, *ListMyPaymentsRequest) (*ListMyPaymentsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListMyPayments not implemented")
+}
+func (UnimplementedCarSearchServiceServer) SubmitCameraRequest(context.Context, *SubmitCameraRequestRequest) (*CameraRequest, error) {
+	return nil, status.Error(codes.Unimplemented, "method SubmitCameraRequest not implemented")
+}
+func (UnimplementedCarSearchServiceServer) ListCameraRequests(context.Context, *ListCameraRequestsRequest) (*ListCameraRequestsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListCameraRequests not implemented")
+}
+func (UnimplementedCarSearchServiceServer) VoteCameraRequest(context.Context, *VoteCameraRequestRequest) (*CameraRequest, error) {
+	return nil, status.Error(codes.Unimplemented, "method VoteCameraRequest not implemented")
+}
+func (UnimplementedCarSearchServiceServer) SetCameraRequestStatus(context.Context, *SetCameraRequestStatusRequest) (*CameraRequest, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetCameraRequestStatus not implemented")
 }
 func (UnimplementedCarSearchServiceServer) mustEmbedUnimplementedCarSearchServiceServer() {}
 func (UnimplementedCarSearchServiceServer) testEmbeddedByValue()                          {}
@@ -682,6 +758,78 @@ func _CarSearchService_ListMyPayments_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CarSearchService_SubmitCameraRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubmitCameraRequestRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).SubmitCameraRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_SubmitCameraRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).SubmitCameraRequest(ctx, req.(*SubmitCameraRequestRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarSearchService_ListCameraRequests_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCameraRequestsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).ListCameraRequests(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_ListCameraRequests_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).ListCameraRequests(ctx, req.(*ListCameraRequestsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarSearchService_VoteCameraRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VoteCameraRequestRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).VoteCameraRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_VoteCameraRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).VoteCameraRequest(ctx, req.(*VoteCameraRequestRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarSearchService_SetCameraRequestStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetCameraRequestStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).SetCameraRequestStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_SetCameraRequestStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).SetCameraRequestStatus(ctx, req.(*SetCameraRequestStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CarSearchService_ServiceDesc is the grpc.ServiceDesc for CarSearchService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -752,6 +900,22 @@ var CarSearchService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListMyPayments",
 			Handler:    _CarSearchService_ListMyPayments_Handler,
+		},
+		{
+			MethodName: "SubmitCameraRequest",
+			Handler:    _CarSearchService_SubmitCameraRequest_Handler,
+		},
+		{
+			MethodName: "ListCameraRequests",
+			Handler:    _CarSearchService_ListCameraRequests_Handler,
+		},
+		{
+			MethodName: "VoteCameraRequest",
+			Handler:    _CarSearchService_VoteCameraRequest_Handler,
+		},
+		{
+			MethodName: "SetCameraRequestStatus",
+			Handler:    _CarSearchService_SetCameraRequestStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

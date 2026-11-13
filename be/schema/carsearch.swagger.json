@@ -178,6 +178,33 @@
         ]
       }
     },
+    "/carsearch.CarSearchService/ListCameraRequests": {
+      "post": {
+        "summary": "ListCameraRequests — заявки на камеры, от новых к старым, постранично; рамка карты и статус — фильтры.\nПубличный: contact не отдаётся. С заголовком admin-token — с contact (неверный токен — PERMISSION_DENIED).",
+        "operationId": "CarSearchService_ListCameraRequests",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchListCameraRequestsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchListCameraRequestsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
     "/carsearch.CarSearchService/ListClarifications": {
       "post": {
         "summary": "ListClarifications — уточнения для админ-панели, от новых к старым, постранично, вместе с фиксацией.\nНужен заголовок admin-token.",
@@ -421,6 +448,33 @@
         ]
       }
     },
+    "/carsearch.CarSearchService/SetCameraRequestStatus": {
+      "post": {
+        "summary": "SetCameraRequestStatus — сменить статус заявки. Нужен заголовок admin-token.",
+        "operationId": "CarSearchService_SetCameraRequestStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchCameraRequest"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchSetCameraRequestStatusRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
     "/carsearch.CarSearchService/SetClarificationStatus": {
       "post": {
         "summary": "SetClarificationStatus — принять или отклонить уточнение вручную. Нужен заголовок admin-token.",
@@ -447,9 +501,114 @@
           "CarSearchService"
         ]
       }
+    },
+    "/carsearch.CarSearchService/SubmitCameraRequest": {
+      "post": {
+        "summary": "SubmitCameraRequest — заявка на расположение камеры (страница /cameras). Создаётся со статусом NEW.",
+        "operationId": "CarSearchService_SubmitCameraRequest",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchCameraRequest"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchSubmitCameraRequestRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/VoteCameraRequest": {
+      "post": {
+        "summary": "VoteCameraRequest — голос «+1» за заявку. Без авторизации; повторный голос с того же браузера\nотсекает фронт (localStorage).",
+        "operationId": "CarSearchService_VoteCameraRequest",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchCameraRequest"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchVoteCameraRequestRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
     }
   },
   "definitions": {
+    "carsearchCameraRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "lat": {
+          "type": "number",
+          "format": "double",
+          "description": "Точка (WGS 84, градусы)."
+        },
+        "lon": {
+          "type": "number",
+          "format": "double"
+        },
+        "address": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "contact": {
+          "type": "string",
+          "description": "Контакт автора (e-mail/телеграм) — только администратору (ListCameraRequests с admin-token)."
+        },
+        "status": {
+          "$ref": "#/definitions/carsearchCameraRequestStatus"
+        },
+        "votes": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "CameraRequest — заявка на расположение камеры."
+    },
+    "carsearchCameraRequestStatus": {
+      "type": "string",
+      "enum": [
+        "CAMERA_REQUEST_STATUS_UNSPECIFIED",
+        "CAMERA_REQUEST_STATUS_NEW",
+        "CAMERA_REQUEST_STATUS_APPROVED",
+        "CAMERA_REQUEST_STATUS_REJECTED",
+        "CAMERA_REQUEST_STATUS_INSTALLED"
+      ],
+      "default": "CAMERA_REQUEST_STATUS_UNSPECIFIED",
+      "description": "Статус заявки на камеру."
+    },
     "carsearchClarification": {
       "type": "object",
       "properties": {
@@ -629,6 +788,28 @@
         }
       }
     },
+    "carsearchGeoBox": {
+      "type": "object",
+      "properties": {
+        "minLat": {
+          "type": "number",
+          "format": "double"
+        },
+        "minLon": {
+          "type": "number",
+          "format": "double"
+        },
+        "maxLat": {
+          "type": "number",
+          "format": "double"
+        },
+        "maxLon": {
+          "type": "number",
+          "format": "double"
+        }
+      },
+      "description": "Рамка карты: заявки с min_lat \u003c= lat \u003c= max_lat и min_lon \u003c= lon \u003c= max_lon."
+    },
     "carsearchGetRequest": {
       "type": "object",
       "properties": {
@@ -667,6 +848,50 @@
         "hidden": {
           "type": "boolean",
           "description": "true — скрыть, false — показать снова."
+        }
+      }
+    },
+    "carsearchListCameraRequestsRequest": {
+      "type": "object",
+      "properties": {
+        "bbox": {
+          "$ref": "#/definitions/carsearchGeoBox",
+          "description": "Рамка карты; не задана — все."
+        },
+        "status": {
+          "$ref": "#/definitions/carsearchCameraRequestStatus",
+          "description": "Фильтр по статусу; UNSPECIFIED — все."
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Сколько заявок пропустить («Загрузить ещё»)."
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Размер страницы, 1..500; 0 — по умолчанию (100)."
+        }
+      }
+    },
+    "carsearchListCameraRequestsResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchCameraRequest"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Всего заявок по фильтру."
+        },
+        "nextOffset": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Смещение следующей страницы; не задано — дальше ничего нет."
         }
       }
     },
@@ -1102,6 +1327,19 @@
         }
       }
     },
+    "carsearchSetCameraRequestStatusRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "uuid заявки."
+        },
+        "status": {
+          "$ref": "#/definitions/carsearchCameraRequestStatus",
+          "description": "Новый статус (не UNSPECIFIED)."
+        }
+      }
+    },
     "carsearchSetClarificationStatusRequest": {
       "type": "object",
       "properties": {
@@ -1112,6 +1350,32 @@
         "status": {
           "$ref": "#/definitions/carsearchClarificationStatus",
           "description": "ACCEPTED или NOT_ACCEPTED."
+        }
+      }
+    },
+    "carsearchSubmitCameraRequestRequest": {
+      "type": "object",
+      "properties": {
+        "lat": {
+          "type": "number",
+          "format": "double",
+          "description": "Точка, обязательна: lat -90..90, lon -180..180."
+        },
+        "lon": {
+          "type": "number",
+          "format": "double"
+        },
+        "address": {
+          "type": "string",
+          "description": "Адрес, до 300 символов; можно пусто."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Почему здесь нужна камера, 1..1000 символов."
+        },
+        "contact": {
+          "type": "string",
+          "description": "E-mail/телеграм для связи, до 200 символов; можно пусто."
         }
       }
     },
@@ -1151,6 +1415,15 @@
       ],
       "default": "USER_PLAN_UNSPECIFIED",
       "description": "Тариф пользователя."
+    },
+    "carsearchVoteCameraRequestRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "uuid заявки."
+        }
+      }
     }
   }
 }

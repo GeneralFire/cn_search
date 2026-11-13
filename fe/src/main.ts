@@ -8,6 +8,7 @@ import { navigate, onRoute, plateHref } from "./router";
 import { renderPlatePage } from "./plate";
 import { renderAdminPage } from "./admin";
 import { isAuthRoute, renderAuthPage } from "./auth";
+import { leaveCamerasPage, renderCamerasPage } from "./cameras";
 import { cardHtml, escapeHtml, formatDate, icon, plateHtml } from "./ui";
 import { t, tp } from "./i18n/i18n";
 import { highlightPlate } from "./searchkey";
@@ -72,12 +73,14 @@ app.innerHTML = `
       <span class="more__info"></span>
     </div>
   </main>
+  <footer class="cam-homelink"><a href="/cameras" data-link>${t("cameras.homeLink")}</a></footer>
   </div>
 
   <div class="view" id="view-plate" hidden></div>
   <div class="view" id="view-admin" hidden></div>
   <div class="view" id="view-auth" hidden></div>
   ${footerHtml()}
+  <div class="view" id="view-cameras" hidden></div>
 
 `;
 
@@ -397,16 +400,26 @@ const $viewAdmin = app.querySelector<HTMLElement>("#view-admin")!;
 void mountHomeAdmin(app.querySelector<HTMLElement>("#view-search .content")!); // админ-режим: полоса «Админ»
 
 const $viewAuth = app.querySelector<HTMLElement>("#view-auth")!;
+const $viewCameras = app.querySelector<HTMLElement>("#view-cameras")!;
 
 onRoute((route) => {
   $viewAuth.hidden = !isAuthRoute(route);
   if (isAuthRoute(route)) {
     if (!$viewSearch.hidden) searchScroll = window.scrollY;
-    $viewSearch.hidden = $viewPlate.hidden = $viewAdmin.hidden = true;
+    $viewSearch.hidden = $viewPlate.hidden = $viewAdmin.hidden = $viewCameras.hidden = true;
+    leaveCamerasPage();
     renderAuthPage($viewAuth, route);
     return;
   }
   $viewAdmin.hidden = route.name !== "admin";
+  $viewCameras.hidden = route.name !== "cameras";
+  if (route.name === "cameras") {
+    if (!$viewSearch.hidden) searchScroll = window.scrollY;
+    $viewSearch.hidden = $viewPlate.hidden = true;
+    renderCamerasPage($viewCameras);
+    return;
+  }
+  leaveCamerasPage();
   if (route.name === "admin") {
     if (!$viewSearch.hidden) searchScroll = window.scrollY;
     $viewSearch.hidden = $viewPlate.hidden = true;

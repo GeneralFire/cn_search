@@ -1,0 +1,181 @@
+/* ---------- Заявки на камеры: страница /cameras (cameras.ts) и вкладка админки (admin-cameras.ts) ---------- */
+
+/* Цвета статусов — из палитры темы (theme.css), «одобрена» — своя янтарная в обеих темах */
+:root {
+  --cam-new: var(--accent);
+  --cam-approved: #c27c0e;
+  --cam-rejected: #8a919c;
+  --cam-installed: var(--ok);
+}
+:root[data-theme="dark"] { --cam-approved: #f0b24a; --cam-rejected: #6d7480; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --cam-approved: #f0b24a; --cam-rejected: #6d7480; }
+}
+
+.cam-bar {
+  position: sticky; top: 0; z-index: 1100;
+  display: flex; align-items: center; gap: 16px; padding: 10px 24px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+.cam-bar__title { margin: 0; font-size: 1.15rem; flex: 1; }
+
+.cam { max-width: 1100px; margin: 0 auto; padding: 20px 24px 64px; display: grid; gap: 16px; }
+
+.cam-intro { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.cam-intro__text { margin: 0; color: var(--muted); max-width: 640px; }
+.cam-propose[hidden] { display: none; }
+
+.cam-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; padding: 0; list-style: none; font-size: 0.85rem; color: var(--muted); }
+.cam-legend li { display: inline-flex; align-items: center; gap: 6px; }
+
+.cam-dot { display: inline-block; flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--cam-new); }
+.cam-dot--approved { background: var(--cam-approved); }
+.cam-dot--rejected { background: var(--cam-rejected); }
+.cam-dot--installed { background: var(--cam-installed); }
+
+/* Карта */
+.cam-mapbox {
+  position: relative; scroll-margin-top: 72px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: calc(var(--radius) + 4px); padding: 8px;
+}
+.cam-map {
+  height: min(60vh, 480px); min-height: 280px; border-radius: var(--radius); overflow: hidden;
+  background: var(--bg); isolation: isolate;
+}
+.cam-map.leaflet-container { font: inherit; background: var(--bg); }
+.cam-map.is-picking, .cam-map.is-picking .leaflet-interactive { cursor: crosshair; }
+.cam-map__error { margin: 0; height: 100%; display: grid; place-items: center; color: var(--muted); }
+.cam-map .leaflet-tile-pane { filter: var(--map-tiles-filter); }
+.cam-map .leaflet-bar a { background: var(--surface); color: var(--text); border-color: var(--border); }
+.cam-map .leaflet-bar a:hover { background: var(--bg); }
+.cam-map.leaflet-container .leaflet-control-attribution { background: color-mix(in srgb, var(--surface) 80%, transparent); color: var(--muted); font-size: 0.68rem; }
+.cam-map.leaflet-container .leaflet-control-attribution a { color: var(--accent); }
+.cam-map .leaflet-popup-content-wrapper, .cam-map .leaflet-popup-tip { background: var(--surface); color: var(--text); }
+
+.cam-pickbar {
+  position: absolute; z-index: 1000; left: 50%; top: 18px; transform: translateX(-50%);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px;
+  max-width: calc(100% - 100px); padding: 8px 12px; border-radius: 14px;
+  background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-hover); font-size: 0.9rem;
+}
+.cam-pickbar[hidden] { display: none; }
+
+/* Маркеры: кружок цвета статуса */
+.leaflet-marker-icon.cam-pin {
+  border-radius: 50%; background: var(--cam-new); border: 3px solid var(--surface);
+  box-shadow: var(--map-pin-shadow); transition: transform 0.12s ease;
+}
+.leaflet-marker-icon.cam-pin:hover { transform: scale(1.2); }
+.leaflet-marker-icon.cam-pin--approved { background: var(--cam-approved); }
+.leaflet-marker-icon.cam-pin--rejected { background: var(--cam-rejected); }
+.leaflet-marker-icon.cam-pin--installed { background: var(--cam-installed); }
+.leaflet-marker-icon.cam-pin--pick {
+  background: var(--danger); cursor: grab;
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--danger) 30%, transparent), var(--map-pin-shadow);
+}
+
+.cam-pop { display: grid; gap: 4px; justify-items: start; min-width: 160px; }
+.leaflet-popup-content .cam-pop p { margin: 0; }
+.cam-pop__reason { font-size: 0.9rem; }
+.cam-pop__addr, .cam-pop__votes { color: var(--muted); font-size: 0.8rem; }
+
+.cam-status {
+  display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; white-space: nowrap;
+  color: var(--cam-new); background: color-mix(in srgb, var(--cam-new) 14%, transparent);
+}
+.cam-status--approved { color: var(--cam-approved); background: color-mix(in srgb, var(--cam-approved) 16%, transparent); }
+.cam-status--rejected { color: var(--cam-rejected); background: color-mix(in srgb, var(--cam-rejected) 16%, transparent); }
+.cam-status--installed { color: var(--cam-installed); background: color-mix(in srgb, var(--cam-installed) 16%, transparent); }
+
+/* Форма заявки */
+.cam-form {
+  display: grid; gap: 12px; padding: 18px 20px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: calc(var(--radius) + 4px); box-shadow: var(--shadow);
+}
+.cam-form[hidden] { display: none; }
+.cam-form__title { margin: 0; font-size: 1.1rem; }
+.cam-form__point { margin: 0; font-variant-numeric: tabular-nums; color: var(--ok); font-weight: 600; font-size: 0.9rem; }
+.cam-form__point.is-empty { color: var(--muted); font-weight: 400; }
+.cam-field { display: grid; gap: 6px; font-weight: 600; font-size: 0.92rem; }
+.cam-field small { font-weight: 400; color: var(--muted); }
+.cam-field input, .cam-field textarea {
+  font: inherit; font-weight: 400; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); outline: none; resize: vertical;
+}
+.cam-field input:focus, .cam-field textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.cam-form__error { margin: 0; padding: 10px 12px; border-radius: 12px; font-size: 0.9rem;
+  background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
+.cam-form__error[hidden] { display: none; }
+.cam-form__actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+.cam-done {
+  padding: 14px 18px; border-radius: var(--radius);
+  background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--ok) 40%, transparent);
+}
+.cam-done[hidden] { display: none; }
+.cam-done strong { color: var(--ok); }
+
+/* Список */
+.cam-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 8px; }
+.cam-head__title { margin: 0; font-size: 1.15rem; }
+.cam-head__count { color: var(--muted); font-size: 0.9rem; }
+
+.cam-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.cam-item {
+  display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.cam-item.is-hl { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.cam-item > .cam-dot { margin-top: 5px; }
+.cam-item__body { flex: 1; min-width: 0; display: grid; gap: 4px; }
+.cam-item__top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.cam-item__time { color: var(--muted); font-size: 0.8rem; }
+.cam-item__reason { margin: 0; overflow-wrap: anywhere; }
+.cam-item__addr {
+  justify-self: start; padding: 0; border: 0; background: none; font: inherit; font-size: 0.85rem;
+  color: var(--accent); cursor: pointer; text-align: left; overflow-wrap: anywhere;
+}
+.cam-item__addr:hover { text-decoration: underline; }
+
+.cam-vote {
+  flex: none; display: grid; justify-items: center; gap: 2px; min-width: 56px; padding: 8px 10px;
+  border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--accent);
+  font: inherit; cursor: pointer; transition: background 0.12s ease, border-color 0.12s ease;
+}
+.cam-vote:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-soft); }
+.cam-vote:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cam-vote__plus { font-weight: 700; font-size: 0.85rem; }
+.cam-vote__n { font-size: 0.8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cam-vote.is-voted { background: var(--accent); border-color: var(--accent); color: var(--on-accent); cursor: default; }
+.cam-vote.is-voted .cam-vote__n { color: var(--on-accent); }
+.cam-vote.is-error { border-color: var(--danger); color: var(--danger); }
+
+.cam-note { margin: 0; color: var(--muted); text-align: center; padding: 16px; }
+.cam-note.is-error { color: var(--danger); }
+
+/* Ссылка на страницу с главной */
+.cam-homelink { display: flex; justify-content: center; padding: 8px 24px 32px; }
+.cam-homelink a { color: var(--muted); font-size: 0.88rem; text-decoration: none; }
+.cam-homelink a:hover { color: var(--accent); text-decoration: underline; }
+
+/* Админка: таблица заявок */
+.adm-cam-contact { overflow-wrap: anywhere; min-width: 120px; }
+.adm-cam-reason { min-width: 200px; max-width: 360px; overflow-wrap: anywhere; }
+.adm-cam-coords { white-space: nowrap; font-variant-numeric: tabular-nums; font-size: 0.85rem; }
+.adm-cam-select {
+  font: inherit; font-size: 0.88rem; padding: 6px 8px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+}
+.adm-cam-select.is-error { border-color: var(--danger); }
+
+@media (max-width: 640px) {
+  .cam-bar { padding: 8px 12px; }
+  .cam { padding: 14px 12px 48px; }
+  .cam-map { height: 55vh; }
+  .cam-pickbar { left: 8px; right: 8px; transform: none; max-width: none; top: 8px; }
+  .cam-form { padding: 14px; }
+  .cam-intro .cam-propose { width: 100%; }
+}

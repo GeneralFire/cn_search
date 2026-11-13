@@ -22,6 +22,9 @@ export type CarSearchServiceGetData = CarsearchGetResponse;
 
 export type CarSearchServiceHideSightingData = CarsearchPlateSighting;
 
+export type CarSearchServiceListCameraRequestsData =
+  CarsearchListCameraRequestsResponse;
+
 export type CarSearchServiceListClarificationsData =
   CarsearchListClarificationsResponse;
 
@@ -43,7 +46,47 @@ export type CarSearchServiceSearchData = CarsearchSearchResponse;
 
 export type CarSearchServiceSeeAlsoData = CarsearchSeeAlsoResponse;
 
+export type CarSearchServiceSetCameraRequestStatusData = CarsearchCameraRequest;
+
 export type CarSearchServiceSetClarificationStatusData = CarsearchClarification;
+
+export type CarSearchServiceSubmitCameraRequestData = CarsearchCameraRequest;
+
+export type CarSearchServiceVoteCameraRequestData = CarsearchCameraRequest;
+
+/** CameraRequest — заявка на расположение камеры. */
+export interface CarsearchCameraRequest {
+  address?: string;
+  /** Контакт автора (e-mail/телеграм) — только администратору (ListCameraRequests с admin-token). */
+  contact?: string;
+  /** @format date-time */
+  createdAt?: string;
+  id?: string;
+  /**
+   * Точка (WGS 84, градусы).
+   * @format double
+   */
+  lat?: number;
+  /** @format double */
+  lon?: number;
+  reason?: string;
+  /** Статус заявки на камеру. */
+  status?: CarsearchCameraRequestStatus;
+  /** @format int32 */
+  votes?: number;
+}
+
+/**
+ * Статус заявки на камеру.
+ * @default "CAMERA_REQUEST_STATUS_UNSPECIFIED"
+ */
+export enum CarsearchCameraRequestStatus {
+  CAMERA_REQUEST_STATUS_UNSPECIFIED = "CAMERA_REQUEST_STATUS_UNSPECIFIED",
+  CAMERA_REQUEST_STATUS_NEW = "CAMERA_REQUEST_STATUS_NEW",
+  CAMERA_REQUEST_STATUS_APPROVED = "CAMERA_REQUEST_STATUS_APPROVED",
+  CAMERA_REQUEST_STATUS_REJECTED = "CAMERA_REQUEST_STATUS_REJECTED",
+  CAMERA_REQUEST_STATUS_INSTALLED = "CAMERA_REQUEST_STATUS_INSTALLED",
+}
 
 /** Clarification — уточнение номера к фиксации. */
 export interface CarsearchClarification {
@@ -158,6 +201,18 @@ export interface CarsearchCreatePaymentResponse {
   paymentId?: string;
 }
 
+/** Рамка карты: заявки с min_lat <= lat <= max_lat и min_lon <= lon <= max_lon. */
+export interface CarsearchGeoBox {
+  /** @format double */
+  maxLat?: number;
+  /** @format double */
+  maxLon?: number;
+  /** @format double */
+  minLat?: number;
+  /** @format double */
+  minLon?: number;
+}
+
 export interface CarsearchGetRequest {
   /** uuid любой фиксации номера. */
   id?: string;
@@ -178,6 +233,37 @@ export interface CarsearchHideSightingRequest {
   hidden?: boolean;
   /** uuid фиксации. */
   id?: string;
+}
+
+export interface CarsearchListCameraRequestsRequest {
+  /** Рамка карты; не задана — все. */
+  bbox?: CarsearchGeoBox;
+  /**
+   * Размер страницы, 1..500; 0 — по умолчанию (100).
+   * @format int32
+   */
+  limit?: number;
+  /**
+   * Сколько заявок пропустить («Загрузить ещё»).
+   * @format int32
+   */
+  offset?: number;
+  /** Фильтр по статусу; UNSPECIFIED — все. */
+  status?: CarsearchCameraRequestStatus;
+}
+
+export interface CarsearchListCameraRequestsResponse {
+  items?: CarsearchCameraRequest[];
+  /**
+   * Смещение следующей страницы; не задано — дальше ничего нет.
+   * @format int32
+   */
+  nextOffset?: number;
+  /**
+   * Всего заявок по фильтру.
+   * @format int32
+   */
+  total?: number;
 }
 
 export interface CarsearchListClarificationsRequest {
@@ -466,11 +552,34 @@ export interface CarsearchSeeAlsoResponse {
   items?: CarsearchPlateSighting[];
 }
 
+export interface CarsearchSetCameraRequestStatusRequest {
+  /** uuid заявки. */
+  id?: string;
+  /** Новый статус (не UNSPECIFIED). */
+  status?: CarsearchCameraRequestStatus;
+}
+
 export interface CarsearchSetClarificationStatusRequest {
   /** uuid уточнения. */
   id?: string;
   /** ACCEPTED или NOT_ACCEPTED. */
   status?: CarsearchClarificationStatus;
+}
+
+export interface CarsearchSubmitCameraRequestRequest {
+  /** Адрес, до 300 символов; можно пусто. */
+  address?: string;
+  /** E-mail/телеграм для связи, до 200 символов; можно пусто. */
+  contact?: string;
+  /**
+   * Точка, обязательна: lat -90..90, lon -180..180.
+   * @format double
+   */
+  lat?: number;
+  /** @format double */
+  lon?: number;
+  /** Почему здесь нужна камера, 1..1000 символов. */
+  reason?: string;
 }
 
 /** User — пользователь. */
@@ -498,6 +607,11 @@ export enum CarsearchUserPlan {
   USER_PLAN_UNSPECIFIED = "USER_PLAN_UNSPECIFIED",
   USER_PLAN_FREE = "USER_PLAN_FREE",
   USER_PLAN_PRO = "USER_PLAN_PRO",
+}
+
+export interface CarsearchVoteCameraRequestRequest {
+  /** uuid заявки. */
+  id?: string;
 }
 
 export type QueryParamsType = Record<string | number, any>;
@@ -893,6 +1007,27 @@ export class CarSearchApi<
      * No description
      *
      * @tags CarSearchService
+     * @name CarSearchServiceListCameraRequests
+     * @summary ListCameraRequests — заявки на камеры, от новых к старым, постранично; рамка карты и статус — фильтры. Публичный: contact не отдаётся. С заголовком admin-token — с contact (неверный токен — PERMISSION_DENIED).
+     * @request POST:/carsearch.CarSearchService/ListCameraRequests
+     */
+    carSearchServiceListCameraRequests: (
+      body: CarsearchListCameraRequestsRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceListCameraRequestsData, any>({
+        path: `/carsearch.CarSearchService/ListCameraRequests`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
      * @name CarSearchServiceListClarifications
      * @summary ListClarifications — уточнения для админ-панели, от новых к старым, постранично, вместе с фиксацией. Нужен заголовок admin-token.
      * @request POST:/carsearch.CarSearchService/ListClarifications
@@ -1082,6 +1217,27 @@ export class CarSearchApi<
      * No description
      *
      * @tags CarSearchService
+     * @name CarSearchServiceSetCameraRequestStatus
+     * @summary SetCameraRequestStatus — сменить статус заявки. Нужен заголовок admin-token.
+     * @request POST:/carsearch.CarSearchService/SetCameraRequestStatus
+     */
+    carSearchServiceSetCameraRequestStatus: (
+      body: CarsearchSetCameraRequestStatusRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceSetCameraRequestStatusData, any>({
+        path: `/carsearch.CarSearchService/SetCameraRequestStatus`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
      * @name CarSearchServiceSetClarificationStatus
      * @summary SetClarificationStatus — принять или отклонить уточнение вручную. Нужен заголовок admin-token.
      * @request POST:/carsearch.CarSearchService/SetClarificationStatus
@@ -1092,6 +1248,48 @@ export class CarSearchApi<
     ) =>
       this.request<CarSearchServiceSetClarificationStatusData, any>({
         path: `/carsearch.CarSearchService/SetClarificationStatus`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
+     * @name CarSearchServiceSubmitCameraRequest
+     * @summary SubmitCameraRequest — заявка на расположение камеры (страница /cameras). Создаётся со статусом NEW.
+     * @request POST:/carsearch.CarSearchService/SubmitCameraRequest
+     */
+    carSearchServiceSubmitCameraRequest: (
+      body: CarsearchSubmitCameraRequestRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceSubmitCameraRequestData, any>({
+        path: `/carsearch.CarSearchService/SubmitCameraRequest`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
+     * @name CarSearchServiceVoteCameraRequest
+     * @summary VoteCameraRequest — голос «+1» за заявку. Без авторизации; повторный голос с того же браузера отсекает фронт (localStorage).
+     * @request POST:/carsearch.CarSearchService/VoteCameraRequest
+     */
+    carSearchServiceVoteCameraRequest: (
+      body: CarsearchVoteCameraRequestRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceVoteCameraRequestData, any>({
+        path: `/carsearch.CarSearchService/VoteCameraRequest`,
         method: "POST",
         body: body,
         type: ContentType.Json,
