@@ -6,6 +6,7 @@ package implementation
 //go:generate minimock -i admin -o ./mocks/admin_mock.go -n AdminMock -p mocks
 //go:generate minimock -i cameraRequests -o ./mocks/camera_requests_mock.go -n CameraRequestsMock -p mocks
 //go:generate minimock -i apiTokens -o ./mocks/api_tokens_mock.go -n ApiTokensMock -p mocks
+//go:generate minimock -i ingest -o ./mocks/ingest_mock.go -n IngestMock -p mocks
 
 import (
 	"context"
@@ -61,4 +62,9 @@ type apiTokens interface {
 	ListPlateViews(ctx context.Context, o models.ListPlateViewsOpts) (models.PlateViewsPage, error)
 	TokenInfo(ctx context.Context, token string) (models.ApiToken, error)
 	OpenPlate(ctx context.Context, o models.OpenPlateOpts) (models.SamePlate, error)
+}
+
+// ingest — новая фиксация по фото (реализация — usecase.Ingest).
+type ingest interface {
+	Ingest(ctx context.Context, o models.IngestOpts) (models.IngestResult, error)
 }

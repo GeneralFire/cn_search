@@ -61,6 +61,7 @@ export function mountSettings(root: HTMLElement): void {
       <div class="st__panel" id="${id}" role="group" aria-label="${t("settings.title")}" hidden>
         <div class="st__title">${t("settings.title")}</div>
         <a class="st__home" href="/" data-link>${t("nav.homeShort")}</a>
+        <a class="st__home" href="/upload" data-link>${t("upload.link")}</a>
         ${adminSettingsHtml()}
         <a class="st__home" href="/cameras" data-link>${t("cameras.link")}</a>
         <div class="st__label" id="${id}-lang">${t("lang.label")}</div>

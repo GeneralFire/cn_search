@@ -9,6 +9,7 @@ import { renderPlatePage } from "./plate";
 import { renderAdminPage } from "./admin";
 import { isAuthRoute, renderAuthPage } from "./auth";
 import { leaveCamerasPage, renderCamerasPage } from "./cameras";
+import { renderUploadPage } from "./upload";
 import { cardHtml, escapeHtml, formatDate, icon, plateHtml } from "./ui";
 import { t, tp } from "./i18n/i18n";
 import { highlightPlate } from "./searchkey";
@@ -79,6 +80,7 @@ app.innerHTML = `
   <div class="view" id="view-plate" hidden></div>
   <div class="view" id="view-admin" hidden></div>
   <div class="view" id="view-auth" hidden></div>
+  <div class="view" id="view-upload" hidden></div>
   ${footerHtml()}
   <div class="view" id="view-cameras" hidden></div>
 
@@ -401,6 +403,7 @@ void mountHomeAdmin(app.querySelector<HTMLElement>("#view-search .content")!); /
 
 const $viewAuth = app.querySelector<HTMLElement>("#view-auth")!;
 const $viewCameras = app.querySelector<HTMLElement>("#view-cameras")!;
+const $viewUpload = app.querySelector<HTMLElement>("#view-upload")!;
 
 onRoute((route) => {
   $viewAuth.hidden = !isAuthRoute(route);
@@ -420,6 +423,13 @@ onRoute((route) => {
     return;
   }
   leaveCamerasPage();
+  $viewUpload.hidden = route.name !== "upload";
+  if (route.name === "upload") {
+    if (!$viewSearch.hidden) searchScroll = window.scrollY;
+    $viewSearch.hidden = $viewPlate.hidden = true;
+    renderUploadPage($viewUpload);
+    return;
+  }
   if (route.name === "admin") {
     if (!$viewSearch.hidden) searchScroll = window.scrollY;
     $viewSearch.hidden = $viewPlate.hidden = true;

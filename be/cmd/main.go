@@ -25,7 +25,9 @@ import (
 	"github.com/GeneralFire/cn_search/be/internal/apitoken"
 	"github.com/GeneralFire/cn_search/be/internal/db"
 	"github.com/GeneralFire/cn_search/be/internal/implementation"
+	"github.com/GeneralFire/cn_search/be/internal/ocr"
 	"github.com/GeneralFire/cn_search/be/internal/repository"
+	"github.com/GeneralFire/cn_search/be/internal/storage"
 	"github.com/GeneralFire/cn_search/be/internal/usecase"
 	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch"
 )
@@ -40,6 +42,14 @@ type config struct {
 	PhotoBase   string // публичный URL бакета с картинками для браузера
 	AdminToken  string // пароль админ-панели (заголовок admin-token); пусто — админские методы выключены
 	SigningKey  string // TOKEN_SIGNING_KEY — ключ HMAC-подписи API-токенов; пусто — токены не проходят проверку
+
+	// rpc Ingest (фото → OCR → фиксация): включён, если заданы OCR_URL и S3_ENDPOINT.
+	OCRURL      string // сервис распознавания номеров (ocr/), напр. http://ocr:8000
+	S3Endpoint  string // host:port S3 без схемы, напр. s3:9000
+	S3AccessKey string
+	S3SecretKey string
+	S3Bucket    string
+	S3UseSSL    bool
 }
 
 func loadConfig() config {
@@ -50,6 +60,13 @@ func loadConfig() config {
 		PhotoBase:   envOr("S3_PUBLIC_URL", "/s3/cars"),
 		AdminToken:  os.Getenv("ADMIN_TOKEN"),
 		SigningKey:  os.Getenv("TOKEN_SIGNING_KEY"),
+
+		OCRURL:      os.Getenv("OCR_URL"),
+		S3Endpoint:  os.Getenv("S3_ENDPOINT"),
+		S3AccessKey: os.Getenv("S3_ACCESS_KEY"),
+		S3SecretKey: os.Getenv("S3_SECRET_KEY"),
+		S3Bucket:    envOr("S3_BUCKET", "cars"),
+		S3UseSSL:    os.Getenv("S3_USE_SSL") == "true",
 	}
 }
 
@@ -91,12 +108,23 @@ func serve(ctx context.Context, log *slog.Logger, cfg config) error {
 		if cfg.AdminToken == "" {
 			log.Warn("ADMIN_TOKEN не задан — админ-панель выключена")
 		}
-		svc := implementation.NewCarSearch(uc, cfg.PhotoBase,
+		opts := []implementation.Option{
 			implementation.WithComplaints(usecase.NewComplaints(cluster, repo), cfg.AdminToken),
 			implementation.WithAdmin(usecase.NewAdmin(cluster, repo), cfg.AdminToken),
 			implementation.WithAccounts(usecase.NewAccounts(cluster, repo)),
 			implementation.WithCameraRequests(usecase.NewCameraRequests(cluster, repo)),
-			implementation.WithApiTokens(usecase.NewApiTokens(cluster, repo, apitoken.NewSigner(cfg.SigningKey))))
+			implementation.WithApiTokens(usecase.NewApiTokens(cluster, repo, apitoken.NewSigner(cfg.SigningKey))),
+		}
+		if cfg.OCRURL != "" && cfg.S3Endpoint != "" {
+			photos, err := storage.NewS3(cfg.S3Endpoint, cfg.S3AccessKey, cfg.S3SecretKey, cfg.S3Bucket, cfg.S3UseSSL)
+			if err != nil {
+				return err
+			}
+			opts = append(opts, implementation.WithIngest(usecase.NewIngest(cluster, repo, ocr.New(cfg.OCRURL), photos)))
+		} else {
+			log.Warn("OCR_URL или S3_ENDPOINT не заданы — загрузка фото (rpc Ingest) выключена")
+		}
+		svc := implementation.NewCarSearch(uc, cfg.PhotoBase, opts...)
 		if cfg.SigningKey == "" {
 			log.Warn("TOKEN_SIGNING_KEY не задан — API-токены не проходят проверку")
 		}
@@ -121,13 +149,14 @@ func serve(ctx context.Context, log *slog.Logger, cfg config) error {
 			Addr:              ":" + cfg.HTTPPort,
 			Handler:           logRequests(log, root),
 			ReadHeaderTimeout: 5 * time.Second,
-			ReadTimeout:       10 * time.Second,
-			WriteTimeout:      30 * time.Second,
+			ReadTimeout:       60 * time.Second, // загрузка фото (rpc Ingest) с телефона
+			WriteTimeout:      60 * time.Second,
 			IdleTimeout:       120 * time.Second,
 		}
 
 		// gRPC — тот же сервис.
-		grpcSrv := grpc.NewServer()
+		// Фото в rpc Ingest — до 8 МБ: стандартного предела gRPC (4 МБ) не хватает.
+		grpcSrv := grpc.NewServer(grpc.MaxRecvMsgSize(implementation.MaxPhotoBytes + 1<<20))
 		desc.RegisterGRPC(grpcSrv)
 		reflection.Register(grpcSrv)
 		grpcLis, err := net.Listen("tcp", ":"+cfg.GRPCPort)

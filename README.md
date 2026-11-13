@@ -53,7 +53,9 @@ make stop-fe  # / stop-be / stop-etc — остановить часть; make d
 ```
 car-search/
 ├── Makefile                 # все команды: make help
-├── docker-compose.yml       # db + s3 + be + fe
+├── docker-compose.yml       # db + s3 + ocr + be + fe
+├── ocr/                     # распознавание номеров (Python, fast-alpr, ONNX/CPU): POST /recognize
+├── docs/OCR_PIPELINE.md     # схема фото → OCR → фиксация, модели, приватность
 ├── be/                      # бэкенд, Go
 │   ├── api/carsearch/carsearch.proto      # КОНТРАКТ (без HTTP-аннотаций)
 │   ├── schema/carsearch.swagger.json      # сгенерирован clay
@@ -67,7 +69,8 @@ car-search/
 │   │   ├── db/              # Executor (Select/Get/Exec, *Sqr) и Cluster (транзакции)
 │   │   ├── models/          # доменные модели (теги db)
 │   │   ├── test_utils/s3/   # тестовые картинки + upload.sh (заливает сервис s3-init)
-│   │   └── s3/              # S3-клиент
+│   │   ├── storage/         # S3-клиент (minio-go): фото из rpc Ingest
+│   │   └── ocr/             # HTTP-клиент сервиса ocr/
 │   ├── migrations/          # SQL-миграции схемы (goose): 0001_init.sql (в бинарник не входят)
 ├── fe/                      # фронтенд, TypeScript + Vite
 │   ├── src/api/generated.ts # сгенерированный TS-клиент (не править)
@@ -112,6 +115,7 @@ clay генерирует ручки с флагом `generate_unbound_methods`:
 | `Get` | `POST /api/carsearch.CarSearchService/Get` |
 | `SeeAlso` | `POST /api/carsearch.CarSearchService/SeeAlso` |
 | `Clarify` | `POST /api/carsearch.CarSearchService/Clarify` |
+| `Ingest` | `POST /api/carsearch.CarSearchService/Ingest` — фото (base64) → OCR → фиксация, см. docs/OCR_PIPELINE.md; страница `/upload` |
 | — | `GET /api/swagger.json` — спецификация |
 | — | `GET /api/health` |
 

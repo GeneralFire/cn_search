@@ -59,7 +59,10 @@
   Админ-режим: `src/adminmode.ts` (admin-token в sessionStorage → rpc Me → класс `is-admin` и заголовок во всех запросах),
   скрытые панели — `src/adminpanels.ts`, вкладки `/admin` — реестр `src/admintabs.ts`. Скрытые фиксации (`plate_sightings.hidden`)
   отдаются только с верным admin-token (`IncludeHidden`).
-- `docker-compose.yml`: db (Postgres), s3 (RustFS — minio/minio больше нет на Docker Hub), be, fe.
+- `rpc Ingest` (фото → номер → фиксация): сервис `ocr/` (Python, fast-alpr, порт только в сети compose) →
+  usecase `Ingest` (EXIF, нормализация номера `plate_format.go`, S3 `u/<uuid>.jpg` через minio-go, запись в БД);
+  фронт — `/upload` (`src/upload.ts`). Схема и модели — `docs/OCR_PIPELINE.md`.
+- `docker-compose.yml`: db (Postgres), s3 (RustFS — minio/minio больше нет на Docker Hub), ocr, be, fe.
   Запуск: `make run` (всё) или по частям `make etc` (db+s3+миграции), `make run-be`, `make run-fe`.
   Тестовые данные приходят миграцией при `make etc`.
 - Порядок при изменении API: proto → `make gen` → `implementation` → `usecase` → `repository`

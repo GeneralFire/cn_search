@@ -7,6 +7,9 @@ package usecase
 //go:generate minimock -i adminRepository -o ./mocks/admin_repository_mock.go -n AdminRepositoryMock -p mocks
 //go:generate minimock -i cameraRequestsRepository -o ./mocks/camera_requests_repository_mock.go -n CameraRequestsRepositoryMock -p mocks
 //go:generate minimock -i apiTokensRepository -o ./mocks/api_tokens_repository_mock.go -n ApiTokensRepositoryMock -p mocks
+//go:generate minimock -i ingestRepository -o ./mocks/ingest_repository_mock.go -n IngestRepositoryMock -p mocks
+//go:generate minimock -i recognizer -o ./mocks/recognizer_mock.go -n RecognizerMock -p mocks
+//go:generate minimock -i photoStorage -o ./mocks/photo_storage_mock.go -n PhotoStorageMock -p mocks
 
 import (
 	"context"
@@ -79,4 +82,21 @@ type apiTokensRepository interface {
 	ListPlateViews(ctx context.Context, tx db.Executor, o models.ListPlateViewsOpts) (models.PlateViewsPage, error)
 	ListSamePlate(ctx context.Context, tx db.Executor, o models.SamePlateOpts) ([]models.PlateSighting, error)
 	ListPlateClarifications(ctx context.Context, tx db.Executor, o models.SamePlateOpts) ([]models.PlateClarification, error)
+}
+
+// ingestRepository — запись номеров и фиксаций для rpc Ingest (реализация — repository.New()).
+type ingestRepository interface {
+	UpsertPlate(ctx context.Context, tx db.Executor, o models.UpsertPlateOpts) (string, error)
+	CreateSighting(ctx context.Context, tx db.Executor, o models.CreateSightingOpts) (models.PlateSighting, error)
+}
+
+// recognizer — распознавание номеров на фото (реализация — ocr.Client, HTTP к сервису ocr/).
+// Номера — как прочитала модель (латиница, цифры); ошибка связи — models.ErrRecognizerUnavailable.
+type recognizer interface {
+	Recognize(ctx context.Context, photo []byte) ([]models.PlateCandidate, error)
+}
+
+// photoStorage — хранилище фото (реализация — storage.S3).
+type photoStorage interface {
+	Put(ctx context.Context, key string, data []byte, contentType string) error
 }

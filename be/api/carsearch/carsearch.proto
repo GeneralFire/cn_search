@@ -107,6 +107,11 @@ service CarSearchService {
   // TokenInfo — остаток API-токена запроса (cookie cs_token или authorization: Bearer cst_…).
   // Нет токена или он недействителен — UNAUTHENTICATED.
   rpc TokenInfo(TokenInfoRequest) returns (ApiToken);
+  // Ingest — новая фиксация по фото: номер распознаёт OCR-сервис (ocr/), фото и миниатюра
+  // уходят в S3, номер находится или создаётся, фиксация сохраняется. Номер не распознан
+  // (уверенность ниже порога) или файл не фото — INVALID_ARGUMENT; OCR недоступен — UNAVAILABLE.
+  // По HTTP (clay, JSON) photo передаётся строкой base64.
+  rpc Ingest(IngestRequest) returns (IngestResponse);
 }
 
 // PlateSighting — фиксация номера: где и когда замечена машина.
@@ -612,3 +617,34 @@ message ListPlateViewsResponse {
 }
 
 message TokenInfoRequest {}
+message IngestRequest {
+  // Фото (JPEG или PNG), до 8 МБ.
+  bytes photo = 1;
+  // Когда снято; не задано — из EXIF (DateTimeOriginal), иначе время загрузки.
+  google.protobuf.Timestamp taken_at = 2;
+  // Координаты места (WGS 84); не заданы — из EXIF GPS, иначе неизвестны. Только парой.
+  optional double lat = 3;
+  optional double lon = 4;
+  // Адрес, до 300 символов; можно пусто. Язык адреса определяется по тексту (пусто — "ru").
+  string address = 5;
+}
+
+// PlateCandidate — номер, распознанный на фото.
+message PlateCandidate {
+  // Номер после нормализации по формату: "Р466УК 79" (RU — кириллицей).
+  string plate = 1;
+  // Как прочитала модель: "P466YK79".
+  string raw = 2;
+  // Уверенность 0..1.
+  double confidence = 3;
+  PlateType plate_type = 4;
+  // Рамка номера на фото, пиксели: x1, y1, x2, y2.
+  repeated int32 bbox = 5;
+}
+
+message IngestResponse {
+  // Созданная фиксация.
+  PlateSighting sighting = 1;
+  // Все распознанные номера, по убыванию уверенности; в фиксацию попал первый.
+  repeated PlateCandidate candidates = 2;
+}

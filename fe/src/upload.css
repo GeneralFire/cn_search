@@ -1,0 +1,48 @@
+/* ---------- Загрузка фото /upload (upload.ts): фото → OCR → фиксация ---------- */
+
+.up-bar {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; gap: 16px; padding: 10px 24px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+.up-bar__title { margin: 0; font-size: 1.15rem; flex: 1; }
+
+.up { max-width: 640px; margin: 0 auto; padding: 24px 20px 64px; display: grid; gap: 20px; }
+.up__hint { margin: 0; color: var(--muted); }
+.up__form { display: grid; gap: 14px; }
+
+.up-drop {
+  display: grid; place-items: center; min-height: 220px; padding: 12px; cursor: pointer; overflow: hidden;
+  border: 2px dashed var(--border); border-radius: 20px; background: var(--surface);
+  color: var(--muted); text-align: center; transition: border-color 0.15s, background 0.15s;
+}
+.up-drop:hover, .up-drop:focus-visible, .up-drop--over { border-color: var(--accent); background: var(--accent-soft); outline: none; }
+.up-drop__preview { max-width: 100%; max-height: 360px; border-radius: 12px; object-fit: contain; }
+
+.up__row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.up__camera { cursor: pointer; }
+.up__coords { color: var(--muted); font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+
+.up__field { display: grid; gap: 6px; }
+.up__label { font-weight: 600; }
+.up__input {
+  font: inherit; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); outline: none;
+}
+.up__input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+.up__error { margin: 0; padding: 10px 12px; border-radius: 12px; font-size: 0.9rem;
+  background: color-mix(in srgb, #e5484d 15%, transparent); color: #e5484d; }
+.up__submit:disabled { opacity: 0.5; cursor: default; }
+
+.up-result {
+  display: grid; justify-items: start; gap: 12px; padding: 20px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow);
+}
+.up-result__title { margin: 0; font-size: 1.05rem; }
+.up-result__conf { margin: 0; color: var(--muted); }
+.up-result__raw { font-family: ui-monospace, monospace; }
+.up-result__more ul { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 8px; }
+.up-result__more li { display: flex; align-items: center; gap: 10px; color: var(--muted); }
+.up-result .btn { text-decoration: none; }

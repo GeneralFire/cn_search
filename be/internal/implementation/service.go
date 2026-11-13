@@ -27,6 +27,7 @@ type CarSearch struct {
 
 	cameraRequests cameraRequests // заявки на камеры (WithCameraRequests); nil — методы заявок недоступны
 	tokens         apiTokens      // API-токены и журнал просмотров (WithApiTokens); nil — Get без журнала
+	ingest         ingest         // новая фиксация по фото (WithIngest); nil — Ingest недоступен
 }
 
 // Option — необязательная часть сервиса.
@@ -64,6 +65,11 @@ func WithCameraRequests(c cameraRequests) Option {
 // токенов и журнала (заголовок admin-token, см. WithComplaints) и TokenInfo.
 func WithApiTokens(t apiTokens) Option {
 	return func(s *CarSearch) { s.tokens = t }
+}
+
+// WithIngest включает rpc Ingest (фото → OCR → фиксация).
+func WithIngest(i ingest) Option {
+	return func(s *CarSearch) { s.ingest = i }
 }
 
 func NewCarSearch(uc plateSightings, photoBaseURL string, opts ...Option) *CarSearch {

@@ -205,6 +205,33 @@
         ]
       }
     },
+    "/carsearch.CarSearchService/Ingest": {
+      "post": {
+        "summary": "Ingest — новая фиксация по фото: номер распознаёт OCR-сервис (ocr/), фото и миниатюра\nуходят в S3, номер находится или создаётся, фиксация сохраняется. Номер не распознан\n(уверенность ниже порога) или файл не фото — INVALID_ARGUMENT; OCR недоступен — UNAVAILABLE.\nПо HTTP (clay, JSON) photo передаётся строкой base64.",
+        "operationId": "CarSearchService_Ingest",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchIngestResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchIngestRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
     "/carsearch.CarSearchService/ListApiTokens": {
       "post": {
         "summary": "ListApiTokens — токены от новых к старым (админ).",
@@ -1049,6 +1076,50 @@
         }
       }
     },
+    "carsearchIngestRequest": {
+      "type": "object",
+      "properties": {
+        "photo": {
+          "type": "string",
+          "format": "byte",
+          "description": "Фото (JPEG или PNG), до 8 МБ."
+        },
+        "takenAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Когда снято; не задано — из EXIF (DateTimeOriginal), иначе время загрузки."
+        },
+        "lat": {
+          "type": "number",
+          "format": "double",
+          "description": "Координаты места (WGS 84); не заданы — из EXIF GPS, иначе неизвестны. Только парой."
+        },
+        "lon": {
+          "type": "number",
+          "format": "double"
+        },
+        "address": {
+          "type": "string",
+          "description": "Адрес, до 300 символов; можно пусто. Язык адреса определяется по тексту (пусто — \"ru\")."
+        }
+      }
+    },
+    "carsearchIngestResponse": {
+      "type": "object",
+      "properties": {
+        "sighting": {
+          "$ref": "#/definitions/carsearchPlateSighting",
+          "description": "Созданная фиксация."
+        },
+        "candidates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchPlateCandidate"
+          },
+          "description": "Все распознанные номера, по убыванию уверенности; в фиксацию попал первый."
+        }
+      }
+    },
     "carsearchListApiTokensRequest": {
       "type": "object",
       "properties": {
@@ -1385,6 +1456,36 @@
           }
         }
       }
+    },
+    "carsearchPlateCandidate": {
+      "type": "object",
+      "properties": {
+        "plate": {
+          "type": "string",
+          "description": "Номер после нормализации по формату: \"Р466УК 79\" (RU — кириллицей)."
+        },
+        "raw": {
+          "type": "string",
+          "description": "Как прочитала модель: \"P466YK79\"."
+        },
+        "confidence": {
+          "type": "number",
+          "format": "double",
+          "description": "Уверенность 0..1."
+        },
+        "plateType": {
+          "$ref": "#/definitions/carsearchPlateType"
+        },
+        "bbox": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": "Рамка номера на фото, пиксели: x1, y1, x2, y2."
+        }
+      },
+      "description": "PlateCandidate — номер, распознанный на фото."
     },
     "carsearchPlateClarification": {
       "type": "object",

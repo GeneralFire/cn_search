@@ -47,9 +47,9 @@ etc: ## поднять БД и S3: миграции goose (схема + тест
 	$(DC) run --rm s3-init
 
 .PHONY: run-be
-run-be: ## собрать и поднять только бэк (нужен `make etc`)
+run-be: ## собрать и поднять бэк и OCR-сервис (нужен `make etc`)
 	@test -n "$$($(DC) ps -q --status running db 2>/dev/null)" || { echo "БД не запущена: сначала make etc"; exit 1; }
-	$(DC) up -d --build --no-deps --wait be
+	$(DC) up -d --build --no-deps --wait ocr be
 
 .PHONY: run-fe
 run-fe: ## собрать и поднять только фронт (без бэка страница откроется, но поиск вернёт ошибку)
@@ -58,8 +58,8 @@ run-fe: ## собрать и поднять только фронт (без бэ
 .PHONY: stop-fe stop-be stop-etc
 stop-fe: ## остановить фронт
 	$(DC) stop fe
-stop-be: ## остановить бэк
-	$(DC) stop be
+stop-be: ## остановить бэк и OCR
+	$(DC) stop be ocr
 stop-etc: ## остановить БД и S3 (данные сохраняются)
 	$(DC) stop db s3
 

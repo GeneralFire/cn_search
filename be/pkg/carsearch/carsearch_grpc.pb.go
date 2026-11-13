@@ -44,6 +44,7 @@ const (
 	CarSearchService_RevokeApiToken_FullMethodName         = "/carsearch.CarSearchService/RevokeApiToken"
 	CarSearchService_ListPlateViews_FullMethodName         = "/carsearch.CarSearchService/ListPlateViews"
 	CarSearchService_TokenInfo_FullMethodName              = "/carsearch.CarSearchService/TokenInfo"
+	CarSearchService_Ingest_FullMethodName                 = "/carsearch.CarSearchService/Ingest"
 )
 
 // CarSearchServiceClient is the client API for CarSearchService service.
@@ -125,6 +126,11 @@ type CarSearchServiceClient interface {
 	// TokenInfo — остаток API-токена запроса (cookie cs_token или authorization: Bearer cst_…).
 	// Нет токена или он недействителен — UNAUTHENTICATED.
 	TokenInfo(ctx context.Context, in *TokenInfoRequest, opts ...grpc.CallOption) (*ApiToken, error)
+	// Ingest — новая фиксация по фото: номер распознаёт OCR-сервис (ocr/), фото и миниатюра
+	// уходят в S3, номер находится или создаётся, фиксация сохраняется. Номер не распознан
+	// (уверенность ниже порога) или файл не фото — INVALID_ARGUMENT; OCR недоступен — UNAVAILABLE.
+	// По HTTP (clay, JSON) photo передаётся строкой base64.
+	Ingest(ctx context.Context, in *IngestRequest, opts ...grpc.CallOption) (*IngestResponse, error)
 }
 
 type carSearchServiceClient struct {
@@ -385,6 +391,16 @@ func (c *carSearchServiceClient) TokenInfo(ctx context.Context, in *TokenInfoReq
 	return out, nil
 }
 
+func (c *carSearchServiceClient) Ingest(ctx context.Context, in *IngestRequest, opts ...grpc.CallOption) (*IngestResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IngestResponse)
+	err := c.cc.Invoke(ctx, CarSearchService_Ingest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CarSearchServiceServer is the server API for CarSearchService service.
 // All implementations must embed UnimplementedCarSearchServiceServer
 // for forward compatibility.
@@ -464,6 +480,11 @@ type CarSearchServiceServer interface {
 	// TokenInfo — остаток API-токена запроса (cookie cs_token или authorization: Bearer cst_…).
 	// Нет токена или он недействителен — UNAUTHENTICATED.
 	TokenInfo(context.Context, *TokenInfoRequest) (*ApiToken, error)
+	// Ingest — новая фиксация по фото: номер распознаёт OCR-сервис (ocr/), фото и миниатюра
+	// уходят в S3, номер находится или создаётся, фиксация сохраняется. Номер не распознан
+	// (уверенность ниже порога) или файл не фото — INVALID_ARGUMENT; OCR недоступен — UNAVAILABLE.
+	// По HTTP (clay, JSON) photo передаётся строкой base64.
+	Ingest(context.Context, *IngestRequest) (*IngestResponse, error)
 	mustEmbedUnimplementedCarSearchServiceServer()
 }
 
@@ -548,6 +569,9 @@ func (UnimplementedCarSearchServiceServer) ListPlateViews(context.Context, *List
 }
 func (UnimplementedCarSearchServiceServer) TokenInfo(context.Context, *TokenInfoRequest) (*ApiToken, error) {
 	return nil, status.Error(codes.Unimplemented, "method TokenInfo not implemented")
+}
+func (UnimplementedCarSearchServiceServer) Ingest(context.Context, *IngestRequest) (*IngestResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Ingest not implemented")
 }
 func (UnimplementedCarSearchServiceServer) mustEmbedUnimplementedCarSearchServiceServer() {}
 func (UnimplementedCarSearchServiceServer) testEmbeddedByValue()                          {}
@@ -1020,6 +1044,24 @@ func _CarSearchService_TokenInfo_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CarSearchService_Ingest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IngestRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).Ingest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_Ingest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).Ingest(ctx, req.(*IngestRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CarSearchService_ServiceDesc is the grpc.ServiceDesc for CarSearchService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1126,6 +1168,10 @@ var CarSearchService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "TokenInfo",
 			Handler:    _CarSearchService_TokenInfo_Handler,
+		},
+		{
+			MethodName: "Ingest",
+			Handler:    _CarSearchService_Ingest_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

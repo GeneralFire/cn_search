@@ -742,3 +742,54 @@ export async function apiTokenInfo(token?: string): Promise<ApiToken> {
   const params = token ? { headers: { ...headers, authorization: `Bearer ${token}` } } : {};
   return toApiToken(await call(() => api.carsearchCarSearchService.carSearchServiceTokenInfo({}, params)));
 }
+
+// ---------------------------------------------------------------- загрузка фото (rpc Ingest)
+
+/** Номер, распознанный на фото. */
+export interface PlateCandidate {
+  plate: string;
+  raw: string;
+  /** Уверенность 0..1. */
+  confidence: number;
+  plateType: string;
+}
+
+/** Фото → OCR → новая фиксация. photo по JSON уходит строкой base64 (bytes в proto3 JSON). */
+export async function ingest(req: {
+  photo: Blob;
+  lat?: number;
+  lon?: number;
+  address?: string;
+}): Promise<{ sighting: Car; candidates: PlateCandidate[] }> {
+  const photo = await blobToBase64(req.photo);
+  try {
+    const { data } = await api.carsearchCarSearchService.carSearchServiceIngest({
+      // swagger-typescript-api типизирует format: byte как Blob, а по JSON уходит строка base64.
+      photo: photo as unknown as Blob,
+      address: req.address,
+      ...(req.lat != null && req.lon != null ? { lat: req.lat, lon: req.lon } : {}),
+    });
+    return {
+      sighting: toCar(data.sighting ?? {}),
+      candidates: (data.candidates ?? []).map((c) => ({
+        plate: c.plate ?? "",
+        raw: c.raw ?? "",
+        confidence: c.confidence ?? 0,
+        plateType: plateTypes[c.plateType ?? ""] ?? "",
+      })),
+    };
+  } catch (e) {
+    // Текст для пользователя — после "desc = " (clay: "rpc error: code = … desc = …").
+    const msg = await errorMessage(e);
+    throw new ApiError(msg.replace(/^rpc error: code = \w+ desc = /, ""), e instanceof Response ? e.status : 0);
+  }
+}
+
+function blobToBase64(b: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).replace(/^data:[^,]*,/, ""));
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(b);
+  });
+}

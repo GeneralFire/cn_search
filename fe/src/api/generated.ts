@@ -25,6 +25,8 @@ export type CarSearchServiceGetData = CarsearchGetResponse;
 
 export type CarSearchServiceHideSightingData = CarsearchPlateSighting;
 
+export type CarSearchServiceIngestData = CarsearchIngestResponse;
+
 export type CarSearchServiceListApiTokensData = CarsearchListApiTokensResponse;
 
 export type CarSearchServiceListCameraRequestsData =
@@ -287,6 +289,35 @@ export interface CarsearchHideSightingRequest {
   id?: string;
 }
 
+export interface CarsearchIngestRequest {
+  /** Адрес, до 300 символов; можно пусто. Язык адреса определяется по тексту (пусто — "ru"). */
+  address?: string;
+  /**
+   * Координаты места (WGS 84); не заданы — из EXIF GPS, иначе неизвестны. Только парой.
+   * @format double
+   */
+  lat?: number;
+  /** @format double */
+  lon?: number;
+  /**
+   * Фото (JPEG или PNG), до 8 МБ.
+   * @format byte
+   */
+  photo?: Blob;
+  /**
+   * Когда снято; не задано — из EXIF (DateTimeOriginal), иначе время загрузки.
+   * @format date-time
+   */
+  takenAt?: string;
+}
+
+export interface CarsearchIngestResponse {
+  /** Все распознанные номера, по убыванию уверенности; в фиксацию попал первый. */
+  candidates?: CarsearchPlateCandidate[];
+  /** Созданная фиксация. */
+  sighting?: CarsearchPlateSighting;
+}
+
 export interface CarsearchListApiTokensRequest {
   /**
    * Размер страницы, 1..100; 0 — по умолчанию (30).
@@ -499,6 +530,23 @@ export type CarsearchPlansRequest = object;
 
 export interface CarsearchPlansResponse {
   items?: CarsearchPlanInfo[];
+}
+
+/** PlateCandidate — номер, распознанный на фото. */
+export interface CarsearchPlateCandidate {
+  /** Рамка номера на фото, пиксели: x1, y1, x2, y2. */
+  bbox?: number[];
+  /**
+   * Уверенность 0..1.
+   * @format double
+   */
+  confidence?: number;
+  /** Номер после нормализации по формату: "Р466УК 79" (RU — кириллицей). */
+  plate?: string;
+  /** Формат номерного знака — от него зависит, как его рисовать. */
+  plateType?: CarsearchPlateType;
+  /** Как прочитала модель: "P466YK79". */
+  raw?: string;
 }
 
 /** PlateClarification — предложенный номер и сколько раз его предлагали к фиксациям номера. */
@@ -1133,6 +1181,27 @@ export class CarSearchApi<
     ) =>
       this.request<CarSearchServiceHideSightingData, any>({
         path: `/carsearch.CarSearchService/HideSighting`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
+     * @name CarSearchServiceIngest
+     * @summary Ingest — новая фиксация по фото: номер распознаёт OCR-сервис (ocr/), фото и миниатюра уходят в S3, номер находится или создаётся, фиксация сохраняется. Номер не распознан (уверенность ниже порога) или файл не фото — INVALID_ARGUMENT; OCR недоступен — UNAVAILABLE. По HTTP (clay, JSON) photo передаётся строкой base64.
+     * @request POST:/carsearch.CarSearchService/Ingest
+     */
+    carSearchServiceIngest: (
+      body: CarsearchIngestRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceIngestData, any>({
+        path: `/carsearch.CarSearchService/Ingest`,
         method: "POST",
         body: body,
         type: ContentType.Json,
