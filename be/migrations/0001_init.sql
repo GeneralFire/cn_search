@@ -1,6 +1,9 @@
 -- Номера (plates) и их фиксации (plate_sightings): где и когда замечена машина.
 
 -- +goose Up
+-- levenshtein() для подсказок «возможно, вы искали» (rpc Search при пустой выдаче); contrib Postgres.
+CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;
+
 -- Ключ поиска по номеру: похожие символы сводятся к одному. Кириллические буквы номера
 -- (А В Е К М Н О Р С Т У Х, украинская І) → латинские двойники, буква О (кир. и лат.) → цифра 0,
 -- дефис и точка китайских номеров "·" → пробел (иначе парсер tsvector читает "KDT-4419" как 'kdt'
@@ -92,3 +95,4 @@ DROP TYPE clarification_status;
 DROP TABLE plate_sightings;
 DROP TABLE plates;
 DROP FUNCTION plate_search_key(text);
+DROP EXTENSION IF EXISTS fuzzystrmatch;

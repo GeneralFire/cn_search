@@ -164,4 +164,7 @@ export const de: Dict = {
   "noPhoto.label": "Kein Foto",
   // Подвал: пустая строка — подвал не показывается.
   "footer.message": "",
+
+  "dym.title": "Meinten Sie:",
+  "dym.search": "Nach {plate} suchen",
 };

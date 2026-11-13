@@ -239,6 +239,12 @@ export interface CarsearchSearchResponse {
    */
   nextOffset?: number;
   /**
+   * «Возможно, вы искали»: только при total = 0 и непустом запросе — до 5 номеров, ближайших
+   * к запросу по расстоянию правки (levenshtein) между ключами plate_search_key без пробелов,
+   * не дальше 2 правок; по одной (последней) фиксации на номер, ближайшие первыми.
+   */
+  suggestions?: CarsearchPlateSighting[];
+  /**
    * Всего найдено номеров по запросу.
    * @format int32
    */

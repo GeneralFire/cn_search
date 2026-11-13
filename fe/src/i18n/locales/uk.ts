@@ -164,4 +164,7 @@ export const uk: Dict = {
   "noPhoto.label": "Немає фото",
   // Подвал: пустая строка — подвал не показывается.
   "footer.message": "NO WAR IN UKRAINE",
+
+  "dym.title": "Можливо, ви шукали:",
+  "dym.search": "Шукати {plate}",
 };

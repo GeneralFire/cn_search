@@ -126,6 +126,42 @@ func (r *repository) Search(ctx context.Context, tx db.Executor, q models.Search
 	return page, nil
 }
 
+// suggestKey — ключ для расстояния правки: plate_search_key без пробелов, в нижнем регистре
+// ("А123ВС 777" → "a123bc777"). Пробелы убраны, чтобы «А123ВС777» и «А123ВС 777» не различались.
+func suggestKey(expr string) string {
+	return `lower(replace(plate_search_key(` + expr + `), ' ', ''))`
+}
+
+// Suggest — «возможно, вы искали»: номера, ключ которых не дальше models.SuggestMaxDistance правок
+// (levenshtein, расширение fuzzystrmatch) от ключа запроса; по одной (последней) фиксации на номер,
+// ближайшие первыми, затем свежие; не больше models.SuggestLimit. Рынок и тестовые данные — как в Search.
+func (r *repository) Suggest(ctx context.Context, tx db.Executor, q models.SearchOpts) ([]models.PlateSighting, error) {
+	conds := []string{`levenshtein(` + suggestKey("p.plate") + `, ` + suggestKey("$1") + `) <= $2`}
+	if c := marketCond(q.Market); c != "" {
+		conds = append(conds, c)
+	}
+	if !q.IncludeTestData {
+		conds = append(conds, notTestData)
+	}
+	query := fmt.Sprintf(`SELECT * FROM (
+		SELECT DISTINCT ON (s.plate_id) %s, levenshtein(%s, %s) AS distance FROM %s%s
+		ORDER BY s.plate_id, s.created_at DESC, s.id
+	) latest ORDER BY distance, created_at DESC, id LIMIT $3`,
+		plateSightingSelect, suggestKey("p.plate"), suggestKey("$1"), plateSightingFrom, whereClause(conds))
+	var rows []struct {
+		models.PlateSighting
+		Distance int `db:"distance"`
+	}
+	if err := tx.Select(ctx, &rows, query, q.Plate, models.SuggestMaxDistance, models.SuggestLimit); err != nil {
+		return nil, fmt.Errorf("suggest: %w", err)
+	}
+	items := make([]models.PlateSighting, len(rows))
+	for i, row := range rows {
+		items[i] = row.PlateSighting
+	}
+	return items, nil
+}
+
 // SeeAlso — свежие фиксации других номеров: по одной на номер, номер фиксации o.ExcludeSightingID исключён.
 func (r *repository) SeeAlso(ctx context.Context, tx db.Executor, o models.SeeAlsoOpts) ([]models.PlateSighting, error) {
 	var conds []string

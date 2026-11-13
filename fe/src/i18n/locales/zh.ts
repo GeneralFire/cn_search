@@ -165,4 +165,7 @@ export const zh: Dict = {
   "noPhoto.label": "暂无照片",
   // Подвал: пустая строка — подвал не показывается.
   "footer.message": "",
+
+  "dym.title": "您是不是要找：",
+  "dym.search": "搜索 {plate}",
 };

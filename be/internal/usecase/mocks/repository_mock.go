@@ -68,6 +68,13 @@ type RepositoryMock struct {
 	afterSeeAlsoCounter  uint64
 	beforeSeeAlsoCounter uint64
 	SeeAlsoMock          mRepositoryMockSeeAlso
+
+	funcSuggest          func(ctx context.Context, tx db.Executor, q models.SearchOpts) (pa1 []models.PlateSighting, err error)
+	funcSuggestOrigin    string
+	inspectFuncSuggest   func(ctx context.Context, tx db.Executor, q models.SearchOpts)
+	afterSuggestCounter  uint64
+	beforeSuggestCounter uint64
+	SuggestMock          mRepositoryMockSuggest
 }
 
 // NewRepositoryMock returns a mock for mm_usecase.repository
@@ -98,6 +105,9 @@ func NewRepositoryMock(t minimock.Tester) *RepositoryMock {
 
 	m.SeeAlsoMock = mRepositoryMockSeeAlso{mock: m}
 	m.SeeAlsoMock.callArgs = []*RepositoryMockSeeAlsoParams{}
+
+	m.SuggestMock = mRepositoryMockSuggest{mock: m}
+	m.SuggestMock.callArgs = []*RepositoryMockSuggestParams{}
 
 	t.Cleanup(m.MinimockFinish)
 
@@ -2814,6 +2824,380 @@ func (m *RepositoryMock) MinimockSeeAlsoInspect() {
 	}
 }
 
+type mRepositoryMockSuggest struct {
+	optional           bool
+	mock               *RepositoryMock
+	defaultExpectation *RepositoryMockSuggestExpectation
+	expectations       []*RepositoryMockSuggestExpectation
+
+	callArgs []*RepositoryMockSuggestParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// RepositoryMockSuggestExpectation specifies expectation struct of the repository.Suggest
+type RepositoryMockSuggestExpectation struct {
+	mock               *RepositoryMock
+	params             *RepositoryMockSuggestParams
+	paramPtrs          *RepositoryMockSuggestParamPtrs
+	expectationOrigins RepositoryMockSuggestExpectationOrigins
+	results            *RepositoryMockSuggestResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// RepositoryMockSuggestParams contains parameters of the repository.Suggest
+type RepositoryMockSuggestParams struct {
+	ctx context.Context
+	tx  db.Executor
+	q   models.SearchOpts
+}
+
+// RepositoryMockSuggestParamPtrs contains pointers to parameters of the repository.Suggest
+type RepositoryMockSuggestParamPtrs struct {
+	ctx *context.Context
+	tx  *db.Executor
+	q   *models.SearchOpts
+}
+
+// RepositoryMockSuggestResults contains results of the repository.Suggest
+type RepositoryMockSuggestResults struct {
+	pa1 []models.PlateSighting
+	err error
+}
+
+// RepositoryMockSuggestOrigins contains origins of expectations of the repository.Suggest
+type RepositoryMockSuggestExpectationOrigins struct {
+	origin    string
+	originCtx string
+	originTx  string
+	originQ   string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmSuggest *mRepositoryMockSuggest) Optional() *mRepositoryMockSuggest {
+	mmSuggest.optional = true
+	return mmSuggest
+}
+
+// Expect sets up expected params for repository.Suggest
+func (mmSuggest *mRepositoryMockSuggest) Expect(ctx context.Context, tx db.Executor, q models.SearchOpts) *mRepositoryMockSuggest {
+	if mmSuggest.mock.funcSuggest != nil {
+		mmSuggest.mock.t.Fatalf("RepositoryMock.Suggest mock is already set by Set")
+	}
+
+	if mmSuggest.defaultExpectation == nil {
+		mmSuggest.defaultExpectation = &RepositoryMockSuggestExpectation{}
+	}
+
+	if mmSuggest.defaultExpectation.paramPtrs != nil {
+		mmSuggest.mock.t.Fatalf("RepositoryMock.Suggest mock is already set by ExpectParams functions")
+	}
+
+	mmSuggest.defaultExpectation.params = &RepositoryMockSuggestParams{ctx, tx, q}
+	mmSuggest.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmSuggest.expectations {
+		if minimock.Equal(e.params, mmSuggest.defaultExpectation.params) {
+			mmSuggest.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmSuggest.defaultExpectation.params)
+		}
+	}
+
+	return mmSuggest
+}
+
+// ExpectCtxParam1 sets up expected param ctx for repository.Suggest
+func (mmSuggest *mRepositoryMockSuggest) ExpectCtxParam1(ctx context.Context) *mRepositoryMockSuggest {
+	if mmSuggest.mock.funcSuggest != nil {
+		mmSuggest.mock.t.Fatalf("RepositoryMock.Suggest mock is already set by Set")
+	}
+
+	if mmSuggest.defaultExpectation == nil {
+		mmSuggest.defaultExpectation = &RepositoryMockSuggestExpectation{}
+	}
+
+	if mmSuggest.defaultExpectation.params != nil {
+		mmSuggest.mock.t.Fatalf("RepositoryMock.Suggest mock is already set by Expect")
+	}
+
+	if mmSuggest.defaultExpectation.paramPtrs == nil {
+		mmSuggest.defaultExpectation.paramPtrs = &RepositoryMockSuggestParamPtrs{}
+	}
+	mmSuggest.defaultExpectation.paramPtrs.ctx = &ctx
+	mmSuggest.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmSuggest
+}
+
+// ExpectTxParam2 sets up expected param tx for repository.Suggest
+func (mmSuggest *mRepositoryMockSuggest) ExpectTxParam2(tx db.Executor) *mRepositoryMockSuggest {
+	if mmSuggest.mock.funcSuggest != nil {
+		mmSuggest.mock.t.Fatalf("RepositoryMock.Suggest mock is already set by Set")
+	}
+
+	if mmSuggest.defaultExpectation == nil {
+		mmSuggest.defaultExpectation = &RepositoryMockSuggestExpectation{}
+	}
+
+	if mmSuggest.defaultExpectation.params != nil {
+		mmSuggest.mock.t.Fatalf("RepositoryMock.Suggest mock is already set by Expect")
+	}
+
+	if mmSuggest.defaultExpectation.paramPtrs == nil {
+		mmSuggest.defaultExpectation.paramPtrs = &RepositoryMockSuggestParamPtrs{}
+	}
+	mmSuggest.defaultExpectation.paramPtrs.tx = &tx
+	mmSuggest.defaultExpectation.expectationOrigins.originTx = minimock.CallerInfo(1)
+
+	return mmSuggest
+}
+
+// ExpectQParam3 sets up expected param q for repository.Suggest
+func (mmSuggest *mRepositoryMockSuggest) ExpectQParam3(q models.SearchOpts) *mRepositoryMockSuggest {
+	if mmSuggest.mock.funcSuggest != nil {
+		mmSuggest.mock.t.Fatalf("RepositoryMock.Suggest mock is already set by Set")
+	}
+
+	if mmSuggest.defaultExpectation == nil {
+		mmSuggest.defaultExpectation = &RepositoryMockSuggestExpectation{}
+	}
+
+	if mmSuggest.defaultExpectation.params != nil {
+		mmSuggest.mock.t.Fatalf("RepositoryMock.Suggest mock is already set by Expect")
+	}
+
+	if mmSuggest.defaultExpectation.paramPtrs == nil {
+		mmSuggest.defaultExpectation.paramPtrs = &RepositoryMockSuggestParamPtrs{}
+	}
+	mmSuggest.defaultExpectation.paramPtrs.q = &q
+	mmSuggest.defaultExpectation.expectationOrigins.originQ = minimock.CallerInfo(1)
+
+	return mmSuggest
+}
+
+// Inspect accepts an inspector function that has same arguments as the repository.Suggest
+func (mmSuggest *mRepositoryMockSuggest) Inspect(f func(ctx context.Context, tx db.Executor, q models.SearchOpts)) *mRepositoryMockSuggest {
+	if mmSuggest.mock.inspectFuncSuggest != nil {
+		mmSuggest.mock.t.Fatalf("Inspect function is already set for RepositoryMock.Suggest")
+	}
+
+	mmSuggest.mock.inspectFuncSuggest = f
+
+	return mmSuggest
+}
+
+// Return sets up results that will be returned by repository.Suggest
+func (mmSuggest *mRepositoryMockSuggest) Return(pa1 []models.PlateSighting, err error) *RepositoryMock {
+	if mmSuggest.mock.funcSuggest != nil {
+		mmSuggest.mock.t.Fatalf("RepositoryMock.Suggest mock is already set by Set")
+	}
+
+	if mmSuggest.defaultExpectation == nil {
+		mmSuggest.defaultExpectation = &RepositoryMockSuggestExpectation{mock: mmSuggest.mock}
+	}
+	mmSuggest.defaultExpectation.results = &RepositoryMockSuggestResults{pa1, err}
+	mmSuggest.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmSuggest.mock
+}
+
+// Set uses given function f to mock the repository.Suggest method
+func (mmSuggest *mRepositoryMockSuggest) Set(f func(ctx context.Context, tx db.Executor, q models.SearchOpts) (pa1 []models.PlateSighting, err error)) *RepositoryMock {
+	if mmSuggest.defaultExpectation != nil {
+		mmSuggest.mock.t.Fatalf("Default expectation is already set for the repository.Suggest method")
+	}
+
+	if len(mmSuggest.expectations) > 0 {
+		mmSuggest.mock.t.Fatalf("Some expectations are already set for the repository.Suggest method")
+	}
+
+	mmSuggest.mock.funcSuggest = f
+	mmSuggest.mock.funcSuggestOrigin = minimock.CallerInfo(1)
+	return mmSuggest.mock
+}
+
+// When sets expectation for the repository.Suggest which will trigger the result defined by the following
+// Then helper
+func (mmSuggest *mRepositoryMockSuggest) When(ctx context.Context, tx db.Executor, q models.SearchOpts) *RepositoryMockSuggestExpectation {
+	if mmSuggest.mock.funcSuggest != nil {
+		mmSuggest.mock.t.Fatalf("RepositoryMock.Suggest mock is already set by Set")
+	}
+
+	expectation := &RepositoryMockSuggestExpectation{
+		mock:               mmSuggest.mock,
+		params:             &RepositoryMockSuggestParams{ctx, tx, q},
+		expectationOrigins: RepositoryMockSuggestExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmSuggest.expectations = append(mmSuggest.expectations, expectation)
+	return expectation
+}
+
+// Then sets up repository.Suggest return parameters for the expectation previously defined by the When method
+func (e *RepositoryMockSuggestExpectation) Then(pa1 []models.PlateSighting, err error) *RepositoryMock {
+	e.results = &RepositoryMockSuggestResults{pa1, err}
+	return e.mock
+}
+
+// Times sets number of times repository.Suggest should be invoked
+func (mmSuggest *mRepositoryMockSuggest) Times(n uint64) *mRepositoryMockSuggest {
+	if n == 0 {
+		mmSuggest.mock.t.Fatalf("Times of RepositoryMock.Suggest mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmSuggest.expectedInvocations, n)
+	mmSuggest.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmSuggest
+}
+
+func (mmSuggest *mRepositoryMockSuggest) invocationsDone() bool {
+	if len(mmSuggest.expectations) == 0 && mmSuggest.defaultExpectation == nil && mmSuggest.mock.funcSuggest == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmSuggest.mock.afterSuggestCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmSuggest.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// Suggest implements mm_usecase.repository
+func (mmSuggest *RepositoryMock) Suggest(ctx context.Context, tx db.Executor, q models.SearchOpts) (pa1 []models.PlateSighting, err error) {
+	mm_atomic.AddUint64(&mmSuggest.beforeSuggestCounter, 1)
+	defer mm_atomic.AddUint64(&mmSuggest.afterSuggestCounter, 1)
+
+	mmSuggest.t.Helper()
+
+	if mmSuggest.inspectFuncSuggest != nil {
+		mmSuggest.inspectFuncSuggest(ctx, tx, q)
+	}
+
+	mm_params := RepositoryMockSuggestParams{ctx, tx, q}
+
+	// Record call args
+	mmSuggest.SuggestMock.mutex.Lock()
+	mmSuggest.SuggestMock.callArgs = append(mmSuggest.SuggestMock.callArgs, &mm_params)
+	mmSuggest.SuggestMock.mutex.Unlock()
+
+	for _, e := range mmSuggest.SuggestMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.pa1, e.results.err
+		}
+	}
+
+	if mmSuggest.SuggestMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmSuggest.SuggestMock.defaultExpectation.Counter, 1)
+		mm_want := mmSuggest.SuggestMock.defaultExpectation.params
+		mm_want_ptrs := mmSuggest.SuggestMock.defaultExpectation.paramPtrs
+
+		mm_got := RepositoryMockSuggestParams{ctx, tx, q}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmSuggest.t.Errorf("RepositoryMock.Suggest got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmSuggest.SuggestMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.tx != nil && !minimock.Equal(*mm_want_ptrs.tx, mm_got.tx) {
+				mmSuggest.t.Errorf("RepositoryMock.Suggest got unexpected parameter tx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmSuggest.SuggestMock.defaultExpectation.expectationOrigins.originTx, *mm_want_ptrs.tx, mm_got.tx, minimock.Diff(*mm_want_ptrs.tx, mm_got.tx))
+			}
+
+			if mm_want_ptrs.q != nil && !minimock.Equal(*mm_want_ptrs.q, mm_got.q) {
+				mmSuggest.t.Errorf("RepositoryMock.Suggest got unexpected parameter q, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmSuggest.SuggestMock.defaultExpectation.expectationOrigins.originQ, *mm_want_ptrs.q, mm_got.q, minimock.Diff(*mm_want_ptrs.q, mm_got.q))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmSuggest.t.Errorf("RepositoryMock.Suggest got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmSuggest.SuggestMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmSuggest.SuggestMock.defaultExpectation.results
+		if mm_results == nil {
+			mmSuggest.t.Fatal("No results are set for the RepositoryMock.Suggest")
+		}
+		return (*mm_results).pa1, (*mm_results).err
+	}
+	if mmSuggest.funcSuggest != nil {
+		return mmSuggest.funcSuggest(ctx, tx, q)
+	}
+	mmSuggest.t.Fatalf("Unexpected call to RepositoryMock.Suggest. %v %v %v", ctx, tx, q)
+	return
+}
+
+// SuggestAfterCounter returns a count of finished RepositoryMock.Suggest invocations
+func (mmSuggest *RepositoryMock) SuggestAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmSuggest.afterSuggestCounter)
+}
+
+// SuggestBeforeCounter returns a count of RepositoryMock.Suggest invocations
+func (mmSuggest *RepositoryMock) SuggestBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmSuggest.beforeSuggestCounter)
+}
+
+// Calls returns a list of arguments used in each call to RepositoryMock.Suggest.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmSuggest *mRepositoryMockSuggest) Calls() []*RepositoryMockSuggestParams {
+	mmSuggest.mutex.RLock()
+
+	argCopy := make([]*RepositoryMockSuggestParams, len(mmSuggest.callArgs))
+	copy(argCopy, mmSuggest.callArgs)
+
+	mmSuggest.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockSuggestDone returns true if the count of the Suggest invocations corresponds
+// the number of defined expectations
+func (m *RepositoryMock) MinimockSuggestDone() bool {
+	if m.SuggestMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.SuggestMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.SuggestMock.invocationsDone()
+}
+
+// MinimockSuggestInspect logs each unmet expectation
+func (m *RepositoryMock) MinimockSuggestInspect() {
+	for _, e := range m.SuggestMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to RepositoryMock.Suggest at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterSuggestCounter := mm_atomic.LoadUint64(&m.afterSuggestCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.SuggestMock.defaultExpectation != nil && afterSuggestCounter < 1 {
+		if m.SuggestMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to RepositoryMock.Suggest at\n%s", m.SuggestMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to RepositoryMock.Suggest at\n%s with params: %#v", m.SuggestMock.defaultExpectation.expectationOrigins.origin, *m.SuggestMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcSuggest != nil && afterSuggestCounter < 1 {
+		m.t.Errorf("Expected call to RepositoryMock.Suggest at\n%s", m.funcSuggestOrigin)
+	}
+
+	if !m.SuggestMock.invocationsDone() && afterSuggestCounter > 0 {
+		m.t.Errorf("Expected %d calls to RepositoryMock.Suggest at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.SuggestMock.expectedInvocations), m.SuggestMock.expectedInvocationsOrigin, afterSuggestCounter)
+	}
+}
+
 // MinimockFinish checks that all mocked methods have been called the expected number of times
 func (m *RepositoryMock) MinimockFinish() {
 	m.finishOnce.Do(func() {
@@ -2831,6 +3215,8 @@ func (m *RepositoryMock) MinimockFinish() {
 			m.MinimockSearchInspect()
 
 			m.MinimockSeeAlsoInspect()
+
+			m.MinimockSuggestInspect()
 		}
 	})
 }
@@ -2860,5 +3246,6 @@ func (m *RepositoryMock) minimockDone() bool {
 		m.MinimockListSamePlateDone() &&
 		m.MinimockMatchesSightingPlateDone() &&
 		m.MinimockSearchDone() &&
-		m.MinimockSeeAlsoDone()
+		m.MinimockSeeAlsoDone() &&
+		m.MinimockSuggestDone()
 }

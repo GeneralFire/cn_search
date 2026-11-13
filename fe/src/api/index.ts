@@ -35,6 +35,8 @@ export interface CarsPage {
   items: Car[];
   total: number;
   nextOffset: number | null;
+  /** «Возможно, вы искали»: только при пустой выдаче по непустому запросу. */
+  suggestions: Car[];
 }
 
 // include-test-data: бэк отдаёт и строки с is_test_data (сейчас в базе только тестовые данные).
@@ -80,6 +82,7 @@ export async function search(req: CarsearchSearchRequest, signal?: AbortSignal):
     items: (data.items ?? []).map(toCar),
     total: data.total ?? 0,
     nextOffset: data.nextOffset ?? null,
+    suggestions: (data.suggestions ?? []).map(toCar),
   };
 }
 

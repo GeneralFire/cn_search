@@ -4,6 +4,7 @@ package usecase
 
 import (
 	"context"
+	"strings"
 
 	"github.com/GeneralFire/cn_search/be/internal/db"
 	"github.com/GeneralFire/cn_search/be/internal/models"
@@ -20,9 +21,16 @@ func New(tx transactor, repo repository) *PlateSightings {
 }
 
 // Search — поиск фиксаций; count и страница читаются в одной транзакции (один снимок).
+// Ничего не нашлось по непустому запросу — в той же транзакции подсказки «возможно, вы искали».
 func (u *PlateSightings) Search(ctx context.Context, q models.SearchOpts) (page models.SearchPage, err error) {
 	err = u.tx.InReadTx(ctx, func(ctx context.Context, tx db.Executor) error {
-		page, err = u.repo.Search(ctx, tx, q)
+		if page, err = u.repo.Search(ctx, tx, q); err != nil {
+			return err
+		}
+		if page.Total > 0 || strings.TrimSpace(q.Plate) == "" {
+			return nil
+		}
+		page.Suggestions, err = u.repo.Suggest(ctx, tx, q)
 		return err
 	})
 	return page, err

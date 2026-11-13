@@ -50,7 +50,15 @@ type SearchPage struct {
 	Offset     int
 	Limit      int
 	NextOffset *int // nil — дальше ничего нет
+	// Suggestions — «возможно, вы искали»: только при Total = 0 и непустом запросе.
+	Suggestions []PlateSighting
 }
+
+// SuggestLimit — сколько подсказок «возможно, вы искали» отдавать.
+const SuggestLimit = 5
+
+// SuggestMaxDistance — наибольшее расстояние правки (levenshtein) между ключами запроса и номера.
+const SuggestMaxDistance = 2
 
 // SeeAlsoOpts — параметры блока «свежие фиксации» на странице номера.
 type SeeAlsoOpts struct {

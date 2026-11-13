@@ -97,6 +97,10 @@ message SearchResponse {
   int32 total = 2;
   // Смещение следующей страницы; не задано — дальше ничего нет.
   optional int32 next_offset = 3;
+  // «Возможно, вы искали»: только при total = 0 и непустом запросе — до 5 номеров, ближайших
+  // к запросу по расстоянию правки (levenshtein) между ключами plate_search_key без пробелов,
+  // не дальше 2 правок; по одной (последней) фиксации на номер, ближайшие первыми.
+  repeated PlateSighting suggestions = 4;
 }
 
 message GetRequest {

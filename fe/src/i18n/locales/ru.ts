@@ -164,4 +164,7 @@ export const ru = {
   "noPhoto.label": "Нет фото",
   // Подвал: пустая строка — подвал не показывается.
   "footer.message": "",
+
+  "dym.title": "Возможно, вы искали:",
+  "dym.search": "Искать {plate}",
 } as const;

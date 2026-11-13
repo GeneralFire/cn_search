@@ -43,12 +43,14 @@
   is_test_data). Поиск — по началу слов: `to_tsvector('simple', p.plate) @@ to_tsquery(<слова:* через &>)`,
   запрос собирается в SQL (не в Go), GIN-индекс, без pg_trgm. Похожие символы (кириллица/латиница, О/0, дефис)
   сводит `plate_search_key()` — одинаково в индексе и в запросе (тест `repository` следит за совпадением). `Get(id)` — все фиксации того же номера.
+  Пустая выдача по непустому запросу — `SearchResponse.suggestions` («возможно, вы искали»): до 5 номеров
+  с `levenshtein` (fuzzystrmatch, contrib) ≤ 2 по `plate_search_key` без пробелов (`repository.Suggest`).
 - Данные БД и S3 — bind mount в `./.data` (не коммитится), удаляет `make reset`.
 - `fe/` — TypeScript + Vite. TS-клиент `fe/src/api/generated.ts` генерируется из swagger: `make gen-ts`.
   Поиск по номеру, бесконечная прокрутка + «Загрузить ещё», модалка «Уточнить» (заглушка),
   главная без запроса — блок «для вас» (2 ряда номеров «рынка» языка) и вкладки стран + «Прочее»
   (`src/home.ts`, `SearchRequest.market` → `models.Market` → условия по `plates.meta` type/region; вкладка — `?tab=`),
-  страница номера `/plate/<id фиксации>` (`src/plate.ts`, роутер на History API — `src/router.ts`).
+  запрос поиска — в адресе `?q=` (F5, история, смена языка), страница номера `/plate/<id фиксации>` (`src/plate.ts`, роутер на History API — `src/router.ts`).
 - `docker-compose.yml`: db (Postgres), s3 (RustFS — minio/minio больше нет на Docker Hub), be, fe.
   Запуск: `make run` (всё) или по частям `make etc` (db+s3+миграции), `make run-be`, `make run-fe`.
   Тестовые данные приходят миграцией при `make etc`.

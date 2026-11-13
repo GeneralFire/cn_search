@@ -56,7 +56,7 @@ const PLATE_TEXT = ".plate__num, .plate__reg, .plate-eu__num, .plate-us__num, .p
 /** Обернуть в <mark> совпадение с запросом внутри отрисованного номера (plateHtml из ui.ts).
  *  Номер в разметке разбит на части без пробелов (серия, регион), поэтому символы сопоставляются
  *  с исходной строкой номера по порядку, пропуская пробелы. */
-export function highlightPlate(root: Element, plate: string, q: string): void {
+export function highlightPlate(root: Element, plate: string, q: string, markClass = "qs__mark"): void {
   const ranges = matchRanges(plate, q);
   if (!ranges.length) return;
   const chars = [...plate];
@@ -77,7 +77,7 @@ export function highlightPlate(root: Element, plate: string, q: string): void {
       if (!buf) return;
       if (bufMarked) {
         const m = document.createElement("mark");
-        m.className = "qs__mark";
+        m.className = markClass;
         m.textContent = buf;
         frag.append(m);
       } else frag.append(buf);

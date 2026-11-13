@@ -49,14 +49,11 @@ export const getLang = (): Lang => lang;
 /** Локаль для Intl (даты, время, «3 дня назад»). */
 export const intlLocale = (): string => info.intl;
 
-/** Флаг: страница перезагружена сменой языка — можно восстановить состояние (запрос поиска). */
-export const SWITCH_FLAG = "lang-switch";
-
-/** Сохранить язык и перерисовать страницу (перезагрузкой — так обновятся все тексты и форматы). */
+/** Сохранить язык и перерисовать страницу (перезагрузкой — так обновятся все тексты и форматы).
+ *  Запрос поиска и вкладка живут в адресе (?q=, ?tab=) и переживают перезагрузку сами. */
 export function setLang(next: Lang): void {
   if (next === lang) return;
   localStorage.setItem(STORAGE_KEY, next);
-  sessionStorage.setItem(SWITCH_FLAG, "1");
   location.reload();
 }
 

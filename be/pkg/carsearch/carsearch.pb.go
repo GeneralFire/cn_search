@@ -454,7 +454,11 @@ type SearchResponse struct {
 	// Всего найдено номеров по запросу.
 	Total int32 `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
 	// Смещение следующей страницы; не задано — дальше ничего нет.
-	NextOffset    *int32 `protobuf:"varint,3,opt,name=next_offset,json=nextOffset,proto3,oneof" json:"next_offset,omitempty"`
+	NextOffset *int32 `protobuf:"varint,3,opt,name=next_offset,json=nextOffset,proto3,oneof" json:"next_offset,omitempty"`
+	// «Возможно, вы искали»: только при total = 0 и непустом запросе — до 5 номеров, ближайших
+	// к запросу по расстоянию правки (levenshtein) между ключами plate_search_key без пробелов,
+	// не дальше 2 правок; по одной (последней) фиксации на номер, ближайшие первыми.
+	Suggestions   []*PlateSighting `protobuf:"bytes,4,rep,name=suggestions,proto3" json:"suggestions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -508,6 +512,13 @@ func (x *SearchResponse) GetNextOffset() int32 {
 		return *x.NextOffset
 	}
 	return 0
+}
+
+func (x *SearchResponse) GetSuggestions() []*PlateSighting {
+	if x != nil {
+		return x.Suggestions
+	}
+	return nil
 }
 
 type GetRequest struct {
@@ -1265,12 +1276,13 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\x05plate\x18\x01 \x01(\tR\x05plate\x12\x16\n" +
 	"\x06offset\x18\x02 \x01(\x05R\x06offset\x12\x14\n" +
 	"\x05limit\x18\x03 \x01(\x05R\x05limit\x12\x16\n" +
-	"\x06market\x18\x04 \x01(\tR\x06market\"\x8c\x01\n" +
+	"\x06market\x18\x04 \x01(\tR\x06market\"\xc8\x01\n" +
 	"\x0eSearchResponse\x12.\n" +
 	"\x05items\x18\x01 \x03(\v2\x18.carsearch.PlateSightingR\x05items\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x05R\x05total\x12$\n" +
 	"\vnext_offset\x18\x03 \x01(\x05H\x00R\n" +
-	"nextOffset\x88\x01\x01B\x0e\n" +
+	"nextOffset\x88\x01\x01\x12:\n" +
+	"\vsuggestions\x18\x04 \x03(\v2\x18.carsearch.PlateSightingR\vsuggestionsB\x0e\n" +
 	"\f_next_offset\"\x1c\n" +
 	"\n" +
 	"GetRequest\x12\x0e\n" +
@@ -1399,39 +1411,40 @@ var file_carsearch_carsearch_proto_depIdxs = []int32{
 	19, // 0: carsearch.PlateSighting.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 1: carsearch.PlateSighting.plate_type:type_name -> carsearch.PlateType
 	4,  // 2: carsearch.SearchResponse.items:type_name -> carsearch.PlateSighting
-	4,  // 3: carsearch.GetResponse.items:type_name -> carsearch.PlateSighting
-	4,  // 4: carsearch.SeeAlsoResponse.items:type_name -> carsearch.PlateSighting
-	1,  // 5: carsearch.Clarification.status:type_name -> carsearch.ClarificationStatus
-	19, // 6: carsearch.Clarification.created_at:type_name -> google.protobuf.Timestamp
-	0,  // 7: carsearch.Clarification.plate_type:type_name -> carsearch.PlateType
-	0,  // 8: carsearch.ClarifyRequest.plate_type:type_name -> carsearch.PlateType
-	11, // 9: carsearch.ClarifyResponse.clarification:type_name -> carsearch.Clarification
-	2,  // 10: carsearch.Complaint.reason:type_name -> carsearch.ComplaintReason
-	3,  // 11: carsearch.Complaint.status:type_name -> carsearch.ComplaintStatus
-	19, // 12: carsearch.Complaint.created_at:type_name -> google.protobuf.Timestamp
-	4,  // 13: carsearch.Complaint.sighting:type_name -> carsearch.PlateSighting
-	2,  // 14: carsearch.ComplainRequest.reason:type_name -> carsearch.ComplaintReason
-	3,  // 15: carsearch.ListComplaintsRequest.status:type_name -> carsearch.ComplaintStatus
-	14, // 16: carsearch.ListComplaintsResponse.items:type_name -> carsearch.Complaint
-	5,  // 17: carsearch.CarSearchService.Search:input_type -> carsearch.SearchRequest
-	7,  // 18: carsearch.CarSearchService.Get:input_type -> carsearch.GetRequest
-	9,  // 19: carsearch.CarSearchService.SeeAlso:input_type -> carsearch.SeeAlsoRequest
-	12, // 20: carsearch.CarSearchService.Clarify:input_type -> carsearch.ClarifyRequest
-	15, // 21: carsearch.CarSearchService.Complain:input_type -> carsearch.ComplainRequest
-	16, // 22: carsearch.CarSearchService.ListComplaints:input_type -> carsearch.ListComplaintsRequest
-	18, // 23: carsearch.CarSearchService.ResolveComplaint:input_type -> carsearch.ResolveComplaintRequest
-	6,  // 24: carsearch.CarSearchService.Search:output_type -> carsearch.SearchResponse
-	8,  // 25: carsearch.CarSearchService.Get:output_type -> carsearch.GetResponse
-	10, // 26: carsearch.CarSearchService.SeeAlso:output_type -> carsearch.SeeAlsoResponse
-	13, // 27: carsearch.CarSearchService.Clarify:output_type -> carsearch.ClarifyResponse
-	14, // 28: carsearch.CarSearchService.Complain:output_type -> carsearch.Complaint
-	17, // 29: carsearch.CarSearchService.ListComplaints:output_type -> carsearch.ListComplaintsResponse
-	14, // 30: carsearch.CarSearchService.ResolveComplaint:output_type -> carsearch.Complaint
-	24, // [24:31] is the sub-list for method output_type
-	17, // [17:24] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	4,  // 3: carsearch.SearchResponse.suggestions:type_name -> carsearch.PlateSighting
+	4,  // 4: carsearch.GetResponse.items:type_name -> carsearch.PlateSighting
+	4,  // 5: carsearch.SeeAlsoResponse.items:type_name -> carsearch.PlateSighting
+	1,  // 6: carsearch.Clarification.status:type_name -> carsearch.ClarificationStatus
+	19, // 7: carsearch.Clarification.created_at:type_name -> google.protobuf.Timestamp
+	0,  // 8: carsearch.Clarification.plate_type:type_name -> carsearch.PlateType
+	0,  // 9: carsearch.ClarifyRequest.plate_type:type_name -> carsearch.PlateType
+	11, // 10: carsearch.ClarifyResponse.clarification:type_name -> carsearch.Clarification
+	2,  // 11: carsearch.Complaint.reason:type_name -> carsearch.ComplaintReason
+	3,  // 12: carsearch.Complaint.status:type_name -> carsearch.ComplaintStatus
+	19, // 13: carsearch.Complaint.created_at:type_name -> google.protobuf.Timestamp
+	4,  // 14: carsearch.Complaint.sighting:type_name -> carsearch.PlateSighting
+	2,  // 15: carsearch.ComplainRequest.reason:type_name -> carsearch.ComplaintReason
+	3,  // 16: carsearch.ListComplaintsRequest.status:type_name -> carsearch.ComplaintStatus
+	14, // 17: carsearch.ListComplaintsResponse.items:type_name -> carsearch.Complaint
+	5,  // 18: carsearch.CarSearchService.Search:input_type -> carsearch.SearchRequest
+	7,  // 19: carsearch.CarSearchService.Get:input_type -> carsearch.GetRequest
+	9,  // 20: carsearch.CarSearchService.SeeAlso:input_type -> carsearch.SeeAlsoRequest
+	12, // 21: carsearch.CarSearchService.Clarify:input_type -> carsearch.ClarifyRequest
+	15, // 22: carsearch.CarSearchService.Complain:input_type -> carsearch.ComplainRequest
+	16, // 23: carsearch.CarSearchService.ListComplaints:input_type -> carsearch.ListComplaintsRequest
+	18, // 24: carsearch.CarSearchService.ResolveComplaint:input_type -> carsearch.ResolveComplaintRequest
+	6,  // 25: carsearch.CarSearchService.Search:output_type -> carsearch.SearchResponse
+	8,  // 26: carsearch.CarSearchService.Get:output_type -> carsearch.GetResponse
+	10, // 27: carsearch.CarSearchService.SeeAlso:output_type -> carsearch.SeeAlsoResponse
+	13, // 28: carsearch.CarSearchService.Clarify:output_type -> carsearch.ClarifyResponse
+	14, // 29: carsearch.CarSearchService.Complain:output_type -> carsearch.Complaint
+	17, // 30: carsearch.CarSearchService.ListComplaints:output_type -> carsearch.ListComplaintsResponse
+	14, // 31: carsearch.CarSearchService.ResolveComplaint:output_type -> carsearch.Complaint
+	25, // [25:32] is the sub-list for method output_type
+	18, // [18:25] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_carsearch_carsearch_proto_init() }

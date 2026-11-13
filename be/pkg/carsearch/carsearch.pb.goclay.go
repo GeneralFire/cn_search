@@ -1545,6 +1545,13 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
           "type": "integer",
           "format": "int32",
           "description": "Смещение следующей страницы; не задано — дальше ничего нет."
+        },
+        "suggestions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchPlateSighting"
+          },
+          "description": "«Возможно, вы искали»: только при total = 0 и непустом запросе — до 5 номеров, ближайших\nк запросу по расстоянию правки (levenshtein) между ключами plate_search_key без пробелов,\nне дальше 2 правок; по одной (последней) фиксации на номер, ближайшие первыми."
         }
       }
     },

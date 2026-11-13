@@ -1,11 +1,13 @@
 import "./style.css";
+import "./didyoumean.css";
 import "./theme";
 import { ApiError, clarify, search, type Car } from "./api";
 import { navigate, onRoute, plateHref } from "./router";
 import { renderPlatePage } from "./plate";
 import { renderAdminPage } from "./admin";
 import { cardHtml, escapeHtml, formatDate, icon, plateHtml } from "./ui";
-import { SWITCH_FLAG, t, tp } from "./i18n/i18n";
+import { t, tp } from "./i18n/i18n";
+import { highlightPlate } from "./searchkey";
 import { mountSettings } from "./settings";
 import { initHoverPreview } from "./hoverpreview";
 import { footerHtml } from "./footer";
@@ -177,10 +179,11 @@ async function loadMore(): Promise<void> {
     const startIndex = state.cars.size;
     page.items.forEach((c) => (state.cars.set(c.id, c), known.set(c.id, c)));
     $grid.insertAdjacentHTML("beforeend", page.items.map((c, i) => cardHtml(c, i)).join(""));
+    if (!home) highlightCards(startIndex, page.items);
     state.total = page.total;
     state.nextOffset = page.nextOffset;
 
-    if (startIndex === 0 && page.items.length === 0) renderEmpty();
+    if (startIndex === 0 && page.items.length === 0) renderEmpty(page.suggestions);
   } catch (e) {
     if (ctrl.signal.aborted || gen !== state.generation) return;
     state.failed = true;
@@ -199,9 +202,30 @@ async function loadMore(): Promise<void> {
   }
 }
 
-function renderEmpty(): void {
+/** Подсветить совпадение с запросом в номерах только что добавленных карточек выдачи
+ *  (похожие символы — как на бэке, searchkey.ts). */
+function highlightCards(from: number, cars: Car[]): void {
+  const cards = $grid.querySelectorAll<HTMLElement>(".card .card__plate");
+  cars.forEach((c, i) => {
+    const el = cards[from + i];
+    if (el) highlightPlate(el, c.plate, $plate.value, "dym-mark");
+  });
+}
+
+/** Блок «Возможно, вы искали» — номера, близкие к запросу (подсказки бэка при пустой выдаче). */
+function suggestionsHtml(cars: Car[]): string {
+  if (!cars.length) return "";
+  return `<div class="dym"><span class="dym__title">${t("dym.title")}</span>${cars
+    .map(
+      (c) => `<button class="dym__plate" type="button" data-suggest="${escapeHtml(c.plate)}"
+        aria-label="${escapeHtml(t("dym.search", { plate: c.plate }))}">${plateHtml(c)}</button>`
+    )
+    .join("")}</div>`;
+}
+
+function renderEmpty(suggestions: Car[] = []): void {
   if (hasQuery()) {
-    $grid.innerHTML = `<div class="empty"><strong>${t("empty.title")}</strong>${t("empty.hint")}</div>`;
+    $grid.innerHTML = `<div class="empty"><strong>${t("empty.title")}</strong>${t("empty.hint")}${suggestionsHtml(suggestions)}</div>`;
   } else if (state.skip > 0) {
     $grid.innerHTML = `<p class="feed__note">${t("homeTabs.allAbove")}</p>`;
   } else {
@@ -408,14 +432,44 @@ $modal.addEventListener("click", (e) => {
 // Поиск
 // ---------------------------------------------------------------------------
 
+/** Запрос из адреса (?q=) — с ним открывается выдача (F5, ссылка, «Назад», смена языка). */
+const queryFromUrl = (): string => (location.pathname === "/" && new URLSearchParams(location.search).get("q")) || "";
+
+/** Записать запрос в адрес (пусто — без параметра), не добавляя запись в историю. */
+function setQueryInUrl(q: string): void {
+  if (location.pathname !== "/") return;
+  const url = new URL(location.href);
+  if (q.trim()) url.searchParams.set("q", q);
+  else url.searchParams.delete("q");
+  if (url.href !== location.href) history.replaceState(history.state, "", url);
+}
+
+/** Поставить запрос в поле поиска (кнопка очистки — по нему). */
+function setQuery(q: string): void {
+  $plate.value = q;
+  app.querySelector<HTMLButtonElement>(`[data-clear="${$plate.id}"]`)!.hidden = !q;
+}
+
 let debounce: number | undefined;
 function onInput(): void {
   app.querySelector<HTMLButtonElement>(`[data-clear="${$plate.id}"]`)!.hidden = !$plate.value;
+  setQueryInUrl($plate.value);
   clearTimeout(debounce);
   debounce = window.setTimeout(newSearch, DEBOUNCE_MS);
 }
 
 $plate.addEventListener("input", onInput);
+
+// «Возможно, вы искали»: клик по номеру — поиск по нему.
+$grid.addEventListener("click", (e) => {
+  const b = (e.target as Element).closest<HTMLButtonElement>("[data-suggest]");
+  if (!b) return;
+  clearTimeout(debounce);
+  setQuery(b.dataset.suggest ?? "");
+  setQueryInUrl($plate.value);
+  newSearch();
+  window.scrollTo({ top: 0 });
+});
 
 app.querySelectorAll<HTMLButtonElement>("[data-clear]").forEach((btn) =>
   btn.addEventListener("click", (e) => {
@@ -439,14 +493,8 @@ $moreBtn.addEventListener("click", () => {
 
 initHoverPreview();
 
-// Смена языка перезагружает страницу — запрос поиска переносим через перезагрузку.
-const SEARCH_Q = "search-q";
-addEventListener("pagehide", () => sessionStorage.setItem(SEARCH_Q, $plate.value));
-if (sessionStorage.getItem(SWITCH_FLAG)) {
-  sessionStorage.removeItem(SWITCH_FLAG);
-  $plate.value = sessionStorage.getItem(SEARCH_Q) ?? "";
-  app.querySelector<HTMLButtonElement>(`[data-clear="${$plate.id}"]`)!.hidden = !$plate.value;
-}
+// Запрос — в адресе (?q=): F5 и смена языка (перезагрузка) открывают ту же выдачу.
+setQuery(queryFromUrl());
 
 const $viewSearch = app.querySelector<HTMLElement>("#view-search")!;
 const $viewPlate = app.querySelector<HTMLElement>("#view-plate")!;
@@ -471,12 +519,11 @@ onRoute((route) => {
       open: (id) => navigate(plateHref(id)),
       // Enter в поиске шапки — полная выдача на главной с этим запросом.
       submit: (query) => {
-        $plate.value = query;
-        app.querySelector<HTMLButtonElement>(`[data-clear="${$plate.id}"]`)!.hidden = !query;
+        setQuery(query);
         searchStarted = true;
         searchScroll = 0;
         newSearch();
-        navigate("/");
+        navigate(query.trim() ? `/?q=${encodeURIComponent(query)}` : "/");
       },
     });
     return;
@@ -487,6 +534,14 @@ onRoute((route) => {
   document.title = t("app.title");
   if (!searchStarted) {
     searchStarted = true;
+    newSearch();
+  } else if (queryFromUrl() !== $plate.value) {
+    // Адрес с другим запросом (переход по истории или ссылкой на главную) — новая выдача.
+    clearTimeout(debounce);
+    setQuery(queryFromUrl());
+    if (!hasQuery()) state.tab = tabFromUrl();
+    renderTabs();
+    searchScroll = 0;
     newSearch();
   } else if (!hasQuery() && tabFromUrl() !== state.tab) {
     selectTab(tabFromUrl()); // адрес с другой вкладкой (переход по истории)

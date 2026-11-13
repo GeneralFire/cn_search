@@ -32,6 +32,38 @@ func TestSearchInReadTx(t *testing.T) {
 	}
 }
 
+// Пустая выдача по непустому запросу — подсказки из той же транзакции.
+func TestSearchSuggestsWhenEmpty(t *testing.T) {
+	tx := dbmocks.NewExecutorMock(t)
+	opts := models.SearchOpts{Plate: "А123ВС 778", Limit: 35, IncludeTestData: true}
+	repo := mocks.NewRepositoryMock(t)
+	repo.SearchMock.Expect(minimock.AnyContext, tx, opts).Return(models.SearchPage{}, nil)
+	repo.SuggestMock.Expect(minimock.AnyContext, tx, opts).Return([]models.PlateSighting{{Plate: "А123ВС 777"}}, nil)
+
+	page, err := New(readTx(t, tx), repo).Search(context.Background(), opts)
+	if err != nil || len(page.Suggestions) != 1 || page.Suggestions[0].Plate != "А123ВС 777" {
+		t.Fatalf("Search: %+v %v", page, err)
+	}
+}
+
+// Подсказки не нужны, если что-то нашлось или запрос пустой (Suggest не вызывается — мок упадёт).
+func TestSearchNoSuggestions(t *testing.T) {
+	for name, c := range map[string]struct {
+		plate string
+		total int
+	}{"нашлось": {"А123", 3}, "пустой запрос": {" ", 0}} {
+		t.Run(name, func(t *testing.T) {
+			tx := dbmocks.NewExecutorMock(t)
+			repo := mocks.NewRepositoryMock(t)
+			repo.SearchMock.Return(models.SearchPage{Total: c.total}, nil)
+			page, err := New(readTx(t, tx), repo).Search(context.Background(), models.SearchOpts{Plate: c.plate})
+			if err != nil || page.Suggestions != nil {
+				t.Fatalf("Search: %+v %v", page, err)
+			}
+		})
+	}
+}
+
 func TestListSamePlateInReadTx(t *testing.T) {
 	tx := dbmocks.NewExecutorMock(t)
 	repo := mocks.NewRepositoryMock(t)

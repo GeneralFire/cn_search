@@ -45,6 +45,9 @@ func (s *CarSearch) Search(ctx context.Context, req *pb.SearchRequest) (*pb.Sear
 	for i, c := range page.Items {
 		resp.Items[i] = s.toPB(c)
 	}
+	for _, c := range page.Suggestions {
+		resp.Suggestions = append(resp.Suggestions, s.toPB(c))
+	}
 	if page.NextOffset != nil {
 		next := int32(*page.NextOffset)
 		resp.NextOffset = &next

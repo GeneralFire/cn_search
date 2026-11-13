@@ -34,6 +34,19 @@ func TestSearch(t *testing.T) {
 	}
 }
 
+func TestSearchSuggestions(t *testing.T) {
+	svc, uc := newSvc(t)
+	uc.SearchMock.Return(models.SearchPage{Suggestions: []models.PlateSighting{sighting}}, nil)
+
+	resp, err := svc.Search(context.Background(), &pb.SearchRequest{Plate: "А123ВС 778"})
+	if err != nil || resp.GetTotal() != 0 || len(resp.GetItems()) != 0 || len(resp.GetSuggestions()) != 1 {
+		t.Fatalf("ответ: %v %v", resp, err)
+	}
+	if s := resp.GetSuggestions()[0]; s.GetPlate() != "А123ВС 777" || s.GetId() != sighting.ID || s.GetThumbUrl() != "/s3/cars/car-1_thumb.jpg" {
+		t.Errorf("маппинг подсказки: %v", s)
+	}
+}
+
 func TestSearchPassesIncludeTestData(t *testing.T) {
 	svc, uc := newSvc(t)
 	uc.SearchMock.Expect(minimock.AnyContext, models.SearchOpts{Limit: DefaultLimit, IncludeTestData: true}).
