@@ -7,6 +7,7 @@ import {
   CarsearchComplaintStatus,
   CarsearchPaymentStatus,
   CarsearchPlateType,
+  type CarsearchApiToken,
   type CarsearchClarification,
   CarsearchUserPlan,
   type CarsearchCameraRequest,
@@ -14,6 +15,7 @@ import {
   type CarsearchPayment,
   type CarsearchUser,
   type CarsearchPlateSighting,
+  type CarsearchPlateView,
   type CarsearchSearchRequest,
   type CarsearchSearchResponse,
 } from "./generated";
@@ -616,4 +618,127 @@ export async function confirmMockPayment(paymentId: string, success: boolean): P
 export async function myPayments(): Promise<Payment[]> {
   const d = await call(() => api.carsearchCarSearchService.carSearchServiceListMyPayments({}));
   return (d.items ?? []).map(toPayment);
+}
+
+// ---------------------------------------------------------------------------
+// API-токены (cst_…) и журнал просмотров страниц номеров
+// ---------------------------------------------------------------------------
+
+/** API-токен без самого токена; lastUsedAt "" — ещё не использовался. */
+export interface ApiToken {
+  id: string;
+  name: string;
+  requestsTotal: number;
+  requestsLeft: number;
+  revoked: boolean;
+  createdAt: string;
+  lastUsedAt: string;
+  viewsCount: number;
+}
+
+function toApiToken(t: CarsearchApiToken | undefined): ApiToken {
+  return {
+    id: t?.id ?? "",
+    name: t?.name ?? "",
+    requestsTotal: t?.requestsTotal ?? 0,
+    requestsLeft: t?.requestsLeft ?? 0,
+    revoked: t?.revoked ?? false,
+    createdAt: t?.createdAt ?? "",
+    lastUsedAt: t?.lastUsedAt ?? "",
+    viewsCount: t?.viewsCount ?? 0,
+  };
+}
+
+/** Новый токен (админ); token — единственный раз. */
+export async function createApiToken(name: string, requests: number): Promise<{ token: string; info: ApiToken }> {
+  const data = await call(() =>
+    api.carsearchCarSearchService.carSearchServiceCreateApiToken({ name, requests }, adminParams())
+  );
+  return { token: data.token ?? "", info: toApiToken(data.info) };
+}
+
+export interface ApiTokensPage {
+  items: ApiToken[];
+  total: number;
+  nextOffset: number | null;
+}
+
+export async function listApiTokens(offset: number, limit = 30): Promise<ApiTokensPage> {
+  const data = await call(() =>
+    api.carsearchCarSearchService.carSearchServiceListApiTokens({ offset, limit }, adminParams())
+  );
+  return { items: (data.items ?? []).map(toApiToken), total: data.total ?? 0, nextOffset: data.nextOffset ?? null };
+}
+
+export async function revokeApiToken(id: string): Promise<ApiToken> {
+  return toApiToken(await call(() => api.carsearchCarSearchService.carSearchServiceRevokeApiToken({ id }, adminParams())));
+}
+
+/** Открытие страницы номера (журнал plate_views). */
+export interface PlateView {
+  id: string;
+  createdAt: string;
+  sighting: Car | null;
+  tokenId: string;
+  tokenName: string;
+  consumed: boolean;
+  isAdmin: boolean;
+  userAgent: string;
+}
+
+export interface PlateViewsPage {
+  items: PlateView[];
+  total: number;
+  nextOffset: number | null;
+}
+
+/** Журнал открытий (админ); tokenId / plateId "" — без фильтра. */
+export async function listPlateViews(
+  filter: { tokenId?: string; plateId?: string },
+  offset: number,
+  limit = 30
+): Promise<PlateViewsPage> {
+  const data = await call(() =>
+    api.carsearchCarSearchService.carSearchServiceListPlateViews({ ...filter, offset, limit }, adminParams())
+  );
+  return {
+    items: (data.items ?? []).map((v: CarsearchPlateView) => ({
+      id: v.id ?? "",
+      createdAt: v.createdAt ?? "",
+      sighting: v.sighting ? toCar(v.sighting) : null,
+      tokenId: v.tokenId ?? "",
+      tokenName: v.tokenName ?? "",
+      consumed: v.consumed ?? false,
+      isAdmin: v.isAdmin ?? false,
+      userAgent: v.userAgent ?? "",
+    })),
+    total: data.total ?? 0,
+    nextOffset: data.nextOffset ?? null,
+  };
+}
+
+// Вход по API-токену: cookie cs_token (её же читает бэк в rpc Get). Пользовательские токены "cs_…"
+// живут в той же cookie — здесь трогаем только значения "cst_…".
+const TOKEN_COOKIE = "cs_token";
+export const API_TOKEN_PREFIX = "cst_";
+
+export function getApiTokenCookie(): string {
+  const v = document.cookie
+    .split("; ")
+    .find((c) => c.startsWith(`${TOKEN_COOKIE}=`))
+    ?.slice(TOKEN_COOKIE.length + 1);
+  return v && v.startsWith(API_TOKEN_PREFIX) ? decodeURIComponent(v) : "";
+}
+
+export function setApiTokenCookie(token: string): void {
+  document.cookie = token
+    ? `${TOKEN_COOKIE}=${encodeURIComponent(token)}; path=/; max-age=31536000; samesite=lax`
+    : `${TOKEN_COOKIE}=; path=/; max-age=0; samesite=lax`;
+}
+
+/** Остаток API-токена (TokenInfo): token — проверить конкретный (вход, ещё до cookie), иначе — из cookie.
+ *  401 (ApiError.status) — токен недействителен. */
+export async function apiTokenInfo(token?: string): Promise<ApiToken> {
+  const params = token ? { headers: { ...headers, authorization: `Bearer ${token}` } } : {};
+  return toApiToken(await call(() => api.carsearchCarSearchService.carSearchServiceTokenInfo({}, params)));
 }

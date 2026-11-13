@@ -97,6 +97,33 @@
         ]
       }
     },
+    "/carsearch.CarSearchService/CreateApiToken": {
+      "post": {
+        "summary": "CreateApiToken — новый API-токен на requests запросов (админ). Токен в открытом виде\nвозвращается только здесь, бэк хранит лишь sha256 его подписи.",
+        "operationId": "CarSearchService_CreateApiToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchCreateApiTokenResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchCreateApiTokenRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
     "/carsearch.CarSearchService/CreatePayment": {
       "post": {
         "summary": "CreatePayment — платёж за тариф и адрес кассы (пока демо-касса /pay/mock/\u003cid\u003e). Нужен токен\nпользователя, иначе UNAUTHENTICATED.",
@@ -126,7 +153,7 @@
     },
     "/carsearch.CarSearchService/Get": {
       "post": {
-        "summary": "Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.",
+        "summary": "Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.\nКаждое открытие пишется в журнал plate_views. С API-токеном (cookie cs_token = \"cst_…\" или\nauthorization: Bearer cst_…) списывает один запрос: исчерпан — RESOURCE_EXHAUSTED, отозван —\nPERMISSION_DENIED, подпись неверна — UNAUTHENTICATED. С admin-token квота не списывается.",
         "operationId": "CarSearchService_Get",
         "responses": {
           "200": {
@@ -170,6 +197,33 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/carsearchHideSightingRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/ListApiTokens": {
+      "post": {
+        "summary": "ListApiTokens — токены от новых к старым (админ).",
+        "operationId": "CarSearchService_ListApiTokens",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchListApiTokensResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchListApiTokensRequest"
             }
           }
         ],
@@ -286,6 +340,33 @@
         ]
       }
     },
+    "/carsearch.CarSearchService/ListPlateViews": {
+      "post": {
+        "summary": "ListPlateViews — журнал открытий страниц номеров (rpc Get), от новых к старым (админ).",
+        "operationId": "CarSearchService_ListPlateViews",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchListPlateViewsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchListPlateViewsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
     "/carsearch.CarSearchService/Me": {
       "post": {
         "summary": "Me — кто я: is_admin — верный заголовок admin-token; authenticated и user — по токену пользователя\n(cookie cs_token или Authorization: Bearer). Нет токена или он неверный — authenticated = false.",
@@ -386,6 +467,33 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/carsearchResolveComplaintRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/RevokeApiToken": {
+      "post": {
+        "summary": "RevokeApiToken — отозвать токен (админ): дальше Get с ним отвечает PERMISSION_DENIED.",
+        "operationId": "CarSearchService_RevokeApiToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchApiToken"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchRevokeApiTokenRequest"
             }
           }
         ],
@@ -529,6 +637,33 @@
         ]
       }
     },
+    "/carsearch.CarSearchService/TokenInfo": {
+      "post": {
+        "summary": "TokenInfo — остаток API-токена запроса (cookie cs_token или authorization: Bearer cst_…).\nНет токена или он недействителен — UNAUTHENTICATED.",
+        "operationId": "CarSearchService_TokenInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchApiToken"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchTokenInfoRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
     "/carsearch.CarSearchService/VoteCameraRequest": {
       "post": {
         "summary": "VoteCameraRequest — голос «+1» за заявку. Без авторизации; повторный голос с того же браузера\nотсекает фронт (localStorage).",
@@ -558,6 +693,43 @@
     }
   },
   "definitions": {
+    "carsearchApiToken": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "requestsTotal": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "requestsLeft": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "revoked": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUsedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Последний списанный запрос; не задан — токен ещё не использовался."
+        },
+        "viewsCount": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Сколько раз открывали страницы номеров с этим токеном (только в ListApiTokens)."
+        }
+      },
+      "description": "ApiToken — API-токен без самого токена (он показывается один раз в CreateApiToken)."
+    },
     "carsearchCameraRequest": {
       "type": "object",
       "properties": {
@@ -764,6 +936,32 @@
         }
       }
     },
+    "carsearchCreateApiTokenRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Название для админки, 1..100 символов."
+        },
+        "requests": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Сколько запросов (открытий страницы номера) доступно, 1..1000000."
+        }
+      }
+    },
+    "carsearchCreateApiTokenResponse": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string",
+          "description": "Токен \"cst_…\" — единственный раз; потом его не узнать."
+        },
+        "info": {
+          "$ref": "#/definitions/carsearchApiToken"
+        }
+      }
+    },
     "carsearchCreatePaymentRequest": {
       "type": "object",
       "properties": {
@@ -848,6 +1046,39 @@
         "hidden": {
           "type": "boolean",
           "description": "true — скрыть, false — показать снова."
+        }
+      }
+    },
+    "carsearchListApiTokensRequest": {
+      "type": "object",
+      "properties": {
+        "offset": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Размер страницы, 1..100; 0 — по умолчанию (30)."
+        }
+      }
+    },
+    "carsearchListApiTokensResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchApiToken"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "nextOffset": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -994,6 +1225,47 @@
           "items": {
             "$ref": "#/definitions/carsearchPayment"
           }
+        }
+      }
+    },
+    "carsearchListPlateViewsRequest": {
+      "type": "object",
+      "properties": {
+        "tokenId": {
+          "type": "string",
+          "description": "Фильтр по uuid токена; пусто — все."
+        },
+        "plateId": {
+          "type": "string",
+          "description": "Фильтр по uuid номера (plates.id); пусто — все."
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Размер страницы, 1..100; 0 — по умолчанию (30)."
+        }
+      }
+    },
+    "carsearchListPlateViewsResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchPlateView"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "nextOffset": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -1221,6 +1493,41 @@
       "default": "PLATE_TYPE_DEFAULT",
       "description": "Формат номерного знака — от него зависит, как его рисовать."
     },
+    "carsearchPlateView": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sighting": {
+          "$ref": "#/definitions/carsearchPlateSighting",
+          "description": "Открытая фиксация (номер, фото, адрес)."
+        },
+        "tokenId": {
+          "type": "string",
+          "description": "API-токен запроса; пусто — без токена."
+        },
+        "tokenName": {
+          "type": "string"
+        },
+        "consumed": {
+          "type": "boolean",
+          "description": "Списан ли запрос из токена."
+        },
+        "isAdmin": {
+          "type": "boolean",
+          "description": "Открыл администратор (admin-token)."
+        },
+        "userAgent": {
+          "type": "string"
+        }
+      },
+      "description": "PlateView — открытие страницы номера (запись журнала plate_views)."
+    },
     "carsearchRegisterRequest": {
       "type": "object",
       "properties": {
@@ -1248,6 +1555,15 @@
         "id": {
           "type": "string",
           "description": "uuid жалобы."
+        }
+      }
+    },
+    "carsearchRevokeApiTokenRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "uuid токена."
         }
       }
     },
@@ -1378,6 +1694,9 @@
           "description": "E-mail/телеграм для связи, до 200 символов; можно пусто."
         }
       }
+    },
+    "carsearchTokenInfoRequest": {
+      "type": "object"
     },
     "carsearchUser": {
       "type": "object",

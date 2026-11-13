@@ -86,12 +86,29 @@ export async function renderPlatePage(root: HTMLElement, id: string, handlers: Q
   } catch (e) {
     if (my.signal.aborted) return;
     const notFound = e instanceof ApiError && e.status === 404;
+    const tokenMsg = tokenErrorHtml(e);
+    if (tokenMsg) {
+      $main.innerHTML = tokenMsg;
+      return;
+    }
     $main.innerHTML = `
       <div class="empty pp-empty">
         <strong>${t(notFound ? "plate.notFound" : "error.loadFailed")}</strong>
         ${notFound ? t("plate.notFoundHint") : escapeHtml(e instanceof ApiError ? e.message : t("error.serverDown"))}
       </div>`;
   }
+}
+
+// Отказ по API-токену (Get: 429 — исчерпан, 403 — отозван, 401 — недействителен); иначе "".
+function tokenErrorHtml(e: unknown): string {
+  if (!(e instanceof ApiError)) return "";
+  const kind = e.status === 429 ? "exhausted" : e.status === 403 ? "revoked" : e.status === 401 ? "invalid" : "";
+  if (!kind) return "";
+  return `
+      <div class="empty pp-empty pp-token">
+        <strong>${t(`tokens.page.${kind}` as const)}</strong>
+        ${t(`tokens.page.${kind}Hint` as const)}
+      </div>`;
 }
 
 function pageHtml(items: Car[], currentId: string): string {

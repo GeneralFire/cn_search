@@ -39,6 +39,11 @@ const (
 	CarSearchService_ListCameraRequests_FullMethodName     = "/carsearch.CarSearchService/ListCameraRequests"
 	CarSearchService_VoteCameraRequest_FullMethodName      = "/carsearch.CarSearchService/VoteCameraRequest"
 	CarSearchService_SetCameraRequestStatus_FullMethodName = "/carsearch.CarSearchService/SetCameraRequestStatus"
+	CarSearchService_CreateApiToken_FullMethodName         = "/carsearch.CarSearchService/CreateApiToken"
+	CarSearchService_ListApiTokens_FullMethodName          = "/carsearch.CarSearchService/ListApiTokens"
+	CarSearchService_RevokeApiToken_FullMethodName         = "/carsearch.CarSearchService/RevokeApiToken"
+	CarSearchService_ListPlateViews_FullMethodName         = "/carsearch.CarSearchService/ListPlateViews"
+	CarSearchService_TokenInfo_FullMethodName              = "/carsearch.CarSearchService/TokenInfo"
 )
 
 // CarSearchServiceClient is the client API for CarSearchService service.
@@ -55,6 +60,9 @@ type CarSearchServiceClient interface {
 	// Один номер — одна строка (последняя подходящая фиксация). От новых к старым, постранично.
 	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
 	// Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.
+	// Каждое открытие пишется в журнал plate_views. С API-токеном (cookie cs_token = "cst_…" или
+	// authorization: Bearer cst_…) списывает один запрос: исчерпан — RESOURCE_EXHAUSTED, отозван —
+	// PERMISSION_DENIED, подпись неверна — UNAUTHENTICATED. С admin-token квота не списывается.
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	// SeeAlso — свежие фиксации других номеров (блок внизу страницы номера): один номер — одна
 	// карточка, номер открытой фиксации исключён. Не более 21.
@@ -105,6 +113,18 @@ type CarSearchServiceClient interface {
 	VoteCameraRequest(ctx context.Context, in *VoteCameraRequestRequest, opts ...grpc.CallOption) (*CameraRequest, error)
 	// SetCameraRequestStatus — сменить статус заявки. Нужен заголовок admin-token.
 	SetCameraRequestStatus(ctx context.Context, in *SetCameraRequestStatusRequest, opts ...grpc.CallOption) (*CameraRequest, error)
+	// CreateApiToken — новый API-токен на requests запросов (админ). Токен в открытом виде
+	// возвращается только здесь, бэк хранит лишь sha256 его подписи.
+	CreateApiToken(ctx context.Context, in *CreateApiTokenRequest, opts ...grpc.CallOption) (*CreateApiTokenResponse, error)
+	// ListApiTokens — токены от новых к старым (админ).
+	ListApiTokens(ctx context.Context, in *ListApiTokensRequest, opts ...grpc.CallOption) (*ListApiTokensResponse, error)
+	// RevokeApiToken — отозвать токен (админ): дальше Get с ним отвечает PERMISSION_DENIED.
+	RevokeApiToken(ctx context.Context, in *RevokeApiTokenRequest, opts ...grpc.CallOption) (*ApiToken, error)
+	// ListPlateViews — журнал открытий страниц номеров (rpc Get), от новых к старым (админ).
+	ListPlateViews(ctx context.Context, in *ListPlateViewsRequest, opts ...grpc.CallOption) (*ListPlateViewsResponse, error)
+	// TokenInfo — остаток API-токена запроса (cookie cs_token или authorization: Bearer cst_…).
+	// Нет токена или он недействителен — UNAUTHENTICATED.
+	TokenInfo(ctx context.Context, in *TokenInfoRequest, opts ...grpc.CallOption) (*ApiToken, error)
 }
 
 type carSearchServiceClient struct {
@@ -315,6 +335,56 @@ func (c *carSearchServiceClient) SetCameraRequestStatus(ctx context.Context, in 
 	return out, nil
 }
 
+func (c *carSearchServiceClient) CreateApiToken(ctx context.Context, in *CreateApiTokenRequest, opts ...grpc.CallOption) (*CreateApiTokenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateApiTokenResponse)
+	err := c.cc.Invoke(ctx, CarSearchService_CreateApiToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carSearchServiceClient) ListApiTokens(ctx context.Context, in *ListApiTokensRequest, opts ...grpc.CallOption) (*ListApiTokensResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListApiTokensResponse)
+	err := c.cc.Invoke(ctx, CarSearchService_ListApiTokens_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carSearchServiceClient) RevokeApiToken(ctx context.Context, in *RevokeApiTokenRequest, opts ...grpc.CallOption) (*ApiToken, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiToken)
+	err := c.cc.Invoke(ctx, CarSearchService_RevokeApiToken_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carSearchServiceClient) ListPlateViews(ctx context.Context, in *ListPlateViewsRequest, opts ...grpc.CallOption) (*ListPlateViewsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPlateViewsResponse)
+	err := c.cc.Invoke(ctx, CarSearchService_ListPlateViews_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carSearchServiceClient) TokenInfo(ctx context.Context, in *TokenInfoRequest, opts ...grpc.CallOption) (*ApiToken, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApiToken)
+	err := c.cc.Invoke(ctx, CarSearchService_TokenInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CarSearchServiceServer is the server API for CarSearchService service.
 // All implementations must embed UnimplementedCarSearchServiceServer
 // for forward compatibility.
@@ -329,6 +399,9 @@ type CarSearchServiceServer interface {
 	// Один номер — одна строка (последняя подходящая фиксация). От новых к старым, постранично.
 	Search(context.Context, *SearchRequest) (*SearchResponse, error)
 	// Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.
+	// Каждое открытие пишется в журнал plate_views. С API-токеном (cookie cs_token = "cst_…" или
+	// authorization: Bearer cst_…) списывает один запрос: исчерпан — RESOURCE_EXHAUSTED, отозван —
+	// PERMISSION_DENIED, подпись неверна — UNAUTHENTICATED. С admin-token квота не списывается.
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 	// SeeAlso — свежие фиксации других номеров (блок внизу страницы номера): один номер — одна
 	// карточка, номер открытой фиксации исключён. Не более 21.
@@ -379,6 +452,18 @@ type CarSearchServiceServer interface {
 	VoteCameraRequest(context.Context, *VoteCameraRequestRequest) (*CameraRequest, error)
 	// SetCameraRequestStatus — сменить статус заявки. Нужен заголовок admin-token.
 	SetCameraRequestStatus(context.Context, *SetCameraRequestStatusRequest) (*CameraRequest, error)
+	// CreateApiToken — новый API-токен на requests запросов (админ). Токен в открытом виде
+	// возвращается только здесь, бэк хранит лишь sha256 его подписи.
+	CreateApiToken(context.Context, *CreateApiTokenRequest) (*CreateApiTokenResponse, error)
+	// ListApiTokens — токены от новых к старым (админ).
+	ListApiTokens(context.Context, *ListApiTokensRequest) (*ListApiTokensResponse, error)
+	// RevokeApiToken — отозвать токен (админ): дальше Get с ним отвечает PERMISSION_DENIED.
+	RevokeApiToken(context.Context, *RevokeApiTokenRequest) (*ApiToken, error)
+	// ListPlateViews — журнал открытий страниц номеров (rpc Get), от новых к старым (админ).
+	ListPlateViews(context.Context, *ListPlateViewsRequest) (*ListPlateViewsResponse, error)
+	// TokenInfo — остаток API-токена запроса (cookie cs_token или authorization: Bearer cst_…).
+	// Нет токена или он недействителен — UNAUTHENTICATED.
+	TokenInfo(context.Context, *TokenInfoRequest) (*ApiToken, error)
 	mustEmbedUnimplementedCarSearchServiceServer()
 }
 
@@ -448,6 +533,21 @@ func (UnimplementedCarSearchServiceServer) VoteCameraRequest(context.Context, *V
 }
 func (UnimplementedCarSearchServiceServer) SetCameraRequestStatus(context.Context, *SetCameraRequestStatusRequest) (*CameraRequest, error) {
 	return nil, status.Error(codes.Unimplemented, "method SetCameraRequestStatus not implemented")
+}
+func (UnimplementedCarSearchServiceServer) CreateApiToken(context.Context, *CreateApiTokenRequest) (*CreateApiTokenResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateApiToken not implemented")
+}
+func (UnimplementedCarSearchServiceServer) ListApiTokens(context.Context, *ListApiTokensRequest) (*ListApiTokensResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListApiTokens not implemented")
+}
+func (UnimplementedCarSearchServiceServer) RevokeApiToken(context.Context, *RevokeApiTokenRequest) (*ApiToken, error) {
+	return nil, status.Error(codes.Unimplemented, "method RevokeApiToken not implemented")
+}
+func (UnimplementedCarSearchServiceServer) ListPlateViews(context.Context, *ListPlateViewsRequest) (*ListPlateViewsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListPlateViews not implemented")
+}
+func (UnimplementedCarSearchServiceServer) TokenInfo(context.Context, *TokenInfoRequest) (*ApiToken, error) {
+	return nil, status.Error(codes.Unimplemented, "method TokenInfo not implemented")
 }
 func (UnimplementedCarSearchServiceServer) mustEmbedUnimplementedCarSearchServiceServer() {}
 func (UnimplementedCarSearchServiceServer) testEmbeddedByValue()                          {}
@@ -830,6 +930,96 @@ func _CarSearchService_SetCameraRequestStatus_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CarSearchService_CreateApiToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateApiTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).CreateApiToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_CreateApiToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).CreateApiToken(ctx, req.(*CreateApiTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarSearchService_ListApiTokens_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListApiTokensRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).ListApiTokens(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_ListApiTokens_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).ListApiTokens(ctx, req.(*ListApiTokensRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarSearchService_RevokeApiToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeApiTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).RevokeApiToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_RevokeApiToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).RevokeApiToken(ctx, req.(*RevokeApiTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarSearchService_ListPlateViews_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPlateViewsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).ListPlateViews(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_ListPlateViews_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).ListPlateViews(ctx, req.(*ListPlateViewsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarSearchService_TokenInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TokenInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).TokenInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_TokenInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).TokenInfo(ctx, req.(*TokenInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CarSearchService_ServiceDesc is the grpc.ServiceDesc for CarSearchService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -916,6 +1106,26 @@ var CarSearchService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetCameraRequestStatus",
 			Handler:    _CarSearchService_SetCameraRequestStatus_Handler,
+		},
+		{
+			MethodName: "CreateApiToken",
+			Handler:    _CarSearchService_CreateApiToken_Handler,
+		},
+		{
+			MethodName: "ListApiTokens",
+			Handler:    _CarSearchService_ListApiTokens_Handler,
+		},
+		{
+			MethodName: "RevokeApiToken",
+			Handler:    _CarSearchService_RevokeApiToken_Handler,
+		},
+		{
+			MethodName: "ListPlateViews",
+			Handler:    _CarSearchService_ListPlateViews_Handler,
+		},
+		{
+			MethodName: "TokenInfo",
+			Handler:    _CarSearchService_TokenInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

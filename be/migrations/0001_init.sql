@@ -142,7 +142,46 @@ CREATE TABLE camera_requests (
 CREATE INDEX camera_requests_created_at_idx ON camera_requests (created_at DESC, id);
 CREATE INDEX camera_requests_lat_lon_idx ON camera_requests (lat, lon);
 
+-- API-токены (админка, вкладка «Токены»). Токен = "cst_" + base64url(payload) + "." + base64url(HMAC-SHA256(payload,
+-- TOKEN_SIGNING_KEY)), payload = {"tid": id, "iat": unix}. Ни токен, ни подпись в открытом виде не храним:
+-- signature_hash = hex(sha256(подпись)). Остаток запросов — requests_left (списывает rpc Get).
+CREATE TABLE api_tokens (
+    id             uuid        PRIMARY KEY,
+    name           text        NOT NULL CHECK (char_length(name) BETWEEN 1 AND 100),
+    signature_hash text        NOT NULL UNIQUE,
+    requests_total integer     NOT NULL CHECK (requests_total > 0),
+    requests_left  integer     NOT NULL CHECK (requests_left >= 0),
+    revoked        boolean     NOT NULL DEFAULT false,
+    created_at     timestamptz NOT NULL DEFAULT now(),
+    last_used_at   timestamptz, -- последний списанный запрос; NULL — ещё не использовался
+    is_test_data   boolean     NOT NULL DEFAULT false
+);
+
+-- Админка (rpc ListApiTokens): от новых к старым.
+CREATE INDEX api_tokens_created_at_idx ON api_tokens (created_at DESC, id);
+
+-- Журнал открытий страницы номера (rpc Get): кто открыл и списан ли запрос из API-токена.
+CREATE TABLE plate_views (
+    id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    sighting_id  uuid        NOT NULL REFERENCES plate_sightings (id), -- открытая фиксация
+    plate_id     uuid        NOT NULL REFERENCES plates (id),
+    token_id     uuid        REFERENCES api_tokens (id), -- API-токен запроса; NULL — без токена
+    consumed     boolean     NOT NULL DEFAULT false, -- списан ли запрос из токена
+    user_id      uuid        REFERENCES users (id), -- пользователь (токен "cs_…"); NULL — не вошёл
+    is_admin     boolean     NOT NULL DEFAULT false, -- открыл администратор (admin-token): квота не списывается
+    user_agent   text        NOT NULL DEFAULT '' CHECK (char_length(user_agent) <= 300),
+    created_at   timestamptz NOT NULL DEFAULT now()
+);
+
+-- Журнал токена (rpc ListPlateViews с token_id, views_count в ListApiTokens) и журнал номера.
+CREATE INDEX plate_views_token_created_at_idx ON plate_views (token_id, created_at DESC);
+CREATE INDEX plate_views_plate_created_at_idx ON plate_views (plate_id, created_at DESC);
+-- Общий журнал без фильтра.
+CREATE INDEX plate_views_created_at_idx ON plate_views (created_at DESC, id);
+
 -- +goose Down
+DROP TABLE plate_views;
+DROP TABLE api_tokens;
 DROP TABLE camera_requests;
 DROP TYPE camera_request_status;
 DROP TABLE payments;

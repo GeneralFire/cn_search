@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
+	"github.com/GeneralFire/cn_search/be/internal/apitoken"
 	"github.com/GeneralFire/cn_search/be/internal/db"
 	"github.com/GeneralFire/cn_search/be/internal/implementation"
 	"github.com/GeneralFire/cn_search/be/internal/repository"
@@ -38,6 +39,7 @@ type config struct {
 	DatabaseURL string
 	PhotoBase   string // публичный URL бакета с картинками для браузера
 	AdminToken  string // пароль админ-панели (заголовок admin-token); пусто — админские методы выключены
+	SigningKey  string // TOKEN_SIGNING_KEY — ключ HMAC-подписи API-токенов; пусто — токены не проходят проверку
 }
 
 func loadConfig() config {
@@ -47,6 +49,7 @@ func loadConfig() config {
 		DatabaseURL: os.Getenv("DATABASE_URL"),
 		PhotoBase:   envOr("S3_PUBLIC_URL", "/s3/cars"),
 		AdminToken:  os.Getenv("ADMIN_TOKEN"),
+		SigningKey:  os.Getenv("TOKEN_SIGNING_KEY"),
 	}
 }
 
@@ -92,7 +95,11 @@ func serve(ctx context.Context, log *slog.Logger, cfg config) error {
 			implementation.WithComplaints(usecase.NewComplaints(cluster, repo), cfg.AdminToken),
 			implementation.WithAdmin(usecase.NewAdmin(cluster, repo), cfg.AdminToken),
 			implementation.WithAccounts(usecase.NewAccounts(cluster, repo)),
-			implementation.WithCameraRequests(usecase.NewCameraRequests(cluster, repo)))
+			implementation.WithCameraRequests(usecase.NewCameraRequests(cluster, repo)),
+			implementation.WithApiTokens(usecase.NewApiTokens(cluster, repo, apitoken.NewSigner(cfg.SigningKey))))
+		if cfg.SigningKey == "" {
+			log.Warn("TOKEN_SIGNING_KEY не задан — API-токены не проходят проверку")
+		}
 		desc := pb.NewCarSearchServiceServiceDesc(svc)
 
 		// HTTP: ручки clay под /api + health + swagger.

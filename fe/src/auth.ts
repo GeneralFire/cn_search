@@ -5,7 +5,9 @@
 // admin-token (sessionStorage, админ-панель) здесь не трогаем.
 import "./auth.css";
 import {
+  API_TOKEN_PREFIX,
   ApiError,
+  apiTokenInfo,
   confirmMockPayment,
   createPayment,
   me,
@@ -59,6 +61,16 @@ function loadMe(): Promise<Me> {
 async function login(token: string): Promise<string> {
   token = token.trim();
   if (!token) return t("auth.tokenEmpty");
+  // API-токен "cst_…" (админка, вкладка «Токены») — своя проверка; остаток — apitoken-settings.ts.
+  if (token.startsWith(API_TOKEN_PREFIX)) {
+    try {
+      await apiTokenInfo(token);
+    } catch (e) {
+      return e instanceof ApiError && e.status === 401 ? t("auth.tokenWrong") : e instanceof ApiError ? e.message : t("error.serverDown");
+    }
+    setToken(token);
+    return "";
+  }
   try {
     const r = await me(token);
     if (!r.user) return t("auth.tokenWrong");

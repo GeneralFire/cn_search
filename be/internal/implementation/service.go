@@ -26,6 +26,7 @@ type CarSearch struct {
 	accounts accounts // пользователи и оплата (WithAccounts); nil — методы аккаунта недоступны
 
 	cameraRequests cameraRequests // заявки на камеры (WithCameraRequests); nil — методы заявок недоступны
+	tokens         apiTokens      // API-токены и журнал просмотров (WithApiTokens); nil — Get без журнала
 }
 
 // Option — необязательная часть сервиса.
@@ -57,6 +58,12 @@ func WithAccounts(a accounts) Option {
 // (adminToken из WithComplaints).
 func WithCameraRequests(c cameraRequests) Option {
 	return func(s *CarSearch) { s.cameraRequests = c }
+}
+
+// WithApiTokens включает API-токены: списание запросов и журнал открытий в Get, админские методы
+// токенов и журнала (заголовок admin-token, см. WithComplaints) и TokenInfo.
+func WithApiTokens(t apiTokens) Option {
+	return func(s *CarSearch) { s.tokens = t }
 }
 
 func NewCarSearch(uc plateSightings, photoBaseURL string, opts ...Option) *CarSearch {

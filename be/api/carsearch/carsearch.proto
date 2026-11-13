@@ -17,6 +17,9 @@ service CarSearchService {
   rpc Search(SearchRequest) returns (SearchResponse);
 
   // Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.
+  // Каждое открытие пишется в журнал plate_views. С API-токеном (cookie cs_token = "cst_…" или
+  // authorization: Bearer cst_…) списывает один запрос: исчерпан — RESOURCE_EXHAUSTED, отозван —
+  // PERMISSION_DENIED, подпись неверна — UNAUTHENTICATED. С admin-token квота не списывается.
   rpc Get(GetRequest) returns (GetResponse);
 
   // SeeAlso — свежие фиксации других номеров (блок внизу страницы номера): один номер — одна
@@ -85,6 +88,25 @@ service CarSearchService {
 
   // SetCameraRequestStatus — сменить статус заявки. Нужен заголовок admin-token.
   rpc SetCameraRequestStatus(SetCameraRequestStatusRequest) returns (CameraRequest);
+
+  // ---------------- API-токены и журнал просмотров (админка, вкладки «Токены» и «Просмотры»)
+
+  // CreateApiToken — новый API-токен на requests запросов (админ). Токен в открытом виде
+  // возвращается только здесь, бэк хранит лишь sha256 его подписи.
+  rpc CreateApiToken(CreateApiTokenRequest) returns (CreateApiTokenResponse);
+
+  // ListApiTokens — токены от новых к старым (админ).
+  rpc ListApiTokens(ListApiTokensRequest) returns (ListApiTokensResponse);
+
+  // RevokeApiToken — отозвать токен (админ): дальше Get с ним отвечает PERMISSION_DENIED.
+  rpc RevokeApiToken(RevokeApiTokenRequest) returns (ApiToken);
+
+  // ListPlateViews — журнал открытий страниц номеров (rpc Get), от новых к старым (админ).
+  rpc ListPlateViews(ListPlateViewsRequest) returns (ListPlateViewsResponse);
+
+  // TokenInfo — остаток API-токена запроса (cookie cs_token или authorization: Bearer cst_…).
+  // Нет токена или он недействителен — UNAUTHENTICATED.
+  rpc TokenInfo(TokenInfoRequest) returns (ApiToken);
 }
 
 // PlateSighting — фиксация номера: где и когда замечена машина.
@@ -510,3 +532,83 @@ message SetCameraRequestStatusRequest {
   // Новый статус (не UNSPECIFIED).
   CameraRequestStatus status = 2;
 }
+
+// ---------------------------------------------------------------- API-токены
+
+// ApiToken — API-токен без самого токена (он показывается один раз в CreateApiToken).
+message ApiToken {
+  string id = 1;
+  string name = 2;
+  int32 requests_total = 3;
+  int32 requests_left = 4;
+  bool revoked = 5;
+  google.protobuf.Timestamp created_at = 6;
+  // Последний списанный запрос; не задан — токен ещё не использовался.
+  google.protobuf.Timestamp last_used_at = 7;
+  // Сколько раз открывали страницы номеров с этим токеном (только в ListApiTokens).
+  int32 views_count = 8;
+}
+
+message CreateApiTokenRequest {
+  // Название для админки, 1..100 символов.
+  string name = 1;
+  // Сколько запросов (открытий страницы номера) доступно, 1..1000000.
+  int32 requests = 2;
+}
+
+message CreateApiTokenResponse {
+  // Токен "cst_…" — единственный раз; потом его не узнать.
+  string token = 1;
+  ApiToken info = 2;
+}
+
+message ListApiTokensRequest {
+  int32 offset = 1;
+  // Размер страницы, 1..100; 0 — по умолчанию (30).
+  int32 limit = 2;
+}
+
+message ListApiTokensResponse {
+  repeated ApiToken items = 1;
+  int32 total = 2;
+  optional int32 next_offset = 3;
+}
+
+message RevokeApiTokenRequest {
+  // uuid токена.
+  string id = 1;
+}
+
+// PlateView — открытие страницы номера (запись журнала plate_views).
+message PlateView {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  // Открытая фиксация (номер, фото, адрес).
+  PlateSighting sighting = 3;
+  // API-токен запроса; пусто — без токена.
+  string token_id = 4;
+  string token_name = 5;
+  // Списан ли запрос из токена.
+  bool consumed = 6;
+  // Открыл администратор (admin-token).
+  bool is_admin = 7;
+  string user_agent = 8;
+}
+
+message ListPlateViewsRequest {
+  // Фильтр по uuid токена; пусто — все.
+  string token_id = 1;
+  // Фильтр по uuid номера (plates.id); пусто — все.
+  string plate_id = 2;
+  int32 offset = 3;
+  // Размер страницы, 1..100; 0 — по умолчанию (30).
+  int32 limit = 4;
+}
+
+message ListPlateViewsResponse {
+  repeated PlateView items = 1;
+  int32 total = 2;
+  optional int32 next_offset = 3;
+}
+
+message TokenInfoRequest {}

@@ -1,0 +1,12 @@
+/* ---------- Панель настроек: остаток API-токена (apitoken-settings.ts) ---------- */
+
+.stk { margin-top: 12px; }
+.stk[hidden] { display: none; }
+.stk-btn {
+  font: inherit; font-size: 0.85rem; padding: 6px 12px; border-radius: 10px; cursor: pointer; white-space: nowrap;
+  background: transparent; color: var(--text); border: 1px solid var(--border);
+}
+.stk-btn:hover { border-color: var(--accent); }
+.stk-info { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 0.9rem; }
+.stk-left { font-weight: 600; }
+.stk-left.is-empty { color: #e5484d; }

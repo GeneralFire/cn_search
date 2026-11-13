@@ -5,6 +5,7 @@ package implementation
 //go:generate minimock -i complaints -o ./mocks/complaints_mock.go -n ComplaintsMock -p mocks
 //go:generate minimock -i admin -o ./mocks/admin_mock.go -n AdminMock -p mocks
 //go:generate minimock -i cameraRequests -o ./mocks/camera_requests_mock.go -n CameraRequestsMock -p mocks
+//go:generate minimock -i apiTokens -o ./mocks/api_tokens_mock.go -n ApiTokensMock -p mocks
 
 import (
 	"context"
@@ -50,4 +51,14 @@ type cameraRequests interface {
 	List(ctx context.Context, o models.ListCameraRequestsOpts) (models.CameraRequestsPage, error)
 	Vote(ctx context.Context, o models.VoteCameraRequestOpts) (models.CameraRequest, error)
 	SetStatus(ctx context.Context, id string, st models.CameraRequestStatus) (models.CameraRequest, error)
+}
+
+// apiTokens — API-токены и журнал открытий страниц номеров (реализация — usecase.ApiTokens).
+type apiTokens interface {
+	CreateApiToken(ctx context.Context, name string, requests int) (string, models.ApiToken, error)
+	ListApiTokens(ctx context.Context, o models.ListApiTokensOpts) (models.ApiTokensPage, error)
+	RevokeApiToken(ctx context.Context, id string) (models.ApiToken, error)
+	ListPlateViews(ctx context.Context, o models.ListPlateViewsOpts) (models.PlateViewsPage, error)
+	TokenInfo(ctx context.Context, token string) (models.ApiToken, error)
+	OpenPlate(ctx context.Context, o models.OpenPlateOpts) (models.SamePlate, error)
 }

@@ -17,7 +17,25 @@ func (s *CarSearch) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespons
 	if err := uuid.Validate(req.GetId()); err != nil {
 		return nil, status.Error(codes.InvalidArgument, "id: нужен uuid фиксации")
 	}
-	res, err := s.uc.ListSamePlate(ctx, models.SamePlateOpts{ID: req.GetId(), IncludeTestData: includeTestData(ctx), IncludeHidden: s.isAdmin(ctx)})
+	isAdmin := s.isAdmin(ctx)
+	o := models.SamePlateOpts{ID: req.GetId(), IncludeTestData: includeTestData(ctx), IncludeHidden: isAdmin}
+	var res models.SamePlate
+	var err error
+	if s.tokens != nil {
+		// Открытие страницы: списание из API-токена и журнал plate_views (usecase.OpenPlate).
+		res, err = s.tokens.OpenPlate(ctx, models.OpenPlateOpts{
+			SamePlateOpts: o,
+			Token:         apiTokenFromMD(ctx),
+			IsAdmin:       isAdmin,
+			UserID:        s.viewUserID(ctx),
+			UserAgent:     userAgent(ctx),
+		})
+	} else {
+		res, err = s.uc.ListSamePlate(ctx, o)
+	}
+	if e := apiTokenErr(err); e != nil {
+		return nil, e
+	}
 	switch {
 	case errors.Is(err, models.ErrNotFound):
 		return nil, status.Error(codes.NotFound, "фиксация не найдена")

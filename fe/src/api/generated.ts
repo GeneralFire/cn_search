@@ -16,11 +16,16 @@ export type CarSearchServiceComplainData = CarsearchComplaint;
 
 export type CarSearchServiceConfirmMockPaymentData = CarsearchPayment;
 
+export type CarSearchServiceCreateApiTokenData =
+  CarsearchCreateApiTokenResponse;
+
 export type CarSearchServiceCreatePaymentData = CarsearchCreatePaymentResponse;
 
 export type CarSearchServiceGetData = CarsearchGetResponse;
 
 export type CarSearchServiceHideSightingData = CarsearchPlateSighting;
+
+export type CarSearchServiceListApiTokensData = CarsearchListApiTokensResponse;
 
 export type CarSearchServiceListCameraRequestsData =
   CarsearchListCameraRequestsResponse;
@@ -34,6 +39,9 @@ export type CarSearchServiceListComplaintsData =
 export type CarSearchServiceListMyPaymentsData =
   CarsearchListMyPaymentsResponse;
 
+export type CarSearchServiceListPlateViewsData =
+  CarsearchListPlateViewsResponse;
+
 export type CarSearchServiceMeData = CarsearchMeResponse;
 
 export type CarSearchServicePlansData = CarsearchPlansResponse;
@@ -41,6 +49,8 @@ export type CarSearchServicePlansData = CarsearchPlansResponse;
 export type CarSearchServiceRegisterData = CarsearchRegisterResponse;
 
 export type CarSearchServiceResolveComplaintData = CarsearchComplaint;
+
+export type CarSearchServiceRevokeApiTokenData = CarsearchApiToken;
 
 export type CarSearchServiceSearchData = CarsearchSearchResponse;
 
@@ -52,7 +62,32 @@ export type CarSearchServiceSetClarificationStatusData = CarsearchClarification;
 
 export type CarSearchServiceSubmitCameraRequestData = CarsearchCameraRequest;
 
+export type CarSearchServiceTokenInfoData = CarsearchApiToken;
+
 export type CarSearchServiceVoteCameraRequestData = CarsearchCameraRequest;
+
+/** ApiToken — API-токен без самого токена (он показывается один раз в CreateApiToken). */
+export interface CarsearchApiToken {
+  /** @format date-time */
+  createdAt?: string;
+  id?: string;
+  /**
+   * Последний списанный запрос; не задан — токен ещё не использовался.
+   * @format date-time
+   */
+  lastUsedAt?: string;
+  name?: string;
+  /** @format int32 */
+  requestsLeft?: number;
+  /** @format int32 */
+  requestsTotal?: number;
+  revoked?: boolean;
+  /**
+   * Сколько раз открывали страницы номеров с этим токеном (только в ListApiTokens).
+   * @format int32
+   */
+  viewsCount?: number;
+}
 
 /** CameraRequest — заявка на расположение камеры. */
 export interface CarsearchCameraRequest {
@@ -188,6 +223,23 @@ export interface CarsearchConfirmMockPaymentRequest {
   success?: boolean;
 }
 
+export interface CarsearchCreateApiTokenRequest {
+  /** Название для админки, 1..100 символов. */
+  name?: string;
+  /**
+   * Сколько запросов (открытий страницы номера) доступно, 1..1000000.
+   * @format int32
+   */
+  requests?: number;
+}
+
+export interface CarsearchCreateApiTokenResponse {
+  /** ApiToken — API-токен без самого токена (он показывается один раз в CreateApiToken). */
+  info?: CarsearchApiToken;
+  /** Токен "cst_…" — единственный раз; потом его не узнать. */
+  token?: string;
+}
+
 export interface CarsearchCreatePaymentRequest {
   /** Покупаемый тариф; сейчас только PRO. */
   plan?: CarsearchUserPlan;
@@ -233,6 +285,24 @@ export interface CarsearchHideSightingRequest {
   hidden?: boolean;
   /** uuid фиксации. */
   id?: string;
+}
+
+export interface CarsearchListApiTokensRequest {
+  /**
+   * Размер страницы, 1..100; 0 — по умолчанию (30).
+   * @format int32
+   */
+  limit?: number;
+  /** @format int32 */
+  offset?: number;
+}
+
+export interface CarsearchListApiTokensResponse {
+  items?: CarsearchApiToken[];
+  /** @format int32 */
+  nextOffset?: number;
+  /** @format int32 */
+  total?: number;
 }
 
 export interface CarsearchListCameraRequestsRequest {
@@ -332,6 +402,28 @@ export type CarsearchListMyPaymentsRequest = object;
 
 export interface CarsearchListMyPaymentsResponse {
   items?: CarsearchPayment[];
+}
+
+export interface CarsearchListPlateViewsRequest {
+  /**
+   * Размер страницы, 1..100; 0 — по умолчанию (30).
+   * @format int32
+   */
+  limit?: number;
+  /** @format int32 */
+  offset?: number;
+  /** Фильтр по uuid номера (plates.id); пусто — все. */
+  plateId?: string;
+  /** Фильтр по uuid токена; пусто — все. */
+  tokenId?: string;
+}
+
+export interface CarsearchListPlateViewsResponse {
+  items?: CarsearchPlateView[];
+  /** @format int32 */
+  nextOffset?: number;
+  /** @format int32 */
+  total?: number;
 }
 
 export type CarsearchMeRequest = object;
@@ -475,6 +567,23 @@ export enum CarsearchPlateType {
   PLATE_TYPE_CN = "PLATE_TYPE_CN",
 }
 
+/** PlateView — открытие страницы номера (запись журнала plate_views). */
+export interface CarsearchPlateView {
+  /** Списан ли запрос из токена. */
+  consumed?: boolean;
+  /** @format date-time */
+  createdAt?: string;
+  id?: string;
+  /** Открыл администратор (admin-token). */
+  isAdmin?: boolean;
+  /** Открытая фиксация (номер, фото, адрес). */
+  sighting?: CarsearchPlateSighting;
+  /** API-токен запроса; пусто — без токена. */
+  tokenId?: string;
+  tokenName?: string;
+  userAgent?: string;
+}
+
 export interface CarsearchRegisterRequest {
   /** Необязательно; уникален. */
   email?: string;
@@ -489,6 +598,11 @@ export interface CarsearchRegisterResponse {
 
 export interface CarsearchResolveComplaintRequest {
   /** uuid жалобы. */
+  id?: string;
+}
+
+export interface CarsearchRevokeApiTokenRequest {
+  /** uuid токена. */
   id?: string;
 }
 
@@ -581,6 +695,8 @@ export interface CarsearchSubmitCameraRequestRequest {
   /** Почему здесь нужна камера, 1..1000 символов. */
   reason?: string;
 }
+
+export type CarsearchTokenInfoRequest = object;
 
 /** User — пользователь. */
 export interface CarsearchUser {
@@ -944,6 +1060,27 @@ export class CarSearchApi<
      * No description
      *
      * @tags CarSearchService
+     * @name CarSearchServiceCreateApiToken
+     * @summary CreateApiToken — новый API-токен на requests запросов (админ). Токен в открытом виде возвращается только здесь, бэк хранит лишь sha256 его подписи.
+     * @request POST:/carsearch.CarSearchService/CreateApiToken
+     */
+    carSearchServiceCreateApiToken: (
+      body: CarsearchCreateApiTokenRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceCreateApiTokenData, any>({
+        path: `/carsearch.CarSearchService/CreateApiToken`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
      * @name CarSearchServiceCreatePayment
      * @summary CreatePayment — платёж за тариф и адрес кассы (пока демо-касса /pay/mock/<id>). Нужен токен пользователя, иначе UNAUTHENTICATED.
      * @request POST:/carsearch.CarSearchService/CreatePayment
@@ -966,7 +1103,7 @@ export class CarSearchApi<
      *
      * @tags CarSearchService
      * @name CarSearchServiceGet
-     * @summary Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым.
+     * @summary Get по идентификатору фиксации возвращает все фиксации того же номера — от новых к старым. Каждое открытие пишется в журнал plate_views. С API-токеном (cookie cs_token = "cst_…" или authorization: Bearer cst_…) списывает один запрос: исчерпан — RESOURCE_EXHAUSTED, отозван — PERMISSION_DENIED, подпись неверна — UNAUTHENTICATED. С admin-token квота не списывается.
      * @request POST:/carsearch.CarSearchService/Get
      */
     carSearchServiceGet: (
@@ -996,6 +1133,27 @@ export class CarSearchApi<
     ) =>
       this.request<CarSearchServiceHideSightingData, any>({
         path: `/carsearch.CarSearchService/HideSighting`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
+     * @name CarSearchServiceListApiTokens
+     * @summary ListApiTokens — токены от новых к старым (админ).
+     * @request POST:/carsearch.CarSearchService/ListApiTokens
+     */
+    carSearchServiceListApiTokens: (
+      body: CarsearchListApiTokensRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceListApiTokensData, any>({
+        path: `/carsearch.CarSearchService/ListApiTokens`,
         method: "POST",
         body: body,
         type: ContentType.Json,
@@ -1091,6 +1249,27 @@ export class CarSearchApi<
      * No description
      *
      * @tags CarSearchService
+     * @name CarSearchServiceListPlateViews
+     * @summary ListPlateViews — журнал открытий страниц номеров (rpc Get), от новых к старым (админ).
+     * @request POST:/carsearch.CarSearchService/ListPlateViews
+     */
+    carSearchServiceListPlateViews: (
+      body: CarsearchListPlateViewsRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceListPlateViewsData, any>({
+        path: `/carsearch.CarSearchService/ListPlateViews`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
      * @name CarSearchServiceMe
      * @summary Me — кто я: is_admin — верный заголовок admin-token; authenticated и user — по токену пользователя (cookie cs_token или Authorization: Bearer). Нет токена или он неверный — authenticated = false.
      * @request POST:/carsearch.CarSearchService/Me
@@ -1164,6 +1343,27 @@ export class CarSearchApi<
     ) =>
       this.request<CarSearchServiceResolveComplaintData, any>({
         path: `/carsearch.CarSearchService/ResolveComplaint`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
+     * @name CarSearchServiceRevokeApiToken
+     * @summary RevokeApiToken — отозвать токен (админ): дальше Get с ним отвечает PERMISSION_DENIED.
+     * @request POST:/carsearch.CarSearchService/RevokeApiToken
+     */
+    carSearchServiceRevokeApiToken: (
+      body: CarsearchRevokeApiTokenRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceRevokeApiTokenData, any>({
+        path: `/carsearch.CarSearchService/RevokeApiToken`,
         method: "POST",
         body: body,
         type: ContentType.Json,
@@ -1269,6 +1469,27 @@ export class CarSearchApi<
     ) =>
       this.request<CarSearchServiceSubmitCameraRequestData, any>({
         path: `/carsearch.CarSearchService/SubmitCameraRequest`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
+     * @name CarSearchServiceTokenInfo
+     * @summary TokenInfo — остаток API-токена запроса (cookie cs_token или authorization: Bearer cst_…). Нет токена или он недействителен — UNAUTHENTICATED.
+     * @request POST:/carsearch.CarSearchService/TokenInfo
+     */
+    carSearchServiceTokenInfo: (
+      body: CarsearchTokenInfoRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceTokenInfoData, any>({
+        path: `/carsearch.CarSearchService/TokenInfo`,
         method: "POST",
         body: body,
         type: ContentType.Json,

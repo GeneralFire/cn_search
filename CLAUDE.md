@@ -45,6 +45,10 @@
   сводит `plate_search_key()` — одинаково в индексе и в запросе (тест `repository` следит за совпадением). `Get(id)` — все фиксации того же номера.
   Пустая выдача по непустому запросу — `SearchResponse.suggestions` («возможно, вы искали»): до 5 номеров
   с `levenshtein` (fuzzystrmatch, contrib) ≤ 2 по `plate_search_key` без пробелов (`repository.Suggest`).
+- API-токены (`be/internal/apitoken`): `cst_` + base64url({tid,iat}) + `.` + base64url(HMAC-SHA256, `TOKEN_SIGNING_KEY`);
+  в `api_tokens` — только sha256 подписи и остаток `requests_left`. Токен — cookie `cs_token` или `authorization: Bearer`.
+  rpc Get = `usecase.ApiTokens.OpenPlate` (одна InWriteTx): списание + запись в `plate_views`; admin-token квоту не тратит.
+  Админка: вкладки «Токены»/«Просмотры» — `fe/src/admin-tokens.ts`, остаток в настройках — `fe/src/apitoken-settings.ts`.
 - Данные БД и S3 — bind mount в `./.data` (не коммитится), удаляет `make reset`.
 - `fe/` — TypeScript + Vite. TS-клиент `fe/src/api/generated.ts` генерируется из swagger: `make gen-ts`.
   Поиск по номеру, бесконечная прокрутка + «Загрузить ещё», модалка «Уточнить» (`src/clarify.ts`; с карточек главной и со страницы номера),

@@ -6,6 +6,7 @@ package usecase
 //go:generate minimock -i complaintsRepository -o ./mocks/complaints_repository_mock.go -n ComplaintsRepositoryMock -p mocks
 //go:generate minimock -i adminRepository -o ./mocks/admin_repository_mock.go -n AdminRepositoryMock -p mocks
 //go:generate minimock -i cameraRequestsRepository -o ./mocks/camera_requests_repository_mock.go -n CameraRequestsRepositoryMock -p mocks
+//go:generate minimock -i apiTokensRepository -o ./mocks/api_tokens_repository_mock.go -n ApiTokensRepositoryMock -p mocks
 
 import (
 	"context"
@@ -65,4 +66,17 @@ type cameraRequestsRepository interface {
 	ListCameraRequests(ctx context.Context, tx db.Executor, o models.ListCameraRequestsOpts) (models.CameraRequestsPage, error)
 	VoteCameraRequest(ctx context.Context, tx db.Executor, o models.VoteCameraRequestOpts) (models.CameraRequest, error)
 	SetCameraRequestStatus(ctx context.Context, tx db.Executor, id string, st models.CameraRequestStatus) (models.CameraRequest, error)
+}
+
+// apiTokensRepository — API-токены и журнал открытий страниц номеров (реализация — repository.New()).
+type apiTokensRepository interface {
+	CreateApiToken(ctx context.Context, tx db.Executor, o models.CreateApiTokenOpts) (models.ApiToken, error)
+	ListApiTokens(ctx context.Context, tx db.Executor, o models.ListApiTokensOpts) (models.ApiTokensPage, error)
+	RevokeApiToken(ctx context.Context, tx db.Executor, id string) (models.ApiToken, error)
+	FindApiToken(ctx context.Context, tx db.Executor, id, sigHash string) (models.ApiToken, error)
+	ConsumeApiToken(ctx context.Context, tx db.Executor, id string) (models.ApiToken, bool, error)
+	CreatePlateView(ctx context.Context, tx db.Executor, v models.NewPlateView) error
+	ListPlateViews(ctx context.Context, tx db.Executor, o models.ListPlateViewsOpts) (models.PlateViewsPage, error)
+	ListSamePlate(ctx context.Context, tx db.Executor, o models.SamePlateOpts) ([]models.PlateSighting, error)
+	ListPlateClarifications(ctx context.Context, tx db.Executor, o models.SamePlateOpts) ([]models.PlateClarification, error)
 }
