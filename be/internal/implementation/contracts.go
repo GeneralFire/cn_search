@@ -67,4 +67,5 @@ type apiTokens interface {
 // ingest — новая фиксация по фото (реализация — usecase.Ingest).
 type ingest interface {
 	Ingest(ctx context.Context, o models.IngestOpts) (models.IngestResult, error)
+	UploadsLeft(ctx context.Context, user models.User) (*int, error)
 }

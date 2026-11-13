@@ -133,8 +133,7 @@ func (u *Accounts) ListPayments(ctx context.Context, userID string) (items []mod
 }
 
 // UploadQuotaExceeded — исчерпан ли суточный лимит загрузок фото: Free — не больше FreeUploadsPerDay,
-// Pro — без ограничений.
-// TODO: вызвать из сценария загрузки фото (rpc Ingest), когда он появится, со счётчиком загрузок за сутки.
+// Pro — без ограничений. uploadsToday — загрузки за UploadQuotaWindow (вызывается из Ingest).
 func UploadQuotaExceeded(user models.User, uploadsToday int) bool {
 	return user.Plan != models.PlanPro && uploadsToday >= FreeUploadsPerDay
 }

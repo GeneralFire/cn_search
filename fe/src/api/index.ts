@@ -523,6 +523,8 @@ export interface User {
 export interface Me {
   isAdmin: boolean;
   user: User | null; // null — не вошёл (нет токена или он неверный)
+  /** Сколько загрузок фото осталось за 24 часа; null — без ограничений (Pro), не вошёл или загрузка выключена. */
+  uploadsLeft?: number | null;
 }
 
 export interface PlanInfo {
@@ -581,7 +583,11 @@ export async function me(token?: string): Promise<Me> {
     ...(token ? { authorization: `Bearer ${token}` } : {}) } };
   // С явным токеном cookie не отправляем: иначе бэк проверит её, а не введённый токен.
   const d = await call(() => api.carsearchCarSearchService.carSearchServiceMe({}, token ? { ...params, credentials: "omit" } : params));
-  return { isAdmin: !!d.isAdmin, user: d.authenticated && d.user ? toUser(d.user) : null };
+  return {
+    isAdmin: !!d.isAdmin,
+    user: d.authenticated && d.user ? toUser(d.user) : null,
+    uploadsLeft: d.uploadsLeft ?? null,
+  };
 }
 
 /** Регистрация: токен показывается один раз. */
@@ -760,7 +766,7 @@ export async function ingest(req: {
   lat?: number;
   lon?: number;
   address?: string;
-}): Promise<{ sighting: Car; candidates: PlateCandidate[] }> {
+}): Promise<{ sighting: Car; candidates: PlateCandidate[]; uploadsLeft: number | null }> {
   const photo = await blobToBase64(req.photo);
   try {
     const { data } = await api.carsearchCarSearchService.carSearchServiceIngest({
@@ -777,6 +783,8 @@ export async function ingest(req: {
         confidence: c.confidence ?? 0,
         plateType: plateTypes[c.plateType ?? ""] ?? "",
       })),
+      // proto3 JSON: optional 0 приходит явно; поля нет — без ограничений (Pro).
+      uploadsLeft: data.uploadsLeft ?? null,
     };
   } catch (e) {
     // Текст для пользователя — после "desc = " (clay: "rpc error: code = … desc = …").

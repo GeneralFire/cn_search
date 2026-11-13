@@ -370,4 +370,8 @@ export const ru = {
   "upload.confidence": "Уверенность {pct}",
   "upload.open": "Открыть фиксацию",
   "upload.others": "Другие номера на фото",
+  "upload.needLogin": "Войдите по токену (панель на логотипе) или зарегистрируйтесь, чтобы загружать фото.",
+  "upload.unlimited": "Тариф Pro: загрузки без ограничений.",
+  "upload.quotaOver": "Лимит тарифа Free на сутки исчерпан — Pro снимает ограничение.",
+  "upload.quotaLeft": "Осталось загрузок за сутки: {n} из 5 (тариф Free).",
 } as const;

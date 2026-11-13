@@ -8,6 +8,7 @@ import (
 	"context"
 	"sync"
 	mm_atomic "sync/atomic"
+	"time"
 	mm_time "time"
 
 	"github.com/GeneralFire/cn_search/be/internal/db"
@@ -20,12 +21,26 @@ type IngestRepositoryMock struct {
 	t          minimock.Tester
 	finishOnce sync.Once
 
+	funcCountUploads          func(ctx context.Context, tx db.Executor, userID string, since time.Time) (i1 int, err error)
+	funcCountUploadsOrigin    string
+	inspectFuncCountUploads   func(ctx context.Context, tx db.Executor, userID string, since time.Time)
+	afterCountUploadsCounter  uint64
+	beforeCountUploadsCounter uint64
+	CountUploadsMock          mIngestRepositoryMockCountUploads
+
 	funcCreateSighting          func(ctx context.Context, tx db.Executor, o models.CreateSightingOpts) (p1 models.PlateSighting, err error)
 	funcCreateSightingOrigin    string
 	inspectFuncCreateSighting   func(ctx context.Context, tx db.Executor, o models.CreateSightingOpts)
 	afterCreateSightingCounter  uint64
 	beforeCreateSightingCounter uint64
 	CreateSightingMock          mIngestRepositoryMockCreateSighting
+
+	funcLockUser          func(ctx context.Context, tx db.Executor, userID string) (err error)
+	funcLockUserOrigin    string
+	inspectFuncLockUser   func(ctx context.Context, tx db.Executor, userID string)
+	afterLockUserCounter  uint64
+	beforeLockUserCounter uint64
+	LockUserMock          mIngestRepositoryMockLockUser
 
 	funcUpsertPlate          func(ctx context.Context, tx db.Executor, o models.UpsertPlateOpts) (s1 string, err error)
 	funcUpsertPlateOrigin    string
@@ -43,8 +58,14 @@ func NewIngestRepositoryMock(t minimock.Tester) *IngestRepositoryMock {
 		controller.RegisterMocker(m)
 	}
 
+	m.CountUploadsMock = mIngestRepositoryMockCountUploads{mock: m}
+	m.CountUploadsMock.callArgs = []*IngestRepositoryMockCountUploadsParams{}
+
 	m.CreateSightingMock = mIngestRepositoryMockCreateSighting{mock: m}
 	m.CreateSightingMock.callArgs = []*IngestRepositoryMockCreateSightingParams{}
+
+	m.LockUserMock = mIngestRepositoryMockLockUser{mock: m}
+	m.LockUserMock.callArgs = []*IngestRepositoryMockLockUserParams{}
 
 	m.UpsertPlateMock = mIngestRepositoryMockUpsertPlate{mock: m}
 	m.UpsertPlateMock.callArgs = []*IngestRepositoryMockUpsertPlateParams{}
@@ -52,6 +73,411 @@ func NewIngestRepositoryMock(t minimock.Tester) *IngestRepositoryMock {
 	t.Cleanup(m.MinimockFinish)
 
 	return m
+}
+
+type mIngestRepositoryMockCountUploads struct {
+	optional           bool
+	mock               *IngestRepositoryMock
+	defaultExpectation *IngestRepositoryMockCountUploadsExpectation
+	expectations       []*IngestRepositoryMockCountUploadsExpectation
+
+	callArgs []*IngestRepositoryMockCountUploadsParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// IngestRepositoryMockCountUploadsExpectation specifies expectation struct of the ingestRepository.CountUploads
+type IngestRepositoryMockCountUploadsExpectation struct {
+	mock               *IngestRepositoryMock
+	params             *IngestRepositoryMockCountUploadsParams
+	paramPtrs          *IngestRepositoryMockCountUploadsParamPtrs
+	expectationOrigins IngestRepositoryMockCountUploadsExpectationOrigins
+	results            *IngestRepositoryMockCountUploadsResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// IngestRepositoryMockCountUploadsParams contains parameters of the ingestRepository.CountUploads
+type IngestRepositoryMockCountUploadsParams struct {
+	ctx    context.Context
+	tx     db.Executor
+	userID string
+	since  time.Time
+}
+
+// IngestRepositoryMockCountUploadsParamPtrs contains pointers to parameters of the ingestRepository.CountUploads
+type IngestRepositoryMockCountUploadsParamPtrs struct {
+	ctx    *context.Context
+	tx     *db.Executor
+	userID *string
+	since  *time.Time
+}
+
+// IngestRepositoryMockCountUploadsResults contains results of the ingestRepository.CountUploads
+type IngestRepositoryMockCountUploadsResults struct {
+	i1  int
+	err error
+}
+
+// IngestRepositoryMockCountUploadsOrigins contains origins of expectations of the ingestRepository.CountUploads
+type IngestRepositoryMockCountUploadsExpectationOrigins struct {
+	origin       string
+	originCtx    string
+	originTx     string
+	originUserID string
+	originSince  string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmCountUploads *mIngestRepositoryMockCountUploads) Optional() *mIngestRepositoryMockCountUploads {
+	mmCountUploads.optional = true
+	return mmCountUploads
+}
+
+// Expect sets up expected params for ingestRepository.CountUploads
+func (mmCountUploads *mIngestRepositoryMockCountUploads) Expect(ctx context.Context, tx db.Executor, userID string, since time.Time) *mIngestRepositoryMockCountUploads {
+	if mmCountUploads.mock.funcCountUploads != nil {
+		mmCountUploads.mock.t.Fatalf("IngestRepositoryMock.CountUploads mock is already set by Set")
+	}
+
+	if mmCountUploads.defaultExpectation == nil {
+		mmCountUploads.defaultExpectation = &IngestRepositoryMockCountUploadsExpectation{}
+	}
+
+	if mmCountUploads.defaultExpectation.paramPtrs != nil {
+		mmCountUploads.mock.t.Fatalf("IngestRepositoryMock.CountUploads mock is already set by ExpectParams functions")
+	}
+
+	mmCountUploads.defaultExpectation.params = &IngestRepositoryMockCountUploadsParams{ctx, tx, userID, since}
+	mmCountUploads.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmCountUploads.expectations {
+		if minimock.Equal(e.params, mmCountUploads.defaultExpectation.params) {
+			mmCountUploads.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmCountUploads.defaultExpectation.params)
+		}
+	}
+
+	return mmCountUploads
+}
+
+// ExpectCtxParam1 sets up expected param ctx for ingestRepository.CountUploads
+func (mmCountUploads *mIngestRepositoryMockCountUploads) ExpectCtxParam1(ctx context.Context) *mIngestRepositoryMockCountUploads {
+	if mmCountUploads.mock.funcCountUploads != nil {
+		mmCountUploads.mock.t.Fatalf("IngestRepositoryMock.CountUploads mock is already set by Set")
+	}
+
+	if mmCountUploads.defaultExpectation == nil {
+		mmCountUploads.defaultExpectation = &IngestRepositoryMockCountUploadsExpectation{}
+	}
+
+	if mmCountUploads.defaultExpectation.params != nil {
+		mmCountUploads.mock.t.Fatalf("IngestRepositoryMock.CountUploads mock is already set by Expect")
+	}
+
+	if mmCountUploads.defaultExpectation.paramPtrs == nil {
+		mmCountUploads.defaultExpectation.paramPtrs = &IngestRepositoryMockCountUploadsParamPtrs{}
+	}
+	mmCountUploads.defaultExpectation.paramPtrs.ctx = &ctx
+	mmCountUploads.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmCountUploads
+}
+
+// ExpectTxParam2 sets up expected param tx for ingestRepository.CountUploads
+func (mmCountUploads *mIngestRepositoryMockCountUploads) ExpectTxParam2(tx db.Executor) *mIngestRepositoryMockCountUploads {
+	if mmCountUploads.mock.funcCountUploads != nil {
+		mmCountUploads.mock.t.Fatalf("IngestRepositoryMock.CountUploads mock is already set by Set")
+	}
+
+	if mmCountUploads.defaultExpectation == nil {
+		mmCountUploads.defaultExpectation = &IngestRepositoryMockCountUploadsExpectation{}
+	}
+
+	if mmCountUploads.defaultExpectation.params != nil {
+		mmCountUploads.mock.t.Fatalf("IngestRepositoryMock.CountUploads mock is already set by Expect")
+	}
+
+	if mmCountUploads.defaultExpectation.paramPtrs == nil {
+		mmCountUploads.defaultExpectation.paramPtrs = &IngestRepositoryMockCountUploadsParamPtrs{}
+	}
+	mmCountUploads.defaultExpectation.paramPtrs.tx = &tx
+	mmCountUploads.defaultExpectation.expectationOrigins.originTx = minimock.CallerInfo(1)
+
+	return mmCountUploads
+}
+
+// ExpectUserIDParam3 sets up expected param userID for ingestRepository.CountUploads
+func (mmCountUploads *mIngestRepositoryMockCountUploads) ExpectUserIDParam3(userID string) *mIngestRepositoryMockCountUploads {
+	if mmCountUploads.mock.funcCountUploads != nil {
+		mmCountUploads.mock.t.Fatalf("IngestRepositoryMock.CountUploads mock is already set by Set")
+	}
+
+	if mmCountUploads.defaultExpectation == nil {
+		mmCountUploads.defaultExpectation = &IngestRepositoryMockCountUploadsExpectation{}
+	}
+
+	if mmCountUploads.defaultExpectation.params != nil {
+		mmCountUploads.mock.t.Fatalf("IngestRepositoryMock.CountUploads mock is already set by Expect")
+	}
+
+	if mmCountUploads.defaultExpectation.paramPtrs == nil {
+		mmCountUploads.defaultExpectation.paramPtrs = &IngestRepositoryMockCountUploadsParamPtrs{}
+	}
+	mmCountUploads.defaultExpectation.paramPtrs.userID = &userID
+	mmCountUploads.defaultExpectation.expectationOrigins.originUserID = minimock.CallerInfo(1)
+
+	return mmCountUploads
+}
+
+// ExpectSinceParam4 sets up expected param since for ingestRepository.CountUploads
+func (mmCountUploads *mIngestRepositoryMockCountUploads) ExpectSinceParam4(since time.Time) *mIngestRepositoryMockCountUploads {
+	if mmCountUploads.mock.funcCountUploads != nil {
+		mmCountUploads.mock.t.Fatalf("IngestRepositoryMock.CountUploads mock is already set by Set")
+	}
+
+	if mmCountUploads.defaultExpectation == nil {
+		mmCountUploads.defaultExpectation = &IngestRepositoryMockCountUploadsExpectation{}
+	}
+
+	if mmCountUploads.defaultExpectation.params != nil {
+		mmCountUploads.mock.t.Fatalf("IngestRepositoryMock.CountUploads mock is already set by Expect")
+	}
+
+	if mmCountUploads.defaultExpectation.paramPtrs == nil {
+		mmCountUploads.defaultExpectation.paramPtrs = &IngestRepositoryMockCountUploadsParamPtrs{}
+	}
+	mmCountUploads.defaultExpectation.paramPtrs.since = &since
+	mmCountUploads.defaultExpectation.expectationOrigins.originSince = minimock.CallerInfo(1)
+
+	return mmCountUploads
+}
+
+// Inspect accepts an inspector function that has same arguments as the ingestRepository.CountUploads
+func (mmCountUploads *mIngestRepositoryMockCountUploads) Inspect(f func(ctx context.Context, tx db.Executor, userID string, since time.Time)) *mIngestRepositoryMockCountUploads {
+	if mmCountUploads.mock.inspectFuncCountUploads != nil {
+		mmCountUploads.mock.t.Fatalf("Inspect function is already set for IngestRepositoryMock.CountUploads")
+	}
+
+	mmCountUploads.mock.inspectFuncCountUploads = f
+
+	return mmCountUploads
+}
+
+// Return sets up results that will be returned by ingestRepository.CountUploads
+func (mmCountUploads *mIngestRepositoryMockCountUploads) Return(i1 int, err error) *IngestRepositoryMock {
+	if mmCountUploads.mock.funcCountUploads != nil {
+		mmCountUploads.mock.t.Fatalf("IngestRepositoryMock.CountUploads mock is already set by Set")
+	}
+
+	if mmCountUploads.defaultExpectation == nil {
+		mmCountUploads.defaultExpectation = &IngestRepositoryMockCountUploadsExpectation{mock: mmCountUploads.mock}
+	}
+	mmCountUploads.defaultExpectation.results = &IngestRepositoryMockCountUploadsResults{i1, err}
+	mmCountUploads.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmCountUploads.mock
+}
+
+// Set uses given function f to mock the ingestRepository.CountUploads method
+func (mmCountUploads *mIngestRepositoryMockCountUploads) Set(f func(ctx context.Context, tx db.Executor, userID string, since time.Time) (i1 int, err error)) *IngestRepositoryMock {
+	if mmCountUploads.defaultExpectation != nil {
+		mmCountUploads.mock.t.Fatalf("Default expectation is already set for the ingestRepository.CountUploads method")
+	}
+
+	if len(mmCountUploads.expectations) > 0 {
+		mmCountUploads.mock.t.Fatalf("Some expectations are already set for the ingestRepository.CountUploads method")
+	}
+
+	mmCountUploads.mock.funcCountUploads = f
+	mmCountUploads.mock.funcCountUploadsOrigin = minimock.CallerInfo(1)
+	return mmCountUploads.mock
+}
+
+// When sets expectation for the ingestRepository.CountUploads which will trigger the result defined by the following
+// Then helper
+func (mmCountUploads *mIngestRepositoryMockCountUploads) When(ctx context.Context, tx db.Executor, userID string, since time.Time) *IngestRepositoryMockCountUploadsExpectation {
+	if mmCountUploads.mock.funcCountUploads != nil {
+		mmCountUploads.mock.t.Fatalf("IngestRepositoryMock.CountUploads mock is already set by Set")
+	}
+
+	expectation := &IngestRepositoryMockCountUploadsExpectation{
+		mock:               mmCountUploads.mock,
+		params:             &IngestRepositoryMockCountUploadsParams{ctx, tx, userID, since},
+		expectationOrigins: IngestRepositoryMockCountUploadsExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmCountUploads.expectations = append(mmCountUploads.expectations, expectation)
+	return expectation
+}
+
+// Then sets up ingestRepository.CountUploads return parameters for the expectation previously defined by the When method
+func (e *IngestRepositoryMockCountUploadsExpectation) Then(i1 int, err error) *IngestRepositoryMock {
+	e.results = &IngestRepositoryMockCountUploadsResults{i1, err}
+	return e.mock
+}
+
+// Times sets number of times ingestRepository.CountUploads should be invoked
+func (mmCountUploads *mIngestRepositoryMockCountUploads) Times(n uint64) *mIngestRepositoryMockCountUploads {
+	if n == 0 {
+		mmCountUploads.mock.t.Fatalf("Times of IngestRepositoryMock.CountUploads mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmCountUploads.expectedInvocations, n)
+	mmCountUploads.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmCountUploads
+}
+
+func (mmCountUploads *mIngestRepositoryMockCountUploads) invocationsDone() bool {
+	if len(mmCountUploads.expectations) == 0 && mmCountUploads.defaultExpectation == nil && mmCountUploads.mock.funcCountUploads == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmCountUploads.mock.afterCountUploadsCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmCountUploads.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// CountUploads implements mm_usecase.ingestRepository
+func (mmCountUploads *IngestRepositoryMock) CountUploads(ctx context.Context, tx db.Executor, userID string, since time.Time) (i1 int, err error) {
+	mm_atomic.AddUint64(&mmCountUploads.beforeCountUploadsCounter, 1)
+	defer mm_atomic.AddUint64(&mmCountUploads.afterCountUploadsCounter, 1)
+
+	mmCountUploads.t.Helper()
+
+	if mmCountUploads.inspectFuncCountUploads != nil {
+		mmCountUploads.inspectFuncCountUploads(ctx, tx, userID, since)
+	}
+
+	mm_params := IngestRepositoryMockCountUploadsParams{ctx, tx, userID, since}
+
+	// Record call args
+	mmCountUploads.CountUploadsMock.mutex.Lock()
+	mmCountUploads.CountUploadsMock.callArgs = append(mmCountUploads.CountUploadsMock.callArgs, &mm_params)
+	mmCountUploads.CountUploadsMock.mutex.Unlock()
+
+	for _, e := range mmCountUploads.CountUploadsMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.i1, e.results.err
+		}
+	}
+
+	if mmCountUploads.CountUploadsMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmCountUploads.CountUploadsMock.defaultExpectation.Counter, 1)
+		mm_want := mmCountUploads.CountUploadsMock.defaultExpectation.params
+		mm_want_ptrs := mmCountUploads.CountUploadsMock.defaultExpectation.paramPtrs
+
+		mm_got := IngestRepositoryMockCountUploadsParams{ctx, tx, userID, since}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmCountUploads.t.Errorf("IngestRepositoryMock.CountUploads got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmCountUploads.CountUploadsMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.tx != nil && !minimock.Equal(*mm_want_ptrs.tx, mm_got.tx) {
+				mmCountUploads.t.Errorf("IngestRepositoryMock.CountUploads got unexpected parameter tx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmCountUploads.CountUploadsMock.defaultExpectation.expectationOrigins.originTx, *mm_want_ptrs.tx, mm_got.tx, minimock.Diff(*mm_want_ptrs.tx, mm_got.tx))
+			}
+
+			if mm_want_ptrs.userID != nil && !minimock.Equal(*mm_want_ptrs.userID, mm_got.userID) {
+				mmCountUploads.t.Errorf("IngestRepositoryMock.CountUploads got unexpected parameter userID, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmCountUploads.CountUploadsMock.defaultExpectation.expectationOrigins.originUserID, *mm_want_ptrs.userID, mm_got.userID, minimock.Diff(*mm_want_ptrs.userID, mm_got.userID))
+			}
+
+			if mm_want_ptrs.since != nil && !minimock.Equal(*mm_want_ptrs.since, mm_got.since) {
+				mmCountUploads.t.Errorf("IngestRepositoryMock.CountUploads got unexpected parameter since, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmCountUploads.CountUploadsMock.defaultExpectation.expectationOrigins.originSince, *mm_want_ptrs.since, mm_got.since, minimock.Diff(*mm_want_ptrs.since, mm_got.since))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmCountUploads.t.Errorf("IngestRepositoryMock.CountUploads got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmCountUploads.CountUploadsMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmCountUploads.CountUploadsMock.defaultExpectation.results
+		if mm_results == nil {
+			mmCountUploads.t.Fatal("No results are set for the IngestRepositoryMock.CountUploads")
+		}
+		return (*mm_results).i1, (*mm_results).err
+	}
+	if mmCountUploads.funcCountUploads != nil {
+		return mmCountUploads.funcCountUploads(ctx, tx, userID, since)
+	}
+	mmCountUploads.t.Fatalf("Unexpected call to IngestRepositoryMock.CountUploads. %v %v %v %v", ctx, tx, userID, since)
+	return
+}
+
+// CountUploadsAfterCounter returns a count of finished IngestRepositoryMock.CountUploads invocations
+func (mmCountUploads *IngestRepositoryMock) CountUploadsAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmCountUploads.afterCountUploadsCounter)
+}
+
+// CountUploadsBeforeCounter returns a count of IngestRepositoryMock.CountUploads invocations
+func (mmCountUploads *IngestRepositoryMock) CountUploadsBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmCountUploads.beforeCountUploadsCounter)
+}
+
+// Calls returns a list of arguments used in each call to IngestRepositoryMock.CountUploads.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmCountUploads *mIngestRepositoryMockCountUploads) Calls() []*IngestRepositoryMockCountUploadsParams {
+	mmCountUploads.mutex.RLock()
+
+	argCopy := make([]*IngestRepositoryMockCountUploadsParams, len(mmCountUploads.callArgs))
+	copy(argCopy, mmCountUploads.callArgs)
+
+	mmCountUploads.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockCountUploadsDone returns true if the count of the CountUploads invocations corresponds
+// the number of defined expectations
+func (m *IngestRepositoryMock) MinimockCountUploadsDone() bool {
+	if m.CountUploadsMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.CountUploadsMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.CountUploadsMock.invocationsDone()
+}
+
+// MinimockCountUploadsInspect logs each unmet expectation
+func (m *IngestRepositoryMock) MinimockCountUploadsInspect() {
+	for _, e := range m.CountUploadsMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to IngestRepositoryMock.CountUploads at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterCountUploadsCounter := mm_atomic.LoadUint64(&m.afterCountUploadsCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.CountUploadsMock.defaultExpectation != nil && afterCountUploadsCounter < 1 {
+		if m.CountUploadsMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to IngestRepositoryMock.CountUploads at\n%s", m.CountUploadsMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to IngestRepositoryMock.CountUploads at\n%s with params: %#v", m.CountUploadsMock.defaultExpectation.expectationOrigins.origin, *m.CountUploadsMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcCountUploads != nil && afterCountUploadsCounter < 1 {
+		m.t.Errorf("Expected call to IngestRepositoryMock.CountUploads at\n%s", m.funcCountUploadsOrigin)
+	}
+
+	if !m.CountUploadsMock.invocationsDone() && afterCountUploadsCounter > 0 {
+		m.t.Errorf("Expected %d calls to IngestRepositoryMock.CountUploads at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.CountUploadsMock.expectedInvocations), m.CountUploadsMock.expectedInvocationsOrigin, afterCountUploadsCounter)
+	}
 }
 
 type mIngestRepositoryMockCreateSighting struct {
@@ -425,6 +851,379 @@ func (m *IngestRepositoryMock) MinimockCreateSightingInspect() {
 	if !m.CreateSightingMock.invocationsDone() && afterCreateSightingCounter > 0 {
 		m.t.Errorf("Expected %d calls to IngestRepositoryMock.CreateSighting at\n%s but found %d calls",
 			mm_atomic.LoadUint64(&m.CreateSightingMock.expectedInvocations), m.CreateSightingMock.expectedInvocationsOrigin, afterCreateSightingCounter)
+	}
+}
+
+type mIngestRepositoryMockLockUser struct {
+	optional           bool
+	mock               *IngestRepositoryMock
+	defaultExpectation *IngestRepositoryMockLockUserExpectation
+	expectations       []*IngestRepositoryMockLockUserExpectation
+
+	callArgs []*IngestRepositoryMockLockUserParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// IngestRepositoryMockLockUserExpectation specifies expectation struct of the ingestRepository.LockUser
+type IngestRepositoryMockLockUserExpectation struct {
+	mock               *IngestRepositoryMock
+	params             *IngestRepositoryMockLockUserParams
+	paramPtrs          *IngestRepositoryMockLockUserParamPtrs
+	expectationOrigins IngestRepositoryMockLockUserExpectationOrigins
+	results            *IngestRepositoryMockLockUserResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// IngestRepositoryMockLockUserParams contains parameters of the ingestRepository.LockUser
+type IngestRepositoryMockLockUserParams struct {
+	ctx    context.Context
+	tx     db.Executor
+	userID string
+}
+
+// IngestRepositoryMockLockUserParamPtrs contains pointers to parameters of the ingestRepository.LockUser
+type IngestRepositoryMockLockUserParamPtrs struct {
+	ctx    *context.Context
+	tx     *db.Executor
+	userID *string
+}
+
+// IngestRepositoryMockLockUserResults contains results of the ingestRepository.LockUser
+type IngestRepositoryMockLockUserResults struct {
+	err error
+}
+
+// IngestRepositoryMockLockUserOrigins contains origins of expectations of the ingestRepository.LockUser
+type IngestRepositoryMockLockUserExpectationOrigins struct {
+	origin       string
+	originCtx    string
+	originTx     string
+	originUserID string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmLockUser *mIngestRepositoryMockLockUser) Optional() *mIngestRepositoryMockLockUser {
+	mmLockUser.optional = true
+	return mmLockUser
+}
+
+// Expect sets up expected params for ingestRepository.LockUser
+func (mmLockUser *mIngestRepositoryMockLockUser) Expect(ctx context.Context, tx db.Executor, userID string) *mIngestRepositoryMockLockUser {
+	if mmLockUser.mock.funcLockUser != nil {
+		mmLockUser.mock.t.Fatalf("IngestRepositoryMock.LockUser mock is already set by Set")
+	}
+
+	if mmLockUser.defaultExpectation == nil {
+		mmLockUser.defaultExpectation = &IngestRepositoryMockLockUserExpectation{}
+	}
+
+	if mmLockUser.defaultExpectation.paramPtrs != nil {
+		mmLockUser.mock.t.Fatalf("IngestRepositoryMock.LockUser mock is already set by ExpectParams functions")
+	}
+
+	mmLockUser.defaultExpectation.params = &IngestRepositoryMockLockUserParams{ctx, tx, userID}
+	mmLockUser.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmLockUser.expectations {
+		if minimock.Equal(e.params, mmLockUser.defaultExpectation.params) {
+			mmLockUser.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmLockUser.defaultExpectation.params)
+		}
+	}
+
+	return mmLockUser
+}
+
+// ExpectCtxParam1 sets up expected param ctx for ingestRepository.LockUser
+func (mmLockUser *mIngestRepositoryMockLockUser) ExpectCtxParam1(ctx context.Context) *mIngestRepositoryMockLockUser {
+	if mmLockUser.mock.funcLockUser != nil {
+		mmLockUser.mock.t.Fatalf("IngestRepositoryMock.LockUser mock is already set by Set")
+	}
+
+	if mmLockUser.defaultExpectation == nil {
+		mmLockUser.defaultExpectation = &IngestRepositoryMockLockUserExpectation{}
+	}
+
+	if mmLockUser.defaultExpectation.params != nil {
+		mmLockUser.mock.t.Fatalf("IngestRepositoryMock.LockUser mock is already set by Expect")
+	}
+
+	if mmLockUser.defaultExpectation.paramPtrs == nil {
+		mmLockUser.defaultExpectation.paramPtrs = &IngestRepositoryMockLockUserParamPtrs{}
+	}
+	mmLockUser.defaultExpectation.paramPtrs.ctx = &ctx
+	mmLockUser.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmLockUser
+}
+
+// ExpectTxParam2 sets up expected param tx for ingestRepository.LockUser
+func (mmLockUser *mIngestRepositoryMockLockUser) ExpectTxParam2(tx db.Executor) *mIngestRepositoryMockLockUser {
+	if mmLockUser.mock.funcLockUser != nil {
+		mmLockUser.mock.t.Fatalf("IngestRepositoryMock.LockUser mock is already set by Set")
+	}
+
+	if mmLockUser.defaultExpectation == nil {
+		mmLockUser.defaultExpectation = &IngestRepositoryMockLockUserExpectation{}
+	}
+
+	if mmLockUser.defaultExpectation.params != nil {
+		mmLockUser.mock.t.Fatalf("IngestRepositoryMock.LockUser mock is already set by Expect")
+	}
+
+	if mmLockUser.defaultExpectation.paramPtrs == nil {
+		mmLockUser.defaultExpectation.paramPtrs = &IngestRepositoryMockLockUserParamPtrs{}
+	}
+	mmLockUser.defaultExpectation.paramPtrs.tx = &tx
+	mmLockUser.defaultExpectation.expectationOrigins.originTx = minimock.CallerInfo(1)
+
+	return mmLockUser
+}
+
+// ExpectUserIDParam3 sets up expected param userID for ingestRepository.LockUser
+func (mmLockUser *mIngestRepositoryMockLockUser) ExpectUserIDParam3(userID string) *mIngestRepositoryMockLockUser {
+	if mmLockUser.mock.funcLockUser != nil {
+		mmLockUser.mock.t.Fatalf("IngestRepositoryMock.LockUser mock is already set by Set")
+	}
+
+	if mmLockUser.defaultExpectation == nil {
+		mmLockUser.defaultExpectation = &IngestRepositoryMockLockUserExpectation{}
+	}
+
+	if mmLockUser.defaultExpectation.params != nil {
+		mmLockUser.mock.t.Fatalf("IngestRepositoryMock.LockUser mock is already set by Expect")
+	}
+
+	if mmLockUser.defaultExpectation.paramPtrs == nil {
+		mmLockUser.defaultExpectation.paramPtrs = &IngestRepositoryMockLockUserParamPtrs{}
+	}
+	mmLockUser.defaultExpectation.paramPtrs.userID = &userID
+	mmLockUser.defaultExpectation.expectationOrigins.originUserID = minimock.CallerInfo(1)
+
+	return mmLockUser
+}
+
+// Inspect accepts an inspector function that has same arguments as the ingestRepository.LockUser
+func (mmLockUser *mIngestRepositoryMockLockUser) Inspect(f func(ctx context.Context, tx db.Executor, userID string)) *mIngestRepositoryMockLockUser {
+	if mmLockUser.mock.inspectFuncLockUser != nil {
+		mmLockUser.mock.t.Fatalf("Inspect function is already set for IngestRepositoryMock.LockUser")
+	}
+
+	mmLockUser.mock.inspectFuncLockUser = f
+
+	return mmLockUser
+}
+
+// Return sets up results that will be returned by ingestRepository.LockUser
+func (mmLockUser *mIngestRepositoryMockLockUser) Return(err error) *IngestRepositoryMock {
+	if mmLockUser.mock.funcLockUser != nil {
+		mmLockUser.mock.t.Fatalf("IngestRepositoryMock.LockUser mock is already set by Set")
+	}
+
+	if mmLockUser.defaultExpectation == nil {
+		mmLockUser.defaultExpectation = &IngestRepositoryMockLockUserExpectation{mock: mmLockUser.mock}
+	}
+	mmLockUser.defaultExpectation.results = &IngestRepositoryMockLockUserResults{err}
+	mmLockUser.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmLockUser.mock
+}
+
+// Set uses given function f to mock the ingestRepository.LockUser method
+func (mmLockUser *mIngestRepositoryMockLockUser) Set(f func(ctx context.Context, tx db.Executor, userID string) (err error)) *IngestRepositoryMock {
+	if mmLockUser.defaultExpectation != nil {
+		mmLockUser.mock.t.Fatalf("Default expectation is already set for the ingestRepository.LockUser method")
+	}
+
+	if len(mmLockUser.expectations) > 0 {
+		mmLockUser.mock.t.Fatalf("Some expectations are already set for the ingestRepository.LockUser method")
+	}
+
+	mmLockUser.mock.funcLockUser = f
+	mmLockUser.mock.funcLockUserOrigin = minimock.CallerInfo(1)
+	return mmLockUser.mock
+}
+
+// When sets expectation for the ingestRepository.LockUser which will trigger the result defined by the following
+// Then helper
+func (mmLockUser *mIngestRepositoryMockLockUser) When(ctx context.Context, tx db.Executor, userID string) *IngestRepositoryMockLockUserExpectation {
+	if mmLockUser.mock.funcLockUser != nil {
+		mmLockUser.mock.t.Fatalf("IngestRepositoryMock.LockUser mock is already set by Set")
+	}
+
+	expectation := &IngestRepositoryMockLockUserExpectation{
+		mock:               mmLockUser.mock,
+		params:             &IngestRepositoryMockLockUserParams{ctx, tx, userID},
+		expectationOrigins: IngestRepositoryMockLockUserExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmLockUser.expectations = append(mmLockUser.expectations, expectation)
+	return expectation
+}
+
+// Then sets up ingestRepository.LockUser return parameters for the expectation previously defined by the When method
+func (e *IngestRepositoryMockLockUserExpectation) Then(err error) *IngestRepositoryMock {
+	e.results = &IngestRepositoryMockLockUserResults{err}
+	return e.mock
+}
+
+// Times sets number of times ingestRepository.LockUser should be invoked
+func (mmLockUser *mIngestRepositoryMockLockUser) Times(n uint64) *mIngestRepositoryMockLockUser {
+	if n == 0 {
+		mmLockUser.mock.t.Fatalf("Times of IngestRepositoryMock.LockUser mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmLockUser.expectedInvocations, n)
+	mmLockUser.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmLockUser
+}
+
+func (mmLockUser *mIngestRepositoryMockLockUser) invocationsDone() bool {
+	if len(mmLockUser.expectations) == 0 && mmLockUser.defaultExpectation == nil && mmLockUser.mock.funcLockUser == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmLockUser.mock.afterLockUserCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmLockUser.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// LockUser implements mm_usecase.ingestRepository
+func (mmLockUser *IngestRepositoryMock) LockUser(ctx context.Context, tx db.Executor, userID string) (err error) {
+	mm_atomic.AddUint64(&mmLockUser.beforeLockUserCounter, 1)
+	defer mm_atomic.AddUint64(&mmLockUser.afterLockUserCounter, 1)
+
+	mmLockUser.t.Helper()
+
+	if mmLockUser.inspectFuncLockUser != nil {
+		mmLockUser.inspectFuncLockUser(ctx, tx, userID)
+	}
+
+	mm_params := IngestRepositoryMockLockUserParams{ctx, tx, userID}
+
+	// Record call args
+	mmLockUser.LockUserMock.mutex.Lock()
+	mmLockUser.LockUserMock.callArgs = append(mmLockUser.LockUserMock.callArgs, &mm_params)
+	mmLockUser.LockUserMock.mutex.Unlock()
+
+	for _, e := range mmLockUser.LockUserMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.err
+		}
+	}
+
+	if mmLockUser.LockUserMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmLockUser.LockUserMock.defaultExpectation.Counter, 1)
+		mm_want := mmLockUser.LockUserMock.defaultExpectation.params
+		mm_want_ptrs := mmLockUser.LockUserMock.defaultExpectation.paramPtrs
+
+		mm_got := IngestRepositoryMockLockUserParams{ctx, tx, userID}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmLockUser.t.Errorf("IngestRepositoryMock.LockUser got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmLockUser.LockUserMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.tx != nil && !minimock.Equal(*mm_want_ptrs.tx, mm_got.tx) {
+				mmLockUser.t.Errorf("IngestRepositoryMock.LockUser got unexpected parameter tx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmLockUser.LockUserMock.defaultExpectation.expectationOrigins.originTx, *mm_want_ptrs.tx, mm_got.tx, minimock.Diff(*mm_want_ptrs.tx, mm_got.tx))
+			}
+
+			if mm_want_ptrs.userID != nil && !minimock.Equal(*mm_want_ptrs.userID, mm_got.userID) {
+				mmLockUser.t.Errorf("IngestRepositoryMock.LockUser got unexpected parameter userID, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmLockUser.LockUserMock.defaultExpectation.expectationOrigins.originUserID, *mm_want_ptrs.userID, mm_got.userID, minimock.Diff(*mm_want_ptrs.userID, mm_got.userID))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmLockUser.t.Errorf("IngestRepositoryMock.LockUser got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmLockUser.LockUserMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmLockUser.LockUserMock.defaultExpectation.results
+		if mm_results == nil {
+			mmLockUser.t.Fatal("No results are set for the IngestRepositoryMock.LockUser")
+		}
+		return (*mm_results).err
+	}
+	if mmLockUser.funcLockUser != nil {
+		return mmLockUser.funcLockUser(ctx, tx, userID)
+	}
+	mmLockUser.t.Fatalf("Unexpected call to IngestRepositoryMock.LockUser. %v %v %v", ctx, tx, userID)
+	return
+}
+
+// LockUserAfterCounter returns a count of finished IngestRepositoryMock.LockUser invocations
+func (mmLockUser *IngestRepositoryMock) LockUserAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmLockUser.afterLockUserCounter)
+}
+
+// LockUserBeforeCounter returns a count of IngestRepositoryMock.LockUser invocations
+func (mmLockUser *IngestRepositoryMock) LockUserBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmLockUser.beforeLockUserCounter)
+}
+
+// Calls returns a list of arguments used in each call to IngestRepositoryMock.LockUser.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmLockUser *mIngestRepositoryMockLockUser) Calls() []*IngestRepositoryMockLockUserParams {
+	mmLockUser.mutex.RLock()
+
+	argCopy := make([]*IngestRepositoryMockLockUserParams, len(mmLockUser.callArgs))
+	copy(argCopy, mmLockUser.callArgs)
+
+	mmLockUser.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockLockUserDone returns true if the count of the LockUser invocations corresponds
+// the number of defined expectations
+func (m *IngestRepositoryMock) MinimockLockUserDone() bool {
+	if m.LockUserMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.LockUserMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.LockUserMock.invocationsDone()
+}
+
+// MinimockLockUserInspect logs each unmet expectation
+func (m *IngestRepositoryMock) MinimockLockUserInspect() {
+	for _, e := range m.LockUserMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to IngestRepositoryMock.LockUser at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterLockUserCounter := mm_atomic.LoadUint64(&m.afterLockUserCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.LockUserMock.defaultExpectation != nil && afterLockUserCounter < 1 {
+		if m.LockUserMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to IngestRepositoryMock.LockUser at\n%s", m.LockUserMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to IngestRepositoryMock.LockUser at\n%s with params: %#v", m.LockUserMock.defaultExpectation.expectationOrigins.origin, *m.LockUserMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcLockUser != nil && afterLockUserCounter < 1 {
+		m.t.Errorf("Expected call to IngestRepositoryMock.LockUser at\n%s", m.funcLockUserOrigin)
+	}
+
+	if !m.LockUserMock.invocationsDone() && afterLockUserCounter > 0 {
+		m.t.Errorf("Expected %d calls to IngestRepositoryMock.LockUser at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.LockUserMock.expectedInvocations), m.LockUserMock.expectedInvocationsOrigin, afterLockUserCounter)
 	}
 }
 
@@ -806,7 +1605,11 @@ func (m *IngestRepositoryMock) MinimockUpsertPlateInspect() {
 func (m *IngestRepositoryMock) MinimockFinish() {
 	m.finishOnce.Do(func() {
 		if !m.minimockDone() {
+			m.MinimockCountUploadsInspect()
+
 			m.MinimockCreateSightingInspect()
+
+			m.MinimockLockUserInspect()
 
 			m.MinimockUpsertPlateInspect()
 		}
@@ -832,6 +1635,8 @@ func (m *IngestRepositoryMock) MinimockWait(timeout mm_time.Duration) {
 func (m *IngestRepositoryMock) minimockDone() bool {
 	done := true
 	return done &&
+		m.MinimockCountUploadsDone() &&
 		m.MinimockCreateSightingDone() &&
+		m.MinimockLockUserDone() &&
 		m.MinimockUpsertPlateDone()
 }

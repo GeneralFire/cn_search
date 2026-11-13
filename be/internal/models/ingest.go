@@ -2,11 +2,19 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"time"
 )
 
 // ErrRecognizerUnavailable — сервис распознавания номеров не ответил (недоступен, таймаут, 5xx).
 var ErrRecognizerUnavailable = errors.New("recognizer unavailable")
+
+// UploadQuotaError — суточный лимит загрузок фото исчерпан (тариф Free); Limit — лимит за сутки.
+type UploadQuotaError struct {
+	Limit int
+}
+
+func (e *UploadQuotaError) Error() string { return fmt.Sprintf("upload quota exceeded: %d per day", e.Limit) }
 
 // IngestOpts — новая фиксация по фото (rpc Ingest).
 type IngestOpts struct {
@@ -15,6 +23,7 @@ type IngestOpts struct {
 	Lat     *float64   // nil — из EXIF GPS; задаются только парой с Lon
 	Lon     *float64
 	Address string
+	User    User // кто загружает: квота по тарифу, plate_sightings.uploaded_by
 }
 
 // PlateCandidate — номер, распознанный на фото.
@@ -31,6 +40,8 @@ type PlateCandidate struct {
 type IngestResult struct {
 	Sighting   PlateSighting
 	Candidates []PlateCandidate
+	// UploadsLeft — сколько загрузок ещё можно за сутки после этой; nil — без ограничений (Pro).
+	UploadsLeft *int
 }
 
 // UpsertPlateOpts — номер для поиска или создания (таблица plates).
@@ -49,4 +60,6 @@ type CreateSightingOpts struct {
 	ThumbKey      string
 	CreatedAt     time.Time
 	Lat, Lon      *float64
+	UploadedBy    string    // users.id
+	UploadedAt    time.Time // момент загрузки — для суточной квоты
 }

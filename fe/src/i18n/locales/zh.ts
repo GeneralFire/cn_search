@@ -371,4 +371,8 @@ export const zh: Dict = {
   "upload.confidence": "置信度 {pct}",
   "upload.open": "打开记录",
   "upload.others": "照片中的其他车牌",
+  "upload.needLogin": "请用令牌登录（点击徽标打开面板）或注册后再上传照片。",
+  "upload.unlimited": "Pro 套餐：上传不限次数。",
+  "upload.quotaOver": "Free 套餐今日上传次数已用完，升级 Pro 可解除限制。",
+  "upload.quotaLeft": "今日剩余上传次数：{n}/5（Free 套餐）。",
 };

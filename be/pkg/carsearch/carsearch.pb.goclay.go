@@ -3663,7 +3663,7 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
     },
     "/carsearch.CarSearchService/Ingest": {
       "post": {
-        "summary": "Ingest — новая фиксация по фото: номер распознаёт OCR-сервис (ocr/), фото и миниатюра\nуходят в S3, номер находится или создаётся, фиксация сохраняется. Номер не распознан\n(уверенность ниже порога) или файл не фото — INVALID_ARGUMENT; OCR недоступен — UNAVAILABLE.\nПо HTTP (clay, JSON) photo передаётся строкой base64.",
+        "summary": "Ingest — новая фиксация по фото: номер распознаёт OCR-сервис (ocr/), фото и миниатюра\nуходят в S3, номер находится или создаётся, фиксация сохраняется. Номер не распознан\n(уверенность ниже порога) или файл не фото — INVALID_ARGUMENT; OCR недоступен — UNAVAILABLE.\nПо HTTP (clay, JSON) photo передаётся строкой base64. Нужен вход (токен пользователя), иначе\nUNAUTHENTICATED; тариф Free — не больше 5 загрузок за 24 часа, сверх — RESOURCE_EXHAUSTED; Pro — без лимита.",
         "operationId": "CarSearchService_Ingest",
         "responses": {
           "200": {
@@ -4573,6 +4573,11 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
             "$ref": "#/definitions/carsearchPlateCandidate"
           },
           "description": "Все распознанные номера, по убыванию уверенности; в фиксацию попал первый."
+        },
+        "uploadsLeft": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Сколько загрузок ещё можно за последние 24 часа (тариф Free); не задано — без ограничений (Pro)."
         }
       }
     },
@@ -4812,6 +4817,11 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         },
         "user": {
           "$ref": "#/definitions/carsearchUser"
+        },
+        "uploadsLeft": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Сколько загрузок фото (rpc Ingest) осталось за последние 24 часа; не задано — без ограничений\n(Pro), не вошёл или загрузка фото выключена."
         }
       }
     },

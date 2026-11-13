@@ -1910,6 +1910,9 @@ type MeResponse struct {
 	// Токен пользователя верный; иначе user не задан.
 	Authenticated bool  `protobuf:"varint,2,opt,name=authenticated,proto3" json:"authenticated,omitempty"`
 	User          *User `protobuf:"bytes,3,opt,name=user,proto3" json:"user,omitempty"`
+	// Сколько загрузок фото (rpc Ingest) осталось за последние 24 часа; не задано — без ограничений
+	// (Pro), не вошёл или загрузка фото выключена.
+	UploadsLeft   *int32 `protobuf:"varint,4,opt,name=uploads_left,json=uploadsLeft,proto3,oneof" json:"uploads_left,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1963,6 +1966,13 @@ func (x *MeResponse) GetUser() *User {
 		return x.User
 	}
 	return nil
+}
+
+func (x *MeResponse) GetUploadsLeft() int32 {
+	if x != nil && x.UploadsLeft != nil {
+		return *x.UploadsLeft
+	}
+	return 0
 }
 
 type RegisterRequest struct {
@@ -3882,7 +3892,9 @@ type IngestResponse struct {
 	// Созданная фиксация.
 	Sighting *PlateSighting `protobuf:"bytes,1,opt,name=sighting,proto3" json:"sighting,omitempty"`
 	// Все распознанные номера, по убыванию уверенности; в фиксацию попал первый.
-	Candidates    []*PlateCandidate `protobuf:"bytes,2,rep,name=candidates,proto3" json:"candidates,omitempty"`
+	Candidates []*PlateCandidate `protobuf:"bytes,2,rep,name=candidates,proto3" json:"candidates,omitempty"`
+	// Сколько загрузок ещё можно за последние 24 часа (тариф Free); не задано — без ограничений (Pro).
+	UploadsLeft   *int32 `protobuf:"varint,3,opt,name=uploads_left,json=uploadsLeft,proto3,oneof" json:"uploads_left,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3929,6 +3941,13 @@ func (x *IngestResponse) GetCandidates() []*PlateCandidate {
 		return x.Candidates
 	}
 	return nil
+}
+
+func (x *IngestResponse) GetUploadsLeft() int32 {
+	if x != nil && x.UploadsLeft != nil {
+		return *x.UploadsLeft
+	}
+	return 0
 }
 
 var File_carsearch_carsearch_proto protoreflect.FileDescriptor
@@ -4061,12 +4080,14 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\tpro_until\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\bproUntil\x129\n" +
 	"\n" +
 	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\v\n" +
-	"\tMeRequest\"r\n" +
+	"\tMeRequest\"\xab\x01\n" +
 	"\n" +
 	"MeResponse\x12\x19\n" +
 	"\bis_admin\x18\x01 \x01(\bR\aisAdmin\x12$\n" +
 	"\rauthenticated\x18\x02 \x01(\bR\rauthenticated\x12#\n" +
-	"\x04user\x18\x03 \x01(\v2\x0f.carsearch.UserR\x04user\"'\n" +
+	"\x04user\x18\x03 \x01(\v2\x0f.carsearch.UserR\x04user\x12&\n" +
+	"\fuploads_left\x18\x04 \x01(\x05H\x00R\vuploadsLeft\x88\x01\x01B\x0f\n" +
+	"\r_uploads_left\"'\n" +
 	"\x0fRegisterRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\"M\n" +
 	"\x10RegisterResponse\x12\x14\n" +
@@ -4215,12 +4236,14 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"confidence\x123\n" +
 	"\n" +
 	"plate_type\x18\x04 \x01(\x0e2\x14.carsearch.PlateTypeR\tplateType\x12\x12\n" +
-	"\x04bbox\x18\x05 \x03(\x05R\x04bbox\"\x81\x01\n" +
+	"\x04bbox\x18\x05 \x03(\x05R\x04bbox\"\xba\x01\n" +
 	"\x0eIngestResponse\x124\n" +
 	"\bsighting\x18\x01 \x01(\v2\x18.carsearch.PlateSightingR\bsighting\x129\n" +
 	"\n" +
 	"candidates\x18\x02 \x03(\v2\x19.carsearch.PlateCandidateR\n" +
-	"candidates*\x82\x01\n" +
+	"candidates\x12&\n" +
+	"\fuploads_left\x18\x03 \x01(\x05H\x00R\vuploadsLeft\x88\x01\x01B\x0f\n" +
+	"\r_uploads_left*\x82\x01\n" +
 	"\tPlateType\x12\x16\n" +
 	"\x12PLATE_TYPE_DEFAULT\x10\x00\x12\x11\n" +
 	"\rPLATE_TYPE_RU\x10\x01\x12\x11\n" +
@@ -4489,10 +4512,12 @@ func file_carsearch_carsearch_proto_init() {
 	file_carsearch_carsearch_proto_msgTypes[2].OneofWrappers = []any{}
 	file_carsearch_carsearch_proto_msgTypes[14].OneofWrappers = []any{}
 	file_carsearch_carsearch_proto_msgTypes[19].OneofWrappers = []any{}
+	file_carsearch_carsearch_proto_msgTypes[22].OneofWrappers = []any{}
 	file_carsearch_carsearch_proto_msgTypes[38].OneofWrappers = []any{}
 	file_carsearch_carsearch_proto_msgTypes[45].OneofWrappers = []any{}
 	file_carsearch_carsearch_proto_msgTypes[49].OneofWrappers = []any{}
 	file_carsearch_carsearch_proto_msgTypes[51].OneofWrappers = []any{}
+	file_carsearch_carsearch_proto_msgTypes[53].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

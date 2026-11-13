@@ -1,8 +1,9 @@
 // Страница /upload: фото машины → бэк (rpc Ingest) распознаёт номер (OCR), сохраняет фото и создаёт
 // фиксацию. Фото — перетаскиванием, выбором файла или камерой телефона (capture=environment);
 // время и координаты бэк берёт из EXIF, координаты можно задать кнопкой «Моё место» (геолокация).
+// Загружать можно только после входа (токен cs_token); Free — 5 фото за сутки, остаток — над формой.
 import "./upload.css";
-import { ApiError, ingest, type PlateCandidate } from "./api";
+import { ApiError, ingest, me, type PlateCandidate } from "./api";
 import { plateHref } from "./router";
 import { escapeHtml, plateHtml } from "./ui";
 import { t } from "./i18n/i18n";
@@ -26,7 +27,7 @@ const $ = <T extends HTMLElement>(sel: string) => $root.querySelector<T>(sel)!;
 export function renderUploadPage(root: HTMLElement): void {
   document.title = `${t("upload.title")} — ${t("app.title")}`;
   window.scrollTo({ top: 0 });
-  if (root.querySelector(".up")) return;
+  if (root.querySelector(".up")) return void refreshQuota();
   $root = root;
   root.innerHTML = `
     <header class="up-bar">
@@ -35,6 +36,7 @@ export function renderUploadPage(root: HTMLElement): void {
     </header>
     <main class="up">
       <p class="up__hint">${t("upload.hint")}</p>
+      <p class="up-quota" aria-live="polite" hidden></p>
       <form class="up__form" novalidate>
         <label class="up-drop" tabindex="0">
           <input class="up-drop__input" type="file" accept="image/*" hidden />
@@ -90,6 +92,37 @@ export function renderUploadPage(root: HTMLElement): void {
     e.preventDefault();
     void submit();
   });
+  void refreshQuota();
+}
+
+const quota = { loggedIn: true, left: null as number | null };
+
+/** Вход и остаток загрузок (rpc Me): не вошёл — приглашение войти и форма недоступна. */
+async function refreshQuota(): Promise<void> {
+  try {
+    const m = await me();
+    quota.loggedIn = !!m.user;
+    quota.left = m.user ? (m.uploadsLeft ?? null) : null;
+  } catch {
+    return; // бэк недоступен — ошибку покажет отправка
+  }
+  renderQuota();
+}
+
+function renderQuota(): void {
+  const $q = $(".up-quota");
+  $q.hidden = false;
+  $q.classList.toggle("up-quota--warn", !quota.loggedIn || quota.left === 0);
+  if (!quota.loggedIn) {
+    $q.innerHTML = `${t("upload.needLogin")} <a href="/signup" data-link>${t("auth.signupLink")}</a>`;
+  } else if (quota.left == null) {
+    $q.textContent = t("upload.unlimited");
+  } else if (quota.left === 0) {
+    $q.innerHTML = `${t("upload.quotaOver")} <a href="/pricing" data-link>${t("auth.pricing")}</a>`;
+  } else {
+    $q.textContent = t("upload.quotaLeft", { n: quota.left });
+  }
+  $<HTMLButtonElement>(".up__submit").disabled = !state.file || !quota.loggedIn || quota.left === 0;
 }
 
 function setFile(f: File): void {
@@ -101,8 +134,8 @@ function setFile(f: File): void {
   $img.src = state.previewUrl;
   $img.hidden = false;
   $(".up-drop__text").hidden = true;
-  $<HTMLButtonElement>(".up__submit").disabled = false;
   $(".up-result").hidden = true;
+  renderQuota();
   showError("");
 }
 
@@ -138,12 +171,17 @@ async function submit(): Promise<void> {
     const address = $<HTMLInputElement>(".up__input").value.trim();
     const res = await ingest({ photo, address, ...(state.coords ?? {}) });
     showResult(res.sighting.id, res.candidates);
+    quota.left = res.uploadsLeft;
   } catch (e) {
     showError(e instanceof ApiError ? e.message || t("upload.failed") : t("upload.failed"));
+    if (e instanceof ApiError && (e.status === 401 || e.status === 429)) {
+      quota.loggedIn = e.status !== 401;
+      if (e.status === 429) quota.left = 0;
+    }
   } finally {
     state.busy = false;
-    $btn.disabled = false;
     $btn.textContent = t("upload.submit");
+    renderQuota();
   }
 }
 

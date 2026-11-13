@@ -11,6 +11,7 @@ import (
 
 	"github.com/gojuno/minimock/v3"
 
+	"github.com/GeneralFire/cn_search/be/internal/db"
 	dbmocks "github.com/GeneralFire/cn_search/be/internal/db/mocks"
 	"github.com/GeneralFire/cn_search/be/internal/models"
 	"github.com/GeneralFire/cn_search/be/internal/usecase/mocks"
@@ -37,7 +38,8 @@ func newTestIngest(t *testing.T, withTx bool) (*Ingest, ingestDeps) {
 	d := ingestDeps{dbmocks.NewExecutorMock(t), mocks.NewIngestRepositoryMock(t), mocks.NewRecognizerMock(t), mocks.NewPhotoStorageMock(t)}
 	tr := mocks.NewTransactorMock(t)
 	if withTx {
-		tr = writeTx(t, d.tx)
+		tr.InReadTxMock.Optional().Set(func(ctx context.Context, fn db.TxFunc) error { return fn(ctx, d.tx) })
+		tr.InWriteTxMock.Set(func(ctx context.Context, fn db.TxFunc) error { return fn(ctx, d.tx) })
 	}
 	u := NewIngest(tr, d.repo, d.ocr, d.photos)
 	u.now = func() time.Time { return time.Date(2026, 11, 13, 12, 0, 0, 0, time.UTC) }
@@ -45,8 +47,16 @@ func newTestIngest(t *testing.T, withTx bool) (*Ingest, ingestDeps) {
 	return u, d
 }
 
+var (
+	freeUser = models.User{ID: "u1", Plan: models.PlanFree}
+	proUser  = models.User{ID: "u2", Plan: models.PlanPro}
+)
+
 func TestIngest(t *testing.T) {
 	u, d := newTestIngest(t, true)
+	since := u.now().Add(-UploadQuotaWindow)
+	d.repo.CountUploadsMock.Expect(minimock.AnyContext, d.tx, "u1", since).Return(2, nil) // до OCR и в транзакции
+	d.repo.LockUserMock.Expect(minimock.AnyContext, d.tx, "u1").Return(nil)
 	photo := testJPEG(t, 2000, 1000)
 	d.ocr.RecognizeMock.Expect(minimock.AnyContext, photo).Return([]models.PlateCandidate{
 		{Raw: "155880", Confidence: 0.39},
@@ -67,17 +77,60 @@ func TestIngest(t *testing.T) {
 	d.repo.CreateSightingMock.Expect(minimock.AnyContext, d.tx, models.CreateSightingOpts{
 		PlateID: "p1", Address: "Москва, Тверская 1", AddressLocale: "ru",
 		PhotoKey: "u/id1.jpg", ThumbKey: "u/id1_thumb.jpg", CreatedAt: taken, Lat: &lat, Lon: &lon,
+		UploadedBy: "u1", UploadedAt: u.now(),
 	}).Return(models.PlateSighting{ID: "s1", Plate: "Н311УО 797"}, nil)
 
-	res, err := u.Ingest(context.Background(), models.IngestOpts{Photo: photo, TakenAt: &taken, Lat: &lat, Lon: &lon, Address: " Москва, Тверская 1 "})
+	res, err := u.Ingest(context.Background(), models.IngestOpts{Photo: photo, TakenAt: &taken, Lat: &lat, Lon: &lon, Address: " Москва, Тверская 1 ", User: freeUser})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if res.Sighting.ID != "s1" || len(res.Candidates) != 2 || res.Candidates[0].Plate != "Н311УО 797" || res.Candidates[1].Raw != "155880" {
 		t.Errorf("результат: %+v", res)
 	}
+	if res.UploadsLeft == nil || *res.UploadsLeft != FreeUploadsPerDay-3 {
+		t.Errorf("UploadsLeft = %v", res.UploadsLeft)
+	}
+	if d.repo.CountUploadsAfterCounter() != 2 {
+		t.Errorf("CountUploads вызван %d раз", d.repo.CountUploadsAfterCounter())
+	}
 	if sizes["u/id1.jpg"] != photoMaxWidth || sizes["u/id1_thumb.jpg"] != thumbWidth {
 		t.Errorf("размеры: %v", sizes)
+	}
+}
+
+// Квота исчерпана: до OCR (5 загрузок за сутки) и в транзакции (параллельная загрузка успела раньше).
+func TestIngestQuota(t *testing.T) {
+	var quota *models.UploadQuotaError
+	u, d := newTestIngest(t, false)
+	u.tx = readTx(t, d.tx)
+	d.repo.CountUploadsMock.Return(FreeUploadsPerDay, nil)
+	if _, err := u.Ingest(context.Background(), models.IngestOpts{Photo: testJPEG(t, 10, 10), User: freeUser}); !errors.As(err, &quota) || quota.Limit != FreeUploadsPerDay {
+		t.Errorf("до OCR: %v", err)
+	}
+
+	u, d = newTestIngest(t, true)
+	calls := 0
+	d.repo.CountUploadsMock.Set(func(context.Context, db.Executor, string, time.Time) (int, error) {
+		calls++
+		return FreeUploadsPerDay - 2 + calls, nil // 4 до OCR, 5 в транзакции
+	})
+	d.repo.LockUserMock.Return(nil)
+	d.ocr.RecognizeMock.Return([]models.PlateCandidate{{Raw: "7ABC123", Confidence: 0.9}}, nil)
+	d.photos.PutMock.Return(nil)
+	if _, err := u.Ingest(context.Background(), models.IngestOpts{Photo: testJPEG(t, 10, 10), User: freeUser}); !errors.As(err, &quota) {
+		t.Errorf("в транзакции: %v", err)
+	}
+}
+
+func TestUploadsLeft(t *testing.T) {
+	u, d := newTestIngest(t, false)
+	u.tx = readTx(t, d.tx)
+	d.repo.CountUploadsMock.Return(7, nil)
+	if left, err := u.UploadsLeft(context.Background(), freeUser); err != nil || *left != 0 {
+		t.Errorf("free: %v %v", left, err)
+	}
+	if left, err := u.UploadsLeft(context.Background(), proUser); err != nil || left != nil {
+		t.Errorf("pro: %v %v", left, err)
 	}
 }
 
@@ -91,10 +144,12 @@ func TestIngestDefaults(t *testing.T) {
 	d.repo.UpsertPlateMock.Expect(minimock.AnyContext, d.tx, models.UpsertPlateOpts{Plate: "7ABC123", Type: "us"}).Return("p1", nil)
 	d.repo.CreateSightingMock.Expect(minimock.AnyContext, d.tx, models.CreateSightingOpts{
 		PlateID: "p1", AddressLocale: "ru", PhotoKey: "u/id1.jpg", ThumbKey: "u/id1_thumb.jpg", CreatedAt: u.now(),
+		UploadedBy: "u2", UploadedAt: u.now(),
 	}).Return(models.PlateSighting{ID: "s1"}, nil)
 
-	if _, err := u.Ingest(context.Background(), models.IngestOpts{Photo: photo, TakenAt: &future}); err != nil {
-		t.Fatal(err)
+	res, err := u.Ingest(context.Background(), models.IngestOpts{Photo: photo, TakenAt: &future, User: proUser})
+	if err != nil || res.UploadsLeft != nil { // Pro — без лимита, квоту не считаем
+		t.Fatal(res.UploadsLeft, err)
 	}
 }
 
@@ -102,20 +157,20 @@ func TestIngestErrors(t *testing.T) {
 	var invalid *models.ValidationError
 
 	u, _ := newTestIngest(t, false)
-	if _, err := u.Ingest(context.Background(), models.IngestOpts{Photo: []byte("not an image")}); !errors.As(err, &invalid) || invalid.Message != errNotPhoto {
+	if _, err := u.Ingest(context.Background(), models.IngestOpts{Photo: []byte("not an image"), User: proUser}); !errors.As(err, &invalid) || invalid.Message != errNotPhoto {
 		t.Errorf("не фото: %v", err)
 	}
 
 	u, d := newTestIngest(t, false)
 	d.ocr.RecognizeMock.Return([]models.PlateCandidate{{Raw: "P466YK79", Confidence: MinPlateConfidence - 0.01}}, nil)
-	res, err := u.Ingest(context.Background(), models.IngestOpts{Photo: testJPEG(t, 10, 10)})
+	res, err := u.Ingest(context.Background(), models.IngestOpts{Photo: testJPEG(t, 10, 10), User: proUser})
 	if !errors.As(err, &invalid) || invalid.Message != errPlateNotRecognized || len(res.Candidates) != 1 {
 		t.Errorf("ниже порога: %+v %v", res, err)
 	}
 
 	u, d = newTestIngest(t, false)
 	d.ocr.RecognizeMock.Return(nil, models.ErrRecognizerUnavailable)
-	if _, err := u.Ingest(context.Background(), models.IngestOpts{Photo: testJPEG(t, 10, 10)}); !errors.Is(err, models.ErrRecognizerUnavailable) {
+	if _, err := u.Ingest(context.Background(), models.IngestOpts{Photo: testJPEG(t, 10, 10), User: proUser}); !errors.Is(err, models.ErrRecognizerUnavailable) {
 		t.Errorf("OCR недоступен: %v", err)
 	}
 }

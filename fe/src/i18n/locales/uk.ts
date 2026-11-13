@@ -370,4 +370,8 @@ export const uk: Dict = {
   "upload.confidence": "Впевненість {pct}",
   "upload.open": "Відкрити фіксацію",
   "upload.others": "Інші номери на фото",
+  "upload.needLogin": "Увійдіть за токеном (панель на логотипі) або зареєструйтеся, щоб завантажувати фото.",
+  "upload.unlimited": "Тариф Pro: завантаження без обмежень.",
+  "upload.quotaOver": "Ліміт тарифу Free на добу вичерпано — Pro знімає обмеження.",
+  "upload.quotaLeft": "Залишилось завантажень на добу: {n} з 5 (тариф Free).",
 };

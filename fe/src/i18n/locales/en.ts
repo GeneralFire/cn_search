@@ -370,4 +370,8 @@ export const en: Dict = {
   "upload.confidence": "Confidence {pct}",
   "upload.open": "Open sighting",
   "upload.others": "Other plates in the photo",
+  "upload.needLogin": "Sign in with your token (panel on the logo) or sign up to upload photos.",
+  "upload.unlimited": "Pro plan: unlimited uploads.",
+  "upload.quotaOver": "Free plan daily limit reached — Pro removes the limit.",
+  "upload.quotaLeft": "Uploads left today: {n} of 5 (Free plan).",
 };

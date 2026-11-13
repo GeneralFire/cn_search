@@ -18,6 +18,9 @@ import (
 // MinPlateConfidence — номер с меньшей уверенностью OCR считается нераспознанным.
 const MinPlateConfidence = 0.5
 
+// UploadQuotaWindow — окно суточной квоты загрузок (скользящее: последние 24 часа).
+const UploadQuotaWindow = 24 * time.Hour
+
 // photoKeyPrefix — каталог загруженных фото в бакете (тестовые лежат в корне: car-N.jpg).
 const photoKeyPrefix = "u/"
 
@@ -47,7 +50,18 @@ func NewIngest(tx transactor, repo ingestRepository, ocr recognizer, photos phot
 // Фото (до 1600 px) и миниатюра (480 px) без EXIF — в S3, затем в одной транзакции номер
 // находится или создаётся и создаётся фиксация. Время и координаты — из запроса, иначе из EXIF;
 // время — иначе сейчас. Если транзакция не прошла, фото остаются в S3 (их подчистит будущая уборка).
+//
+// Квота: Free — не больше FreeUploadsPerDay загрузок за UploadQuotaWindow (*models.UploadQuotaError),
+// Pro — без ограничений. Проверяется до OCR (не тратить распознавание) и ещё раз в транзакции записи
+// под блокировкой пользователя (параллельные загрузки не превысят лимит).
 func (u *Ingest) Ingest(ctx context.Context, o models.IngestOpts) (models.IngestResult, error) {
+	left, err := u.UploadsLeft(ctx, o.User)
+	if err != nil {
+		return models.IngestResult{}, err
+	}
+	if left != nil && *left == 0 {
+		return models.IngestResult{}, &models.UploadQuotaError{Limit: FreeUploadsPerDay}
+	}
 	img, meta, err := decodePhoto(o.Photo)
 	if err != nil {
 		return models.IngestResult{}, &models.ValidationError{Message: errNotPhoto}
@@ -76,9 +90,11 @@ func (u *Ingest) Ingest(ctx context.Context, o models.IngestOpts) (models.Ingest
 	}
 	id := u.newID()
 	so := models.CreateSightingOpts{
-		PhotoKey: photoKeyPrefix + id + ".jpg",
-		ThumbKey: photoKeyPrefix + id + "_thumb.jpg",
-		Address:  strings.TrimSpace(o.Address),
+		PhotoKey:   photoKeyPrefix + id + ".jpg",
+		ThumbKey:   photoKeyPrefix + id + "_thumb.jpg",
+		Address:    strings.TrimSpace(o.Address),
+		UploadedBy: o.User.ID,
+		UploadedAt: u.now(),
 	}
 	so.AddressLocale = addressLocale(so.Address)
 	so.CreatedAt = u.now()
@@ -98,6 +114,20 @@ func (u *Ingest) Ingest(ctx context.Context, o models.IngestOpts) (models.Ingest
 
 	var s models.PlateSighting
 	err = u.tx.InWriteTx(ctx, func(ctx context.Context, tx db.Executor) error {
+		if o.User.Plan != models.PlanPro {
+			if err := u.repo.LockUser(ctx, tx, o.User.ID); err != nil {
+				return err
+			}
+			n, err := u.repo.CountUploads(ctx, tx, o.User.ID, so.UploadedAt.Add(-UploadQuotaWindow))
+			if err != nil {
+				return err
+			}
+			if UploadQuotaExceeded(o.User, n) {
+				return &models.UploadQuotaError{Limit: FreeUploadsPerDay}
+			}
+			rest := FreeUploadsPerDay - n - 1
+			left = &rest
+		}
 		so.PlateID, err = u.repo.UpsertPlate(ctx, tx, models.UpsertPlateOpts{Plate: best.Plate, Type: best.PlateType, Region: best.Region})
 		if err != nil {
 			return err
@@ -108,5 +138,22 @@ func (u *Ingest) Ingest(ctx context.Context, o models.IngestOpts) (models.Ingest
 	if err != nil {
 		return models.IngestResult{}, err
 	}
-	return models.IngestResult{Sighting: s, Candidates: cands}, nil
+	return models.IngestResult{Sighting: s, Candidates: cands, UploadsLeft: left}, nil
+}
+
+// UploadsLeft — сколько загрузок пользователь ещё может сделать за UploadQuotaWindow; nil — без ограничений (Pro).
+func (u *Ingest) UploadsLeft(ctx context.Context, user models.User) (*int, error) {
+	if user.Plan == models.PlanPro {
+		return nil, nil
+	}
+	var n int
+	err := u.tx.InReadTx(ctx, func(ctx context.Context, tx db.Executor) (err error) {
+		n, err = u.repo.CountUploads(ctx, tx, user.ID, u.now().Add(-UploadQuotaWindow))
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	left := max(0, FreeUploadsPerDay-n)
+	return &left, nil
 }

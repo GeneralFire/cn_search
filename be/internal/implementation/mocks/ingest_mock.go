@@ -25,6 +25,13 @@ type IngestMock struct {
 	afterIngestCounter  uint64
 	beforeIngestCounter uint64
 	IngestMock          mIngestMockIngest
+
+	funcUploadsLeft          func(ctx context.Context, user models.User) (ip1 *int, err error)
+	funcUploadsLeftOrigin    string
+	inspectFuncUploadsLeft   func(ctx context.Context, user models.User)
+	afterUploadsLeftCounter  uint64
+	beforeUploadsLeftCounter uint64
+	UploadsLeftMock          mIngestMockUploadsLeft
 }
 
 // NewIngestMock returns a mock for mm_implementation.ingest
@@ -37,6 +44,9 @@ func NewIngestMock(t minimock.Tester) *IngestMock {
 
 	m.IngestMock = mIngestMockIngest{mock: m}
 	m.IngestMock.callArgs = []*IngestMockIngestParams{}
+
+	m.UploadsLeftMock = mIngestMockUploadsLeft{mock: m}
+	m.UploadsLeftMock.callArgs = []*IngestMockUploadsLeftParams{}
 
 	t.Cleanup(m.MinimockFinish)
 
@@ -386,11 +396,356 @@ func (m *IngestMock) MinimockIngestInspect() {
 	}
 }
 
+type mIngestMockUploadsLeft struct {
+	optional           bool
+	mock               *IngestMock
+	defaultExpectation *IngestMockUploadsLeftExpectation
+	expectations       []*IngestMockUploadsLeftExpectation
+
+	callArgs []*IngestMockUploadsLeftParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// IngestMockUploadsLeftExpectation specifies expectation struct of the ingest.UploadsLeft
+type IngestMockUploadsLeftExpectation struct {
+	mock               *IngestMock
+	params             *IngestMockUploadsLeftParams
+	paramPtrs          *IngestMockUploadsLeftParamPtrs
+	expectationOrigins IngestMockUploadsLeftExpectationOrigins
+	results            *IngestMockUploadsLeftResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// IngestMockUploadsLeftParams contains parameters of the ingest.UploadsLeft
+type IngestMockUploadsLeftParams struct {
+	ctx  context.Context
+	user models.User
+}
+
+// IngestMockUploadsLeftParamPtrs contains pointers to parameters of the ingest.UploadsLeft
+type IngestMockUploadsLeftParamPtrs struct {
+	ctx  *context.Context
+	user *models.User
+}
+
+// IngestMockUploadsLeftResults contains results of the ingest.UploadsLeft
+type IngestMockUploadsLeftResults struct {
+	ip1 *int
+	err error
+}
+
+// IngestMockUploadsLeftOrigins contains origins of expectations of the ingest.UploadsLeft
+type IngestMockUploadsLeftExpectationOrigins struct {
+	origin     string
+	originCtx  string
+	originUser string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmUploadsLeft *mIngestMockUploadsLeft) Optional() *mIngestMockUploadsLeft {
+	mmUploadsLeft.optional = true
+	return mmUploadsLeft
+}
+
+// Expect sets up expected params for ingest.UploadsLeft
+func (mmUploadsLeft *mIngestMockUploadsLeft) Expect(ctx context.Context, user models.User) *mIngestMockUploadsLeft {
+	if mmUploadsLeft.mock.funcUploadsLeft != nil {
+		mmUploadsLeft.mock.t.Fatalf("IngestMock.UploadsLeft mock is already set by Set")
+	}
+
+	if mmUploadsLeft.defaultExpectation == nil {
+		mmUploadsLeft.defaultExpectation = &IngestMockUploadsLeftExpectation{}
+	}
+
+	if mmUploadsLeft.defaultExpectation.paramPtrs != nil {
+		mmUploadsLeft.mock.t.Fatalf("IngestMock.UploadsLeft mock is already set by ExpectParams functions")
+	}
+
+	mmUploadsLeft.defaultExpectation.params = &IngestMockUploadsLeftParams{ctx, user}
+	mmUploadsLeft.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmUploadsLeft.expectations {
+		if minimock.Equal(e.params, mmUploadsLeft.defaultExpectation.params) {
+			mmUploadsLeft.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmUploadsLeft.defaultExpectation.params)
+		}
+	}
+
+	return mmUploadsLeft
+}
+
+// ExpectCtxParam1 sets up expected param ctx for ingest.UploadsLeft
+func (mmUploadsLeft *mIngestMockUploadsLeft) ExpectCtxParam1(ctx context.Context) *mIngestMockUploadsLeft {
+	if mmUploadsLeft.mock.funcUploadsLeft != nil {
+		mmUploadsLeft.mock.t.Fatalf("IngestMock.UploadsLeft mock is already set by Set")
+	}
+
+	if mmUploadsLeft.defaultExpectation == nil {
+		mmUploadsLeft.defaultExpectation = &IngestMockUploadsLeftExpectation{}
+	}
+
+	if mmUploadsLeft.defaultExpectation.params != nil {
+		mmUploadsLeft.mock.t.Fatalf("IngestMock.UploadsLeft mock is already set by Expect")
+	}
+
+	if mmUploadsLeft.defaultExpectation.paramPtrs == nil {
+		mmUploadsLeft.defaultExpectation.paramPtrs = &IngestMockUploadsLeftParamPtrs{}
+	}
+	mmUploadsLeft.defaultExpectation.paramPtrs.ctx = &ctx
+	mmUploadsLeft.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmUploadsLeft
+}
+
+// ExpectUserParam2 sets up expected param user for ingest.UploadsLeft
+func (mmUploadsLeft *mIngestMockUploadsLeft) ExpectUserParam2(user models.User) *mIngestMockUploadsLeft {
+	if mmUploadsLeft.mock.funcUploadsLeft != nil {
+		mmUploadsLeft.mock.t.Fatalf("IngestMock.UploadsLeft mock is already set by Set")
+	}
+
+	if mmUploadsLeft.defaultExpectation == nil {
+		mmUploadsLeft.defaultExpectation = &IngestMockUploadsLeftExpectation{}
+	}
+
+	if mmUploadsLeft.defaultExpectation.params != nil {
+		mmUploadsLeft.mock.t.Fatalf("IngestMock.UploadsLeft mock is already set by Expect")
+	}
+
+	if mmUploadsLeft.defaultExpectation.paramPtrs == nil {
+		mmUploadsLeft.defaultExpectation.paramPtrs = &IngestMockUploadsLeftParamPtrs{}
+	}
+	mmUploadsLeft.defaultExpectation.paramPtrs.user = &user
+	mmUploadsLeft.defaultExpectation.expectationOrigins.originUser = minimock.CallerInfo(1)
+
+	return mmUploadsLeft
+}
+
+// Inspect accepts an inspector function that has same arguments as the ingest.UploadsLeft
+func (mmUploadsLeft *mIngestMockUploadsLeft) Inspect(f func(ctx context.Context, user models.User)) *mIngestMockUploadsLeft {
+	if mmUploadsLeft.mock.inspectFuncUploadsLeft != nil {
+		mmUploadsLeft.mock.t.Fatalf("Inspect function is already set for IngestMock.UploadsLeft")
+	}
+
+	mmUploadsLeft.mock.inspectFuncUploadsLeft = f
+
+	return mmUploadsLeft
+}
+
+// Return sets up results that will be returned by ingest.UploadsLeft
+func (mmUploadsLeft *mIngestMockUploadsLeft) Return(ip1 *int, err error) *IngestMock {
+	if mmUploadsLeft.mock.funcUploadsLeft != nil {
+		mmUploadsLeft.mock.t.Fatalf("IngestMock.UploadsLeft mock is already set by Set")
+	}
+
+	if mmUploadsLeft.defaultExpectation == nil {
+		mmUploadsLeft.defaultExpectation = &IngestMockUploadsLeftExpectation{mock: mmUploadsLeft.mock}
+	}
+	mmUploadsLeft.defaultExpectation.results = &IngestMockUploadsLeftResults{ip1, err}
+	mmUploadsLeft.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmUploadsLeft.mock
+}
+
+// Set uses given function f to mock the ingest.UploadsLeft method
+func (mmUploadsLeft *mIngestMockUploadsLeft) Set(f func(ctx context.Context, user models.User) (ip1 *int, err error)) *IngestMock {
+	if mmUploadsLeft.defaultExpectation != nil {
+		mmUploadsLeft.mock.t.Fatalf("Default expectation is already set for the ingest.UploadsLeft method")
+	}
+
+	if len(mmUploadsLeft.expectations) > 0 {
+		mmUploadsLeft.mock.t.Fatalf("Some expectations are already set for the ingest.UploadsLeft method")
+	}
+
+	mmUploadsLeft.mock.funcUploadsLeft = f
+	mmUploadsLeft.mock.funcUploadsLeftOrigin = minimock.CallerInfo(1)
+	return mmUploadsLeft.mock
+}
+
+// When sets expectation for the ingest.UploadsLeft which will trigger the result defined by the following
+// Then helper
+func (mmUploadsLeft *mIngestMockUploadsLeft) When(ctx context.Context, user models.User) *IngestMockUploadsLeftExpectation {
+	if mmUploadsLeft.mock.funcUploadsLeft != nil {
+		mmUploadsLeft.mock.t.Fatalf("IngestMock.UploadsLeft mock is already set by Set")
+	}
+
+	expectation := &IngestMockUploadsLeftExpectation{
+		mock:               mmUploadsLeft.mock,
+		params:             &IngestMockUploadsLeftParams{ctx, user},
+		expectationOrigins: IngestMockUploadsLeftExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmUploadsLeft.expectations = append(mmUploadsLeft.expectations, expectation)
+	return expectation
+}
+
+// Then sets up ingest.UploadsLeft return parameters for the expectation previously defined by the When method
+func (e *IngestMockUploadsLeftExpectation) Then(ip1 *int, err error) *IngestMock {
+	e.results = &IngestMockUploadsLeftResults{ip1, err}
+	return e.mock
+}
+
+// Times sets number of times ingest.UploadsLeft should be invoked
+func (mmUploadsLeft *mIngestMockUploadsLeft) Times(n uint64) *mIngestMockUploadsLeft {
+	if n == 0 {
+		mmUploadsLeft.mock.t.Fatalf("Times of IngestMock.UploadsLeft mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmUploadsLeft.expectedInvocations, n)
+	mmUploadsLeft.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmUploadsLeft
+}
+
+func (mmUploadsLeft *mIngestMockUploadsLeft) invocationsDone() bool {
+	if len(mmUploadsLeft.expectations) == 0 && mmUploadsLeft.defaultExpectation == nil && mmUploadsLeft.mock.funcUploadsLeft == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmUploadsLeft.mock.afterUploadsLeftCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmUploadsLeft.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// UploadsLeft implements mm_implementation.ingest
+func (mmUploadsLeft *IngestMock) UploadsLeft(ctx context.Context, user models.User) (ip1 *int, err error) {
+	mm_atomic.AddUint64(&mmUploadsLeft.beforeUploadsLeftCounter, 1)
+	defer mm_atomic.AddUint64(&mmUploadsLeft.afterUploadsLeftCounter, 1)
+
+	mmUploadsLeft.t.Helper()
+
+	if mmUploadsLeft.inspectFuncUploadsLeft != nil {
+		mmUploadsLeft.inspectFuncUploadsLeft(ctx, user)
+	}
+
+	mm_params := IngestMockUploadsLeftParams{ctx, user}
+
+	// Record call args
+	mmUploadsLeft.UploadsLeftMock.mutex.Lock()
+	mmUploadsLeft.UploadsLeftMock.callArgs = append(mmUploadsLeft.UploadsLeftMock.callArgs, &mm_params)
+	mmUploadsLeft.UploadsLeftMock.mutex.Unlock()
+
+	for _, e := range mmUploadsLeft.UploadsLeftMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.ip1, e.results.err
+		}
+	}
+
+	if mmUploadsLeft.UploadsLeftMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmUploadsLeft.UploadsLeftMock.defaultExpectation.Counter, 1)
+		mm_want := mmUploadsLeft.UploadsLeftMock.defaultExpectation.params
+		mm_want_ptrs := mmUploadsLeft.UploadsLeftMock.defaultExpectation.paramPtrs
+
+		mm_got := IngestMockUploadsLeftParams{ctx, user}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmUploadsLeft.t.Errorf("IngestMock.UploadsLeft got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmUploadsLeft.UploadsLeftMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.user != nil && !minimock.Equal(*mm_want_ptrs.user, mm_got.user) {
+				mmUploadsLeft.t.Errorf("IngestMock.UploadsLeft got unexpected parameter user, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmUploadsLeft.UploadsLeftMock.defaultExpectation.expectationOrigins.originUser, *mm_want_ptrs.user, mm_got.user, minimock.Diff(*mm_want_ptrs.user, mm_got.user))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmUploadsLeft.t.Errorf("IngestMock.UploadsLeft got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmUploadsLeft.UploadsLeftMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmUploadsLeft.UploadsLeftMock.defaultExpectation.results
+		if mm_results == nil {
+			mmUploadsLeft.t.Fatal("No results are set for the IngestMock.UploadsLeft")
+		}
+		return (*mm_results).ip1, (*mm_results).err
+	}
+	if mmUploadsLeft.funcUploadsLeft != nil {
+		return mmUploadsLeft.funcUploadsLeft(ctx, user)
+	}
+	mmUploadsLeft.t.Fatalf("Unexpected call to IngestMock.UploadsLeft. %v %v", ctx, user)
+	return
+}
+
+// UploadsLeftAfterCounter returns a count of finished IngestMock.UploadsLeft invocations
+func (mmUploadsLeft *IngestMock) UploadsLeftAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmUploadsLeft.afterUploadsLeftCounter)
+}
+
+// UploadsLeftBeforeCounter returns a count of IngestMock.UploadsLeft invocations
+func (mmUploadsLeft *IngestMock) UploadsLeftBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmUploadsLeft.beforeUploadsLeftCounter)
+}
+
+// Calls returns a list of arguments used in each call to IngestMock.UploadsLeft.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmUploadsLeft *mIngestMockUploadsLeft) Calls() []*IngestMockUploadsLeftParams {
+	mmUploadsLeft.mutex.RLock()
+
+	argCopy := make([]*IngestMockUploadsLeftParams, len(mmUploadsLeft.callArgs))
+	copy(argCopy, mmUploadsLeft.callArgs)
+
+	mmUploadsLeft.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockUploadsLeftDone returns true if the count of the UploadsLeft invocations corresponds
+// the number of defined expectations
+func (m *IngestMock) MinimockUploadsLeftDone() bool {
+	if m.UploadsLeftMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.UploadsLeftMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.UploadsLeftMock.invocationsDone()
+}
+
+// MinimockUploadsLeftInspect logs each unmet expectation
+func (m *IngestMock) MinimockUploadsLeftInspect() {
+	for _, e := range m.UploadsLeftMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to IngestMock.UploadsLeft at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterUploadsLeftCounter := mm_atomic.LoadUint64(&m.afterUploadsLeftCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.UploadsLeftMock.defaultExpectation != nil && afterUploadsLeftCounter < 1 {
+		if m.UploadsLeftMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to IngestMock.UploadsLeft at\n%s", m.UploadsLeftMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to IngestMock.UploadsLeft at\n%s with params: %#v", m.UploadsLeftMock.defaultExpectation.expectationOrigins.origin, *m.UploadsLeftMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcUploadsLeft != nil && afterUploadsLeftCounter < 1 {
+		m.t.Errorf("Expected call to IngestMock.UploadsLeft at\n%s", m.funcUploadsLeftOrigin)
+	}
+
+	if !m.UploadsLeftMock.invocationsDone() && afterUploadsLeftCounter > 0 {
+		m.t.Errorf("Expected %d calls to IngestMock.UploadsLeft at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.UploadsLeftMock.expectedInvocations), m.UploadsLeftMock.expectedInvocationsOrigin, afterUploadsLeftCounter)
+	}
+}
+
 // MinimockFinish checks that all mocked methods have been called the expected number of times
 func (m *IngestMock) MinimockFinish() {
 	m.finishOnce.Do(func() {
 		if !m.minimockDone() {
 			m.MinimockIngestInspect()
+
+			m.MinimockUploadsLeftInspect()
 		}
 	})
 }
@@ -414,5 +769,6 @@ func (m *IngestMock) MinimockWait(timeout mm_time.Duration) {
 func (m *IngestMock) minimockDone() bool {
 	done := true
 	return done &&
-		m.MinimockIngestDone()
+		m.MinimockIngestDone() &&
+		m.MinimockUploadsLeftDone()
 }

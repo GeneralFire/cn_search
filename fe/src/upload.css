@@ -46,3 +46,7 @@
 .up-result__more ul { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 8px; }
 .up-result__more li { display: flex; align-items: center; gap: 10px; color: var(--muted); }
 .up-result .btn { text-decoration: none; }
+
+.up-quota { margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--accent-soft); font-size: 0.95rem; }
+.up-quota--warn { background: color-mix(in srgb, #f5a524 18%, transparent); }
+.up-quota a { color: var(--accent); font-weight: 600; }

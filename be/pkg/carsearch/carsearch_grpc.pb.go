@@ -129,7 +129,8 @@ type CarSearchServiceClient interface {
 	// Ingest — новая фиксация по фото: номер распознаёт OCR-сервис (ocr/), фото и миниатюра
 	// уходят в S3, номер находится или создаётся, фиксация сохраняется. Номер не распознан
 	// (уверенность ниже порога) или файл не фото — INVALID_ARGUMENT; OCR недоступен — UNAVAILABLE.
-	// По HTTP (clay, JSON) photo передаётся строкой base64.
+	// По HTTP (clay, JSON) photo передаётся строкой base64. Нужен вход (токен пользователя), иначе
+	// UNAUTHENTICATED; тариф Free — не больше 5 загрузок за 24 часа, сверх — RESOURCE_EXHAUSTED; Pro — без лимита.
 	Ingest(ctx context.Context, in *IngestRequest, opts ...grpc.CallOption) (*IngestResponse, error)
 }
 
@@ -483,7 +484,8 @@ type CarSearchServiceServer interface {
 	// Ingest — новая фиксация по фото: номер распознаёт OCR-сервис (ocr/), фото и миниатюра
 	// уходят в S3, номер находится или создаётся, фиксация сохраняется. Номер не распознан
 	// (уверенность ниже порога) или файл не фото — INVALID_ARGUMENT; OCR недоступен — UNAVAILABLE.
-	// По HTTP (clay, JSON) photo передаётся строкой base64.
+	// По HTTP (clay, JSON) photo передаётся строкой base64. Нужен вход (токен пользователя), иначе
+	// UNAUTHENTICATED; тариф Free — не больше 5 загрузок за 24 часа, сверх — RESOURCE_EXHAUSTED; Pro — без лимита.
 	Ingest(context.Context, *IngestRequest) (*IngestResponse, error)
 	mustEmbedUnimplementedCarSearchServiceServer()
 }

@@ -5,6 +5,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch"
 )
@@ -20,6 +21,11 @@ func (s *CarSearch) Me(ctx context.Context, _ *pb.MeRequest) (*pb.MeResponse, er
 	switch status.Code(err) {
 	case codes.OK:
 		resp.Authenticated, resp.User = true, userPB(u)
+		if s.ingest != nil { // остаток загрузок фото: сбой подсчёта не мешает ответу
+			if left, err := s.ingest.UploadsLeft(ctx, u); err == nil && left != nil {
+				resp.UploadsLeft = proto.Int32(int32(*left))
+			}
+		}
 	case codes.Unauthenticated:
 	default:
 		return nil, err

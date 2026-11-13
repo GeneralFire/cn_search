@@ -179,11 +179,20 @@ CREATE INDEX plate_views_plate_created_at_idx ON plate_views (plate_id, created_
 -- Общий журнал без фильтра.
 CREATE INDEX plate_views_created_at_idx ON plate_views (created_at DESC, id);
 
+-- Кто загрузил фиксацию (rpc Ingest) и когда. created_at — время съёмки (может быть в прошлом, из EXIF),
+-- поэтому суточная квота загрузок считается по uploaded_at. NULL — не загрузка пользователя (тестовые данные).
+ALTER TABLE plate_sightings
+    ADD COLUMN uploaded_by uuid REFERENCES users (id),
+    ADD COLUMN uploaded_at timestamptz;
+-- Квота загрузок: число загрузок пользователя за последние сутки.
+CREATE INDEX plate_sightings_uploaded_by_idx ON plate_sightings (uploaded_by, uploaded_at) WHERE uploaded_by IS NOT NULL;
+
 -- +goose Down
 DROP TABLE plate_views;
 DROP TABLE api_tokens;
 DROP TABLE camera_requests;
 DROP TYPE camera_request_status;
+ALTER TABLE plate_sightings DROP COLUMN uploaded_by, DROP COLUMN uploaded_at;
 DROP TABLE payments;
 DROP TABLE users;
 DROP TABLE complaints;

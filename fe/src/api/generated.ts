@@ -316,6 +316,11 @@ export interface CarsearchIngestResponse {
   candidates?: CarsearchPlateCandidate[];
   /** Созданная фиксация. */
   sighting?: CarsearchPlateSighting;
+  /**
+   * Сколько загрузок ещё можно за последние 24 часа (тариф Free); не задано — без ограничений (Pro).
+   * @format int32
+   */
+  uploadsLeft?: number;
 }
 
 export interface CarsearchListApiTokensRequest {
@@ -464,6 +469,12 @@ export interface CarsearchMeResponse {
   authenticated?: boolean;
   /** Заголовок admin-token верный. */
   isAdmin?: boolean;
+  /**
+   * Сколько загрузок фото (rpc Ingest) осталось за последние 24 часа; не задано — без ограничений
+   * (Pro), не вошёл или загрузка фото выключена.
+   * @format int32
+   */
+  uploadsLeft?: number;
   /** User — пользователь. */
   user?: CarsearchUser;
 }
@@ -1193,7 +1204,7 @@ export class CarSearchApi<
      *
      * @tags CarSearchService
      * @name CarSearchServiceIngest
-     * @summary Ingest — новая фиксация по фото: номер распознаёт OCR-сервис (ocr/), фото и миниатюра уходят в S3, номер находится или создаётся, фиксация сохраняется. Номер не распознан (уверенность ниже порога) или файл не фото — INVALID_ARGUMENT; OCR недоступен — UNAVAILABLE. По HTTP (clay, JSON) photo передаётся строкой base64.
+     * @summary Ingest — новая фиксация по фото: номер распознаёт OCR-сервис (ocr/), фото и миниатюра уходят в S3, номер находится или создаётся, фиксация сохраняется. Номер не распознан (уверенность ниже порога) или файл не фото — INVALID_ARGUMENT; OCR недоступен — UNAVAILABLE. По HTTP (clay, JSON) photo передаётся строкой base64. Нужен вход (токен пользователя), иначе UNAUTHENTICATED; тариф Free — не больше 5 загрузок за 24 часа, сверх — RESOURCE_EXHAUSTED; Pro — без лимита.
      * @request POST:/carsearch.CarSearchService/Ingest
      */
     carSearchServiceIngest: (

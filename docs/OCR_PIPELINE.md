@@ -29,6 +29,14 @@ flowchart LR
 
 Steps of `rpc Ingest` (`be/internal/usecase/ingest.go`):
 
+0. **Sign-in and quota**: uploads require a user token (cookie `cs_token` or `Authorization: Bearer`);
+   anonymous requests get `UNAUTHENTICATED` (“sign in to upload photos”) — the quota is per user, and
+   anonymous uploads would be an easy abuse vector. Free plan: at most 5 uploads in a rolling 24 h
+   window, counted by `plate_sightings.uploaded_by` / `uploaded_at` (not `created_at`, which is the
+   shot time from EXIF); over the limit → `RESOURCE_EXHAUSTED`. Pro: unlimited. The check runs before
+   OCR (to not waste recognition) and again inside the write transaction with the user row locked
+   (`SELECT … FOR UPDATE`), so parallel uploads cannot exceed the limit. Remaining uploads are returned
+   in `IngestResponse.uploads_left` and `MeResponse.uploads_left` and shown on `/upload`.
 1. **Validate** (`implementation/ingest.go`): photo present and ≤ 8 MB, `lat`/`lon` only as a pair
    and in range, address ≤ 300 chars. Over HTTP (clay) the request is JSON, so `bytes photo`
    is a base64 string; gRPC accepts up to 9 MB messages.

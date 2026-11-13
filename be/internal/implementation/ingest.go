@@ -8,6 +8,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/GeneralFire/cn_search/be/internal/models"
 	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch"
@@ -20,10 +21,18 @@ const (
 	maxAddressLength = 300
 )
 
-// Ingest — rpc Ingest: фото → OCR → номер → фиксация. Здесь — проверки запроса; сценарий — в usecase.
+// Ingest — rpc Ingest: фото → OCR → номер → фиксация. Здесь — вход и проверки запроса; сценарий
+// и квота загрузок — в usecase. Анонимно загружать нельзя: квота считается на пользователя.
 func (s *CarSearch) Ingest(ctx context.Context, req *pb.IngestRequest) (*pb.IngestResponse, error) {
 	if s.ingest == nil {
 		return nil, status.Error(codes.Unimplemented, "загрузка фото не включена (нет OCR_URL или S3)")
+	}
+	user, err := s.currentUser(ctx)
+	if status.Code(err) == codes.Unauthenticated {
+		return nil, status.Error(codes.Unauthenticated, "войдите, чтобы загружать фото")
+	}
+	if err != nil {
+		return nil, err
 	}
 	address := strings.TrimSpace(req.GetAddress())
 	switch {
@@ -38,22 +47,29 @@ func (s *CarSearch) Ingest(ctx context.Context, req *pb.IngestRequest) (*pb.Inge
 	case utf8.RuneCountInString(address) > maxAddressLength:
 		return nil, status.Errorf(codes.InvalidArgument, "address: не длиннее %d символов", maxAddressLength)
 	}
-	o := models.IngestOpts{Photo: req.GetPhoto(), Lat: req.Lat, Lon: req.Lon, Address: address}
+	o := models.IngestOpts{Photo: req.GetPhoto(), Lat: req.Lat, Lon: req.Lon, Address: address, User: user}
 	if req.GetTakenAt() != nil {
 		t := req.GetTakenAt().AsTime()
 		o.TakenAt = &t
 	}
 	res, err := s.ingest.Ingest(ctx, o)
 	var invalid *models.ValidationError
+	var quota *models.UploadQuotaError
 	switch {
 	case errors.As(err, &invalid):
 		return nil, status.Error(codes.InvalidArgument, invalid.Message)
+	case errors.As(err, &quota):
+		return nil, status.Errorf(codes.ResourceExhausted,
+			"лимит тарифа Free — %d фото за сутки; оформите Pro, чтобы загружать без ограничений", quota.Limit)
 	case errors.Is(err, models.ErrRecognizerUnavailable):
 		return nil, status.Error(codes.Unavailable, "сервис распознавания недоступен, попробуйте позже")
 	case err != nil:
 		return nil, status.Error(codes.Internal, "не удалось сохранить фиксацию")
 	}
 	out := &pb.IngestResponse{Sighting: s.toPB(res.Sighting)}
+	if res.UploadsLeft != nil {
+		out.UploadsLeft = proto.Int32(int32(*res.UploadsLeft))
+	}
 	for _, c := range res.Candidates {
 		bbox := make([]int32, len(c.BBox))
 		for i, v := range c.BBox {

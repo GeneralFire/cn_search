@@ -88,6 +88,8 @@ type apiTokensRepository interface {
 type ingestRepository interface {
 	UpsertPlate(ctx context.Context, tx db.Executor, o models.UpsertPlateOpts) (string, error)
 	CreateSighting(ctx context.Context, tx db.Executor, o models.CreateSightingOpts) (models.PlateSighting, error)
+	CountUploads(ctx context.Context, tx db.Executor, userID string, since time.Time) (int, error)
+	LockUser(ctx context.Context, tx db.Executor, userID string) error
 }
 
 // recognizer — распознавание номеров на фото (реализация — ocr.Client, HTTP к сервису ocr/).

@@ -370,4 +370,8 @@ export const de: Dict = {
   "upload.confidence": "Sicherheit {pct}",
   "upload.open": "Sichtung öffnen",
   "upload.others": "Weitere Kennzeichen im Foto",
+  "upload.needLogin": "Melden Sie sich mit Ihrem Token an (Panel am Logo) oder registrieren Sie sich, um Fotos hochzuladen.",
+  "upload.unlimited": "Pro-Tarif: unbegrenzte Uploads.",
+  "upload.quotaOver": "Tageslimit des Free-Tarifs erreicht — Pro hebt das Limit auf.",
+  "upload.quotaLeft": "Verbleibende Uploads heute: {n} von 5 (Free-Tarif).",
 };
