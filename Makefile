@@ -28,6 +28,8 @@ PROTOC_GEN_GRPC  := v1.6.2
 # protoc — не Go-модуль, ставится отдельно (Homebrew локально, релиз GitHub в CI); версия попадает
 # в шапку сгенерированных *.pb.go, поэтому у всех должна совпадать.
 PROTOC_VERSION   := 36.2
+# golangci-lint: образ с Docker Hub (локально без установки); та же версия — в .github/workflows/ci.yml.
+GOLANGCI_LINT_VERSION := v2.15.0
 
 .DEFAULT_GOAL := help
 
@@ -152,6 +154,13 @@ gen-ts: ## swagger.json → TypeScript-клиент (fe/src/api/generated.ts)
 test: ## тесты бэка и проверка типов фронта
 	cd $(BE) && go test -race -count=1 ./...
 	cd $(FE) && npx tsc
+
+.PHONY: lint
+lint: ## golangci-lint бэка (be/.golangci.yml) в docker-образе golangci/golangci-lint
+	docker run --rm -v "$(abspath $(BE))":/src -w /src \
+		-v golangci-lint-cache:/root/.cache \
+		-e GOPROXY -e GOSUMDB -e GOFLAGS -e GOPRIVATE= -e GONOPROXY= -e GONOSUMDB= \
+		golangci/golangci-lint:$(GOLANGCI_LINT_VERSION) golangci-lint run ./...
 
 .PHONY: check-registries
 check-registries: ## убедиться, что зависимости только из публичных реестров

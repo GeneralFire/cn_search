@@ -49,6 +49,9 @@
   в `api_tokens` — только sha256 подписи и остаток `requests_left`. Токен — cookie `cs_token` или `authorization: Bearer`.
   rpc Get = `usecase.ApiTokens.OpenPlate` (одна InWriteTx): списание + запись в `plate_views`; admin-token квоту не тратит.
   Админка: вкладки «Токены»/«Просмотры» — `fe/src/admin-tokens.ts`, остаток в настройках — `fe/src/apitoken-settings.ts`.
+- `GET /api/health` — liveness, `GET /api/ready` — readiness (`be/internal/health`: ping БД и HeadBucket S3, таймаут 1 с,
+  иначе 503 с причиной); healthcheck `be` в compose — на `/api/ready`. Линтер — `make lint` (golangci-lint в docker,
+  `be/.golangci.yml`, версия в Makefile и CI), обновления — `.github/dependabot.yml`.
 - Данные БД и S3 — bind mount в `./.data` (не коммитится), удаляет `make reset`.
 - `fe/` — TypeScript + Vite. TS-клиент `fe/src/api/generated.ts` генерируется из swagger: `make gen-ts`.
   Поиск по номеру, бесконечная прокрутка + «Загрузить ещё», модалка «Уточнить» (`src/clarify.ts`; с карточек главной и со страницы номера),

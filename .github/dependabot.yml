@@ -1,0 +1,50 @@
+# Dependabot: обновления зависимостей раз в неделю; мелкие (minor/patch) — одним PR на экосистему.
+# Все экосистемы — публичные реестры (proxy.golang.org, registry.npmjs.org, PyPI, Docker Hub).
+version: 2
+
+updates:
+  - package-ecosystem: gomod
+    directory: /be
+    schedule:
+      interval: weekly
+    groups:
+      go-minor:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /fe
+    registries: [npmjs]
+    schedule:
+      interval: weekly
+    groups:
+      npm-minor:
+        update-types: [minor, patch]
+
+  - package-ecosystem: pip
+    directory: /ocr
+    schedule:
+      interval: weekly
+    groups:
+      pip-minor:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directories: [/be, /fe, /ocr]
+    schedule:
+      interval: weekly
+    groups:
+      docker-minor:
+        update-types: [minor, patch]
+
+registries:
+  npmjs:
+    type: npm-registry
+    url: https://registry.npmjs.org

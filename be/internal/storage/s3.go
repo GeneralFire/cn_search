@@ -38,3 +38,15 @@ func (s *S3) Put(ctx context.Context, key string, data []byte, contentType strin
 	}
 	return nil
 }
+
+// Ping — проверка готовности: бакет доступен (HeadBucket).
+func (s *S3) Ping(ctx context.Context) error {
+	ok, err := s.client.BucketExists(ctx, s.bucket)
+	if err != nil {
+		return fmt.Errorf("s3 head bucket %s: %w", s.bucket, err)
+	}
+	if !ok {
+		return fmt.Errorf("s3: бакет %s не найден", s.bucket)
+	}
+	return nil
+}

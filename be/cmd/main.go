@@ -24,6 +24,7 @@ import (
 
 	"github.com/GeneralFire/cn_search/be/internal/apitoken"
 	"github.com/GeneralFire/cn_search/be/internal/db"
+	"github.com/GeneralFire/cn_search/be/internal/health"
 	"github.com/GeneralFire/cn_search/be/internal/implementation"
 	"github.com/GeneralFire/cn_search/be/internal/ocr"
 	"github.com/GeneralFire/cn_search/be/internal/repository"
@@ -115,11 +116,14 @@ func serve(ctx context.Context, log *slog.Logger, cfg config) error {
 			implementation.WithCameraRequests(usecase.NewCameraRequests(cluster, repo)),
 			implementation.WithApiTokens(usecase.NewApiTokens(cluster, repo, apitoken.NewSigner(cfg.SigningKey))),
 		}
+		// Готовность (/api/ready): БД и, если настроен, бакет S3.
+		ready := health.New(health.DefaultTimeout).With("db", pool)
 		if cfg.OCRURL != "" && cfg.S3Endpoint != "" {
 			photos, err := storage.NewS3(cfg.S3Endpoint, cfg.S3AccessKey, cfg.S3SecretKey, cfg.S3Bucket, cfg.S3UseSSL)
 			if err != nil {
 				return err
 			}
+			ready.With("s3", photos)
 			opts = append(opts, implementation.WithIngest(usecase.NewIngest(cluster, repo, ocr.New(cfg.OCRURL), photos)))
 		} else {
 			log.Warn("OCR_URL или S3_ENDPOINT не заданы — загрузка фото (rpc Ingest) выключена")
@@ -134,10 +138,8 @@ func serve(ctx context.Context, log *slog.Logger, cfg config) error {
 		api := chi.NewRouter()
 		desc.RegisterHTTP(api)
 		root := chi.NewRouter()
-		root.Get(apiPrefix+"/health", func(w http.ResponseWriter, _ *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"status":"ok"}`))
-		})
+		root.Get(apiPrefix+"/health", health.Live)
+		root.Get(apiPrefix+"/ready", ready.Ready)
 		swaggerJSON := desc.SwaggerDef(func(s *spec.Swagger) { s.BasePath = apiPrefix })
 		root.Get(apiPrefix+"/swagger.json", func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "application/json")

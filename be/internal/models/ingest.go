@@ -14,7 +14,9 @@ type UploadQuotaError struct {
 	Limit int
 }
 
-func (e *UploadQuotaError) Error() string { return fmt.Sprintf("upload quota exceeded: %d per day", e.Limit) }
+func (e *UploadQuotaError) Error() string {
+	return fmt.Sprintf("upload quota exceeded: %d per day", e.Limit)
+}
 
 // IngestOpts — новая фиксация по фото (rpc Ingest).
 type IngestOpts struct {

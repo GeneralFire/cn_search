@@ -1,4 +1,4 @@
-# CI: тесты бэка (с Postgres для интеграционных), сборка фронта, реестры, актуальность генерации.
+# CI: тесты и линтер бэка (с Postgres для интеграционных), сборка фронта, реестры, актуальность генерации.
 name: CI
 
 on:
@@ -58,6 +58,20 @@ jobs:
       - name: go test -race
         working-directory: be
         run: go test -race -count=1 ./...
+
+  lint:
+    name: Go lint (golangci-lint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: be/go.mod
+          cache-dependency-path: be/go.sum
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.15.0 # = GOLANGCI_LINT_VERSION в Makefile
+          working-directory: be
 
   fe:
     name: Frontend (tsc, vite build)

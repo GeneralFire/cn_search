@@ -119,6 +119,12 @@ services:
         condition: service_completed_successfully
       ocr:
         condition: service_healthy
+    # Готовность: /api/ready пингует БД и бакет S3 (503, если что-то недоступно); fe ждёт service_healthy.
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/api/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
     restart: unless-stopped
 
   # --- Фронтенд (Vite, hot-reload) ---

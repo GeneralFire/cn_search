@@ -1,0 +1,64 @@
+# golangci-lint v2 (версия — GOLANGCI_LINT_VERSION в Makefile и в .github/workflows/ci.yml).
+# Локально: make lint (через образ golangci/golangci-lint с Docker Hub).
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  default: none
+  enable:
+    - govet
+    - staticcheck
+    - errcheck
+    - ineffassign
+    - unused
+    - revive
+  settings:
+    staticcheck:
+      # Набор по умолчанию + без QF1001 (De Morgan): подсказка стиля, не ошибка.
+      checks: ["all", "-ST1000", "-ST1003", "-ST1016", "-ST1020", "-ST1021", "-ST1022", "-QF1001"]
+    errcheck:
+      # Закрытие ответов/тел и запись ответа клиенту — ошибку обработать нечем.
+      exclude-functions:
+        - (io.Closer).Close
+        - (net/http.ResponseWriter).Write
+    revive:
+      # Мягкий набор: только то, что ловит реальные ошибки и явные огрехи стиля.
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: errorf
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: range
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: superfluous-else
+        - name: time-naming
+        - name: unreachable-code
+        - name: var-declaration
+  exclusions:
+    generated: lax
+    presets:
+      - std-error-handling
+    paths:
+      - pkg/
+      - mocks/
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/GeneralFire/cn_search
+  exclusions:
+    generated: lax
+    paths:
+      - pkg/
+      - mocks/
