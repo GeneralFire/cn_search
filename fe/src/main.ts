@@ -2,7 +2,8 @@ import "./style.css";
 import "./didyoumean.css";
 import "./theme";
 import "./adminmode"; // до первых запросов: сохранённый admin-token попадает в заголовки
-import { ApiError, clarify, search, type Car } from "./api";
+import { ApiError, search, type Car } from "./api";
+import { openClarify } from "./clarify";
 import { navigate, onRoute, plateHref } from "./router";
 import { renderPlatePage } from "./plate";
 import { renderAdminPage } from "./admin";
@@ -78,18 +79,6 @@ app.innerHTML = `
   <div class="view" id="view-auth" hidden></div>
   ${footerHtml()}
 
-  <dialog class="modal" aria-labelledby="modal-title">
-    <form method="dialog" class="modal__inner">
-      <header class="modal__head">
-        <h3 id="modal-title">${t("modal.title")}</h3>
-        <button class="modal__x" value="close" formnovalidate aria-label="${t("modal.close")}">${icon.clear}</button>
-      </header>
-      <div class="modal__body"></div>
-      <footer class="modal__foot">
-        <button class="btn btn--primary" value="close">${t("modal.ok")}</button>
-      </footer>
-    </form>
-  </dialog>
 `;
 
 const $plate = app.querySelector<HTMLInputElement>("#q-plate")!;
@@ -102,10 +91,6 @@ const $count = app.querySelector<HTMLElement>(".content__count")!;
 const $more = app.querySelector<HTMLElement>(".more")!;
 const $moreBtn = app.querySelector<HTMLButtonElement>(".more__btn")!;
 const $moreInfo = app.querySelector<HTMLElement>(".more__info")!;
-const $modal = app.querySelector<HTMLDialogElement>(".modal")!;
-const $modalBody = app.querySelector<HTMLElement>(".modal__body")!;
-const $modalFoot = app.querySelector<HTMLElement>(".modal__foot")!;
-const $modalForm = app.querySelector<HTMLFormElement>(".modal__inner")!;
 
 mountSettings(app.querySelector<HTMLElement>(".hero__logo")!);
 
@@ -328,108 +313,11 @@ function rearmObserver(): void {
 }
 observer.observe($more);
 
-// ---------------------------------------------------------------------------
-// Модалка «Уточнить» — заглушка
-// ---------------------------------------------------------------------------
-
-function openClarify(car: Car): void {
-  $modalBody.innerHTML = `
-    <div class="modal__car">
-      ${plateHtml(car)}
-      <div>
-        <div class="modal__date">${escapeHtml(formatDate(car.createdAt))}</div>
-        <div class="modal__addr">${escapeHtml(car.address)}</div>
-      </div>
-    </div>
-    <fieldset class="clarify__formats">
-      <legend class="clarify__label">${t("clarify.format")}</legend>
-      ${[["ru", "RU"], ["eu", "EU"], ["us", "US"], ["", t("clarify.formatOther")]]
-        .map(
-          ([v, label]) => `<label class="seg"><input type="radio" name="ptype" value="${v}"${
-            v === (car.plateType || "") ? " checked" : ""
-          } /><span>${escapeHtml(label)}</span></label>`
-        )
-        .join("")}
-    </fieldset>
-    <label class="clarify">
-      <span class="clarify__label">${t("clarify.question")}</span>
-      <span class="clarify__row">
-        <input class="clarify__input" name="plate" required maxlength="32" autocomplete="off" spellcheck="false"
-          placeholder="${escapeHtml(car.plate)}" value="${escapeHtml(car.plate)}" />
-        <input class="clarify__input clarify__region" name="region" maxlength="3" autocomplete="off" spellcheck="false"
-          value="${escapeHtml(car.plateRegion ?? "")}" aria-label="${t("clarify.regionEu")}" />
-      </span>
-      <span class="clarify__hint">${t("clarify.hint")}</span>
-    </label>
-    <div class="clarify__preview"><span class="clarify__label">${t("clarify.preview")}</span><span class="clarify__plate"></span></div>
-    <p class="clarify__msg" role="status" hidden></p>`;
-  $modalFoot.innerHTML = `
-    <button class="btn btn--ghost" value="close" formnovalidate>${t("clarify.cancel")}</button>
-    <button class="btn btn--primary" value="send" type="submit">${t("clarify.send")}</button>`;
-  clarifyFor = car;
-  $modal.showModal();
-  const $input = $modalBody.querySelector<HTMLInputElement>(".clarify__input")!;
-  const $region = $modalBody.querySelector<HTMLInputElement>(".clarify__region")!;
-  const $preview = $modalBody.querySelector<HTMLElement>(".clarify__plate")!;
-  // Регион — только для EU (страна) и US (штат); предпросмотр номера — по выбранному формату.
-  const sync = () => {
-    const type = clarifyType();
-    $region.hidden = type !== "eu" && type !== "us";
-    $region.placeholder = type === "us" ? "CA" : "D";
-    $region.setAttribute("aria-label", t(type === "us" ? "clarify.regionUs" : "clarify.regionEu"));
-    const plate = $input.value.trim().toUpperCase() || car.plate;
-    $preview.innerHTML = plateHtml({ plate, plateType: type, plateRegion: $region.value.trim().toUpperCase() });
-  };
-  $modalBody.addEventListener("input", sync);
-  $modalBody.addEventListener("change", sync);
-  sync();
-  $input.select();
-}
-
-function clarifyType(): string {
-  return $modalBody.querySelector<HTMLInputElement>('input[name="ptype"]:checked')?.value ?? "";
-}
-
-let clarifyFor: Car | null = null;
-
-$modalForm.addEventListener("submit", async (e) => {
-  const submitter = (e as SubmitEvent).submitter as HTMLButtonElement | null;
-  if (submitter?.value !== "send" || !clarifyFor) return; // «Отмена» и крестик — обычное закрытие
-  e.preventDefault();
-  const $input = $modalBody.querySelector<HTMLInputElement>(".clarify__input")!;
-  const $msg = $modalBody.querySelector<HTMLElement>(".clarify__msg")!;
-  submitter.disabled = true;
-  submitter.textContent = t("clarify.sending");
-  try {
-    const type = clarifyType();
-    const region = $modalBody.querySelector<HTMLInputElement>(".clarify__region")!.value;
-    const c = await clarify(clarifyFor.id, $input.value, type, type === "eu" || type === "us" ? region : "");
-    $msg.hidden = false;
-    $msg.className = "clarify__msg is-ok";
-    $msg.textContent = t("clarify.thanks", {
-      plate: c.plate,
-      status: t(c.accepted ? "clarify.accepted" : "clarify.notAccepted"),
-    });
-    $input.disabled = true;
-    $modalFoot.innerHTML = `<button class="btn btn--primary" value="close">${t("clarify.done")}</button>`;
-  } catch (err) {
-    $msg.hidden = false;
-    $msg.className = "clarify__msg is-error";
-    $msg.textContent = err instanceof ApiError ? err.message : t("clarify.failed");
-    submitter.disabled = false;
-    submitter.textContent = t("clarify.send");
-  }
-});
-
+// Кнопка «Уточнить» на карточке — модалка уточнения (clarify.ts).
 app.querySelector(".content")!.addEventListener("click", (e) => {
   const btn = (e.target as Element).closest<HTMLButtonElement>("[data-clarify]");
   const car = btn && known.get(btn.dataset.clarify ?? "");
   if (car) openClarify(car);
-});
-
-// Клик по подложке закрывает модалку.
-$modal.addEventListener("click", (e) => {
-  if (e.target === $modal) $modal.close();
 });
 
 // ---------------------------------------------------------------------------

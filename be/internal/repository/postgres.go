@@ -268,3 +268,37 @@ func (r *repository) ListSamePlate(ctx context.Context, tx db.Executor, o models
 	}
 	return items, nil
 }
+
+// ListPlateClarifications — уточнения ко всем фиксациям номера, к которому относится фиксация o.ID,
+// сгруппированные по предложенному номеру (plate_search_key): написание, формат и регион — из самого
+// свежего уточнения группы; статус accepted, если в группе есть принятые. Сначала принятые, затем
+// по числу уточнений и свежести. Фиксации нет — пустой список (ErrNotFound отдаёт ListSamePlate).
+func (r *repository) ListPlateClarifications(ctx context.Context, tx db.Executor, o models.SamePlateOpts) ([]models.PlateClarification, error) {
+	conds := []string{`s.plate_id = (SELECT plate_id FROM ` + plateSightingsTable + ` WHERE id = $1)`}
+	if !o.IncludeTestData {
+		conds = append(conds, notTestData, `NOT c.is_test_data`)
+	}
+	if !o.IncludeHidden {
+		conds = append(conds, notHidden)
+	}
+	query := `SELECT
+			(array_agg(c.plate ORDER BY c.created_at DESC, c.id))[1] AS plate,
+			(array_agg(c.plate_type ORDER BY c.created_at DESC, c.id))[1] AS plate_type,
+			(array_agg(c.plate_region ORDER BY c.created_at DESC, c.id))[1] AS plate_region,
+			count(*) AS count,
+			CASE WHEN bool_or(c.status = 'accepted') THEN 'accepted' ELSE 'not_accepted' END AS status,
+			array_agg(DISTINCT c.sighting_id::text) AS sighting_ids,
+			-- Ключи json — имена полей models.Clarification (encoding/json сравнивает без учёта регистра).
+			json_agg(json_build_object('id', c.id, 'sightingid', c.sighting_id, 'plate', c.plate, 'status', c.status,
+				'createdat', c.created_at, 'platetype', c.plate_type, 'plateregion', c.plate_region)
+				ORDER BY c.created_at DESC, c.id) AS items
+		FROM ` + clarificationsTable + ` c JOIN ` + plateSightingFrom + ` ON s.id = c.sighting_id
+		WHERE ` + strings.Join(conds, " AND ") + `
+		GROUP BY plate_search_key(c.plate)
+		ORDER BY bool_or(c.status = 'accepted') DESC, count(*) DESC, max(c.created_at) DESC`
+	items := []models.PlateClarification{}
+	if err := tx.Select(ctx, &items, query, o.ID); err != nil {
+		return nil, fmt.Errorf("list plate clarifications: %w", err)
+	}
+	return items, nil
+}

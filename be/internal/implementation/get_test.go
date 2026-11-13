@@ -19,7 +19,14 @@ func TestGet(t *testing.T) {
 	second.ID, second.Address = "00000000-0000-0000-0000-000000000004", "Москва, ул. Тверская, 7"
 	lat, lon := 55.7579, 37.6115
 	second.Lat, second.Lon = &lat, &lon
-	uc.ListSamePlateMock.Expect(minimock.AnyContext, models.SamePlateOpts{ID: "00000000-0000-0000-0000-000000000001"}).Return([]models.PlateSighting{second, sighting}, nil)
+	uc.ListSamePlateMock.Expect(minimock.AnyContext, models.SamePlateOpts{ID: "00000000-0000-0000-0000-000000000001"}).Return(models.SamePlate{
+		Items: []models.PlateSighting{second, sighting},
+		Clarifications: []models.PlateClarification{
+			{Plate: "А123ВС 77", PlateType: "ru", Count: 3, Status: models.ClarificationAccepted, SightingIDs: []string{second.ID, sighting.ID},
+				Items: []models.Clarification{{ID: "c-1", SightingID: second.ID, Plate: "А123ВС 77", Status: models.ClarificationAccepted, PlateType: "ru"}}},
+			{Plate: "AB 123", Count: 1, Status: models.ClarificationNotAccepted, SightingIDs: []string{sighting.ID}},
+		},
+	}, nil)
 
 	resp, err := svc.Get(context.Background(), &pb.GetRequest{Id: "00000000-0000-0000-0000-000000000001"})
 	if err != nil {
@@ -34,6 +41,20 @@ func TestGet(t *testing.T) {
 	}
 	if got := resp.GetItems()[1]; got.Lat != nil || got.Lon != nil {
 		t.Errorf("фиксация 1 без координат: %v, %v", got.Lat, got.Lon)
+	}
+	// Уточнения — в порядке usecase, со статусом, форматом и фиксациями.
+	cl := resp.GetClarifications()
+	if len(cl) != 2 {
+		t.Fatalf("уточнения: %v", cl)
+	}
+	if c := cl[0]; c.GetPlate() != "А123ВС 77" || c.GetPlateType() != pb.PlateType_PLATE_TYPE_RU || c.GetCount() != 3 ||
+		c.GetStatus() != pb.ClarificationStatus_CLARIFICATION_STATUS_ACCEPTED || len(c.GetSightingIds()) != 2 ||
+		len(c.GetItems()) != 1 || c.GetItems()[0].GetId() != "c-1" || c.GetItems()[0].GetStatus() != pb.ClarificationStatus_CLARIFICATION_STATUS_ACCEPTED {
+		t.Errorf("уточнение 1: %v", c)
+	}
+	if c := cl[1]; c.GetPlate() != "AB 123" || c.GetPlateType() != pb.PlateType_PLATE_TYPE_DEFAULT ||
+		c.GetStatus() != pb.ClarificationStatus_CLARIFICATION_STATUS_NOT_ACCEPTED {
+		t.Errorf("уточнение 2: %v", c)
 	}
 }
 
@@ -53,7 +74,7 @@ func TestGetErrors(t *testing.T) {
 		"ошибка БД":  {errors.New("db down"), codes.Internal},
 	} {
 		svc, uc := newSvc(t)
-		uc.ListSamePlateMock.Return(nil, tt.err)
+		uc.ListSamePlateMock.Return(models.SamePlate{}, tt.err)
 		if _, err := svc.Get(ctx, &pb.GetRequest{Id: "00000000-0000-0000-0000-0000000a0500"}); status.Code(err) != tt.want {
 			t.Errorf("%s: code = %v, want %v", name, status.Code(err), tt.want)
 		}

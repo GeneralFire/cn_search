@@ -145,6 +145,25 @@ message GetRequest {
 message GetResponse {
   // Все фиксации номера, от новых к старым; первая по id всегда среди них.
   repeated PlateSighting items = 1;
+  // Уточнения ко всем фиксациям номера, сгруппированные по предложенному номеру (без учёта
+  // похожих символов): сначала принятые, затем по числу предложений и свежести. Нет — пусто.
+  repeated PlateClarification clarifications = 2;
+}
+
+// PlateClarification — предложенный номер и сколько раз его предлагали к фиксациям номера.
+message PlateClarification {
+  // Предложенный номер (написание из самого свежего уточнения группы): "А123ВС 77".
+  string plate = 1;
+  PlateType plate_type = 2;
+  string plate_region = 3;
+  // Сколько уточнений с этим номером.
+  int32 count = 4;
+  // ACCEPTED, если среди них есть принятые; иначе NOT_ACCEPTED.
+  ClarificationStatus status = 5;
+  // uuid фиксаций, к которым этот номер предлагали.
+  repeated string sighting_ids = 6;
+  // Сами уточнения группы, от новых к старым (модерация в админ-режиме — по id).
+  repeated Clarification items = 7;
 }
 
 message SeeAlsoRequest {

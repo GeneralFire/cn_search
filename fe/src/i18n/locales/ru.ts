@@ -246,4 +246,13 @@ export const ru = {
   "auth.date": "Дата",
   "auth.status": "Статус",
   "auth.noPayments": "Платежей пока нет",
+
+
+  "pc.title": "Уточнения номера",
+  "pc.maybe": "Возможно, это",
+  "pc.offers": { one: "{n} предложение", few: "{n} предложения", many: "{n} предложений", other: "{n} предложения" },
+  "pc.accepted": "принято",
+  "pc.notAccepted": "не принято",
+  "pc.search": "искать этот номер",
+  "pc.mark": "Есть уточнения: {plates}",
 } as const;

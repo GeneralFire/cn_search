@@ -2823,6 +2823,13 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
             "$ref": "#/definitions/carsearchPlateSighting"
           },
           "description": "Все фиксации номера, от новых к старым; первая по id всегда среди них."
+        },
+        "clarifications": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchPlateClarification"
+          },
+          "description": "Уточнения ко всем фиксациям номера, сгруппированные по предложенному номеру (без учёта\nпохожих символов): сначала принятые, затем по числу предложений и свежести. Нет — пусто."
         }
       }
     },
@@ -3057,6 +3064,45 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
           }
         }
       }
+    },
+    "carsearchPlateClarification": {
+      "type": "object",
+      "properties": {
+        "plate": {
+          "type": "string",
+          "description": "Предложенный номер (написание из самого свежего уточнения группы): \"А123ВС 77\"."
+        },
+        "plateType": {
+          "$ref": "#/definitions/carsearchPlateType"
+        },
+        "plateRegion": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Сколько уточнений с этим номером."
+        },
+        "status": {
+          "$ref": "#/definitions/carsearchClarificationStatus",
+          "description": "ACCEPTED, если среди них есть принятые; иначе NOT_ACCEPTED."
+        },
+        "sightingIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "uuid фиксаций, к которым этот номер предлагали."
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchClarification"
+          },
+          "description": "Сами уточнения группы, от новых к старым (модерация в админ-режиме — по id)."
+        }
+      },
+      "description": "PlateClarification — предложенный номер и сколько раз его предлагали к фиксациям номера."
     },
     "carsearchPlateSighting": {
       "type": "object",

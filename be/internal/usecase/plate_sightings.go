@@ -36,13 +36,20 @@ func (u *PlateSightings) Search(ctx context.Context, q models.SearchOpts) (page 
 	return page, err
 }
 
-// ListSamePlate — все фиксации номера, к которому относится фиксация o.ID.
-func (u *PlateSightings) ListSamePlate(ctx context.Context, o models.SamePlateOpts) (items []models.PlateSighting, err error) {
+// ListSamePlate — все фиксации номера, к которому относится фиксация o.ID, и уточнения к ним
+// (в одной транзакции).
+func (u *PlateSightings) ListSamePlate(ctx context.Context, o models.SamePlateOpts) (res models.SamePlate, err error) {
 	err = u.tx.InReadTx(ctx, func(ctx context.Context, tx db.Executor) error {
-		items, err = u.repo.ListSamePlate(ctx, tx, o)
+		if res.Items, err = u.repo.ListSamePlate(ctx, tx, o); err != nil {
+			return err
+		}
+		res.Clarifications, err = u.repo.ListPlateClarifications(ctx, tx, o)
 		return err
 	})
-	return items, err
+	if err != nil {
+		return models.SamePlate{}, err
+	}
+	return res, nil
 }
 
 // SeeAlso — свежие фиксации других номеров.

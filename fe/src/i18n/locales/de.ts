@@ -246,4 +246,13 @@ export const de: Dict = {
   "auth.date": "Datum",
   "auth.status": "Status",
   "auth.noPayments": "Noch keine Zahlungen",
+
+
+  "pc.title": "Kennzeichen-Präzisierungen",
+  "pc.maybe": "Vielleicht ist es",
+  "pc.offers": { one: "{n} Vorschlag", other: "{n} Vorschläge" },
+  "pc.accepted": "angenommen",
+  "pc.notAccepted": "nicht angenommen",
+  "pc.search": "dieses Kennzeichen suchen",
+  "pc.mark": "Präzisiert: {plates}",
 };

@@ -1,5 +1,5 @@
 // Страница номера: все фиксации номера — где и когда его видели.
-import { ApiError, plateSightings, seeAlso, type Car } from "./api";
+import { ApiError, plateSightings, seeAlso, type Car, type PlateClarification } from "./api";
 import { mountQuickSearch, type QuickSearchHandlers } from "./quicksearch";
 import { plateHref } from "./router";
 import { escapeHtml, fitPlates, formatAgo, formatDate, formatShortDate, formatTime, icon, miniCardHtml, miniSkeletonHtml, photoAttrs, plateHtml } from "./ui";
@@ -9,7 +9,10 @@ import { openLightbox } from "./lightbox";
 import { mountPlateMap, plateMapHtml } from "./map";
 import { complainButtonHtml } from "./complaint";
 import { noPhotoHtml, photoHtml } from "./nophoto";
-import { mountPlateAdmin } from "./adminpanels";
+import { bindClarificationControls, mountPlateAdmin } from "./adminpanels";
+import { adminReady } from "./adminmode";
+import { openClarify } from "./clarify";
+import { clarificationsHtml, clarifiedMarkHtml } from "./clarifications";
 
 /** Сколько карточек показывать в «Свежих фиксациях» (ручка отдаёт не больше). */
 const SEE_ALSO_LIMIT = 21;
@@ -51,9 +54,28 @@ export async function renderPlatePage(root: HTMLElement, id: string, handlers: Q
   window.scrollTo({ top: 0 });
 
   try {
-    const items = await plateSightings(id, my.signal);
+    const { items, clarifications } = await plateSightings(id, my.signal);
     if (my.signal.aborted) return;
     $main.innerHTML = pageHtml(items, id);
+    // Уточнения: плашка сразу; после отправки уточнения или смены статуса админом — перечитываются,
+    // при входе в админ-режим (adminReady) — перерисовываются с кнопками модерации.
+    let list = clarifications;
+    const show = () => showClarifications($main, list, items[0].plateType, handlers, () => void reload());
+    const reload = async () => {
+      try {
+        const page = await plateSightings(id, my.signal);
+        if (my.signal.aborted) return;
+        list = page.clarifications;
+        show();
+      } catch {
+        // Не удалось перечитать — плашка обновится при следующем открытии страницы.
+      }
+    };
+    show();
+    void adminReady.then((on) => on && !my.signal.aborted && show());
+    // «Уточнить» — к открытой фиксации.
+    const shown = items.find((c) => c.id === id) ?? items[0];
+    $main.querySelector("[data-pc-clarify]")?.addEventListener("click", () => openClarify(shown, () => void reload()));
     void loadSeeAlso($main, id, my.signal);
     void mountPlateMap($main, items, id, my.signal);
     void mountPlateAdmin($main, items, id, my.signal); // админ-режим: панель «Управление»
@@ -90,6 +112,7 @@ function pageHtml(items: Car[], currentId: string): string {
         <div class="pp-hero__meta">
           <span class="pp-chip">${icon.pin}${escapeHtml(cities.join(", "))}</span>
           <span class="pp-chip">${icon.clock}${escapeHtml(t("plate.lastSeen", { ago: formatAgo(latest.createdAt) }))}</span>
+          <button class="pc-clarify" type="button" data-pc-clarify>${icon.edit}${t("card.clarify")}</button>
         </div>
         <div class="pp-stats">
           ${stat(String(items.length), tp("stat.sightings", items.length))}
@@ -148,11 +171,35 @@ function timelineItem(c: Car, current: boolean): string {
         <div class="tl__when">
           <time datetime="${escapeHtml(c.createdAt)}">${escapeHtml(formatShortDate(c.createdAt))}, ${escapeHtml(formatTime(c.createdAt))}</time>
           <span class="tl__ago">${escapeHtml(formatAgo(c.createdAt))}</span>
+          <span class="tl__pc" data-pc-for="${escapeHtml(c.id)}"></span>
         </div>
         <div class="tl__where">${icon.pin}${escapeHtml(c.address)}</div>
         ${current ? `<span class="tl__badge">${t("history.shownLeft")}</span>` : ""}
       </div>
     </li>`;
+}
+
+/** Плашка уточнений под шапкой и значки у фиксаций ленты; ссылка «искать этот номер» — поиск
+ *  на главной без перезагрузки (как Enter в поиске шапки). Админ-режим: кнопки «Принять / Отклонить»
+ *  у уточнений (adminpanels.ts), после смены статуса — reload. */
+function showClarifications(
+  $main: HTMLElement, list: PlateClarification[], currentType: string, handlers: QuickSearchHandlers, reload: () => void
+): void {
+  const html = clarificationsHtml(list, currentType);
+  const $old = $main.querySelector(".pc");
+  if ($old) $old.outerHTML = html || "<!---->";
+  else $main.querySelector(".pp-hero")?.insertAdjacentHTML("afterend", html);
+  $main.querySelectorAll<HTMLElement>("[data-pc-for]").forEach((el) => (el.innerHTML = clarifiedMarkHtml(el.dataset.pcFor ?? "", list)));
+  const $pc = $main.querySelector<HTMLElement>(".pc");
+  if (!$pc) return;
+  $pc.querySelectorAll<HTMLAnchorElement>("[data-pc-search]").forEach((a) =>
+    a.addEventListener("click", (e) => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return; // новая вкладка — по href (/?q=…)
+      e.preventDefault();
+      handlers.submit(a.dataset.pcSearch ?? "");
+    })
+  );
+  bindClarificationControls($pc, reload);
 }
 
 /** Блок «Свежие фиксации»: до 21 компактной карточки других номеров. */

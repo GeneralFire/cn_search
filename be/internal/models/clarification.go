@@ -59,3 +59,21 @@ type ClarificationsPage struct {
 	Total      int  // всего по фильтру
 	NextOffset *int // nil — дальше ничего нет
 }
+
+// PlateClarification — уточнения к фиксациям номера с одним предложенным номером
+// (сгруппированы по plate_search_key).
+type PlateClarification struct {
+	Plate       string              `db:"plate"`        // написание из самого свежего уточнения группы
+	PlateType   string              `db:"plate_type"`   // как в Clarification
+	PlateRegion string              `db:"plate_region"` // как в Clarification
+	Count       int                 `db:"count"`        // сколько уточнений
+	Status      ClarificationStatus `db:"status"`       // accepted, если есть принятые
+	SightingIDs []string            `db:"sighting_ids"` // фиксации, к которым его предлагали
+	Items       []Clarification     `db:"items"`        // уточнения группы, от новых к старым
+}
+
+// SamePlate — фиксации номера и уточнения к ним (rpc Get).
+type SamePlate struct {
+	Items          []PlateSighting
+	Clarifications []PlateClarification
+}

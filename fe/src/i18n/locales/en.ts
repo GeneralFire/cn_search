@@ -246,4 +246,13 @@ export const en: Dict = {
   "auth.date": "Date",
   "auth.status": "Status",
   "auth.noPayments": "No payments yet",
+
+
+  "pc.title": "Plate clarifications",
+  "pc.maybe": "Maybe it is",
+  "pc.offers": { one: "{n} suggestion", other: "{n} suggestions" },
+  "pc.accepted": "accepted",
+  "pc.notAccepted": "not accepted",
+  "pc.search": "search this plate",
+  "pc.mark": "Clarified: {plates}",
 };

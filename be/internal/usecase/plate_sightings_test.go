@@ -67,11 +67,27 @@ func TestSearchNoSuggestions(t *testing.T) {
 func TestListSamePlateInReadTx(t *testing.T) {
 	tx := dbmocks.NewExecutorMock(t)
 	repo := mocks.NewRepositoryMock(t)
-	repo.ListSamePlateMock.Expect(minimock.AnyContext, tx, models.SamePlateOpts{ID: "id-1", IncludeTestData: true}).Return([]models.PlateSighting{{ID: "id-4"}, {ID: "id-1"}}, nil)
+	o := models.SamePlateOpts{ID: "id-1", IncludeTestData: true}
+	repo.ListSamePlateMock.Expect(minimock.AnyContext, tx, o).Return([]models.PlateSighting{{ID: "id-4"}, {ID: "id-1"}}, nil)
+	// Уточнения — в той же транзакции (тот же tx).
+	repo.ListPlateClarificationsMock.Expect(minimock.AnyContext, tx, o).Return([]models.PlateClarification{{Plate: "А123ВС 77", Count: 2}}, nil)
 
-	items, err := New(readTx(t, tx), repo).ListSamePlate(context.Background(), models.SamePlateOpts{ID: "id-1", IncludeTestData: true})
-	if err != nil || len(items) != 2 {
-		t.Fatalf("ListSamePlate: %v %v", items, err)
+	res, err := New(readTx(t, tx), repo).ListSamePlate(context.Background(), o)
+	if err != nil || len(res.Items) != 2 || len(res.Clarifications) != 1 {
+		t.Fatalf("ListSamePlate: %+v %v", res, err)
+	}
+}
+
+func TestListSamePlateClarificationsError(t *testing.T) {
+	tx := dbmocks.NewExecutorMock(t)
+	repo := mocks.NewRepositoryMock(t)
+	repo.ListSamePlateMock.Return([]models.PlateSighting{{ID: "id-1"}}, nil)
+	boom := errors.New("db down")
+	repo.ListPlateClarificationsMock.Return(nil, boom)
+
+	res, err := New(readTx(t, tx), repo).ListSamePlate(context.Background(), models.SamePlateOpts{ID: "id-1"})
+	if !errors.Is(err, boom) || res.Items != nil {
+		t.Errorf("ListSamePlate: %+v %v", res, err)
 	}
 }
 

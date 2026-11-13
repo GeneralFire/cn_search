@@ -26,7 +26,7 @@ type PlateSightingsMock struct {
 	beforeClarifyCounter uint64
 	ClarifyMock          mPlateSightingsMockClarify
 
-	funcListSamePlate          func(ctx context.Context, o models.SamePlateOpts) (pa1 []models.PlateSighting, err error)
+	funcListSamePlate          func(ctx context.Context, o models.SamePlateOpts) (s1 models.SamePlate, err error)
 	funcListSamePlateOrigin    string
 	inspectFuncListSamePlate   func(ctx context.Context, o models.SamePlateOpts)
 	afterListSamePlateCounter  uint64
@@ -454,7 +454,7 @@ type PlateSightingsMockListSamePlateParamPtrs struct {
 
 // PlateSightingsMockListSamePlateResults contains results of the plateSightings.ListSamePlate
 type PlateSightingsMockListSamePlateResults struct {
-	pa1 []models.PlateSighting
+	s1  models.SamePlate
 	err error
 }
 
@@ -558,7 +558,7 @@ func (mmListSamePlate *mPlateSightingsMockListSamePlate) Inspect(f func(ctx cont
 }
 
 // Return sets up results that will be returned by plateSightings.ListSamePlate
-func (mmListSamePlate *mPlateSightingsMockListSamePlate) Return(pa1 []models.PlateSighting, err error) *PlateSightingsMock {
+func (mmListSamePlate *mPlateSightingsMockListSamePlate) Return(s1 models.SamePlate, err error) *PlateSightingsMock {
 	if mmListSamePlate.mock.funcListSamePlate != nil {
 		mmListSamePlate.mock.t.Fatalf("PlateSightingsMock.ListSamePlate mock is already set by Set")
 	}
@@ -566,13 +566,13 @@ func (mmListSamePlate *mPlateSightingsMockListSamePlate) Return(pa1 []models.Pla
 	if mmListSamePlate.defaultExpectation == nil {
 		mmListSamePlate.defaultExpectation = &PlateSightingsMockListSamePlateExpectation{mock: mmListSamePlate.mock}
 	}
-	mmListSamePlate.defaultExpectation.results = &PlateSightingsMockListSamePlateResults{pa1, err}
+	mmListSamePlate.defaultExpectation.results = &PlateSightingsMockListSamePlateResults{s1, err}
 	mmListSamePlate.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
 	return mmListSamePlate.mock
 }
 
 // Set uses given function f to mock the plateSightings.ListSamePlate method
-func (mmListSamePlate *mPlateSightingsMockListSamePlate) Set(f func(ctx context.Context, o models.SamePlateOpts) (pa1 []models.PlateSighting, err error)) *PlateSightingsMock {
+func (mmListSamePlate *mPlateSightingsMockListSamePlate) Set(f func(ctx context.Context, o models.SamePlateOpts) (s1 models.SamePlate, err error)) *PlateSightingsMock {
 	if mmListSamePlate.defaultExpectation != nil {
 		mmListSamePlate.mock.t.Fatalf("Default expectation is already set for the plateSightings.ListSamePlate method")
 	}
@@ -603,8 +603,8 @@ func (mmListSamePlate *mPlateSightingsMockListSamePlate) When(ctx context.Contex
 }
 
 // Then sets up plateSightings.ListSamePlate return parameters for the expectation previously defined by the When method
-func (e *PlateSightingsMockListSamePlateExpectation) Then(pa1 []models.PlateSighting, err error) *PlateSightingsMock {
-	e.results = &PlateSightingsMockListSamePlateResults{pa1, err}
+func (e *PlateSightingsMockListSamePlateExpectation) Then(s1 models.SamePlate, err error) *PlateSightingsMock {
+	e.results = &PlateSightingsMockListSamePlateResults{s1, err}
 	return e.mock
 }
 
@@ -630,7 +630,7 @@ func (mmListSamePlate *mPlateSightingsMockListSamePlate) invocationsDone() bool 
 }
 
 // ListSamePlate implements mm_implementation.plateSightings
-func (mmListSamePlate *PlateSightingsMock) ListSamePlate(ctx context.Context, o models.SamePlateOpts) (pa1 []models.PlateSighting, err error) {
+func (mmListSamePlate *PlateSightingsMock) ListSamePlate(ctx context.Context, o models.SamePlateOpts) (s1 models.SamePlate, err error) {
 	mm_atomic.AddUint64(&mmListSamePlate.beforeListSamePlateCounter, 1)
 	defer mm_atomic.AddUint64(&mmListSamePlate.afterListSamePlateCounter, 1)
 
@@ -650,7 +650,7 @@ func (mmListSamePlate *PlateSightingsMock) ListSamePlate(ctx context.Context, o 
 	for _, e := range mmListSamePlate.ListSamePlateMock.expectations {
 		if minimock.Equal(*e.params, mm_params) {
 			mm_atomic.AddUint64(&e.Counter, 1)
-			return e.results.pa1, e.results.err
+			return e.results.s1, e.results.err
 		}
 	}
 
@@ -682,7 +682,7 @@ func (mmListSamePlate *PlateSightingsMock) ListSamePlate(ctx context.Context, o 
 		if mm_results == nil {
 			mmListSamePlate.t.Fatal("No results are set for the PlateSightingsMock.ListSamePlate")
 		}
-		return (*mm_results).pa1, (*mm_results).err
+		return (*mm_results).s1, (*mm_results).err
 	}
 	if mmListSamePlate.funcListSamePlate != nil {
 		return mmListSamePlate.funcListSamePlate(ctx, o)

@@ -246,4 +246,13 @@ export const uk: Dict = {
   "auth.date": "Дата",
   "auth.status": "Статус",
   "auth.noPayments": "Платежів поки немає",
+
+
+  "pc.title": "Уточнення номера",
+  "pc.maybe": "Можливо, це",
+  "pc.offers": { one: "{n} пропозиція", few: "{n} пропозиції", many: "{n} пропозицій", other: "{n} пропозиції" },
+  "pc.accepted": "прийнято",
+  "pc.notAccepted": "не прийнято",
+  "pc.search": "шукати цей номер",
+  "pc.mark": "Є уточнення: {plates}",
 };

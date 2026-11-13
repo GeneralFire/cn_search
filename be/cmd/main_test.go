@@ -101,19 +101,26 @@ func TestHTTPGet(t *testing.T) {
 	srv, uc := newHTTP(t)
 	second := sighting
 	second.ID = "00000000-0000-0000-0000-000000000004"
-	uc.ListSamePlateMock.Expect(minimock.AnyContext, models.SamePlateOpts{ID: "00000000-0000-0000-0000-000000000001"}).Return([]models.PlateSighting{second, sighting}, nil)
+	uc.ListSamePlateMock.Expect(minimock.AnyContext, models.SamePlateOpts{ID: "00000000-0000-0000-0000-000000000001"}).Return(models.SamePlate{
+		Items:          []models.PlateSighting{second, sighting},
+		Clarifications: []models.PlateClarification{{Plate: "А123ВС 77", PlateType: "ru", Count: 3, Status: models.ClarificationAccepted, SightingIDs: []string{second.ID}}},
+	}, nil)
 
 	code, out := call(t, srv, "Get", `{"id":"00000000-0000-0000-0000-000000000001"}`)
 	items, _ := out["items"].([]any)
 	if code != http.StatusOK || len(items) != 2 || items[0].(map[string]any)["id"] != "00000000-0000-0000-0000-000000000004" {
 		t.Fatalf("Get: %d %v", code, out)
 	}
+	cl, _ := out["clarifications"].([]any)
+	if len(cl) != 1 || cl[0].(map[string]any)["status"] != "CLARIFICATION_STATUS_ACCEPTED" || cl[0].(map[string]any)["count"] != 3.0 {
+		t.Errorf("clarifications: %v", out["clarifications"])
+	}
 }
 
 func TestHTTPErrors(t *testing.T) {
 	srv, uc := newHTTP(t)
-	uc.ListSamePlateMock.When(minimock.AnyContext, models.SamePlateOpts{ID: "00000000-0000-0000-0000-0000000a0500"}).Then(nil, models.ErrNotFound)
-	uc.ListSamePlateMock.When(minimock.AnyContext, models.SamePlateOpts{ID: "00000000-0000-0000-0000-000000000004"}).Then(nil, errors.New("db down"))
+	uc.ListSamePlateMock.When(minimock.AnyContext, models.SamePlateOpts{ID: "00000000-0000-0000-0000-0000000a0500"}).Then(models.SamePlate{}, models.ErrNotFound)
+	uc.ListSamePlateMock.When(minimock.AnyContext, models.SamePlateOpts{ID: "00000000-0000-0000-0000-000000000004"}).Then(models.SamePlate{}, errors.New("db down"))
 
 	tests := []struct {
 		method, body string

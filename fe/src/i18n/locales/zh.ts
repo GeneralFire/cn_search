@@ -247,4 +247,13 @@ export const zh: Dict = {
   "auth.date": "日期",
   "auth.status": "状态",
   "auth.noPayments": "暂无付款",
+
+
+  "pc.title": "车牌更正",
+  "pc.maybe": "可能是",
+  "pc.offers": { other: "{n} 条建议" },
+  "pc.accepted": "已采纳",
+  "pc.notAccepted": "未采纳",
+  "pc.search": "搜索此车牌",
+  "pc.mark": "已有更正：{plates}",
 };

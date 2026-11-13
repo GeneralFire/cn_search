@@ -26,6 +26,7 @@ type repository interface {
 	Suggest(ctx context.Context, tx db.Executor, q models.SearchOpts) ([]models.PlateSighting, error)
 	ListSamePlate(ctx context.Context, tx db.Executor, o models.SamePlateOpts) ([]models.PlateSighting, error)
 	SeeAlso(ctx context.Context, tx db.Executor, o models.SeeAlsoOpts) ([]models.PlateSighting, error)
+	ListPlateClarifications(ctx context.Context, tx db.Executor, o models.SamePlateOpts) ([]models.PlateClarification, error)
 	CreateClarification(ctx context.Context, tx db.Executor, o models.ClarifyOpts) (models.Clarification, error)
 	MatchesSightingPlate(ctx context.Context, tx db.Executor, sightingID, plate string) (bool, error)
 	CountMatchingClarifications(ctx context.Context, tx db.Executor, sightingID, plate string) (int, error)

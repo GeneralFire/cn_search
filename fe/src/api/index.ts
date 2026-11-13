@@ -101,8 +101,28 @@ export async function search(req: CarsearchSearchRequest, signal?: AbortSignal):
   };
 }
 
-/** Все фиксации номера, к которому относится фиксация id; от новых к старым. */
-export async function plateSightings(id: string, signal?: AbortSignal): Promise<Car[]> {
+/** Уточнения к фиксациям номера с одним предложенным номером (rpc Get). */
+export interface PlateClarification {
+  plate: string;
+  /** Формат: "ru" | "eu" | "us" | "ua" | "cn" | "" (не указан). */
+  plateType: string;
+  plateRegion: string;
+  count: number;
+  accepted: boolean;
+  /** Фиксации, к которым этот номер предлагали. */
+  sightingIds: string[];
+  /** Уточнения группы, от новых к старым (модерация в админ-режиме). */
+  items: Clarification[];
+}
+
+/** Страница номера: все фиксации (от новых к старым) и уточнения к ним (сначала принятые). */
+export interface PlatePage {
+  items: Car[];
+  clarifications: PlateClarification[];
+}
+
+/** Все фиксации номера, к которому относится фиксация id, и уточнения к ним. */
+export async function plateSightings(id: string, signal?: AbortSignal): Promise<PlatePage> {
   let data: CarsearchGetResponse;
   try {
     ({ data } = await api.carsearchCarSearchService.carSearchServiceGet({ id }, { signal }));
@@ -110,7 +130,18 @@ export async function plateSightings(id: string, signal?: AbortSignal): Promise<
     if (signal?.aborted) throw e;
     throw new ApiError(await errorMessage(e), e instanceof Response ? e.status : 0);
   }
-  return (data.items ?? []).map(toCar);
+  return {
+    items: (data.items ?? []).map(toCar),
+    clarifications: (data.clarifications ?? []).map((c) => ({
+      plate: c.plate ?? "",
+      plateType: plateTypes[c.plateType ?? ""] ?? "",
+      plateRegion: c.plateRegion ?? "",
+      count: c.count ?? 0,
+      accepted: c.status === CarsearchClarificationStatus.CLARIFICATION_STATUS_ACCEPTED,
+      sightingIds: c.sightingIds ?? [],
+      items: (c.items ?? []).map(toClarification),
+    })),
+  };
 }
 
 /** Уточнение номера к фиксации; статус нового — «не принят». */

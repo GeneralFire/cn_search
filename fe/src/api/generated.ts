@@ -164,6 +164,11 @@ export interface CarsearchGetRequest {
 }
 
 export interface CarsearchGetResponse {
+  /**
+   * Уточнения ко всем фиксациям номера, сгруппированные по предложенному номеру (без учёта
+   * похожих символов): сначала принятые, затем по числу предложений и свежести. Нет — пусто.
+   */
+  clarifications?: CarsearchPlateClarification[];
   /** Все фиксации номера, от новых к старым; первая по id всегда среди них. */
   items?: CarsearchPlateSighting[];
 }
@@ -316,6 +321,26 @@ export type CarsearchPlansRequest = object;
 
 export interface CarsearchPlansResponse {
   items?: CarsearchPlanInfo[];
+}
+
+/** PlateClarification — предложенный номер и сколько раз его предлагали к фиксациям номера. */
+export interface CarsearchPlateClarification {
+  /**
+   * Сколько уточнений с этим номером.
+   * @format int32
+   */
+  count?: number;
+  /** Сами уточнения группы, от новых к старым (модерация в админ-режиме — по id). */
+  items?: CarsearchClarification[];
+  /** Предложенный номер (написание из самого свежего уточнения группы): "А123ВС 77". */
+  plate?: string;
+  plateRegion?: string;
+  /** Формат номерного знака — от него зависит, как его рисовать. */
+  plateType?: CarsearchPlateType;
+  /** uuid фиксаций, к которым этот номер предлагали. */
+  sightingIds?: string[];
+  /** ACCEPTED, если среди них есть принятые; иначе NOT_ACCEPTED. */
+  status?: CarsearchClarificationStatus;
 }
 
 /** PlateSighting — фиксация номера: где и когда замечена машина. */

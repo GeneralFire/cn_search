@@ -41,6 +41,13 @@ type RepositoryMock struct {
 	beforeCreateClarificationCounter uint64
 	CreateClarificationMock          mRepositoryMockCreateClarification
 
+	funcListPlateClarifications          func(ctx context.Context, tx db.Executor, o models.SamePlateOpts) (pa1 []models.PlateClarification, err error)
+	funcListPlateClarificationsOrigin    string
+	inspectFuncListPlateClarifications   func(ctx context.Context, tx db.Executor, o models.SamePlateOpts)
+	afterListPlateClarificationsCounter  uint64
+	beforeListPlateClarificationsCounter uint64
+	ListPlateClarificationsMock          mRepositoryMockListPlateClarifications
+
 	funcListSamePlate          func(ctx context.Context, tx db.Executor, o models.SamePlateOpts) (pa1 []models.PlateSighting, err error)
 	funcListSamePlateOrigin    string
 	inspectFuncListSamePlate   func(ctx context.Context, tx db.Executor, o models.SamePlateOpts)
@@ -93,6 +100,9 @@ func NewRepositoryMock(t minimock.Tester) *RepositoryMock {
 
 	m.CreateClarificationMock = mRepositoryMockCreateClarification{mock: m}
 	m.CreateClarificationMock.callArgs = []*RepositoryMockCreateClarificationParams{}
+
+	m.ListPlateClarificationsMock = mRepositoryMockListPlateClarifications{mock: m}
+	m.ListPlateClarificationsMock.callArgs = []*RepositoryMockListPlateClarificationsParams{}
 
 	m.ListSamePlateMock = mRepositoryMockListSamePlate{mock: m}
 	m.ListSamePlateMock.callArgs = []*RepositoryMockListSamePlateParams{}
@@ -1294,6 +1304,380 @@ func (m *RepositoryMock) MinimockCreateClarificationInspect() {
 	if !m.CreateClarificationMock.invocationsDone() && afterCreateClarificationCounter > 0 {
 		m.t.Errorf("Expected %d calls to RepositoryMock.CreateClarification at\n%s but found %d calls",
 			mm_atomic.LoadUint64(&m.CreateClarificationMock.expectedInvocations), m.CreateClarificationMock.expectedInvocationsOrigin, afterCreateClarificationCounter)
+	}
+}
+
+type mRepositoryMockListPlateClarifications struct {
+	optional           bool
+	mock               *RepositoryMock
+	defaultExpectation *RepositoryMockListPlateClarificationsExpectation
+	expectations       []*RepositoryMockListPlateClarificationsExpectation
+
+	callArgs []*RepositoryMockListPlateClarificationsParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// RepositoryMockListPlateClarificationsExpectation specifies expectation struct of the repository.ListPlateClarifications
+type RepositoryMockListPlateClarificationsExpectation struct {
+	mock               *RepositoryMock
+	params             *RepositoryMockListPlateClarificationsParams
+	paramPtrs          *RepositoryMockListPlateClarificationsParamPtrs
+	expectationOrigins RepositoryMockListPlateClarificationsExpectationOrigins
+	results            *RepositoryMockListPlateClarificationsResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// RepositoryMockListPlateClarificationsParams contains parameters of the repository.ListPlateClarifications
+type RepositoryMockListPlateClarificationsParams struct {
+	ctx context.Context
+	tx  db.Executor
+	o   models.SamePlateOpts
+}
+
+// RepositoryMockListPlateClarificationsParamPtrs contains pointers to parameters of the repository.ListPlateClarifications
+type RepositoryMockListPlateClarificationsParamPtrs struct {
+	ctx *context.Context
+	tx  *db.Executor
+	o   *models.SamePlateOpts
+}
+
+// RepositoryMockListPlateClarificationsResults contains results of the repository.ListPlateClarifications
+type RepositoryMockListPlateClarificationsResults struct {
+	pa1 []models.PlateClarification
+	err error
+}
+
+// RepositoryMockListPlateClarificationsOrigins contains origins of expectations of the repository.ListPlateClarifications
+type RepositoryMockListPlateClarificationsExpectationOrigins struct {
+	origin    string
+	originCtx string
+	originTx  string
+	originO   string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmListPlateClarifications *mRepositoryMockListPlateClarifications) Optional() *mRepositoryMockListPlateClarifications {
+	mmListPlateClarifications.optional = true
+	return mmListPlateClarifications
+}
+
+// Expect sets up expected params for repository.ListPlateClarifications
+func (mmListPlateClarifications *mRepositoryMockListPlateClarifications) Expect(ctx context.Context, tx db.Executor, o models.SamePlateOpts) *mRepositoryMockListPlateClarifications {
+	if mmListPlateClarifications.mock.funcListPlateClarifications != nil {
+		mmListPlateClarifications.mock.t.Fatalf("RepositoryMock.ListPlateClarifications mock is already set by Set")
+	}
+
+	if mmListPlateClarifications.defaultExpectation == nil {
+		mmListPlateClarifications.defaultExpectation = &RepositoryMockListPlateClarificationsExpectation{}
+	}
+
+	if mmListPlateClarifications.defaultExpectation.paramPtrs != nil {
+		mmListPlateClarifications.mock.t.Fatalf("RepositoryMock.ListPlateClarifications mock is already set by ExpectParams functions")
+	}
+
+	mmListPlateClarifications.defaultExpectation.params = &RepositoryMockListPlateClarificationsParams{ctx, tx, o}
+	mmListPlateClarifications.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmListPlateClarifications.expectations {
+		if minimock.Equal(e.params, mmListPlateClarifications.defaultExpectation.params) {
+			mmListPlateClarifications.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmListPlateClarifications.defaultExpectation.params)
+		}
+	}
+
+	return mmListPlateClarifications
+}
+
+// ExpectCtxParam1 sets up expected param ctx for repository.ListPlateClarifications
+func (mmListPlateClarifications *mRepositoryMockListPlateClarifications) ExpectCtxParam1(ctx context.Context) *mRepositoryMockListPlateClarifications {
+	if mmListPlateClarifications.mock.funcListPlateClarifications != nil {
+		mmListPlateClarifications.mock.t.Fatalf("RepositoryMock.ListPlateClarifications mock is already set by Set")
+	}
+
+	if mmListPlateClarifications.defaultExpectation == nil {
+		mmListPlateClarifications.defaultExpectation = &RepositoryMockListPlateClarificationsExpectation{}
+	}
+
+	if mmListPlateClarifications.defaultExpectation.params != nil {
+		mmListPlateClarifications.mock.t.Fatalf("RepositoryMock.ListPlateClarifications mock is already set by Expect")
+	}
+
+	if mmListPlateClarifications.defaultExpectation.paramPtrs == nil {
+		mmListPlateClarifications.defaultExpectation.paramPtrs = &RepositoryMockListPlateClarificationsParamPtrs{}
+	}
+	mmListPlateClarifications.defaultExpectation.paramPtrs.ctx = &ctx
+	mmListPlateClarifications.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmListPlateClarifications
+}
+
+// ExpectTxParam2 sets up expected param tx for repository.ListPlateClarifications
+func (mmListPlateClarifications *mRepositoryMockListPlateClarifications) ExpectTxParam2(tx db.Executor) *mRepositoryMockListPlateClarifications {
+	if mmListPlateClarifications.mock.funcListPlateClarifications != nil {
+		mmListPlateClarifications.mock.t.Fatalf("RepositoryMock.ListPlateClarifications mock is already set by Set")
+	}
+
+	if mmListPlateClarifications.defaultExpectation == nil {
+		mmListPlateClarifications.defaultExpectation = &RepositoryMockListPlateClarificationsExpectation{}
+	}
+
+	if mmListPlateClarifications.defaultExpectation.params != nil {
+		mmListPlateClarifications.mock.t.Fatalf("RepositoryMock.ListPlateClarifications mock is already set by Expect")
+	}
+
+	if mmListPlateClarifications.defaultExpectation.paramPtrs == nil {
+		mmListPlateClarifications.defaultExpectation.paramPtrs = &RepositoryMockListPlateClarificationsParamPtrs{}
+	}
+	mmListPlateClarifications.defaultExpectation.paramPtrs.tx = &tx
+	mmListPlateClarifications.defaultExpectation.expectationOrigins.originTx = minimock.CallerInfo(1)
+
+	return mmListPlateClarifications
+}
+
+// ExpectOParam3 sets up expected param o for repository.ListPlateClarifications
+func (mmListPlateClarifications *mRepositoryMockListPlateClarifications) ExpectOParam3(o models.SamePlateOpts) *mRepositoryMockListPlateClarifications {
+	if mmListPlateClarifications.mock.funcListPlateClarifications != nil {
+		mmListPlateClarifications.mock.t.Fatalf("RepositoryMock.ListPlateClarifications mock is already set by Set")
+	}
+
+	if mmListPlateClarifications.defaultExpectation == nil {
+		mmListPlateClarifications.defaultExpectation = &RepositoryMockListPlateClarificationsExpectation{}
+	}
+
+	if mmListPlateClarifications.defaultExpectation.params != nil {
+		mmListPlateClarifications.mock.t.Fatalf("RepositoryMock.ListPlateClarifications mock is already set by Expect")
+	}
+
+	if mmListPlateClarifications.defaultExpectation.paramPtrs == nil {
+		mmListPlateClarifications.defaultExpectation.paramPtrs = &RepositoryMockListPlateClarificationsParamPtrs{}
+	}
+	mmListPlateClarifications.defaultExpectation.paramPtrs.o = &o
+	mmListPlateClarifications.defaultExpectation.expectationOrigins.originO = minimock.CallerInfo(1)
+
+	return mmListPlateClarifications
+}
+
+// Inspect accepts an inspector function that has same arguments as the repository.ListPlateClarifications
+func (mmListPlateClarifications *mRepositoryMockListPlateClarifications) Inspect(f func(ctx context.Context, tx db.Executor, o models.SamePlateOpts)) *mRepositoryMockListPlateClarifications {
+	if mmListPlateClarifications.mock.inspectFuncListPlateClarifications != nil {
+		mmListPlateClarifications.mock.t.Fatalf("Inspect function is already set for RepositoryMock.ListPlateClarifications")
+	}
+
+	mmListPlateClarifications.mock.inspectFuncListPlateClarifications = f
+
+	return mmListPlateClarifications
+}
+
+// Return sets up results that will be returned by repository.ListPlateClarifications
+func (mmListPlateClarifications *mRepositoryMockListPlateClarifications) Return(pa1 []models.PlateClarification, err error) *RepositoryMock {
+	if mmListPlateClarifications.mock.funcListPlateClarifications != nil {
+		mmListPlateClarifications.mock.t.Fatalf("RepositoryMock.ListPlateClarifications mock is already set by Set")
+	}
+
+	if mmListPlateClarifications.defaultExpectation == nil {
+		mmListPlateClarifications.defaultExpectation = &RepositoryMockListPlateClarificationsExpectation{mock: mmListPlateClarifications.mock}
+	}
+	mmListPlateClarifications.defaultExpectation.results = &RepositoryMockListPlateClarificationsResults{pa1, err}
+	mmListPlateClarifications.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmListPlateClarifications.mock
+}
+
+// Set uses given function f to mock the repository.ListPlateClarifications method
+func (mmListPlateClarifications *mRepositoryMockListPlateClarifications) Set(f func(ctx context.Context, tx db.Executor, o models.SamePlateOpts) (pa1 []models.PlateClarification, err error)) *RepositoryMock {
+	if mmListPlateClarifications.defaultExpectation != nil {
+		mmListPlateClarifications.mock.t.Fatalf("Default expectation is already set for the repository.ListPlateClarifications method")
+	}
+
+	if len(mmListPlateClarifications.expectations) > 0 {
+		mmListPlateClarifications.mock.t.Fatalf("Some expectations are already set for the repository.ListPlateClarifications method")
+	}
+
+	mmListPlateClarifications.mock.funcListPlateClarifications = f
+	mmListPlateClarifications.mock.funcListPlateClarificationsOrigin = minimock.CallerInfo(1)
+	return mmListPlateClarifications.mock
+}
+
+// When sets expectation for the repository.ListPlateClarifications which will trigger the result defined by the following
+// Then helper
+func (mmListPlateClarifications *mRepositoryMockListPlateClarifications) When(ctx context.Context, tx db.Executor, o models.SamePlateOpts) *RepositoryMockListPlateClarificationsExpectation {
+	if mmListPlateClarifications.mock.funcListPlateClarifications != nil {
+		mmListPlateClarifications.mock.t.Fatalf("RepositoryMock.ListPlateClarifications mock is already set by Set")
+	}
+
+	expectation := &RepositoryMockListPlateClarificationsExpectation{
+		mock:               mmListPlateClarifications.mock,
+		params:             &RepositoryMockListPlateClarificationsParams{ctx, tx, o},
+		expectationOrigins: RepositoryMockListPlateClarificationsExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmListPlateClarifications.expectations = append(mmListPlateClarifications.expectations, expectation)
+	return expectation
+}
+
+// Then sets up repository.ListPlateClarifications return parameters for the expectation previously defined by the When method
+func (e *RepositoryMockListPlateClarificationsExpectation) Then(pa1 []models.PlateClarification, err error) *RepositoryMock {
+	e.results = &RepositoryMockListPlateClarificationsResults{pa1, err}
+	return e.mock
+}
+
+// Times sets number of times repository.ListPlateClarifications should be invoked
+func (mmListPlateClarifications *mRepositoryMockListPlateClarifications) Times(n uint64) *mRepositoryMockListPlateClarifications {
+	if n == 0 {
+		mmListPlateClarifications.mock.t.Fatalf("Times of RepositoryMock.ListPlateClarifications mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmListPlateClarifications.expectedInvocations, n)
+	mmListPlateClarifications.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmListPlateClarifications
+}
+
+func (mmListPlateClarifications *mRepositoryMockListPlateClarifications) invocationsDone() bool {
+	if len(mmListPlateClarifications.expectations) == 0 && mmListPlateClarifications.defaultExpectation == nil && mmListPlateClarifications.mock.funcListPlateClarifications == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmListPlateClarifications.mock.afterListPlateClarificationsCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmListPlateClarifications.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// ListPlateClarifications implements mm_usecase.repository
+func (mmListPlateClarifications *RepositoryMock) ListPlateClarifications(ctx context.Context, tx db.Executor, o models.SamePlateOpts) (pa1 []models.PlateClarification, err error) {
+	mm_atomic.AddUint64(&mmListPlateClarifications.beforeListPlateClarificationsCounter, 1)
+	defer mm_atomic.AddUint64(&mmListPlateClarifications.afterListPlateClarificationsCounter, 1)
+
+	mmListPlateClarifications.t.Helper()
+
+	if mmListPlateClarifications.inspectFuncListPlateClarifications != nil {
+		mmListPlateClarifications.inspectFuncListPlateClarifications(ctx, tx, o)
+	}
+
+	mm_params := RepositoryMockListPlateClarificationsParams{ctx, tx, o}
+
+	// Record call args
+	mmListPlateClarifications.ListPlateClarificationsMock.mutex.Lock()
+	mmListPlateClarifications.ListPlateClarificationsMock.callArgs = append(mmListPlateClarifications.ListPlateClarificationsMock.callArgs, &mm_params)
+	mmListPlateClarifications.ListPlateClarificationsMock.mutex.Unlock()
+
+	for _, e := range mmListPlateClarifications.ListPlateClarificationsMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.pa1, e.results.err
+		}
+	}
+
+	if mmListPlateClarifications.ListPlateClarificationsMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmListPlateClarifications.ListPlateClarificationsMock.defaultExpectation.Counter, 1)
+		mm_want := mmListPlateClarifications.ListPlateClarificationsMock.defaultExpectation.params
+		mm_want_ptrs := mmListPlateClarifications.ListPlateClarificationsMock.defaultExpectation.paramPtrs
+
+		mm_got := RepositoryMockListPlateClarificationsParams{ctx, tx, o}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmListPlateClarifications.t.Errorf("RepositoryMock.ListPlateClarifications got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmListPlateClarifications.ListPlateClarificationsMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.tx != nil && !minimock.Equal(*mm_want_ptrs.tx, mm_got.tx) {
+				mmListPlateClarifications.t.Errorf("RepositoryMock.ListPlateClarifications got unexpected parameter tx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmListPlateClarifications.ListPlateClarificationsMock.defaultExpectation.expectationOrigins.originTx, *mm_want_ptrs.tx, mm_got.tx, minimock.Diff(*mm_want_ptrs.tx, mm_got.tx))
+			}
+
+			if mm_want_ptrs.o != nil && !minimock.Equal(*mm_want_ptrs.o, mm_got.o) {
+				mmListPlateClarifications.t.Errorf("RepositoryMock.ListPlateClarifications got unexpected parameter o, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmListPlateClarifications.ListPlateClarificationsMock.defaultExpectation.expectationOrigins.originO, *mm_want_ptrs.o, mm_got.o, minimock.Diff(*mm_want_ptrs.o, mm_got.o))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmListPlateClarifications.t.Errorf("RepositoryMock.ListPlateClarifications got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmListPlateClarifications.ListPlateClarificationsMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmListPlateClarifications.ListPlateClarificationsMock.defaultExpectation.results
+		if mm_results == nil {
+			mmListPlateClarifications.t.Fatal("No results are set for the RepositoryMock.ListPlateClarifications")
+		}
+		return (*mm_results).pa1, (*mm_results).err
+	}
+	if mmListPlateClarifications.funcListPlateClarifications != nil {
+		return mmListPlateClarifications.funcListPlateClarifications(ctx, tx, o)
+	}
+	mmListPlateClarifications.t.Fatalf("Unexpected call to RepositoryMock.ListPlateClarifications. %v %v %v", ctx, tx, o)
+	return
+}
+
+// ListPlateClarificationsAfterCounter returns a count of finished RepositoryMock.ListPlateClarifications invocations
+func (mmListPlateClarifications *RepositoryMock) ListPlateClarificationsAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmListPlateClarifications.afterListPlateClarificationsCounter)
+}
+
+// ListPlateClarificationsBeforeCounter returns a count of RepositoryMock.ListPlateClarifications invocations
+func (mmListPlateClarifications *RepositoryMock) ListPlateClarificationsBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmListPlateClarifications.beforeListPlateClarificationsCounter)
+}
+
+// Calls returns a list of arguments used in each call to RepositoryMock.ListPlateClarifications.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmListPlateClarifications *mRepositoryMockListPlateClarifications) Calls() []*RepositoryMockListPlateClarificationsParams {
+	mmListPlateClarifications.mutex.RLock()
+
+	argCopy := make([]*RepositoryMockListPlateClarificationsParams, len(mmListPlateClarifications.callArgs))
+	copy(argCopy, mmListPlateClarifications.callArgs)
+
+	mmListPlateClarifications.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockListPlateClarificationsDone returns true if the count of the ListPlateClarifications invocations corresponds
+// the number of defined expectations
+func (m *RepositoryMock) MinimockListPlateClarificationsDone() bool {
+	if m.ListPlateClarificationsMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.ListPlateClarificationsMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.ListPlateClarificationsMock.invocationsDone()
+}
+
+// MinimockListPlateClarificationsInspect logs each unmet expectation
+func (m *RepositoryMock) MinimockListPlateClarificationsInspect() {
+	for _, e := range m.ListPlateClarificationsMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to RepositoryMock.ListPlateClarifications at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterListPlateClarificationsCounter := mm_atomic.LoadUint64(&m.afterListPlateClarificationsCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.ListPlateClarificationsMock.defaultExpectation != nil && afterListPlateClarificationsCounter < 1 {
+		if m.ListPlateClarificationsMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to RepositoryMock.ListPlateClarifications at\n%s", m.ListPlateClarificationsMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to RepositoryMock.ListPlateClarifications at\n%s with params: %#v", m.ListPlateClarificationsMock.defaultExpectation.expectationOrigins.origin, *m.ListPlateClarificationsMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcListPlateClarifications != nil && afterListPlateClarificationsCounter < 1 {
+		m.t.Errorf("Expected call to RepositoryMock.ListPlateClarifications at\n%s", m.funcListPlateClarificationsOrigin)
+	}
+
+	if !m.ListPlateClarificationsMock.invocationsDone() && afterListPlateClarificationsCounter > 0 {
+		m.t.Errorf("Expected %d calls to RepositoryMock.ListPlateClarifications at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.ListPlateClarificationsMock.expectedInvocations), m.ListPlateClarificationsMock.expectedInvocationsOrigin, afterListPlateClarificationsCounter)
 	}
 }
 
@@ -3208,6 +3592,8 @@ func (m *RepositoryMock) MinimockFinish() {
 
 			m.MinimockCreateClarificationInspect()
 
+			m.MinimockListPlateClarificationsInspect()
+
 			m.MinimockListSamePlateInspect()
 
 			m.MinimockMatchesSightingPlateInspect()
@@ -3243,6 +3629,7 @@ func (m *RepositoryMock) minimockDone() bool {
 		m.MinimockAcceptMatchingClarificationsDone() &&
 		m.MinimockCountMatchingClarificationsDone() &&
 		m.MinimockCreateClarificationDone() &&
+		m.MinimockListPlateClarificationsDone() &&
 		m.MinimockListSamePlateDone() &&
 		m.MinimockMatchesSightingPlateDone() &&
 		m.MinimockSearchDone() &&

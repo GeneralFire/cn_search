@@ -145,7 +145,7 @@ func TestIncludeHiddenOnlyForAdmin(t *testing.T) {
 	}{{context.Background(), false}, {adminCtx("nope"), false}, {adminCtx(testAdminToken), true}} {
 		svc, _, uc := newAdminSvc(t)
 		uc.SearchMock.Expect(minimock.AnyContext, models.SearchOpts{Limit: DefaultLimit, IncludeHidden: tt.want}).Return(models.SearchPage{}, nil)
-		uc.ListSamePlateMock.Expect(minimock.AnyContext, models.SamePlateOpts{ID: sighting.ID, IncludeHidden: tt.want}).Return([]models.PlateSighting{sighting}, nil)
+		uc.ListSamePlateMock.Expect(minimock.AnyContext, models.SamePlateOpts{ID: sighting.ID, IncludeHidden: tt.want}).Return(models.SamePlate{Items: []models.PlateSighting{sighting}}, nil)
 		uc.SeeAlsoMock.Expect(minimock.AnyContext, models.SeeAlsoOpts{Limit: MaxSeeAlso, IncludeHidden: tt.want}).Return(nil, nil)
 		if _, err := svc.Search(tt.ctx, &pb.SearchRequest{}); err != nil {
 			t.Fatal(err)

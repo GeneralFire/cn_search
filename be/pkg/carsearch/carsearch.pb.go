@@ -681,9 +681,12 @@ func (x *GetRequest) GetId() string {
 type GetResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Все фиксации номера, от новых к старым; первая по id всегда среди них.
-	Items         []*PlateSighting `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Items []*PlateSighting `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	// Уточнения ко всем фиксациям номера, сгруппированные по предложенному номеру (без учёта
+	// похожих символов): сначала принятые, затем по числу предложений и свежести. Нет — пусто.
+	Clarifications []*PlateClarification `protobuf:"bytes,2,rep,name=clarifications,proto3" json:"clarifications,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *GetResponse) Reset() {
@@ -723,6 +726,111 @@ func (x *GetResponse) GetItems() []*PlateSighting {
 	return nil
 }
 
+func (x *GetResponse) GetClarifications() []*PlateClarification {
+	if x != nil {
+		return x.Clarifications
+	}
+	return nil
+}
+
+// PlateClarification — предложенный номер и сколько раз его предлагали к фиксациям номера.
+type PlateClarification struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Предложенный номер (написание из самого свежего уточнения группы): "А123ВС 77".
+	Plate       string    `protobuf:"bytes,1,opt,name=plate,proto3" json:"plate,omitempty"`
+	PlateType   PlateType `protobuf:"varint,2,opt,name=plate_type,json=plateType,proto3,enum=carsearch.PlateType" json:"plate_type,omitempty"`
+	PlateRegion string    `protobuf:"bytes,3,opt,name=plate_region,json=plateRegion,proto3" json:"plate_region,omitempty"`
+	// Сколько уточнений с этим номером.
+	Count int32 `protobuf:"varint,4,opt,name=count,proto3" json:"count,omitempty"`
+	// ACCEPTED, если среди них есть принятые; иначе NOT_ACCEPTED.
+	Status ClarificationStatus `protobuf:"varint,5,opt,name=status,proto3,enum=carsearch.ClarificationStatus" json:"status,omitempty"`
+	// uuid фиксаций, к которым этот номер предлагали.
+	SightingIds []string `protobuf:"bytes,6,rep,name=sighting_ids,json=sightingIds,proto3" json:"sighting_ids,omitempty"`
+	// Сами уточнения группы, от новых к старым (модерация в админ-режиме — по id).
+	Items         []*Clarification `protobuf:"bytes,7,rep,name=items,proto3" json:"items,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PlateClarification) Reset() {
+	*x = PlateClarification{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PlateClarification) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PlateClarification) ProtoMessage() {}
+
+func (x *PlateClarification) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PlateClarification.ProtoReflect.Descriptor instead.
+func (*PlateClarification) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *PlateClarification) GetPlate() string {
+	if x != nil {
+		return x.Plate
+	}
+	return ""
+}
+
+func (x *PlateClarification) GetPlateType() PlateType {
+	if x != nil {
+		return x.PlateType
+	}
+	return PlateType_PLATE_TYPE_DEFAULT
+}
+
+func (x *PlateClarification) GetPlateRegion() string {
+	if x != nil {
+		return x.PlateRegion
+	}
+	return ""
+}
+
+func (x *PlateClarification) GetCount() int32 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
+}
+
+func (x *PlateClarification) GetStatus() ClarificationStatus {
+	if x != nil {
+		return x.Status
+	}
+	return ClarificationStatus_CLARIFICATION_STATUS_UNSPECIFIED
+}
+
+func (x *PlateClarification) GetSightingIds() []string {
+	if x != nil {
+		return x.SightingIds
+	}
+	return nil
+}
+
+func (x *PlateClarification) GetItems() []*Clarification {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
 type SeeAlsoRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// uuid открытой фиксации: её номер в выдачу не попадает. Пусто — без исключения.
@@ -735,7 +843,7 @@ type SeeAlsoRequest struct {
 
 func (x *SeeAlsoRequest) Reset() {
 	*x = SeeAlsoRequest{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[5]
+	mi := &file_carsearch_carsearch_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -747,7 +855,7 @@ func (x *SeeAlsoRequest) String() string {
 func (*SeeAlsoRequest) ProtoMessage() {}
 
 func (x *SeeAlsoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[5]
+	mi := &file_carsearch_carsearch_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -760,7 +868,7 @@ func (x *SeeAlsoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SeeAlsoRequest.ProtoReflect.Descriptor instead.
 func (*SeeAlsoRequest) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{5}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SeeAlsoRequest) GetId() string {
@@ -786,7 +894,7 @@ type SeeAlsoResponse struct {
 
 func (x *SeeAlsoResponse) Reset() {
 	*x = SeeAlsoResponse{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[6]
+	mi := &file_carsearch_carsearch_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -798,7 +906,7 @@ func (x *SeeAlsoResponse) String() string {
 func (*SeeAlsoResponse) ProtoMessage() {}
 
 func (x *SeeAlsoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[6]
+	mi := &file_carsearch_carsearch_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -811,7 +919,7 @@ func (x *SeeAlsoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SeeAlsoResponse.ProtoReflect.Descriptor instead.
 func (*SeeAlsoResponse) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{6}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *SeeAlsoResponse) GetItems() []*PlateSighting {
@@ -842,7 +950,7 @@ type Clarification struct {
 
 func (x *Clarification) Reset() {
 	*x = Clarification{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[7]
+	mi := &file_carsearch_carsearch_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -854,7 +962,7 @@ func (x *Clarification) String() string {
 func (*Clarification) ProtoMessage() {}
 
 func (x *Clarification) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[7]
+	mi := &file_carsearch_carsearch_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -867,7 +975,7 @@ func (x *Clarification) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Clarification.ProtoReflect.Descriptor instead.
 func (*Clarification) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{7}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Clarification) GetId() string {
@@ -943,7 +1051,7 @@ type ClarifyRequest struct {
 
 func (x *ClarifyRequest) Reset() {
 	*x = ClarifyRequest{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[8]
+	mi := &file_carsearch_carsearch_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -955,7 +1063,7 @@ func (x *ClarifyRequest) String() string {
 func (*ClarifyRequest) ProtoMessage() {}
 
 func (x *ClarifyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[8]
+	mi := &file_carsearch_carsearch_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -968,7 +1076,7 @@ func (x *ClarifyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClarifyRequest.ProtoReflect.Descriptor instead.
 func (*ClarifyRequest) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{8}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ClarifyRequest) GetSightingId() string {
@@ -1008,7 +1116,7 @@ type ClarifyResponse struct {
 
 func (x *ClarifyResponse) Reset() {
 	*x = ClarifyResponse{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[9]
+	mi := &file_carsearch_carsearch_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1020,7 +1128,7 @@ func (x *ClarifyResponse) String() string {
 func (*ClarifyResponse) ProtoMessage() {}
 
 func (x *ClarifyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[9]
+	mi := &file_carsearch_carsearch_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1033,7 +1141,7 @@ func (x *ClarifyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClarifyResponse.ProtoReflect.Descriptor instead.
 func (*ClarifyResponse) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{9}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ClarifyResponse) GetClarification() *Clarification {
@@ -1061,7 +1169,7 @@ type Complaint struct {
 
 func (x *Complaint) Reset() {
 	*x = Complaint{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[10]
+	mi := &file_carsearch_carsearch_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1073,7 +1181,7 @@ func (x *Complaint) String() string {
 func (*Complaint) ProtoMessage() {}
 
 func (x *Complaint) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[10]
+	mi := &file_carsearch_carsearch_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1086,7 +1194,7 @@ func (x *Complaint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Complaint.ProtoReflect.Descriptor instead.
 func (*Complaint) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{10}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *Complaint) GetId() string {
@@ -1152,7 +1260,7 @@ type ComplainRequest struct {
 
 func (x *ComplainRequest) Reset() {
 	*x = ComplainRequest{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[11]
+	mi := &file_carsearch_carsearch_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1164,7 +1272,7 @@ func (x *ComplainRequest) String() string {
 func (*ComplainRequest) ProtoMessage() {}
 
 func (x *ComplainRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[11]
+	mi := &file_carsearch_carsearch_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1177,7 +1285,7 @@ func (x *ComplainRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ComplainRequest.ProtoReflect.Descriptor instead.
 func (*ComplainRequest) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{11}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ComplainRequest) GetSightingId() string {
@@ -1217,7 +1325,7 @@ type ListComplaintsRequest struct {
 
 func (x *ListComplaintsRequest) Reset() {
 	*x = ListComplaintsRequest{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[12]
+	mi := &file_carsearch_carsearch_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1229,7 +1337,7 @@ func (x *ListComplaintsRequest) String() string {
 func (*ListComplaintsRequest) ProtoMessage() {}
 
 func (x *ListComplaintsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[12]
+	mi := &file_carsearch_carsearch_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1242,7 +1350,7 @@ func (x *ListComplaintsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListComplaintsRequest.ProtoReflect.Descriptor instead.
 func (*ListComplaintsRequest) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{12}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ListComplaintsRequest) GetOffset() int32 {
@@ -1286,7 +1394,7 @@ type ListComplaintsResponse struct {
 
 func (x *ListComplaintsResponse) Reset() {
 	*x = ListComplaintsResponse{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[13]
+	mi := &file_carsearch_carsearch_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1298,7 +1406,7 @@ func (x *ListComplaintsResponse) String() string {
 func (*ListComplaintsResponse) ProtoMessage() {}
 
 func (x *ListComplaintsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[13]
+	mi := &file_carsearch_carsearch_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1311,7 +1419,7 @@ func (x *ListComplaintsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListComplaintsResponse.ProtoReflect.Descriptor instead.
 func (*ListComplaintsResponse) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{13}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ListComplaintsResponse) GetItems() []*Complaint {
@@ -1345,7 +1453,7 @@ type ResolveComplaintRequest struct {
 
 func (x *ResolveComplaintRequest) Reset() {
 	*x = ResolveComplaintRequest{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[14]
+	mi := &file_carsearch_carsearch_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1357,7 +1465,7 @@ func (x *ResolveComplaintRequest) String() string {
 func (*ResolveComplaintRequest) ProtoMessage() {}
 
 func (x *ResolveComplaintRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[14]
+	mi := &file_carsearch_carsearch_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1370,7 +1478,7 @@ func (x *ResolveComplaintRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolveComplaintRequest.ProtoReflect.Descriptor instead.
 func (*ResolveComplaintRequest) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{14}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ResolveComplaintRequest) GetId() string {
@@ -1392,7 +1500,7 @@ type SetClarificationStatusRequest struct {
 
 func (x *SetClarificationStatusRequest) Reset() {
 	*x = SetClarificationStatusRequest{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[15]
+	mi := &file_carsearch_carsearch_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1404,7 +1512,7 @@ func (x *SetClarificationStatusRequest) String() string {
 func (*SetClarificationStatusRequest) ProtoMessage() {}
 
 func (x *SetClarificationStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[15]
+	mi := &file_carsearch_carsearch_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1417,7 +1525,7 @@ func (x *SetClarificationStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetClarificationStatusRequest.ProtoReflect.Descriptor instead.
 func (*SetClarificationStatusRequest) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{15}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *SetClarificationStatusRequest) GetId() string {
@@ -1446,7 +1554,7 @@ type HideSightingRequest struct {
 
 func (x *HideSightingRequest) Reset() {
 	*x = HideSightingRequest{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[16]
+	mi := &file_carsearch_carsearch_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1458,7 +1566,7 @@ func (x *HideSightingRequest) String() string {
 func (*HideSightingRequest) ProtoMessage() {}
 
 func (x *HideSightingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[16]
+	mi := &file_carsearch_carsearch_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1471,7 +1579,7 @@ func (x *HideSightingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HideSightingRequest.ProtoReflect.Descriptor instead.
 func (*HideSightingRequest) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{16}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *HideSightingRequest) GetId() string {
@@ -1504,7 +1612,7 @@ type ListClarificationsRequest struct {
 
 func (x *ListClarificationsRequest) Reset() {
 	*x = ListClarificationsRequest{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[17]
+	mi := &file_carsearch_carsearch_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1516,7 +1624,7 @@ func (x *ListClarificationsRequest) String() string {
 func (*ListClarificationsRequest) ProtoMessage() {}
 
 func (x *ListClarificationsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[17]
+	mi := &file_carsearch_carsearch_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1529,7 +1637,7 @@ func (x *ListClarificationsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListClarificationsRequest.ProtoReflect.Descriptor instead.
 func (*ListClarificationsRequest) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{17}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ListClarificationsRequest) GetStatus() ClarificationStatus {
@@ -1573,7 +1681,7 @@ type ListClarificationsResponse struct {
 
 func (x *ListClarificationsResponse) Reset() {
 	*x = ListClarificationsResponse{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[18]
+	mi := &file_carsearch_carsearch_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1585,7 +1693,7 @@ func (x *ListClarificationsResponse) String() string {
 func (*ListClarificationsResponse) ProtoMessage() {}
 
 func (x *ListClarificationsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[18]
+	mi := &file_carsearch_carsearch_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1598,7 +1706,7 @@ func (x *ListClarificationsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListClarificationsResponse.ProtoReflect.Descriptor instead.
 func (*ListClarificationsResponse) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{18}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ListClarificationsResponse) GetItems() []*Clarification {
@@ -1640,7 +1748,7 @@ type User struct {
 
 func (x *User) Reset() {
 	*x = User{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[19]
+	mi := &file_carsearch_carsearch_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1652,7 +1760,7 @@ func (x *User) String() string {
 func (*User) ProtoMessage() {}
 
 func (x *User) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[19]
+	mi := &file_carsearch_carsearch_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1665,7 +1773,7 @@ func (x *User) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use User.ProtoReflect.Descriptor instead.
 func (*User) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{19}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *User) GetId() string {
@@ -1711,7 +1819,7 @@ type MeRequest struct {
 
 func (x *MeRequest) Reset() {
 	*x = MeRequest{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[20]
+	mi := &file_carsearch_carsearch_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1723,7 +1831,7 @@ func (x *MeRequest) String() string {
 func (*MeRequest) ProtoMessage() {}
 
 func (x *MeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[20]
+	mi := &file_carsearch_carsearch_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1736,7 +1844,7 @@ func (x *MeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MeRequest.ProtoReflect.Descriptor instead.
 func (*MeRequest) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{20}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{21}
 }
 
 type MeResponse struct {
@@ -1752,7 +1860,7 @@ type MeResponse struct {
 
 func (x *MeResponse) Reset() {
 	*x = MeResponse{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[21]
+	mi := &file_carsearch_carsearch_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1764,7 +1872,7 @@ func (x *MeResponse) String() string {
 func (*MeResponse) ProtoMessage() {}
 
 func (x *MeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[21]
+	mi := &file_carsearch_carsearch_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1777,7 +1885,7 @@ func (x *MeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MeResponse.ProtoReflect.Descriptor instead.
 func (*MeResponse) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{21}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *MeResponse) GetIsAdmin() bool {
@@ -1811,7 +1919,7 @@ type RegisterRequest struct {
 
 func (x *RegisterRequest) Reset() {
 	*x = RegisterRequest{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[22]
+	mi := &file_carsearch_carsearch_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1823,7 +1931,7 @@ func (x *RegisterRequest) String() string {
 func (*RegisterRequest) ProtoMessage() {}
 
 func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[22]
+	mi := &file_carsearch_carsearch_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1836,7 +1944,7 @@ func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterRequest.ProtoReflect.Descriptor instead.
 func (*RegisterRequest) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{22}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *RegisterRequest) GetEmail() string {
@@ -1857,7 +1965,7 @@ type RegisterResponse struct {
 
 func (x *RegisterResponse) Reset() {
 	*x = RegisterResponse{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[23]
+	mi := &file_carsearch_carsearch_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1869,7 +1977,7 @@ func (x *RegisterResponse) String() string {
 func (*RegisterResponse) ProtoMessage() {}
 
 func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[23]
+	mi := &file_carsearch_carsearch_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1882,7 +1990,7 @@ func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterResponse.ProtoReflect.Descriptor instead.
 func (*RegisterResponse) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{23}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *RegisterResponse) GetToken() string {
@@ -1907,7 +2015,7 @@ type PlansRequest struct {
 
 func (x *PlansRequest) Reset() {
 	*x = PlansRequest{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[24]
+	mi := &file_carsearch_carsearch_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1919,7 +2027,7 @@ func (x *PlansRequest) String() string {
 func (*PlansRequest) ProtoMessage() {}
 
 func (x *PlansRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[24]
+	mi := &file_carsearch_carsearch_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1932,7 +2040,7 @@ func (x *PlansRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlansRequest.ProtoReflect.Descriptor instead.
 func (*PlansRequest) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{24}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{25}
 }
 
 // PlanInfo — тариф.
@@ -1956,7 +2064,7 @@ type PlanInfo struct {
 
 func (x *PlanInfo) Reset() {
 	*x = PlanInfo{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[25]
+	mi := &file_carsearch_carsearch_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1968,7 +2076,7 @@ func (x *PlanInfo) String() string {
 func (*PlanInfo) ProtoMessage() {}
 
 func (x *PlanInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[25]
+	mi := &file_carsearch_carsearch_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1981,7 +2089,7 @@ func (x *PlanInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlanInfo.ProtoReflect.Descriptor instead.
 func (*PlanInfo) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{25}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *PlanInfo) GetPlan() UserPlan {
@@ -2042,7 +2150,7 @@ type PlansResponse struct {
 
 func (x *PlansResponse) Reset() {
 	*x = PlansResponse{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[26]
+	mi := &file_carsearch_carsearch_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2054,7 +2162,7 @@ func (x *PlansResponse) String() string {
 func (*PlansResponse) ProtoMessage() {}
 
 func (x *PlansResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[26]
+	mi := &file_carsearch_carsearch_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2067,7 +2175,7 @@ func (x *PlansResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlansResponse.ProtoReflect.Descriptor instead.
 func (*PlansResponse) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{26}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *PlansResponse) GetItems() []*PlanInfo {
@@ -2096,7 +2204,7 @@ type Payment struct {
 
 func (x *Payment) Reset() {
 	*x = Payment{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[27]
+	mi := &file_carsearch_carsearch_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2108,7 +2216,7 @@ func (x *Payment) String() string {
 func (*Payment) ProtoMessage() {}
 
 func (x *Payment) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[27]
+	mi := &file_carsearch_carsearch_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2121,7 +2229,7 @@ func (x *Payment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Payment.ProtoReflect.Descriptor instead.
 func (*Payment) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{27}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *Payment) GetId() string {
@@ -2190,7 +2298,7 @@ type CreatePaymentRequest struct {
 
 func (x *CreatePaymentRequest) Reset() {
 	*x = CreatePaymentRequest{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[28]
+	mi := &file_carsearch_carsearch_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2202,7 +2310,7 @@ func (x *CreatePaymentRequest) String() string {
 func (*CreatePaymentRequest) ProtoMessage() {}
 
 func (x *CreatePaymentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[28]
+	mi := &file_carsearch_carsearch_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2215,7 +2323,7 @@ func (x *CreatePaymentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatePaymentRequest.ProtoReflect.Descriptor instead.
 func (*CreatePaymentRequest) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{28}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *CreatePaymentRequest) GetPlan() UserPlan {
@@ -2237,7 +2345,7 @@ type CreatePaymentResponse struct {
 
 func (x *CreatePaymentResponse) Reset() {
 	*x = CreatePaymentResponse{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[29]
+	mi := &file_carsearch_carsearch_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2249,7 +2357,7 @@ func (x *CreatePaymentResponse) String() string {
 func (*CreatePaymentResponse) ProtoMessage() {}
 
 func (x *CreatePaymentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[29]
+	mi := &file_carsearch_carsearch_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2262,7 +2370,7 @@ func (x *CreatePaymentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreatePaymentResponse.ProtoReflect.Descriptor instead.
 func (*CreatePaymentResponse) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{29}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *CreatePaymentResponse) GetPaymentId() string {
@@ -2297,7 +2405,7 @@ type ConfirmMockPaymentRequest struct {
 
 func (x *ConfirmMockPaymentRequest) Reset() {
 	*x = ConfirmMockPaymentRequest{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[30]
+	mi := &file_carsearch_carsearch_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2309,7 +2417,7 @@ func (x *ConfirmMockPaymentRequest) String() string {
 func (*ConfirmMockPaymentRequest) ProtoMessage() {}
 
 func (x *ConfirmMockPaymentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[30]
+	mi := &file_carsearch_carsearch_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2322,7 +2430,7 @@ func (x *ConfirmMockPaymentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfirmMockPaymentRequest.ProtoReflect.Descriptor instead.
 func (*ConfirmMockPaymentRequest) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{30}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *ConfirmMockPaymentRequest) GetPaymentId() string {
@@ -2347,7 +2455,7 @@ type ListMyPaymentsRequest struct {
 
 func (x *ListMyPaymentsRequest) Reset() {
 	*x = ListMyPaymentsRequest{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[31]
+	mi := &file_carsearch_carsearch_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2359,7 +2467,7 @@ func (x *ListMyPaymentsRequest) String() string {
 func (*ListMyPaymentsRequest) ProtoMessage() {}
 
 func (x *ListMyPaymentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[31]
+	mi := &file_carsearch_carsearch_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2372,7 +2480,7 @@ func (x *ListMyPaymentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMyPaymentsRequest.ProtoReflect.Descriptor instead.
 func (*ListMyPaymentsRequest) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{31}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{32}
 }
 
 type ListMyPaymentsResponse struct {
@@ -2384,7 +2492,7 @@ type ListMyPaymentsResponse struct {
 
 func (x *ListMyPaymentsResponse) Reset() {
 	*x = ListMyPaymentsResponse{}
-	mi := &file_carsearch_carsearch_proto_msgTypes[32]
+	mi := &file_carsearch_carsearch_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2396,7 +2504,7 @@ func (x *ListMyPaymentsResponse) String() string {
 func (*ListMyPaymentsResponse) ProtoMessage() {}
 
 func (x *ListMyPaymentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_carsearch_carsearch_proto_msgTypes[32]
+	mi := &file_carsearch_carsearch_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2409,7 +2517,7 @@ func (x *ListMyPaymentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMyPaymentsResponse.ProtoReflect.Descriptor instead.
 func (*ListMyPaymentsResponse) Descriptor() ([]byte, []int) {
-	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{32}
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *ListMyPaymentsResponse) GetItems() []*Payment {
@@ -2456,9 +2564,19 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\f_next_offset\"\x1c\n" +
 	"\n" +
 	"GetRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"=\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x84\x01\n" +
 	"\vGetResponse\x12.\n" +
-	"\x05items\x18\x01 \x03(\v2\x18.carsearch.PlateSightingR\x05items\"6\n" +
+	"\x05items\x18\x01 \x03(\v2\x18.carsearch.PlateSightingR\x05items\x12E\n" +
+	"\x0eclarifications\x18\x02 \x03(\v2\x1d.carsearch.PlateClarificationR\x0eclarifications\"\xa3\x02\n" +
+	"\x12PlateClarification\x12\x14\n" +
+	"\x05plate\x18\x01 \x01(\tR\x05plate\x123\n" +
+	"\n" +
+	"plate_type\x18\x02 \x01(\x0e2\x14.carsearch.PlateTypeR\tplateType\x12!\n" +
+	"\fplate_region\x18\x03 \x01(\tR\vplateRegion\x12\x14\n" +
+	"\x05count\x18\x04 \x01(\x05R\x05count\x126\n" +
+	"\x06status\x18\x05 \x01(\x0e2\x1e.carsearch.ClarificationStatusR\x06status\x12!\n" +
+	"\fsighting_ids\x18\x06 \x03(\tR\vsightingIds\x12.\n" +
+	"\x05items\x18\a \x03(\v2\x18.carsearch.ClarificationR\x05items\"6\n" +
 	"\x0eSeeAlsoRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limit\"A\n" +
@@ -2647,7 +2765,7 @@ func file_carsearch_carsearch_proto_rawDescGZIP() []byte {
 }
 
 var file_carsearch_carsearch_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
-var file_carsearch_carsearch_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
+var file_carsearch_carsearch_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
 var file_carsearch_carsearch_proto_goTypes = []any{
 	(PlateType)(0),                        // 0: carsearch.PlateType
 	(ClarificationStatus)(0),              // 1: carsearch.ClarificationStatus
@@ -2660,110 +2778,115 @@ var file_carsearch_carsearch_proto_goTypes = []any{
 	(*SearchResponse)(nil),                // 8: carsearch.SearchResponse
 	(*GetRequest)(nil),                    // 9: carsearch.GetRequest
 	(*GetResponse)(nil),                   // 10: carsearch.GetResponse
-	(*SeeAlsoRequest)(nil),                // 11: carsearch.SeeAlsoRequest
-	(*SeeAlsoResponse)(nil),               // 12: carsearch.SeeAlsoResponse
-	(*Clarification)(nil),                 // 13: carsearch.Clarification
-	(*ClarifyRequest)(nil),                // 14: carsearch.ClarifyRequest
-	(*ClarifyResponse)(nil),               // 15: carsearch.ClarifyResponse
-	(*Complaint)(nil),                     // 16: carsearch.Complaint
-	(*ComplainRequest)(nil),               // 17: carsearch.ComplainRequest
-	(*ListComplaintsRequest)(nil),         // 18: carsearch.ListComplaintsRequest
-	(*ListComplaintsResponse)(nil),        // 19: carsearch.ListComplaintsResponse
-	(*ResolveComplaintRequest)(nil),       // 20: carsearch.ResolveComplaintRequest
-	(*SetClarificationStatusRequest)(nil), // 21: carsearch.SetClarificationStatusRequest
-	(*HideSightingRequest)(nil),           // 22: carsearch.HideSightingRequest
-	(*ListClarificationsRequest)(nil),     // 23: carsearch.ListClarificationsRequest
-	(*ListClarificationsResponse)(nil),    // 24: carsearch.ListClarificationsResponse
-	(*User)(nil),                          // 25: carsearch.User
-	(*MeRequest)(nil),                     // 26: carsearch.MeRequest
-	(*MeResponse)(nil),                    // 27: carsearch.MeResponse
-	(*RegisterRequest)(nil),               // 28: carsearch.RegisterRequest
-	(*RegisterResponse)(nil),              // 29: carsearch.RegisterResponse
-	(*PlansRequest)(nil),                  // 30: carsearch.PlansRequest
-	(*PlanInfo)(nil),                      // 31: carsearch.PlanInfo
-	(*PlansResponse)(nil),                 // 32: carsearch.PlansResponse
-	(*Payment)(nil),                       // 33: carsearch.Payment
-	(*CreatePaymentRequest)(nil),          // 34: carsearch.CreatePaymentRequest
-	(*CreatePaymentResponse)(nil),         // 35: carsearch.CreatePaymentResponse
-	(*ConfirmMockPaymentRequest)(nil),     // 36: carsearch.ConfirmMockPaymentRequest
-	(*ListMyPaymentsRequest)(nil),         // 37: carsearch.ListMyPaymentsRequest
-	(*ListMyPaymentsResponse)(nil),        // 38: carsearch.ListMyPaymentsResponse
-	(*timestamppb.Timestamp)(nil),         // 39: google.protobuf.Timestamp
+	(*PlateClarification)(nil),            // 11: carsearch.PlateClarification
+	(*SeeAlsoRequest)(nil),                // 12: carsearch.SeeAlsoRequest
+	(*SeeAlsoResponse)(nil),               // 13: carsearch.SeeAlsoResponse
+	(*Clarification)(nil),                 // 14: carsearch.Clarification
+	(*ClarifyRequest)(nil),                // 15: carsearch.ClarifyRequest
+	(*ClarifyResponse)(nil),               // 16: carsearch.ClarifyResponse
+	(*Complaint)(nil),                     // 17: carsearch.Complaint
+	(*ComplainRequest)(nil),               // 18: carsearch.ComplainRequest
+	(*ListComplaintsRequest)(nil),         // 19: carsearch.ListComplaintsRequest
+	(*ListComplaintsResponse)(nil),        // 20: carsearch.ListComplaintsResponse
+	(*ResolveComplaintRequest)(nil),       // 21: carsearch.ResolveComplaintRequest
+	(*SetClarificationStatusRequest)(nil), // 22: carsearch.SetClarificationStatusRequest
+	(*HideSightingRequest)(nil),           // 23: carsearch.HideSightingRequest
+	(*ListClarificationsRequest)(nil),     // 24: carsearch.ListClarificationsRequest
+	(*ListClarificationsResponse)(nil),    // 25: carsearch.ListClarificationsResponse
+	(*User)(nil),                          // 26: carsearch.User
+	(*MeRequest)(nil),                     // 27: carsearch.MeRequest
+	(*MeResponse)(nil),                    // 28: carsearch.MeResponse
+	(*RegisterRequest)(nil),               // 29: carsearch.RegisterRequest
+	(*RegisterResponse)(nil),              // 30: carsearch.RegisterResponse
+	(*PlansRequest)(nil),                  // 31: carsearch.PlansRequest
+	(*PlanInfo)(nil),                      // 32: carsearch.PlanInfo
+	(*PlansResponse)(nil),                 // 33: carsearch.PlansResponse
+	(*Payment)(nil),                       // 34: carsearch.Payment
+	(*CreatePaymentRequest)(nil),          // 35: carsearch.CreatePaymentRequest
+	(*CreatePaymentResponse)(nil),         // 36: carsearch.CreatePaymentResponse
+	(*ConfirmMockPaymentRequest)(nil),     // 37: carsearch.ConfirmMockPaymentRequest
+	(*ListMyPaymentsRequest)(nil),         // 38: carsearch.ListMyPaymentsRequest
+	(*ListMyPaymentsResponse)(nil),        // 39: carsearch.ListMyPaymentsResponse
+	(*timestamppb.Timestamp)(nil),         // 40: google.protobuf.Timestamp
 }
 var file_carsearch_carsearch_proto_depIdxs = []int32{
-	39, // 0: carsearch.PlateSighting.created_at:type_name -> google.protobuf.Timestamp
+	40, // 0: carsearch.PlateSighting.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 1: carsearch.PlateSighting.plate_type:type_name -> carsearch.PlateType
 	6,  // 2: carsearch.SearchResponse.items:type_name -> carsearch.PlateSighting
 	6,  // 3: carsearch.SearchResponse.suggestions:type_name -> carsearch.PlateSighting
 	6,  // 4: carsearch.GetResponse.items:type_name -> carsearch.PlateSighting
-	6,  // 5: carsearch.SeeAlsoResponse.items:type_name -> carsearch.PlateSighting
-	1,  // 6: carsearch.Clarification.status:type_name -> carsearch.ClarificationStatus
-	39, // 7: carsearch.Clarification.created_at:type_name -> google.protobuf.Timestamp
-	0,  // 8: carsearch.Clarification.plate_type:type_name -> carsearch.PlateType
-	6,  // 9: carsearch.Clarification.sighting:type_name -> carsearch.PlateSighting
-	0,  // 10: carsearch.ClarifyRequest.plate_type:type_name -> carsearch.PlateType
-	13, // 11: carsearch.ClarifyResponse.clarification:type_name -> carsearch.Clarification
-	2,  // 12: carsearch.Complaint.reason:type_name -> carsearch.ComplaintReason
-	3,  // 13: carsearch.Complaint.status:type_name -> carsearch.ComplaintStatus
-	39, // 14: carsearch.Complaint.created_at:type_name -> google.protobuf.Timestamp
-	6,  // 15: carsearch.Complaint.sighting:type_name -> carsearch.PlateSighting
-	2,  // 16: carsearch.ComplainRequest.reason:type_name -> carsearch.ComplaintReason
-	3,  // 17: carsearch.ListComplaintsRequest.status:type_name -> carsearch.ComplaintStatus
-	16, // 18: carsearch.ListComplaintsResponse.items:type_name -> carsearch.Complaint
-	1,  // 19: carsearch.SetClarificationStatusRequest.status:type_name -> carsearch.ClarificationStatus
-	1,  // 20: carsearch.ListClarificationsRequest.status:type_name -> carsearch.ClarificationStatus
-	13, // 21: carsearch.ListClarificationsResponse.items:type_name -> carsearch.Clarification
-	4,  // 22: carsearch.User.plan:type_name -> carsearch.UserPlan
-	39, // 23: carsearch.User.pro_until:type_name -> google.protobuf.Timestamp
-	39, // 24: carsearch.User.created_at:type_name -> google.protobuf.Timestamp
-	25, // 25: carsearch.MeResponse.user:type_name -> carsearch.User
-	25, // 26: carsearch.RegisterResponse.user:type_name -> carsearch.User
-	4,  // 27: carsearch.PlanInfo.plan:type_name -> carsearch.UserPlan
-	31, // 28: carsearch.PlansResponse.items:type_name -> carsearch.PlanInfo
-	4,  // 29: carsearch.Payment.plan:type_name -> carsearch.UserPlan
-	5,  // 30: carsearch.Payment.status:type_name -> carsearch.PaymentStatus
-	39, // 31: carsearch.Payment.created_at:type_name -> google.protobuf.Timestamp
-	39, // 32: carsearch.Payment.confirmed_at:type_name -> google.protobuf.Timestamp
-	4,  // 33: carsearch.CreatePaymentRequest.plan:type_name -> carsearch.UserPlan
-	33, // 34: carsearch.CreatePaymentResponse.payment:type_name -> carsearch.Payment
-	33, // 35: carsearch.ListMyPaymentsResponse.items:type_name -> carsearch.Payment
-	7,  // 36: carsearch.CarSearchService.Search:input_type -> carsearch.SearchRequest
-	9,  // 37: carsearch.CarSearchService.Get:input_type -> carsearch.GetRequest
-	11, // 38: carsearch.CarSearchService.SeeAlso:input_type -> carsearch.SeeAlsoRequest
-	14, // 39: carsearch.CarSearchService.Clarify:input_type -> carsearch.ClarifyRequest
-	17, // 40: carsearch.CarSearchService.Complain:input_type -> carsearch.ComplainRequest
-	18, // 41: carsearch.CarSearchService.ListComplaints:input_type -> carsearch.ListComplaintsRequest
-	20, // 42: carsearch.CarSearchService.ResolveComplaint:input_type -> carsearch.ResolveComplaintRequest
-	21, // 43: carsearch.CarSearchService.SetClarificationStatus:input_type -> carsearch.SetClarificationStatusRequest
-	22, // 44: carsearch.CarSearchService.HideSighting:input_type -> carsearch.HideSightingRequest
-	23, // 45: carsearch.CarSearchService.ListClarifications:input_type -> carsearch.ListClarificationsRequest
-	26, // 46: carsearch.CarSearchService.Me:input_type -> carsearch.MeRequest
-	28, // 47: carsearch.CarSearchService.Register:input_type -> carsearch.RegisterRequest
-	30, // 48: carsearch.CarSearchService.Plans:input_type -> carsearch.PlansRequest
-	34, // 49: carsearch.CarSearchService.CreatePayment:input_type -> carsearch.CreatePaymentRequest
-	36, // 50: carsearch.CarSearchService.ConfirmMockPayment:input_type -> carsearch.ConfirmMockPaymentRequest
-	37, // 51: carsearch.CarSearchService.ListMyPayments:input_type -> carsearch.ListMyPaymentsRequest
-	8,  // 52: carsearch.CarSearchService.Search:output_type -> carsearch.SearchResponse
-	10, // 53: carsearch.CarSearchService.Get:output_type -> carsearch.GetResponse
-	12, // 54: carsearch.CarSearchService.SeeAlso:output_type -> carsearch.SeeAlsoResponse
-	15, // 55: carsearch.CarSearchService.Clarify:output_type -> carsearch.ClarifyResponse
-	16, // 56: carsearch.CarSearchService.Complain:output_type -> carsearch.Complaint
-	19, // 57: carsearch.CarSearchService.ListComplaints:output_type -> carsearch.ListComplaintsResponse
-	16, // 58: carsearch.CarSearchService.ResolveComplaint:output_type -> carsearch.Complaint
-	13, // 59: carsearch.CarSearchService.SetClarificationStatus:output_type -> carsearch.Clarification
-	6,  // 60: carsearch.CarSearchService.HideSighting:output_type -> carsearch.PlateSighting
-	24, // 61: carsearch.CarSearchService.ListClarifications:output_type -> carsearch.ListClarificationsResponse
-	27, // 62: carsearch.CarSearchService.Me:output_type -> carsearch.MeResponse
-	29, // 63: carsearch.CarSearchService.Register:output_type -> carsearch.RegisterResponse
-	32, // 64: carsearch.CarSearchService.Plans:output_type -> carsearch.PlansResponse
-	35, // 65: carsearch.CarSearchService.CreatePayment:output_type -> carsearch.CreatePaymentResponse
-	33, // 66: carsearch.CarSearchService.ConfirmMockPayment:output_type -> carsearch.Payment
-	38, // 67: carsearch.CarSearchService.ListMyPayments:output_type -> carsearch.ListMyPaymentsResponse
-	52, // [52:68] is the sub-list for method output_type
-	36, // [36:52] is the sub-list for method input_type
-	36, // [36:36] is the sub-list for extension type_name
-	36, // [36:36] is the sub-list for extension extendee
-	0,  // [0:36] is the sub-list for field type_name
+	11, // 5: carsearch.GetResponse.clarifications:type_name -> carsearch.PlateClarification
+	0,  // 6: carsearch.PlateClarification.plate_type:type_name -> carsearch.PlateType
+	1,  // 7: carsearch.PlateClarification.status:type_name -> carsearch.ClarificationStatus
+	14, // 8: carsearch.PlateClarification.items:type_name -> carsearch.Clarification
+	6,  // 9: carsearch.SeeAlsoResponse.items:type_name -> carsearch.PlateSighting
+	1,  // 10: carsearch.Clarification.status:type_name -> carsearch.ClarificationStatus
+	40, // 11: carsearch.Clarification.created_at:type_name -> google.protobuf.Timestamp
+	0,  // 12: carsearch.Clarification.plate_type:type_name -> carsearch.PlateType
+	6,  // 13: carsearch.Clarification.sighting:type_name -> carsearch.PlateSighting
+	0,  // 14: carsearch.ClarifyRequest.plate_type:type_name -> carsearch.PlateType
+	14, // 15: carsearch.ClarifyResponse.clarification:type_name -> carsearch.Clarification
+	2,  // 16: carsearch.Complaint.reason:type_name -> carsearch.ComplaintReason
+	3,  // 17: carsearch.Complaint.status:type_name -> carsearch.ComplaintStatus
+	40, // 18: carsearch.Complaint.created_at:type_name -> google.protobuf.Timestamp
+	6,  // 19: carsearch.Complaint.sighting:type_name -> carsearch.PlateSighting
+	2,  // 20: carsearch.ComplainRequest.reason:type_name -> carsearch.ComplaintReason
+	3,  // 21: carsearch.ListComplaintsRequest.status:type_name -> carsearch.ComplaintStatus
+	17, // 22: carsearch.ListComplaintsResponse.items:type_name -> carsearch.Complaint
+	1,  // 23: carsearch.SetClarificationStatusRequest.status:type_name -> carsearch.ClarificationStatus
+	1,  // 24: carsearch.ListClarificationsRequest.status:type_name -> carsearch.ClarificationStatus
+	14, // 25: carsearch.ListClarificationsResponse.items:type_name -> carsearch.Clarification
+	4,  // 26: carsearch.User.plan:type_name -> carsearch.UserPlan
+	40, // 27: carsearch.User.pro_until:type_name -> google.protobuf.Timestamp
+	40, // 28: carsearch.User.created_at:type_name -> google.protobuf.Timestamp
+	26, // 29: carsearch.MeResponse.user:type_name -> carsearch.User
+	26, // 30: carsearch.RegisterResponse.user:type_name -> carsearch.User
+	4,  // 31: carsearch.PlanInfo.plan:type_name -> carsearch.UserPlan
+	32, // 32: carsearch.PlansResponse.items:type_name -> carsearch.PlanInfo
+	4,  // 33: carsearch.Payment.plan:type_name -> carsearch.UserPlan
+	5,  // 34: carsearch.Payment.status:type_name -> carsearch.PaymentStatus
+	40, // 35: carsearch.Payment.created_at:type_name -> google.protobuf.Timestamp
+	40, // 36: carsearch.Payment.confirmed_at:type_name -> google.protobuf.Timestamp
+	4,  // 37: carsearch.CreatePaymentRequest.plan:type_name -> carsearch.UserPlan
+	34, // 38: carsearch.CreatePaymentResponse.payment:type_name -> carsearch.Payment
+	34, // 39: carsearch.ListMyPaymentsResponse.items:type_name -> carsearch.Payment
+	7,  // 40: carsearch.CarSearchService.Search:input_type -> carsearch.SearchRequest
+	9,  // 41: carsearch.CarSearchService.Get:input_type -> carsearch.GetRequest
+	12, // 42: carsearch.CarSearchService.SeeAlso:input_type -> carsearch.SeeAlsoRequest
+	15, // 43: carsearch.CarSearchService.Clarify:input_type -> carsearch.ClarifyRequest
+	18, // 44: carsearch.CarSearchService.Complain:input_type -> carsearch.ComplainRequest
+	19, // 45: carsearch.CarSearchService.ListComplaints:input_type -> carsearch.ListComplaintsRequest
+	21, // 46: carsearch.CarSearchService.ResolveComplaint:input_type -> carsearch.ResolveComplaintRequest
+	22, // 47: carsearch.CarSearchService.SetClarificationStatus:input_type -> carsearch.SetClarificationStatusRequest
+	23, // 48: carsearch.CarSearchService.HideSighting:input_type -> carsearch.HideSightingRequest
+	24, // 49: carsearch.CarSearchService.ListClarifications:input_type -> carsearch.ListClarificationsRequest
+	27, // 50: carsearch.CarSearchService.Me:input_type -> carsearch.MeRequest
+	29, // 51: carsearch.CarSearchService.Register:input_type -> carsearch.RegisterRequest
+	31, // 52: carsearch.CarSearchService.Plans:input_type -> carsearch.PlansRequest
+	35, // 53: carsearch.CarSearchService.CreatePayment:input_type -> carsearch.CreatePaymentRequest
+	37, // 54: carsearch.CarSearchService.ConfirmMockPayment:input_type -> carsearch.ConfirmMockPaymentRequest
+	38, // 55: carsearch.CarSearchService.ListMyPayments:input_type -> carsearch.ListMyPaymentsRequest
+	8,  // 56: carsearch.CarSearchService.Search:output_type -> carsearch.SearchResponse
+	10, // 57: carsearch.CarSearchService.Get:output_type -> carsearch.GetResponse
+	13, // 58: carsearch.CarSearchService.SeeAlso:output_type -> carsearch.SeeAlsoResponse
+	16, // 59: carsearch.CarSearchService.Clarify:output_type -> carsearch.ClarifyResponse
+	17, // 60: carsearch.CarSearchService.Complain:output_type -> carsearch.Complaint
+	20, // 61: carsearch.CarSearchService.ListComplaints:output_type -> carsearch.ListComplaintsResponse
+	17, // 62: carsearch.CarSearchService.ResolveComplaint:output_type -> carsearch.Complaint
+	14, // 63: carsearch.CarSearchService.SetClarificationStatus:output_type -> carsearch.Clarification
+	6,  // 64: carsearch.CarSearchService.HideSighting:output_type -> carsearch.PlateSighting
+	25, // 65: carsearch.CarSearchService.ListClarifications:output_type -> carsearch.ListClarificationsResponse
+	28, // 66: carsearch.CarSearchService.Me:output_type -> carsearch.MeResponse
+	30, // 67: carsearch.CarSearchService.Register:output_type -> carsearch.RegisterResponse
+	33, // 68: carsearch.CarSearchService.Plans:output_type -> carsearch.PlansResponse
+	36, // 69: carsearch.CarSearchService.CreatePayment:output_type -> carsearch.CreatePaymentResponse
+	34, // 70: carsearch.CarSearchService.ConfirmMockPayment:output_type -> carsearch.Payment
+	39, // 71: carsearch.CarSearchService.ListMyPayments:output_type -> carsearch.ListMyPaymentsResponse
+	56, // [56:72] is the sub-list for method output_type
+	40, // [40:56] is the sub-list for method input_type
+	40, // [40:40] is the sub-list for extension type_name
+	40, // [40:40] is the sub-list for extension extendee
+	0,  // [0:40] is the sub-list for field type_name
 }
 
 func init() { file_carsearch_carsearch_proto_init() }
@@ -2773,15 +2896,15 @@ func file_carsearch_carsearch_proto_init() {
 	}
 	file_carsearch_carsearch_proto_msgTypes[0].OneofWrappers = []any{}
 	file_carsearch_carsearch_proto_msgTypes[2].OneofWrappers = []any{}
-	file_carsearch_carsearch_proto_msgTypes[13].OneofWrappers = []any{}
-	file_carsearch_carsearch_proto_msgTypes[18].OneofWrappers = []any{}
+	file_carsearch_carsearch_proto_msgTypes[14].OneofWrappers = []any{}
+	file_carsearch_carsearch_proto_msgTypes[19].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_carsearch_carsearch_proto_rawDesc), len(file_carsearch_carsearch_proto_rawDesc)),
 			NumEnums:      6,
-			NumMessages:   33,
+			NumMessages:   34,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

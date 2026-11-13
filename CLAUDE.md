@@ -47,10 +47,11 @@
   с `levenshtein` (fuzzystrmatch, contrib) ≤ 2 по `plate_search_key` без пробелов (`repository.Suggest`).
 - Данные БД и S3 — bind mount в `./.data` (не коммитится), удаляет `make reset`.
 - `fe/` — TypeScript + Vite. TS-клиент `fe/src/api/generated.ts` генерируется из swagger: `make gen-ts`.
-  Поиск по номеру, бесконечная прокрутка + «Загрузить ещё», модалка «Уточнить» (заглушка),
+  Поиск по номеру, бесконечная прокрутка + «Загрузить ещё», модалка «Уточнить» (`src/clarify.ts`; с карточек главной и со страницы номера),
   главная без запроса — блок «для вас» (2 ряда номеров «рынка» языка) и вкладки стран + «Прочее»
   (`src/home.ts`, `SearchRequest.market` → `models.Market` → условия по `plates.meta` type/region; вкладка — `?tab=`),
-  запрос поиска — в адресе `?q=` (F5, история, смена языка), страница номера `/plate/<id фиксации>` (`src/plate.ts`, роутер на History API — `src/router.ts`).
+  запрос поиска — в адресе `?q=` (F5, история, смена языка), страница номера `/plate/<id фиксации>` (`src/plate.ts`, роутер на History API — `src/router.ts`;
+  плашка уточнений — `src/clarifications.ts`, данные — `GetResponse.clarifications`).
   Админ-режим: `src/adminmode.ts` (admin-token в sessionStorage → rpc Me → класс `is-admin` и заголовок во всех запросах),
   скрытые панели — `src/adminpanels.ts`, вкладки `/admin` — реестр `src/admintabs.ts`. Скрытые фиксации (`plate_sightings.hidden`)
   отдаются только с верным admin-token (`IncludeHidden`).

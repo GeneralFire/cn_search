@@ -1,0 +1,40 @@
+/* Уточнения на странице номера: плашка под шапкой, кнопка «Уточнить», значок в ленте истории. */
+.pc { display: grid; gap: 8px; margin-top: -20px; } /* ближе к шапке, чем остальные блоки .pp */
+.pc__row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px;
+  padding: 10px 16px; border-radius: var(--radius);
+  background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+}
+.pc__row.is-accepted {
+  border-color: color-mix(in srgb, var(--ok) 55%, var(--border));
+  background: color-mix(in srgb, var(--ok) 9%, var(--surface));
+}
+.pc__maybe { color: var(--text); font-weight: 600; }
+.pc__plate { display: inline-flex; font-size: 0.8rem; }
+.pc__count { font-size: 0.92rem; }
+.pc__badge {
+  padding: 3px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 600;
+  background: var(--bg); color: var(--muted);
+}
+.is-accepted .pc__badge { background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok); }
+.pc__search { margin-left: auto; color: var(--accent); font-size: 0.92rem; text-decoration: none; }
+.pc__search:hover { text-decoration: underline; }
+
+.pc-clarify {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); font: inherit; font-size: 0.88rem; cursor: pointer;
+}
+.pc-clarify svg { color: var(--accent); width: 14px; height: 14px; }
+.pc-clarify:hover { border-color: var(--accent); }
+.pc-clarify:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.pc-mark {
+  display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--accent-soft); color: var(--accent); vertical-align: middle;
+}
+
+/* Админ-режим: уточнения группы с «Принять / Отклонить» — отдельной строкой под плашкой. */
+.pc__adm { flex-basis: 100%; display: grid; gap: 6px; margin: 4px 0 0; padding: 8px 0 0; list-style: none; border-top: 1px dashed var(--border); }
+.pc__adm li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 0.88rem; }
+.pc__adm-when { min-width: 9em; }
