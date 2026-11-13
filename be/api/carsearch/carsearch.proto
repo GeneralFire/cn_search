@@ -39,6 +39,21 @@ service CarSearchService {
 
   // ResolveComplaint — отметить жалобу решённой. Нужен заголовок admin-token.
   rpc ResolveComplaint(ResolveComplaintRequest) returns (Complaint);
+
+  // Me — кто спрашивает: is_admin, если заголовок admin-token верный. Без токена или с неверным —
+  // is_admin = false (не ошибка): фронт так решает, включать ли админ-режим.
+  rpc Me(MeRequest) returns (MeResponse);
+
+  // SetClarificationStatus — принять или отклонить уточнение вручную. Нужен заголовок admin-token.
+  rpc SetClarificationStatus(SetClarificationStatusRequest) returns (Clarification);
+
+  // HideSighting — скрыть фиксацию (hidden = true) или вернуть её. Скрытые фиксации не попадают
+  // в Search/Get/SeeAlso обычных пользователей; админу отдаются с hidden = true. Нужен admin-token.
+  rpc HideSighting(HideSightingRequest) returns (PlateSighting);
+
+  // ListClarifications — уточнения для админ-панели, от новых к старым, постранично, вместе с фиксацией.
+  // Нужен заголовок admin-token.
+  rpc ListClarifications(ListClarificationsRequest) returns (ListClarificationsResponse);
 }
 
 // PlateSighting — фиксация номера: где и когда замечена машина.
@@ -63,6 +78,8 @@ message PlateSighting {
   // Координаты места фиксации (WGS 84, градусы); не заданы — точка неизвестна.
   optional double lat = 10;
   optional double lon = 11;
+  // Фиксация скрыта админом; приходит только админу (обычным пользователям скрытые не отдаются).
+  bool hidden = 12;
 }
 
 // Формат номерного знака — от него зависит, как его рисовать.
@@ -143,6 +160,8 @@ message Clarification {
   google.protobuf.Timestamp created_at = 5;
   PlateType plate_type = 6;
   string plate_region = 7;
+  // Фиксация (номер, адрес, фото) — только в ListClarifications.
+  PlateSighting sighting = 8;
 }
 
 message ClarifyRequest {
@@ -206,6 +225,8 @@ message ListComplaintsRequest {
   int32 limit = 2;
   // Фильтр по статусу; UNSPECIFIED — все.
   ComplaintStatus status = 3;
+  // Только жалобы на эту фиксацию (uuid); пусто — все.
+  string sighting_id = 4;
 }
 
 message ListComplaintsResponse {
@@ -219,4 +240,44 @@ message ListComplaintsResponse {
 message ResolveComplaintRequest {
   // uuid жалобы.
   string id = 1;
+}
+
+message MeRequest {}
+
+message MeResponse {
+  // Заголовок admin-token верный: можно включать админ-режим.
+  bool is_admin = 1;
+}
+
+message SetClarificationStatusRequest {
+  // uuid уточнения.
+  string id = 1;
+  // ACCEPTED или NOT_ACCEPTED.
+  ClarificationStatus status = 2;
+}
+
+message HideSightingRequest {
+  // uuid фиксации.
+  string id = 1;
+  // true — скрыть, false — показать снова.
+  bool hidden = 2;
+}
+
+message ListClarificationsRequest {
+  // Фильтр по статусу; UNSPECIFIED — все.
+  ClarificationStatus status = 1;
+  // Сколько пропустить («Загрузить ещё»).
+  int32 offset = 2;
+  // Размер страницы, 1..100; 0 — по умолчанию (30).
+  int32 limit = 3;
+  // Только уточнения к этой фиксации (uuid); пусто — все.
+  string sighting_id = 4;
+}
+
+message ListClarificationsResponse {
+  repeated Clarification items = 1;
+  // Всего уточнений по фильтру.
+  int32 total = 2;
+  // Смещение следующей страницы; не задано — дальше ничего нет.
+  optional int32 next_offset = 3;
 }

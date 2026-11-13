@@ -9,6 +9,7 @@ import { openLightbox } from "./lightbox";
 import { mountPlateMap, plateMapHtml } from "./map";
 import { complainButtonHtml } from "./complaint";
 import { noPhotoHtml, photoHtml } from "./nophoto";
+import { mountPlateAdmin } from "./adminpanels";
 
 /** Сколько карточек показывать в «Свежих фиксациях» (ручка отдаёт не больше). */
 const SEE_ALSO_LIMIT = 21;
@@ -55,6 +56,7 @@ export async function renderPlatePage(root: HTMLElement, id: string, handlers: Q
     $main.innerHTML = pageHtml(items, id);
     void loadSeeAlso($main, id, my.signal);
     void mountPlateMap($main, items, id, my.signal);
+    void mountPlateAdmin($main, items, id, my.signal); // админ-режим: панель «Управление»
     $main.querySelector<HTMLButtonElement>("[data-zoom]")?.addEventListener("click", (e) =>
       openLightbox(items, id, e.currentTarget as HTMLElement)
     );

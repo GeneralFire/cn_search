@@ -33,6 +33,7 @@ func (s *CarSearch) Search(ctx context.Context, req *pb.SearchRequest) (*pb.Sear
 		Limit:           limit,
 		IncludeTestData: includeTestData(ctx),
 		Market:          models.Market(req.GetMarket()),
+		IncludeHidden:   s.isAdmin(ctx),
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, "не удалось выполнить поиск")

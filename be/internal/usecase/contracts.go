@@ -3,6 +3,7 @@ package usecase
 //go:generate minimock -i transactor -o ./mocks/transactor_mock.go -n TransactorMock -p mocks
 //go:generate minimock -i repository -o ./mocks/repository_mock.go -n RepositoryMock -p mocks
 //go:generate minimock -i complaintsRepository -o ./mocks/complaints_repository_mock.go -n ComplaintsRepositoryMock -p mocks
+//go:generate minimock -i adminRepository -o ./mocks/admin_repository_mock.go -n AdminRepositoryMock -p mocks
 
 import (
 	"context"
@@ -34,4 +35,11 @@ type complaintsRepository interface {
 	CreateComplaint(ctx context.Context, tx db.Executor, o models.ComplainOpts) (models.Complaint, error)
 	ListComplaints(ctx context.Context, tx db.Executor, o models.ListComplaintsOpts) (models.ComplaintsPage, error)
 	ResolveComplaint(ctx context.Context, tx db.Executor, id string) (models.Complaint, error)
+}
+
+// adminRepository — админские запросы: скрытие фиксаций, разбор уточнений (реализация — repository.New()).
+type adminRepository interface {
+	HideSighting(ctx context.Context, tx db.Executor, id string, hidden bool) (models.PlateSighting, error)
+	SetClarificationStatus(ctx context.Context, tx db.Executor, id string, st models.ClarificationStatus) (models.Clarification, error)
+	ListClarifications(ctx context.Context, tx db.Executor, o models.ListClarificationsOpts) (models.ClarificationsPage, error)
 }

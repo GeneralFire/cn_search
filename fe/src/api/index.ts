@@ -5,6 +5,7 @@ import {
   CarsearchComplaintReason,
   CarsearchComplaintStatus,
   CarsearchPlateType,
+  type CarsearchClarification,
   type CarsearchGetResponse,
   type CarsearchPlateSighting,
   type CarsearchSearchRequest,
@@ -21,6 +22,8 @@ export type Car = Required<Pick<CarsearchPlateSighting, "id" | "plate" | "addres
     /** Координаты места фиксации (WGS 84); нет — точка неизвестна (на карте не показывается). */
     lat?: number;
     lon?: number;
+    /** Скрыта админом — приходит только в админ-режиме. */
+    hidden?: boolean;
   };
 
 const plateTypes: Record<string, string> = {
@@ -40,8 +43,15 @@ export interface CarsPage {
 }
 
 // include-test-data: бэк отдаёт и строки с is_test_data (сейчас в базе только тестовые данные).
+// Объект общий для всех запросов клиента: админ-режим (adminmode.ts) добавляет в него admin-token.
 const headers: Record<string, string> =
   import.meta.env.VITE_INCLUDE_TEST_DATA === "true" ? { "include-test-data": "true" } : {};
+
+/** Админ-режим: все запросы API идут с заголовком admin-token; "" — без него. */
+export function setAdminHeader(token: string): void {
+  if (token) headers["admin-token"] = token;
+  else delete headers["admin-token"];
+}
 
 const api = new CarSearchApi({ baseUrl: "/api", baseApiParams: { headers } });
 
@@ -66,6 +76,7 @@ function toCar(c: CarsearchPlateSighting): Car {
     plateRegion: c.plateRegion,
     // Координаты — только парой: optional double в proto3 JSON приходит, только если задан.
     ...(c.lat != null && c.lon != null ? { lat: c.lat, lon: c.lon } : {}),
+    ...(c.hidden ? { hidden: true } : {}),
   };
 }
 
@@ -200,10 +211,15 @@ const statusEnum: Record<ComplaintStatus | "", CarsearchComplaintStatus> = {
 };
 
 /** Страница жалоб (админ); status "" — все. 403 (ApiError.status) — неверный или не заданный токен. */
-export async function listComplaints(status: ComplaintStatus | "", offset: number, limit = 30): Promise<ComplaintsPage> {
+export async function listComplaints(
+  status: ComplaintStatus | "",
+  offset: number,
+  limit = 30,
+  sightingId = ""
+): Promise<ComplaintsPage> {
   try {
     const { data } = await api.carsearchCarSearchService.carSearchServiceListComplaints(
-      { status: statusEnum[status], offset, limit },
+      { status: statusEnum[status], offset, limit, sightingId },
       adminParams()
     );
     return {
@@ -227,6 +243,100 @@ export async function listComplaints(status: ComplaintStatus | "", offset: numbe
 export async function resolveComplaint(id: string): Promise<void> {
   try {
     await api.carsearchCarSearchService.carSearchServiceResolveComplaint({ id }, adminParams());
+  } catch (e) {
+    throw new ApiError(await errorMessage(e), e instanceof Response ? e.status : 0);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Админ-режим: Me, скрытие фиксаций, разбор уточнений
+// ---------------------------------------------------------------------------
+
+/** Верен ли токен (rpc Me); ошибка сети — исключение, неверный токен — false. */
+export async function checkAdmin(token: string): Promise<boolean> {
+  try {
+    const { data } = await api.carsearchCarSearchService.carSearchServiceMe({}, { headers: { "admin-token": token } });
+    return data.isAdmin === true;
+  } catch (e) {
+    throw new ApiError(await errorMessage(e), e instanceof Response ? e.status : 0);
+  }
+}
+
+/** Скрыть фиксацию из выдачи (hidden = true) или вернуть её (админ). */
+export async function hideSighting(id: string, hidden: boolean): Promise<Car> {
+  try {
+    const { data } = await api.carsearchCarSearchService.carSearchServiceHideSighting({ id, hidden }, adminParams());
+    return toCar(data);
+  } catch (e) {
+    throw new ApiError(await errorMessage(e), e instanceof Response ? e.status : 0);
+  }
+}
+
+export type ClarificationStatus = "accepted" | "not_accepted";
+
+/** Уточнение номера к фиксации (админ-панель); sighting — только из listClarifications. */
+export interface Clarification {
+  id: string;
+  sightingId: string;
+  plate: string;
+  plateType: string;
+  plateRegion: string;
+  status: ClarificationStatus;
+  createdAt: string;
+  sighting: Car | null;
+}
+
+const clarStatusEnum: Record<ClarificationStatus | "", CarsearchClarificationStatus> = {
+  "": CarsearchClarificationStatus.CLARIFICATION_STATUS_UNSPECIFIED,
+  accepted: CarsearchClarificationStatus.CLARIFICATION_STATUS_ACCEPTED,
+  not_accepted: CarsearchClarificationStatus.CLARIFICATION_STATUS_NOT_ACCEPTED,
+};
+
+function toClarification(c: CarsearchClarification): Clarification {
+  return {
+    id: c.id ?? "",
+    sightingId: c.sightingId ?? "",
+    plate: c.plate ?? "",
+    plateType: plateTypes[c.plateType ?? ""] ?? "",
+    plateRegion: c.plateRegion ?? "",
+    status: c.status === CarsearchClarificationStatus.CLARIFICATION_STATUS_ACCEPTED ? "accepted" : "not_accepted",
+    createdAt: c.createdAt ?? "",
+    sighting: c.sighting ? toCar(c.sighting) : null,
+  };
+}
+
+export interface ClarificationsPage {
+  items: Clarification[];
+  total: number;
+  nextOffset: number | null;
+}
+
+/** Страница уточнений (админ); status "" — все, sightingId — только к этой фиксации. */
+export async function listClarifications(
+  status: ClarificationStatus | "",
+  offset: number,
+  limit = 30,
+  sightingId = ""
+): Promise<ClarificationsPage> {
+  try {
+    const { data } = await api.carsearchCarSearchService.carSearchServiceListClarifications(
+      { status: clarStatusEnum[status], offset, limit, sightingId },
+      adminParams()
+    );
+    return { items: (data.items ?? []).map(toClarification), total: data.total ?? 0, nextOffset: data.nextOffset ?? null };
+  } catch (e) {
+    throw new ApiError(await errorMessage(e), e instanceof Response ? e.status : 0);
+  }
+}
+
+/** Принять или отклонить уточнение (админ). */
+export async function setClarificationStatus(id: string, status: ClarificationStatus): Promise<Clarification> {
+  try {
+    const { data } = await api.carsearchCarSearchService.carSearchServiceSetClarificationStatus(
+      { id, status: clarStatusEnum[status] },
+      adminParams()
+    );
+    return toClarification(data);
   } catch (e) {
     throw new ApiError(await errorMessage(e), e instanceof Response ? e.status : 0);
   }

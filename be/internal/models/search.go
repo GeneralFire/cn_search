@@ -15,6 +15,7 @@ type SearchOpts struct {
 	Limit           int
 	IncludeTestData bool   // отдавать и строки с is_test_data = true (заголовок include-test-data)
 	Market          Market // «рынок» номеров; пусто — без фильтра
+	IncludeHidden   bool   // отдавать и скрытые фиксации (plate_sightings.hidden) — только админу
 }
 
 // Market — «рынок» номеров для главной: страна по формату номера (plates.meta: type, region).
@@ -41,6 +42,7 @@ func (m Market) Valid() bool {
 type SamePlateOpts struct {
 	ID              string // uuid любой фиксации номера
 	IncludeTestData bool   // отдавать и строки с is_test_data = true (заголовок include-test-data)
+	IncludeHidden   bool   // отдавать и скрытые фиксации — только админу
 }
 
 // SearchPage — страница результатов поиска.
@@ -65,4 +67,5 @@ type SeeAlsoOpts struct {
 	ExcludeSightingID string // номер этой фиксации исключить; пусто — без исключения
 	Limit             int
 	IncludeTestData   bool
+	IncludeHidden     bool // отдавать и скрытые фиксации — только админу
 }

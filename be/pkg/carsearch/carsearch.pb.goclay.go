@@ -433,6 +433,194 @@ func (d *CarSearchServiceDesc) RegisterHTTP(mux transport.Router) {
 		}
 	}
 
+	{
+		// Handler for Me, binding: POST /carsearch.CarSearchService/Me
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_Me_0(r)
+			rsp, err := _CarSearchService_Me_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_Me_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_Me_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
+	{
+		// Handler for SetClarificationStatus, binding: POST /carsearch.CarSearchService/SetClarificationStatus
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_SetClarificationStatus_0(r)
+			rsp, err := _CarSearchService_SetClarificationStatus_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_SetClarificationStatus_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_SetClarificationStatus_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
+	{
+		// Handler for HideSighting, binding: POST /carsearch.CarSearchService/HideSighting
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_HideSighting_0(r)
+			rsp, err := _CarSearchService_HideSighting_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_HideSighting_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_HideSighting_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
+	{
+		// Handler for ListClarifications, binding: POST /carsearch.CarSearchService/ListClarifications
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_ListClarifications_0(r)
+			rsp, err := _CarSearchService_ListClarifications_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_ListClarifications_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_ListClarifications_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
 }
 
 type CarSearchService_httpClient struct {
@@ -806,6 +994,210 @@ func (c *CarSearchService_httpClient) ResolveComplaint(ctx context.Context, in *
 	return &ret, errors.Wrap(err, "can't unmarshal response")
 }
 
+func (c *CarSearchService_httpClient) Me(ctx context.Context, in *MeRequest, opts ...grpc.CallOption) (*MeResponse, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_Me_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := MeResponse{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
+func (c *CarSearchService_httpClient) SetClarificationStatus(ctx context.Context, in *SetClarificationStatusRequest, opts ...grpc.CallOption) (*Clarification, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_SetClarificationStatus_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := Clarification{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
+func (c *CarSearchService_httpClient) HideSighting(ctx context.Context, in *HideSightingRequest, opts ...grpc.CallOption) (*PlateSighting, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_HideSighting_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := PlateSighting{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
+func (c *CarSearchService_httpClient) ListClarifications(ctx context.Context, in *ListClarificationsRequest, opts ...grpc.CallOption) (*ListClarificationsResponse, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_ListClarifications_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := ListClarificationsResponse{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
 // patterns for CarSearchService
 var (
 	pattern_goclay_CarSearchService_Search_0 = "/carsearch.CarSearchService/Search"
@@ -905,6 +1297,62 @@ var (
 	}
 
 	unmarshaler_goclay_CarSearchService_ResolveComplaint_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
+	pattern_goclay_CarSearchService_Me_0 = "/carsearch.CarSearchService/Me"
+
+	pattern_goclay_CarSearchService_Me_0_builder = func(in *MeRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/Me"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_Me_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
+	pattern_goclay_CarSearchService_SetClarificationStatus_0 = "/carsearch.CarSearchService/SetClarificationStatus"
+
+	pattern_goclay_CarSearchService_SetClarificationStatus_0_builder = func(in *SetClarificationStatusRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/SetClarificationStatus"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_SetClarificationStatus_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
+	pattern_goclay_CarSearchService_HideSighting_0 = "/carsearch.CarSearchService/HideSighting"
+
+	pattern_goclay_CarSearchService_HideSighting_0_builder = func(in *HideSightingRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/HideSighting"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_HideSighting_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
+	pattern_goclay_CarSearchService_ListClarifications_0 = "/carsearch.CarSearchService/ListClarifications"
+
+	pattern_goclay_CarSearchService_ListClarifications_0_builder = func(in *ListClarificationsRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/ListClarifications"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_ListClarifications_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
 // marshalers for CarSearchService
@@ -1020,6 +1468,70 @@ var (
 			return nil
 		}
 	}
+
+	unmarshaler_goclay_CarSearchService_Me_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*MeRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_Me_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
+
+	unmarshaler_goclay_CarSearchService_SetClarificationStatus_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*SetClarificationStatusRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_SetClarificationStatus_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
+
+	unmarshaler_goclay_CarSearchService_HideSighting_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*HideSightingRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_HideSighting_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
+
+	unmarshaler_goclay_CarSearchService_ListClarifications_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*ListClarificationsRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_ListClarifications_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
 )
 
 var _swaggerDef_carsearch_carsearch_proto = []byte(`{
@@ -1121,6 +1633,60 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         ]
       }
     },
+    "/carsearch.CarSearchService/HideSighting": {
+      "post": {
+        "summary": "HideSighting — скрыть фиксацию (hidden = true) или вернуть её. Скрытые фиксации не попадают\nв Search/Get/SeeAlso обычных пользователей; админу отдаются с hidden = true. Нужен admin-token.",
+        "operationId": "CarSearchService_HideSighting",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchPlateSighting"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchHideSightingRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/ListClarifications": {
+      "post": {
+        "summary": "ListClarifications — уточнения для админ-панели, от новых к старым, постранично, вместе с фиксацией.\nНужен заголовок admin-token.",
+        "operationId": "CarSearchService_ListClarifications",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchListClarificationsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchListClarificationsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
     "/carsearch.CarSearchService/ListComplaints": {
       "post": {
         "summary": "ListComplaints — жалобы для админ-панели, от новых к старым, постранично, вместе с фиксацией.\nНужен заголовок admin-token (= ADMIN_TOKEN бэка), иначе PERMISSION_DENIED.",
@@ -1140,6 +1706,33 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
             "required": true,
             "schema": {
               "$ref": "#/definitions/carsearchListComplaintsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/Me": {
+      "post": {
+        "summary": "Me — кто спрашивает: is_admin, если заголовок admin-token верный. Без токена или с неверным —\nis_admin = false (не ошибка): фронт так решает, включать ли админ-режим.",
+        "operationId": "CarSearchService_Me",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchMeResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchMeRequest"
             }
           }
         ],
@@ -1228,6 +1821,33 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
           "CarSearchService"
         ]
       }
+    },
+    "/carsearch.CarSearchService/SetClarificationStatus": {
+      "post": {
+        "summary": "SetClarificationStatus — принять или отклонить уточнение вручную. Нужен заголовок admin-token.",
+        "operationId": "CarSearchService_SetClarificationStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchClarification"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchSetClarificationStatusRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -1258,6 +1878,10 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         },
         "plateRegion": {
           "type": "string"
+        },
+        "sighting": {
+          "$ref": "#/definitions/carsearchPlateSighting",
+          "description": "Фиксация (номер, адрес, фото) — только в ListClarifications."
         }
       },
       "description": "Clarification — уточнение номера к фиксации."
@@ -1391,6 +2015,63 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         }
       }
     },
+    "carsearchHideSightingRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "uuid фиксации."
+        },
+        "hidden": {
+          "type": "boolean",
+          "description": "true — скрыть, false — показать снова."
+        }
+      }
+    },
+    "carsearchListClarificationsRequest": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "$ref": "#/definitions/carsearchClarificationStatus",
+          "description": "Фильтр по статусу; UNSPECIFIED — все."
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Сколько пропустить («Загрузить ещё»)."
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Размер страницы, 1..100; 0 — по умолчанию (30)."
+        },
+        "sightingId": {
+          "type": "string",
+          "description": "Только уточнения к этой фиксации (uuid); пусто — все."
+        }
+      }
+    },
+    "carsearchListClarificationsResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchClarification"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Всего уточнений по фильтру."
+        },
+        "nextOffset": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Смещение следующей страницы; не задано — дальше ничего нет."
+        }
+      }
+    },
     "carsearchListComplaintsRequest": {
       "type": "object",
       "properties": {
@@ -1407,6 +2088,10 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         "status": {
           "$ref": "#/definitions/carsearchComplaintStatus",
           "description": "Фильтр по статусу; UNSPECIFIED — все."
+        },
+        "sightingId": {
+          "type": "string",
+          "description": "Только жалобы на эту фиксацию (uuid); пусто — все."
         }
       }
     },
@@ -1428,6 +2113,18 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
           "type": "integer",
           "format": "int32",
           "description": "Смещение следующей страницы; не задано — дальше ничего нет."
+        }
+      }
+    },
+    "carsearchMeRequest": {
+      "type": "object"
+    },
+    "carsearchMeResponse": {
+      "type": "object",
+      "properties": {
+        "isAdmin": {
+          "type": "boolean",
+          "description": "Заголовок admin-token верный: можно включать админ-режим."
         }
       }
     },
@@ -1478,6 +2175,10 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         "lon": {
           "type": "number",
           "format": "double"
+        },
+        "hidden": {
+          "type": "boolean",
+          "description": "Фиксация скрыта админом; приходит только админу (обычным пользователям скрытые не отдаются)."
         }
       },
       "description": "PlateSighting — фиксация номера: где и когда замечена машина."
@@ -1577,6 +2278,19 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
           "items": {
             "$ref": "#/definitions/carsearchPlateSighting"
           }
+        }
+      }
+    },
+    "carsearchSetClarificationStatusRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "uuid уточнения."
+        },
+        "status": {
+          "$ref": "#/definitions/carsearchClarificationStatus",
+          "description": "ACCEPTED или NOT_ACCEPTED."
         }
       }
     }

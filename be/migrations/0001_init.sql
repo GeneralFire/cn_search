@@ -38,6 +38,7 @@ CREATE TABLE plate_sightings (
     lat        double precision, -- координаты места фиксации (WGS 84, градусы); NULL — неизвестны
     lon        double precision,
     is_test_data boolean   NOT NULL DEFAULT false, -- тестовые данные (миграция 0002_test_data)
+    hidden     boolean     NOT NULL DEFAULT false, -- скрыта админом (rpc HideSighting): обычным пользователям не отдаётся
     CHECK ((lat IS NULL) = (lon IS NULL) AND lat BETWEEN -90 AND 90 AND lon BETWEEN -180 AND 180)
 );
 
@@ -66,6 +67,9 @@ CREATE TABLE clarifications (
 CREATE INDEX clarifications_sighting_plate_key_idx ON clarifications (sighting_id, plate_search_key(plate));
 -- Поиск по уточнённым номерам (rpc Search) — то же выражение, что для plates.
 CREATE INDEX clarifications_plate_gin_idx ON clarifications USING gin (to_tsvector('simple', plate_search_key(plate)));
+-- Админ-панель (rpc ListClarifications): от новых к старым, с фильтром по статусу и без него.
+CREATE INDEX clarifications_status_created_at_idx ON clarifications (status, created_at DESC, id);
+CREATE INDEX clarifications_created_at_idx ON clarifications (created_at DESC, id);
 
 -- Жалобы на фото фиксации (кнопка «Пожаловаться»); разбирает администратор (админ-панель /admin).
 CREATE TYPE complaint_reason AS ENUM ('wrong_plate', 'bad_photo', 'personal_data', 'other');

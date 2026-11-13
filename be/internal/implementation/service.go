@@ -3,6 +3,7 @@
 package implementation
 
 import (
+	"context"
 	"strings"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -20,6 +21,7 @@ type CarSearch struct {
 
 	complaints complaints // жалобы на фото (WithComplaints); nil — методы жалоб недоступны
 	adminToken string     // ADMIN_TOKEN: пусто — админские методы выключены
+	admin      admin      // админские сценарии (WithAdmin); nil — HideSighting и разбор уточнений недоступны
 }
 
 // Option — необязательная часть сервиса.
@@ -29,6 +31,17 @@ type Option func(*CarSearch)
 // по заголовку admin-token, равному adminToken; пустой adminToken — админские методы выключены.
 func WithComplaints(c complaints, adminToken string) Option {
 	return func(s *CarSearch) { s.complaints, s.adminToken = c, adminToken }
+}
+
+// WithAdmin включает админские методы (HideSighting, SetClarificationStatus, ListClarifications) по заголовку
+// admin-token, равному adminToken (тот же ADMIN_TOKEN, что у WithComplaints).
+func WithAdmin(a admin, adminToken string) Option {
+	return func(s *CarSearch) { s.admin, s.adminToken = a, adminToken }
+}
+
+// isAdmin — запрос с верным admin-token: ему отдаются и скрытые фиксации.
+func (s *CarSearch) isAdmin(ctx context.Context) bool {
+	return requireAdmin(ctx, s.adminToken) == nil
 }
 
 func NewCarSearch(uc plateSightings, photoBaseURL string, opts ...Option) *CarSearch {
@@ -52,6 +65,8 @@ func (s *CarSearch) toPB(c models.PlateSighting) *pb.PlateSighting {
 
 		Lat: c.Lat,
 		Lon: c.Lon,
+
+		Hidden: c.Hidden,
 	}
 	if c.PhotoKey != "" {
 		out.PhotoUrl = s.photoBase + "/" + c.PhotoKey

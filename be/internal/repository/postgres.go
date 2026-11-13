@@ -45,6 +45,9 @@ var plateMatch = `(` + plateTSVector("p.plate") + ` @@ ` + tsQueryFrom + `
 // notTestData — без include-test-data строки с is_test_data не отдаются (ни фиксации, ни номера).
 const notTestData = `NOT s.is_test_data AND NOT p.is_test_data`
 
+// notHidden — скрытые админом фиксации видит только админ (IncludeHidden).
+const notHidden = `NOT s.hidden`
+
 // plateTypeExpr, plateRegionExpr — формат и регион номера; coalesce — чтобы условия рынков были
 // true/false и без ключа в meta (иначе NULL, и NOT (…) для «прочего» терял бы такие номера).
 const (
@@ -104,6 +107,9 @@ func (r *repository) Search(ctx context.Context, tx db.Executor, q models.Search
 	}
 	if !q.IncludeTestData {
 		conds = append(conds, notTestData)
+	}
+	if !q.IncludeHidden {
+		conds = append(conds, notHidden)
 	}
 	where := whereClause(conds)
 
@@ -172,6 +178,9 @@ func (r *repository) SeeAlso(ctx context.Context, tx db.Executor, o models.SeeAl
 	}
 	if !o.IncludeTestData {
 		conds = append(conds, notTestData)
+	}
+	if !o.IncludeHidden {
+		conds = append(conds, notHidden)
 	}
 	items := []models.PlateSighting{}
 	if err := tx.Select(ctx, &items, latestPerPlate(whereClause(conds))+` LIMIT $1`, args...); err != nil {
@@ -243,6 +252,9 @@ func (r *repository) ListSamePlate(ctx context.Context, tx db.Executor, o models
 	conds := []string{`s.plate_id = (SELECT plate_id FROM ` + plateSightingsTable + ` WHERE id = $1)`}
 	if !o.IncludeTestData {
 		conds = append(conds, notTestData)
+	}
+	if !o.IncludeHidden {
+		conds = append(conds, notHidden)
 	}
 	where := strings.Join(conds, " AND ")
 	var items []models.PlateSighting

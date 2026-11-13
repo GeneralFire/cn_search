@@ -19,7 +19,8 @@ const complaintColumns = `c.id, c.sighting_id, c.reason, c.comment, c.status, c.
 const complaintSightingSelect = `s.id AS "sighting.id", s.plate_id AS "sighting.plate_id", p.plate AS "sighting.plate",
 	s.address AS "sighting.address", s.photo_key AS "sighting.photo_key", s.photo_thumb_key AS "sighting.photo_thumb_key",
 	s.created_at AS "sighting.created_at", coalesce(p.meta->>'type', '') AS "sighting.plate_type",
-	coalesce(p.meta->>'region', '') AS "sighting.plate_region", s.address_locale AS "sighting.address_locale"`
+	coalesce(p.meta->>'region', '') AS "sighting.plate_region", s.address_locale AS "sighting.address_locale",
+	s.lat AS "sighting.lat", s.lon AS "sighting.lon", s.hidden AS "sighting.hidden"`
 
 // CreateComplaint сохраняет жалобу на фото фиксации (статус — «новая»); is_test_data берётся у фиксации.
 // models.ErrNotFound — фиксации нет (или она тестовая, а тестовые не нужны).
@@ -46,6 +47,10 @@ func (r *repository) ListComplaints(ctx context.Context, tx db.Executor, o model
 	if o.Status != "" {
 		args = append(args, o.Status)
 		conds = append(conds, fmt.Sprintf("c.status = $%d", len(args)))
+	}
+	if o.SightingID != "" {
+		args = append(args, o.SightingID)
+		conds = append(conds, fmt.Sprintf("c.sighting_id = $%d", len(args)))
 	}
 	if !o.IncludeTestData {
 		conds = append(conds, "NOT c.is_test_data")

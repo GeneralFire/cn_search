@@ -32,6 +32,7 @@ func (s *CarSearch) SeeAlso(ctx context.Context, req *pb.SeeAlsoRequest) (*pb.Se
 		ExcludeSightingID: req.GetId(),
 		Limit:             limit,
 		IncludeTestData:   includeTestData(ctx),
+		IncludeHidden:     s.isAdmin(ctx),
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, "не удалось получить свежие фиксации")

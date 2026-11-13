@@ -19,4 +19,6 @@ type PlateSighting struct {
 
 	Lat *float64 `db:"lat"` // широта места фиксации (WGS 84); nil — координат нет
 	Lon *float64 `db:"lon"` // долгота
+
+	Hidden bool `db:"hidden"` // скрыта админом: обычным пользователям не отдаётся
 }

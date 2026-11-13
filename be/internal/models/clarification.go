@@ -37,3 +37,25 @@ type ValidationError struct {
 }
 
 func (e *ValidationError) Error() string { return e.Message }
+
+// ClarificationItem — уточнение вместе с фиксацией (админ-панель). Колонки фиксации — "sighting.<колонка>".
+type ClarificationItem struct {
+	Clarification
+	Sighting PlateSighting `db:"sighting"`
+}
+
+// ListClarificationsOpts — страница уточнений для админ-панели.
+type ListClarificationsOpts struct {
+	Status          ClarificationStatus // пусто — все
+	SightingID      string              // только уточнения к этой фиксации; пусто — все
+	Offset          int
+	Limit           int
+	IncludeTestData bool
+}
+
+// ClarificationsPage — страница уточнений.
+type ClarificationsPage struct {
+	Items      []ClarificationItem
+	Total      int  // всего по фильтру
+	NextOffset *int // nil — дальше ничего нет
+}

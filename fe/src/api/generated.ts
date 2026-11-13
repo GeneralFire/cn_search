@@ -16,14 +16,23 @@ export type CarSearchServiceComplainData = CarsearchComplaint;
 
 export type CarSearchServiceGetData = CarsearchGetResponse;
 
+export type CarSearchServiceHideSightingData = CarsearchPlateSighting;
+
+export type CarSearchServiceListClarificationsData =
+  CarsearchListClarificationsResponse;
+
 export type CarSearchServiceListComplaintsData =
   CarsearchListComplaintsResponse;
+
+export type CarSearchServiceMeData = CarsearchMeResponse;
 
 export type CarSearchServiceResolveComplaintData = CarsearchComplaint;
 
 export type CarSearchServiceSearchData = CarsearchSearchResponse;
 
 export type CarSearchServiceSeeAlsoData = CarsearchSeeAlsoResponse;
+
+export type CarSearchServiceSetClarificationStatusData = CarsearchClarification;
 
 /** Clarification — уточнение номера к фиксации. */
 export interface CarsearchClarification {
@@ -35,6 +44,8 @@ export interface CarsearchClarification {
   plateRegion?: string;
   /** Формат номерного знака — от него зависит, как его рисовать. */
   plateType?: CarsearchPlateType;
+  /** Фиксация (номер, адрес, фото) — только в ListClarifications. */
+  sighting?: CarsearchPlateSighting;
   /** uuid фиксации, к которой уточнение. */
   sightingId?: string;
   /** Актуальный статус: ACCEPTED, когда совпали 3 уточнения фиксации. */
@@ -127,6 +138,44 @@ export interface CarsearchGetResponse {
   items?: CarsearchPlateSighting[];
 }
 
+export interface CarsearchHideSightingRequest {
+  /** true — скрыть, false — показать снова. */
+  hidden?: boolean;
+  /** uuid фиксации. */
+  id?: string;
+}
+
+export interface CarsearchListClarificationsRequest {
+  /**
+   * Размер страницы, 1..100; 0 — по умолчанию (30).
+   * @format int32
+   */
+  limit?: number;
+  /**
+   * Сколько пропустить («Загрузить ещё»).
+   * @format int32
+   */
+  offset?: number;
+  /** Только уточнения к этой фиксации (uuid); пусто — все. */
+  sightingId?: string;
+  /** Фильтр по статусу; UNSPECIFIED — все. */
+  status?: CarsearchClarificationStatus;
+}
+
+export interface CarsearchListClarificationsResponse {
+  items?: CarsearchClarification[];
+  /**
+   * Смещение следующей страницы; не задано — дальше ничего нет.
+   * @format int32
+   */
+  nextOffset?: number;
+  /**
+   * Всего уточнений по фильтру.
+   * @format int32
+   */
+  total?: number;
+}
+
 export interface CarsearchListComplaintsRequest {
   /**
    * Размер страницы, 1..100; 0 — по умолчанию (30).
@@ -138,6 +187,8 @@ export interface CarsearchListComplaintsRequest {
    * @format int32
    */
   offset?: number;
+  /** Только жалобы на эту фиксацию (uuid); пусто — все. */
+  sightingId?: string;
   /** Фильтр по статусу; UNSPECIFIED — все. */
   status?: CarsearchComplaintStatus;
 }
@@ -156,6 +207,13 @@ export interface CarsearchListComplaintsResponse {
   total?: number;
 }
 
+export type CarsearchMeRequest = object;
+
+export interface CarsearchMeResponse {
+  /** Заголовок admin-token верный: можно включать админ-режим. */
+  isAdmin?: boolean;
+}
+
 /** PlateSighting — фиксация номера: где и когда замечена машина. */
 export interface CarsearchPlateSighting {
   address?: string;
@@ -166,6 +224,8 @@ export interface CarsearchPlateSighting {
    * @format date-time
    */
   createdAt?: string;
+  /** Фиксация скрыта админом; приходит только админу (обычным пользователям скрытые не отдаются). */
+  hidden?: boolean;
   /** uuid фиксации. */
   id?: string;
   /**
@@ -263,6 +323,13 @@ export interface CarsearchSeeAlsoRequest {
 
 export interface CarsearchSeeAlsoResponse {
   items?: CarsearchPlateSighting[];
+}
+
+export interface CarsearchSetClarificationStatusRequest {
+  /** uuid уточнения. */
+  id?: string;
+  /** ACCEPTED или NOT_ACCEPTED. */
+  status?: CarsearchClarificationStatus;
 }
 
 export type QueryParamsType = Record<string | number, any>;
@@ -595,6 +662,48 @@ export class CarSearchApi<
      * No description
      *
      * @tags CarSearchService
+     * @name CarSearchServiceHideSighting
+     * @summary HideSighting — скрыть фиксацию (hidden = true) или вернуть её. Скрытые фиксации не попадают в Search/Get/SeeAlso обычных пользователей; админу отдаются с hidden = true. Нужен admin-token.
+     * @request POST:/carsearch.CarSearchService/HideSighting
+     */
+    carSearchServiceHideSighting: (
+      body: CarsearchHideSightingRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceHideSightingData, any>({
+        path: `/carsearch.CarSearchService/HideSighting`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
+     * @name CarSearchServiceListClarifications
+     * @summary ListClarifications — уточнения для админ-панели, от новых к старым, постранично, вместе с фиксацией. Нужен заголовок admin-token.
+     * @request POST:/carsearch.CarSearchService/ListClarifications
+     */
+    carSearchServiceListClarifications: (
+      body: CarsearchListClarificationsRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceListClarificationsData, any>({
+        path: `/carsearch.CarSearchService/ListClarifications`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
      * @name CarSearchServiceListComplaints
      * @summary ListComplaints — жалобы для админ-панели, от новых к старым, постранично, вместе с фиксацией. Нужен заголовок admin-token (= ADMIN_TOKEN бэка), иначе PERMISSION_DENIED.
      * @request POST:/carsearch.CarSearchService/ListComplaints
@@ -605,6 +714,27 @@ export class CarSearchApi<
     ) =>
       this.request<CarSearchServiceListComplaintsData, any>({
         path: `/carsearch.CarSearchService/ListComplaints`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
+     * @name CarSearchServiceMe
+     * @summary Me — кто спрашивает: is_admin, если заголовок admin-token верный. Без токена или с неверным — is_admin = false (не ошибка): фронт так решает, включать ли админ-режим.
+     * @request POST:/carsearch.CarSearchService/Me
+     */
+    carSearchServiceMe: (
+      body: CarsearchMeRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceMeData, any>({
+        path: `/carsearch.CarSearchService/Me`,
         method: "POST",
         body: body,
         type: ContentType.Json,
@@ -668,6 +798,27 @@ export class CarSearchApi<
     ) =>
       this.request<CarSearchServiceSeeAlsoData, any>({
         path: `/carsearch.CarSearchService/SeeAlso`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
+     * @name CarSearchServiceSetClarificationStatus
+     * @summary SetClarificationStatus — принять или отклонить уточнение вручную. Нужен заголовок admin-token.
+     * @request POST:/carsearch.CarSearchService/SetClarificationStatus
+     */
+    carSearchServiceSetClarificationStatus: (
+      body: CarsearchSetClarificationStatusRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceSetClarificationStatusData, any>({
+        path: `/carsearch.CarSearchService/SetClarificationStatus`,
         method: "POST",
         body: body,
         type: ContentType.Json,

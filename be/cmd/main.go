@@ -89,7 +89,8 @@ func serve(ctx context.Context, log *slog.Logger, cfg config) error {
 			log.Warn("ADMIN_TOKEN не задан — админ-панель выключена")
 		}
 		svc := implementation.NewCarSearch(uc, cfg.PhotoBase,
-			implementation.WithComplaints(usecase.NewComplaints(cluster, repo), cfg.AdminToken))
+			implementation.WithComplaints(usecase.NewComplaints(cluster, repo), cfg.AdminToken),
+			implementation.WithAdmin(usecase.NewAdmin(cluster, repo), cfg.AdminToken))
 		desc := pb.NewCarSearchServiceServiceDesc(svc)
 
 		// HTTP: ручки clay под /api + health + swagger.

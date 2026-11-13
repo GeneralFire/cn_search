@@ -2,6 +2,7 @@ package implementation
 
 //go:generate minimock -i plateSightings -o ./mocks/plate_sightings_mock.go -n PlateSightingsMock -p mocks
 //go:generate minimock -i complaints -o ./mocks/complaints_mock.go -n ComplaintsMock -p mocks
+//go:generate minimock -i admin -o ./mocks/admin_mock.go -n AdminMock -p mocks
 
 import (
 	"context"
@@ -22,4 +23,11 @@ type complaints interface {
 	Complain(ctx context.Context, o models.ComplainOpts) (models.Complaint, error)
 	ListComplaints(ctx context.Context, o models.ListComplaintsOpts) (models.ComplaintsPage, error)
 	ResolveComplaint(ctx context.Context, id string) (models.Complaint, error)
+}
+
+// admin — админские сценарии: скрытие фиксаций и разбор уточнений (реализация — usecase.Admin).
+type admin interface {
+	HideSighting(ctx context.Context, id string, hidden bool) (models.PlateSighting, error)
+	SetClarificationStatus(ctx context.Context, id string, st models.ClarificationStatus) (models.Clarification, error)
+	ListClarifications(ctx context.Context, o models.ListClarificationsOpts) (models.ClarificationsPage, error)
 }

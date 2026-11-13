@@ -1,6 +1,7 @@
 import "./style.css";
 import "./didyoumean.css";
 import "./theme";
+import "./adminmode"; // до первых запросов: сохранённый admin-token попадает в заголовки
 import { ApiError, clarify, search, type Car } from "./api";
 import { navigate, onRoute, plateHref } from "./router";
 import { renderPlatePage } from "./plate";
@@ -11,6 +12,7 @@ import { highlightPlate } from "./searchkey";
 import { mountSettings } from "./settings";
 import { initHoverPreview } from "./hoverpreview";
 import { footerHtml } from "./footer";
+import { mountHomeAdmin, refreshHomeAdmin } from "./adminpanels";
 import {
   flagHtml, gridColumns, homeMarket, marketName, setTabInUrl, tabFromUrl, tabsHtml, visibleTabs, type Market,
 } from "./home";
@@ -502,6 +504,7 @@ let searchStarted = false;
 let searchScroll = 0;
 
 const $viewAdmin = app.querySelector<HTMLElement>("#view-admin")!;
+void mountHomeAdmin(app.querySelector<HTMLElement>("#view-search .content")!); // админ-режим: полоса «Админ»
 
 onRoute((route) => {
   $viewAdmin.hidden = route.name !== "admin";
@@ -532,6 +535,7 @@ onRoute((route) => {
   $viewPlate.querySelector(".pp")?.replaceChildren(); // шапку с поиском оставляем
   $viewSearch.hidden = false;
   document.title = t("app.title");
+  void refreshHomeAdmin();
   if (!searchStarted) {
     searchStarted = true;
     newSearch();

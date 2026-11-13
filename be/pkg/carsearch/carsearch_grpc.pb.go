@@ -19,13 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CarSearchService_Search_FullMethodName           = "/carsearch.CarSearchService/Search"
-	CarSearchService_Get_FullMethodName              = "/carsearch.CarSearchService/Get"
-	CarSearchService_SeeAlso_FullMethodName          = "/carsearch.CarSearchService/SeeAlso"
-	CarSearchService_Clarify_FullMethodName          = "/carsearch.CarSearchService/Clarify"
-	CarSearchService_Complain_FullMethodName         = "/carsearch.CarSearchService/Complain"
-	CarSearchService_ListComplaints_FullMethodName   = "/carsearch.CarSearchService/ListComplaints"
-	CarSearchService_ResolveComplaint_FullMethodName = "/carsearch.CarSearchService/ResolveComplaint"
+	CarSearchService_Search_FullMethodName                 = "/carsearch.CarSearchService/Search"
+	CarSearchService_Get_FullMethodName                    = "/carsearch.CarSearchService/Get"
+	CarSearchService_SeeAlso_FullMethodName                = "/carsearch.CarSearchService/SeeAlso"
+	CarSearchService_Clarify_FullMethodName                = "/carsearch.CarSearchService/Clarify"
+	CarSearchService_Complain_FullMethodName               = "/carsearch.CarSearchService/Complain"
+	CarSearchService_ListComplaints_FullMethodName         = "/carsearch.CarSearchService/ListComplaints"
+	CarSearchService_ResolveComplaint_FullMethodName       = "/carsearch.CarSearchService/ResolveComplaint"
+	CarSearchService_Me_FullMethodName                     = "/carsearch.CarSearchService/Me"
+	CarSearchService_SetClarificationStatus_FullMethodName = "/carsearch.CarSearchService/SetClarificationStatus"
+	CarSearchService_HideSighting_FullMethodName           = "/carsearch.CarSearchService/HideSighting"
+	CarSearchService_ListClarifications_FullMethodName     = "/carsearch.CarSearchService/ListClarifications"
 )
 
 // CarSearchServiceClient is the client API for CarSearchService service.
@@ -59,6 +63,17 @@ type CarSearchServiceClient interface {
 	ListComplaints(ctx context.Context, in *ListComplaintsRequest, opts ...grpc.CallOption) (*ListComplaintsResponse, error)
 	// ResolveComplaint — отметить жалобу решённой. Нужен заголовок admin-token.
 	ResolveComplaint(ctx context.Context, in *ResolveComplaintRequest, opts ...grpc.CallOption) (*Complaint, error)
+	// Me — кто спрашивает: is_admin, если заголовок admin-token верный. Без токена или с неверным —
+	// is_admin = false (не ошибка): фронт так решает, включать ли админ-режим.
+	Me(ctx context.Context, in *MeRequest, opts ...grpc.CallOption) (*MeResponse, error)
+	// SetClarificationStatus — принять или отклонить уточнение вручную. Нужен заголовок admin-token.
+	SetClarificationStatus(ctx context.Context, in *SetClarificationStatusRequest, opts ...grpc.CallOption) (*Clarification, error)
+	// HideSighting — скрыть фиксацию (hidden = true) или вернуть её. Скрытые фиксации не попадают
+	// в Search/Get/SeeAlso обычных пользователей; админу отдаются с hidden = true. Нужен admin-token.
+	HideSighting(ctx context.Context, in *HideSightingRequest, opts ...grpc.CallOption) (*PlateSighting, error)
+	// ListClarifications — уточнения для админ-панели, от новых к старым, постранично, вместе с фиксацией.
+	// Нужен заголовок admin-token.
+	ListClarifications(ctx context.Context, in *ListClarificationsRequest, opts ...grpc.CallOption) (*ListClarificationsResponse, error)
 }
 
 type carSearchServiceClient struct {
@@ -139,6 +154,46 @@ func (c *carSearchServiceClient) ResolveComplaint(ctx context.Context, in *Resol
 	return out, nil
 }
 
+func (c *carSearchServiceClient) Me(ctx context.Context, in *MeRequest, opts ...grpc.CallOption) (*MeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MeResponse)
+	err := c.cc.Invoke(ctx, CarSearchService_Me_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carSearchServiceClient) SetClarificationStatus(ctx context.Context, in *SetClarificationStatusRequest, opts ...grpc.CallOption) (*Clarification, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Clarification)
+	err := c.cc.Invoke(ctx, CarSearchService_SetClarificationStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carSearchServiceClient) HideSighting(ctx context.Context, in *HideSightingRequest, opts ...grpc.CallOption) (*PlateSighting, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PlateSighting)
+	err := c.cc.Invoke(ctx, CarSearchService_HideSighting_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carSearchServiceClient) ListClarifications(ctx context.Context, in *ListClarificationsRequest, opts ...grpc.CallOption) (*ListClarificationsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListClarificationsResponse)
+	err := c.cc.Invoke(ctx, CarSearchService_ListClarifications_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CarSearchServiceServer is the server API for CarSearchService service.
 // All implementations must embed UnimplementedCarSearchServiceServer
 // for forward compatibility.
@@ -170,6 +225,17 @@ type CarSearchServiceServer interface {
 	ListComplaints(context.Context, *ListComplaintsRequest) (*ListComplaintsResponse, error)
 	// ResolveComplaint — отметить жалобу решённой. Нужен заголовок admin-token.
 	ResolveComplaint(context.Context, *ResolveComplaintRequest) (*Complaint, error)
+	// Me — кто спрашивает: is_admin, если заголовок admin-token верный. Без токена или с неверным —
+	// is_admin = false (не ошибка): фронт так решает, включать ли админ-режим.
+	Me(context.Context, *MeRequest) (*MeResponse, error)
+	// SetClarificationStatus — принять или отклонить уточнение вручную. Нужен заголовок admin-token.
+	SetClarificationStatus(context.Context, *SetClarificationStatusRequest) (*Clarification, error)
+	// HideSighting — скрыть фиксацию (hidden = true) или вернуть её. Скрытые фиксации не попадают
+	// в Search/Get/SeeAlso обычных пользователей; админу отдаются с hidden = true. Нужен admin-token.
+	HideSighting(context.Context, *HideSightingRequest) (*PlateSighting, error)
+	// ListClarifications — уточнения для админ-панели, от новых к старым, постранично, вместе с фиксацией.
+	// Нужен заголовок admin-token.
+	ListClarifications(context.Context, *ListClarificationsRequest) (*ListClarificationsResponse, error)
 	mustEmbedUnimplementedCarSearchServiceServer()
 }
 
@@ -200,6 +266,18 @@ func (UnimplementedCarSearchServiceServer) ListComplaints(context.Context, *List
 }
 func (UnimplementedCarSearchServiceServer) ResolveComplaint(context.Context, *ResolveComplaintRequest) (*Complaint, error) {
 	return nil, status.Error(codes.Unimplemented, "method ResolveComplaint not implemented")
+}
+func (UnimplementedCarSearchServiceServer) Me(context.Context, *MeRequest) (*MeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Me not implemented")
+}
+func (UnimplementedCarSearchServiceServer) SetClarificationStatus(context.Context, *SetClarificationStatusRequest) (*Clarification, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetClarificationStatus not implemented")
+}
+func (UnimplementedCarSearchServiceServer) HideSighting(context.Context, *HideSightingRequest) (*PlateSighting, error) {
+	return nil, status.Error(codes.Unimplemented, "method HideSighting not implemented")
+}
+func (UnimplementedCarSearchServiceServer) ListClarifications(context.Context, *ListClarificationsRequest) (*ListClarificationsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListClarifications not implemented")
 }
 func (UnimplementedCarSearchServiceServer) mustEmbedUnimplementedCarSearchServiceServer() {}
 func (UnimplementedCarSearchServiceServer) testEmbeddedByValue()                          {}
@@ -348,6 +426,78 @@ func _CarSearchService_ResolveComplaint_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CarSearchService_Me_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).Me(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_Me_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).Me(ctx, req.(*MeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarSearchService_SetClarificationStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetClarificationStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).SetClarificationStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_SetClarificationStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).SetClarificationStatus(ctx, req.(*SetClarificationStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarSearchService_HideSighting_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HideSightingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).HideSighting(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_HideSighting_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).HideSighting(ctx, req.(*HideSightingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarSearchService_ListClarifications_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListClarificationsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).ListClarifications(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_ListClarifications_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).ListClarifications(ctx, req.(*ListClarificationsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CarSearchService_ServiceDesc is the grpc.ServiceDesc for CarSearchService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -382,6 +532,22 @@ var CarSearchService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ResolveComplaint",
 			Handler:    _CarSearchService_ResolveComplaint_Handler,
+		},
+		{
+			MethodName: "Me",
+			Handler:    _CarSearchService_Me_Handler,
+		},
+		{
+			MethodName: "SetClarificationStatus",
+			Handler:    _CarSearchService_SetClarificationStatus_Handler,
+		},
+		{
+			MethodName: "HideSighting",
+			Handler:    _CarSearchService_HideSighting_Handler,
+		},
+		{
+			MethodName: "ListClarifications",
+			Handler:    _CarSearchService_ListClarifications_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -1,16 +1,13 @@
-// Админ-панель /admin: жалобы на фото. Вход — токен admin-token (sessionStorage, см. api/index.ts);
-// без токена или с неверным (бэк ответил 403) — форма ввода. Таблица жалоб с фильтром по статусу,
-// «Загрузить ещё» и кнопкой «Решено»; клик по номеру — страница фиксации.
+// Админ-панель /admin: вкладки (реестр — admintabs.ts): «Жалобы» (здесь), «Уточнения» (adminclar.ts),
+// заявки на камеры подключаются своей вкладкой. Вход — токен admin-token, проверяется rpc Me и включает
+// админ-режим (adminmode.ts); без токена или с неверным (бэк ответил 403) — форма ввода.
+// Жалобы: таблица с фильтром по статусу, «Загрузить ещё», кнопка «Решено»; ?sighting=<id> — только
+// жалобы на эту фиксацию (ссылка из панели «Управление»); клик по номеру — страница фиксации.
 import "./admin.css";
-import {
-  ApiError,
-  getAdminToken,
-  listComplaints,
-  resolveComplaint,
-  setAdminToken,
-  type Complaint,
-  type ComplaintStatus,
-} from "./api";
+import { ApiError, getAdminToken, listComplaints, resolveComplaint, type Complaint, type ComplaintStatus } from "./api";
+import { enterAdminMode, exitAdminMode, shieldIcon } from "./adminmode";
+import { adminTabs, registerAdminTab } from "./admintabs";
+import "./adminclar";
 import { plateHref } from "./router";
 import { escapeHtml, formatDate, photoAttrs, plateHtml } from "./ui";
 import { t } from "./i18n/i18n";
@@ -44,25 +41,57 @@ export function renderAdminPage(root: HTMLElement): void {
     root.innerHTML = `
       <header class="adm-bar">
         <div class="adm-bar__settings"></div>
-        <h1 class="adm-bar__title">${t("admin.title")}</h1>
+        <h1 class="adm-bar__title">${shieldIcon}${t("adminMode.panelTitle")}</h1>
         <button class="btn btn--ghost adm-bar__logout" type="button" hidden>${t("admin.logout")}</button>
       </header>
+      <nav class="adm-tabs" role="tablist" hidden></nav>
       <main class="adm"></main>`;
     mountSettings(root.querySelector<HTMLElement>(".adm-bar__settings")!);
     root.querySelector(".adm-bar__logout")!.addEventListener("click", () => {
-      setAdminToken("");
+      exitAdminMode();
       showLogin();
     });
   }
   $main = root.querySelector<HTMLElement>(".adm")!;
   document.title = t("admin.pageTitle");
   window.scrollTo({ top: 0 });
-  if (getAdminToken()) void showList();
+  if (getAdminToken()) showTab();
   else showLogin();
 }
 
 function setLoggedIn(on: boolean): void {
   $root.querySelector<HTMLElement>(".adm-bar__logout")!.hidden = !on;
+  $root.querySelector<HTMLElement>(".adm-tabs")!.hidden = !on;
+}
+
+// ---------------------------------------------------------------- вкладки
+
+const tabFromUrl = () => {
+  const id = new URLSearchParams(location.search).get("tab");
+  return adminTabs.find((x) => x.id === id) ?? adminTabs[0];
+};
+
+/** Рисует ряд вкладок и активную вкладку (из ?tab=). */
+function showTab(): void {
+  state.seq++;
+  setLoggedIn(true);
+  const active = tabFromUrl();
+  const $tabs = $root.querySelector<HTMLElement>(".adm-tabs")!;
+  $tabs.innerHTML = adminTabs
+    .map((x) => `<button class="adm-tabs__tab" type="button" role="tab" data-tab="${x.id}" aria-selected="${x === active}">${t(x.label)}</button>`)
+    .join("");
+  $tabs.onclick = (e) => {
+    const b = (e.target as Element).closest<HTMLButtonElement>("[data-tab]");
+    if (!b) return;
+    const url = new URL(location.href);
+    url.search = b.dataset.tab === adminTabs[0].id ? "" : `?tab=${b.dataset.tab}`;
+    history.replaceState(history.state, "", url);
+    showTab();
+  };
+  void active.render($main, () => {
+    exitAdminMode();
+    showLogin(t("admin.denied"));
+  });
 }
 
 // ---------------------------------------------------------------- вход
@@ -83,17 +112,24 @@ function showLogin(error = ""): void {
   const $form = $main.querySelector<HTMLFormElement>(".adm-login")!;
   const $input = $form.querySelector<HTMLInputElement>(".adm-login__input")!;
   $input.focus();
-  $form.addEventListener("submit", (e) => {
+  $form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    setAdminToken($input.value.trim());
-    void showList();
+    let ok = false;
+    try {
+      ok = await enterAdminMode($input.value.trim());
+    } catch (err) {
+      showLogin(err instanceof ApiError ? err.message : t("error.serverDown"));
+      return;
+    }
+    if (ok) showTab();
+    else showLogin(t("admin.denied"));
   });
 }
 
 /** Ошибка админского запроса: 403 — токен неверный, снова форма входа; иначе — сообщение. */
 function isDenied(e: unknown): boolean {
   if (e instanceof ApiError && e.status === 403) {
-    setAdminToken("");
+    exitAdminMode();
     showLogin(t("admin.denied"));
     return true;
   }
@@ -102,9 +138,16 @@ function isDenied(e: unknown): boolean {
 
 // ---------------------------------------------------------------- список
 
+registerAdminTab({ id: "complaints", label: "adminMode.tabComplaints", order: 10, render: () => showList() });
+
+/** Фильтр по фиксации из адреса (?sighting=<id>); "" — все жалобы. */
+const sightingFilter = () => new URLSearchParams(location.search).get("sighting") ?? "";
+
 async function showList(): Promise<void> {
-  setLoggedIn(true);
+  const sighting = sightingFilter();
   $main.innerHTML = `
+    ${sighting ? `<p class="adm-filter-chip">${t("adminMode.bySighting")} <code>${escapeHtml(sighting.slice(0, 8))}</code>
+      <button class="adm-link" type="button" data-reset-sighting>${t("adminMode.resetFilter")}</button></p>` : ""}
     <div class="adm-head">
       <div class="adm-filter" role="radiogroup" aria-label="${t("admin.filter")}">
         ${FILTERS.map(
@@ -133,6 +176,10 @@ async function showList(): Promise<void> {
     void load(true);
   });
   $main.querySelector(".more__btn")!.addEventListener("click", () => void load(false));
+  $main.querySelector("[data-reset-sighting]")?.addEventListener("click", () => {
+    history.replaceState(history.state, "", "/admin");
+    void showList();
+  });
   $main.querySelector("tbody")!.addEventListener("click", (e) => {
     const b = (e.target as Element).closest<HTMLButtonElement>("[data-resolve]");
     if (b) void resolve(b);
@@ -154,7 +201,7 @@ async function load(reset: boolean): Promise<void> {
   $btn.textContent = t("more.loading");
   $note.hidden = true;
   try {
-    const page = await listComplaints(state.filter, reset ? 0 : (state.next ?? 0), PAGE_SIZE);
+    const page = await listComplaints(state.filter, reset ? 0 : (state.next ?? 0), PAGE_SIZE, sightingFilter());
     if (my !== state.seq) return;
     state.items.push(...page.items);
     state.total = page.total;

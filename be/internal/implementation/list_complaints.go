@@ -3,6 +3,7 @@ package implementation
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -31,6 +32,8 @@ func (s *CarSearch) ListComplaints(ctx context.Context, req *pb.ListComplaintsRe
 		return nil, status.Error(codes.InvalidArgument, "status: неизвестный статус")
 	}
 	switch {
+	case req.GetSightingId() != "" && uuid.Validate(req.GetSightingId()) != nil:
+		return nil, status.Error(codes.InvalidArgument, "sighting_id: нужен uuid фиксации")
 	case req.GetOffset() < 0:
 		return nil, status.Error(codes.InvalidArgument, "offset: не может быть отрицательным")
 	case req.GetLimit() < 0 || req.GetLimit() > MaxLimit:
@@ -43,6 +46,7 @@ func (s *CarSearch) ListComplaints(ctx context.Context, req *pb.ListComplaintsRe
 
 	page, err := s.complaints.ListComplaints(ctx, models.ListComplaintsOpts{
 		Status: st, Offset: int(req.GetOffset()), Limit: limit, IncludeTestData: includeTestData(ctx),
+		SightingID: req.GetSightingId(),
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, "не удалось получить жалобы")

@@ -51,6 +51,9 @@
   главная без запроса — блок «для вас» (2 ряда номеров «рынка» языка) и вкладки стран + «Прочее»
   (`src/home.ts`, `SearchRequest.market` → `models.Market` → условия по `plates.meta` type/region; вкладка — `?tab=`),
   запрос поиска — в адресе `?q=` (F5, история, смена языка), страница номера `/plate/<id фиксации>` (`src/plate.ts`, роутер на History API — `src/router.ts`).
+  Админ-режим: `src/adminmode.ts` (admin-token в sessionStorage → rpc Me → класс `is-admin` и заголовок во всех запросах),
+  скрытые панели — `src/adminpanels.ts`, вкладки `/admin` — реестр `src/admintabs.ts`. Скрытые фиксации (`plate_sightings.hidden`)
+  отдаются только с верным admin-token (`IncludeHidden`).
 - `docker-compose.yml`: db (Postgres), s3 (RustFS — minio/minio больше нет на Docker Hub), be, fe.
   Запуск: `make run` (всё) или по частям `make etc` (db+s3+миграции), `make run-be`, `make run-fe`.
   Тестовые данные приходят миграцией при `make etc`.

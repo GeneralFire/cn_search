@@ -47,6 +47,7 @@ type ComplainOpts struct {
 // ListComplaintsOpts — страница жалоб для админ-панели.
 type ListComplaintsOpts struct {
 	Status          ComplaintStatus // пусто — все
+	SightingID      string          // только жалобы на эту фиксацию; пусто — все
 	Offset          int
 	Limit           int
 	IncludeTestData bool

@@ -97,6 +97,60 @@
         ]
       }
     },
+    "/carsearch.CarSearchService/HideSighting": {
+      "post": {
+        "summary": "HideSighting — скрыть фиксацию (hidden = true) или вернуть её. Скрытые фиксации не попадают\nв Search/Get/SeeAlso обычных пользователей; админу отдаются с hidden = true. Нужен admin-token.",
+        "operationId": "CarSearchService_HideSighting",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchPlateSighting"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchHideSightingRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/ListClarifications": {
+      "post": {
+        "summary": "ListClarifications — уточнения для админ-панели, от новых к старым, постранично, вместе с фиксацией.\nНужен заголовок admin-token.",
+        "operationId": "CarSearchService_ListClarifications",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchListClarificationsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchListClarificationsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
     "/carsearch.CarSearchService/ListComplaints": {
       "post": {
         "summary": "ListComplaints — жалобы для админ-панели, от новых к старым, постранично, вместе с фиксацией.\nНужен заголовок admin-token (= ADMIN_TOKEN бэка), иначе PERMISSION_DENIED.",
@@ -116,6 +170,33 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/carsearchListComplaintsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/Me": {
+      "post": {
+        "summary": "Me — кто спрашивает: is_admin, если заголовок admin-token верный. Без токена или с неверным —\nis_admin = false (не ошибка): фронт так решает, включать ли админ-режим.",
+        "operationId": "CarSearchService_Me",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchMeResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchMeRequest"
             }
           }
         ],
@@ -204,6 +285,33 @@
           "CarSearchService"
         ]
       }
+    },
+    "/carsearch.CarSearchService/SetClarificationStatus": {
+      "post": {
+        "summary": "SetClarificationStatus — принять или отклонить уточнение вручную. Нужен заголовок admin-token.",
+        "operationId": "CarSearchService_SetClarificationStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchClarification"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchSetClarificationStatusRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -234,6 +342,10 @@
         },
         "plateRegion": {
           "type": "string"
+        },
+        "sighting": {
+          "$ref": "#/definitions/carsearchPlateSighting",
+          "description": "Фиксация (номер, адрес, фото) — только в ListClarifications."
         }
       },
       "description": "Clarification — уточнение номера к фиксации."
@@ -367,6 +479,63 @@
         }
       }
     },
+    "carsearchHideSightingRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "uuid фиксации."
+        },
+        "hidden": {
+          "type": "boolean",
+          "description": "true — скрыть, false — показать снова."
+        }
+      }
+    },
+    "carsearchListClarificationsRequest": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "$ref": "#/definitions/carsearchClarificationStatus",
+          "description": "Фильтр по статусу; UNSPECIFIED — все."
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Сколько пропустить («Загрузить ещё»)."
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Размер страницы, 1..100; 0 — по умолчанию (30)."
+        },
+        "sightingId": {
+          "type": "string",
+          "description": "Только уточнения к этой фиксации (uuid); пусто — все."
+        }
+      }
+    },
+    "carsearchListClarificationsResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchClarification"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Всего уточнений по фильтру."
+        },
+        "nextOffset": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Смещение следующей страницы; не задано — дальше ничего нет."
+        }
+      }
+    },
     "carsearchListComplaintsRequest": {
       "type": "object",
       "properties": {
@@ -383,6 +552,10 @@
         "status": {
           "$ref": "#/definitions/carsearchComplaintStatus",
           "description": "Фильтр по статусу; UNSPECIFIED — все."
+        },
+        "sightingId": {
+          "type": "string",
+          "description": "Только жалобы на эту фиксацию (uuid); пусто — все."
         }
       }
     },
@@ -404,6 +577,18 @@
           "type": "integer",
           "format": "int32",
           "description": "Смещение следующей страницы; не задано — дальше ничего нет."
+        }
+      }
+    },
+    "carsearchMeRequest": {
+      "type": "object"
+    },
+    "carsearchMeResponse": {
+      "type": "object",
+      "properties": {
+        "isAdmin": {
+          "type": "boolean",
+          "description": "Заголовок admin-token верный: можно включать админ-режим."
         }
       }
     },
@@ -454,6 +639,10 @@
         "lon": {
           "type": "number",
           "format": "double"
+        },
+        "hidden": {
+          "type": "boolean",
+          "description": "Фиксация скрыта админом; приходит только админу (обычным пользователям скрытые не отдаются)."
         }
       },
       "description": "PlateSighting — фиксация номера: где и когда замечена машина."
@@ -553,6 +742,19 @@
           "items": {
             "$ref": "#/definitions/carsearchPlateSighting"
           }
+        }
+      }
+    },
+    "carsearchSetClarificationStatusRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "uuid уточнения."
+        },
+        "status": {
+          "$ref": "#/definitions/carsearchClarificationStatus",
+          "description": "ACCEPTED или NOT_ACCEPTED."
         }
       }
     }
