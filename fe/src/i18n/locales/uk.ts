@@ -160,4 +160,8 @@ export const uk: Dict = {
   "qs.recent.title": "Нещодавні",
   "qs.recent.remove": "Прибрати «{q}» з нещодавніх",
   "qs.recent.clear": "Очистити все",
+
+  "noPhoto.label": "Немає фото",
+  // Подвал: пустая строка — подвал не показывается.
+  "footer.message": "NO WAR IN UKRAINE",
 };

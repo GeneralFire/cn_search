@@ -1,6 +1,7 @@
 import "./card.css";
 import { plateHref } from "./router";
 import "./plate-formats.css";
+import { photoHtml } from "./nophoto";
 
 // Общие куски разметки и форматирования для страниц поиска и номера.
 import { getLang, intlLocale, t } from "./i18n/i18n";
@@ -14,7 +15,6 @@ export const icon = {
   pin: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>`,
   edit: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="m13.5 6.5 4 4"/></svg>`,
   cal: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>`,
-  car: `<svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path d="M10 22h-4a2 2 0 0 1-2-2v-4c0-1.5 1-2.6 2.4-3l6.6-1.8 6-5.4A6 6 0 0 1 23 4.5h14a6 6 0 0 1 4.3 1.8L47 12l9 1.6c1.8.3 3 1.9 3 3.6V20a2 2 0 0 1-2 2h-3"/><circle cx="16" cy="23" r="5"/><circle cx="48" cy="23" r="5"/></svg>`,
 };
 
 export function escapeHtml(s: string): string {
@@ -112,7 +112,7 @@ export function miniCardHtml(
   i: number
 ): string {
   const { src } = photoAttrs(c);
-  const photo = src ? `<img src="${escapeHtml(src)}" alt="" loading="lazy" />` : icon.car;
+  const photo = photoHtml(src);
   return `
     <a class="mini" href="${plateHref(c.id)}" data-link style="animation-delay:${Math.min(i, 14) * 25}ms"
        aria-label="${escapeHtml(t("card.allSightings", { plate: c.plate }))}">
@@ -140,7 +140,7 @@ export function cardHtml(
 ): string {
   const city = c.address.split(",")[0] ?? "";
   const { src } = photoAttrs(c); // в карточках — только миниатюра, без превью по наведению
-  const photo = src ? `<img src="${escapeHtml(src)}" alt="" loading="lazy" />` : icon.car;
+  const photo = photoHtml(src);
   const label = escapeHtml(t("card.clarify"));
   // Компактная карточка: номер поверх нижнего края фото, адрес и дата — одной строкой.
   return `

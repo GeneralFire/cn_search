@@ -1,0 +1,17 @@
+/* Подвал: спокойная строка по центру; для украинского — тонкая полоса цветов флага сверху. */
+.site-foot {
+  margin-top: 48px; padding: 20px 16px 28px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+.site-foot--uk { border-top: 0; position: relative; }
+.site-foot--uk::before {
+  content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: min(240px, 60%); height: 6px; border-radius: 3px;
+  background: linear-gradient(#0057b7 50%, #ffd700 50%);
+}
+.site-foot__msg {
+  margin: 0;
+  font-size: 0.95rem; font-weight: 700; letter-spacing: 0.14em;
+  color: var(--text);
+}

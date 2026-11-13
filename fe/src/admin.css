@@ -48,7 +48,6 @@
   background: linear-gradient(135deg, var(--accent-soft), var(--bg));
 }
 .adm-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.adm-thumb > svg { width: 60%; opacity: 0.5; }
 .adm-plate { display: inline-block; text-decoration: none; border-radius: 8px; }
 .adm-plate:hover { filter: brightness(0.95); }
 .adm-plate:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

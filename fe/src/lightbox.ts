@@ -5,6 +5,7 @@ import "./lightbox.css";
 import { plateHref } from "./router";
 import { formatDate, icon } from "./ui";
 import { t } from "./i18n/i18n";
+import { noPhotoHtml } from "./nophoto";
 
 export interface LightboxItem {
   id: string;
@@ -28,6 +29,7 @@ const arrow = (d: string) =>
 let $dlg: HTMLDialogElement | null = null;
 let $stage: HTMLElement;
 let $img: HTMLImageElement;
+let $broken: HTMLElement;
 let $prev: HTMLButtonElement;
 let $next: HTMLButtonElement;
 let $place: HTMLElement;
@@ -64,6 +66,7 @@ function build(): void {
   $dlg.innerHTML = `
     <div class="lb__stage">
       <img class="lb__img" alt="${t("photo.alt")}" draggable="false" />
+      <div class="lb__broken" hidden>${noPhotoHtml()}</div>
     </div>
     <button class="lb__nav lb__nav--prev" type="button" aria-label="${t("lightbox.prev")}">${arrow("M15 18l-6-6 6-6")}</button>
     <button class="lb__nav lb__nav--next" type="button" aria-label="${t("lightbox.next")}">${arrow("M9 18l6-6-6-6")}</button>
@@ -81,6 +84,7 @@ function build(): void {
   const q = <T extends Element>(s: string) => $dlg!.querySelector<T>(s)!;
   $stage = q(".lb__stage");
   $img = q(".lb__img");
+  $broken = q(".lb__broken");
   $prev = q(".lb__nav--prev");
   $next = q(".lb__nav--next");
   $place = q(".lb__place span");
@@ -94,7 +98,13 @@ function build(): void {
   // Переход по ссылке делает роутер (data-link); галерею просто закрываем.
   $open.addEventListener("click", () => $dlg!.close());
   $img.addEventListener("load", () => $img.classList.remove("is-loading"));
-  $img.addEventListener("error", () => $img.classList.remove("is-loading"));
+  // Битая картинка → заглушка «Нет фото» вместо сломанной иконки.
+  $img.addEventListener("error", () => {
+    $img.classList.remove("is-loading");
+    if (!$img.getAttribute("src")) return;
+    $img.hidden = true;
+    $broken.hidden = false;
+  });
 
   $dlg.addEventListener("keydown", onKey);
   $dlg.addEventListener("close", () => {
@@ -124,6 +134,8 @@ function show(i: number): void {
   index = i;
   const c = items[i];
   resetZoom(false);
+  $img.hidden = false;
+  $broken.hidden = true;
   $img.classList.add("is-loading");
   $img.src = c.photoUrl!;
   if ($img.complete) $img.classList.remove("is-loading");

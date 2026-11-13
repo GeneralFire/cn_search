@@ -8,6 +8,7 @@ import { mountSettings } from "./settings";
 import { openLightbox } from "./lightbox";
 import { mountPlateMap, plateMapHtml } from "./map";
 import { complainButtonHtml } from "./complaint";
+import { noPhotoHtml, photoHtml } from "./nophoto";
 
 /** Сколько карточек показывать в «Свежих фиксациях» (ручка отдаёт не больше). */
 const SEE_ALSO_LIMIT = 21;
@@ -103,9 +104,9 @@ function pageHtml(items: Car[], currentId: string): string {
         ${
           shown.photoUrl
             ? `<button class="pp-photo__zoom" type="button" data-zoom="${escapeHtml(shown.photoUrl)}" aria-label="${t("photo.zoom")}">
-                 <img src="${escapeHtml(shown.photoUrl)}" alt="${t("photo.alt")}" />
+                 ${photoHtml(shown.photoUrl, { alt: t("photo.alt"), lazy: false })}
                </button>`
-            : icon.car
+            : noPhotoHtml()
         }
         ${shown.photoUrl ? complainButtonHtml(shown, "photo") : ""}
         <figcaption>
@@ -134,7 +135,7 @@ function pageHtml(items: Car[], currentId: string): string {
 
 function timelineItem(c: Car, current: boolean): string {
   const { src, full } = photoAttrs(c);
-  const thumb = src ? `<img src="${escapeHtml(src)}" alt="" loading="lazy" />` : icon.car;
+  const thumb = photoHtml(src);
   return `
     <li class="tl__item${current ? " is-current" : ""}" data-id="${escapeHtml(c.id)}">
       <a class="tl__link" href="${plateHref(c.id)}" data-link${current ? ` aria-current="page"` : ""}

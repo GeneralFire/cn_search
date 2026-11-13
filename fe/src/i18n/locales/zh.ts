@@ -161,4 +161,8 @@ export const zh: Dict = {
   "qs.recent.title": "最近搜索",
   "qs.recent.remove": "从最近搜索中删除“{q}”",
   "qs.recent.clear": "全部清除",
+
+  "noPhoto.label": "暂无照片",
+  // Подвал: пустая строка — подвал не показывается.
+  "footer.message": "",
 };

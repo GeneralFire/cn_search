@@ -160,4 +160,8 @@ export const ru = {
   "qs.recent.title": "Недавние",
   "qs.recent.remove": "Убрать «{q}» из недавних",
   "qs.recent.clear": "Очистить всё",
+
+  "noPhoto.label": "Нет фото",
+  // Подвал: пустая строка — подвал не показывается.
+  "footer.message": "",
 } as const;

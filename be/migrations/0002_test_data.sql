@@ -162,6 +162,21 @@ FROM (VALUES
 ) AS v (plate, address, locale, photo, created_at, lat, lon)
 JOIN plates p ON p.plate = v.plate;
 
+-- Номер без фото: у фиксаций пустой photo_key — фронт рисует заглушку «Нет фото»;
+-- у последней ключ есть, но файла в S3 нет — битая картинка (onerror) тоже даёт заглушку.
+INSERT INTO plates (plate, meta, is_test_data) VALUES
+  ('Е001КХ 197', '{"type": "ru", "city": "Москва"}', true);
+
+INSERT INTO plate_sightings (plate_id, address, photo_key, photo_thumb_key, created_at, lat, lon, is_test_data)
+SELECT p.id, v.address, v.photo, v.thumb, v.created_at, v.lat, v.lon, true
+FROM (VALUES
+  ('Москва, Ленинградский просп., 39', '', '', timestamptz '2026-11-09 12:40:00Z', 55.7905, 37.5340),
+  ('Москва, ул. Новый Арбат, 15',      '', '', timestamptz '2026-11-06 18:05:00Z', 55.7525, 37.5920),
+  ('Москва, Садовая-Кудринская ул., 3', 'car-missing.jpg', 'car-missing_thumb.jpg',
+   timestamptz '2026-10-30 09:15:00Z', 55.7601, 37.5853)
+) AS v (address, photo, thumb, created_at, lat, lon)
+JOIN plates p ON p.plate = 'Е001КХ 197';
+
 -- Страховка: у каждой тестовой фиксации должны быть координаты — иначе на странице номера нет карты.
 -- +goose StatementBegin
 DO $$

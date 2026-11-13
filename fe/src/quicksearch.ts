@@ -5,6 +5,7 @@ import { escapeHtml, formatAgo, icon, plateHtml } from "./ui";
 import { t, tp } from "./i18n/i18n";
 import { highlightPlate, plateSearchKey } from "./searchkey";
 import "./quicksearch.css";
+import { photoHtml } from "./nophoto";
 
 const PAGE_SIZE = 35;
 const DEBOUNCE_MS = 200;
@@ -111,7 +112,7 @@ export function mountQuickSearch(root: HTMLElement, h: QuickSearchHandlers): voi
     return `
       <li class="qs__item" role="option" id="qs-opt-${i}" data-id="${escapeHtml(c.id)}" aria-selected="false">
         ${plateHtml(c)}
-        ${c.thumbUrl ? `<img class="qs__thumb" src="${escapeHtml(c.thumbUrl)}" alt="" loading="lazy" />` : ""}
+        <span class="qs__thumb qs__thumb-box">${photoHtml(c.thumbUrl ?? "")}</span>
         <span class="qs__meta">
           <span class="qs__addr">${escapeHtml(c.address)}</span>
           <span class="qs__ago">${escapeHtml(formatAgo(c.createdAt))}</span>

@@ -12,9 +12,10 @@ import {
   type ComplaintStatus,
 } from "./api";
 import { plateHref } from "./router";
-import { escapeHtml, formatDate, icon, photoAttrs, plateHtml } from "./ui";
+import { escapeHtml, formatDate, photoAttrs, plateHtml } from "./ui";
 import { t } from "./i18n/i18n";
 import { mountSettings } from "./settings";
+import { photoHtml } from "./nophoto";
 
 const PAGE_SIZE = 30;
 
@@ -189,7 +190,7 @@ function rowHtml(c: Complaint): string {
   const s = c.sighting;
   const href = s ? plateHref(s.id) : "";
   const { src } = s ? photoAttrs(s) : { src: "" };
-  const thumb = src ? `<img src="${escapeHtml(src)}" alt="" loading="lazy" />` : icon.car;
+  const thumb = photoHtml(src);
   return `
     <tr data-id="${escapeHtml(c.id)}">
       <td>${href ? `<a class="adm-thumb" href="${href}" data-link tabindex="-1">${thumb}</a>` : `<span class="adm-thumb">${thumb}</span>`}</td>

@@ -8,6 +8,7 @@ import { cardHtml, escapeHtml, formatDate, icon, plateHtml } from "./ui";
 import { SWITCH_FLAG, t, tp } from "./i18n/i18n";
 import { mountSettings } from "./settings";
 import { initHoverPreview } from "./hoverpreview";
+import { footerHtml } from "./footer";
 import {
   flagHtml, gridColumns, homeMarket, marketName, setTabInUrl, tabFromUrl, tabsHtml, visibleTabs, type Market,
 } from "./home";
@@ -69,6 +70,7 @@ app.innerHTML = `
 
   <div class="view" id="view-plate" hidden></div>
   <div class="view" id="view-admin" hidden></div>
+  ${footerHtml()}
 
   <dialog class="modal" aria-labelledby="modal-title">
     <form method="dialog" class="modal__inner">

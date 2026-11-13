@@ -160,4 +160,8 @@ export const en: Dict = {
   "qs.recent.title": "Recent",
   "qs.recent.remove": "Remove “{q}” from recent",
   "qs.recent.clear": "Clear all",
+
+  "noPhoto.label": "No photo",
+  // Подвал: пустая строка — подвал не показывается.
+  "footer.message": "",
 };
