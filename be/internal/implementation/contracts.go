@@ -36,6 +36,7 @@ type admin interface {
 	RestoreSightingPhoto(ctx context.Context, id string) (models.PlateSighting, error)
 	SetClarificationStatus(ctx context.Context, id string, st models.ClarificationStatus) (models.Clarification, error)
 	ListClarifications(ctx context.Context, o models.ListClarificationsOpts) (models.ClarificationsPage, error)
+	ListAudit(ctx context.Context, o models.ListAuditOpts) (models.AuditPage, error)
 }
 
 // accounts — пользователи, тарифы и мок-оплата (реализация — usecase.Accounts).

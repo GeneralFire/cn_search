@@ -26,6 +26,13 @@ type AdminMock struct {
 	beforeHideSightingCounter uint64
 	HideSightingMock          mAdminMockHideSighting
 
+	funcListAudit          func(ctx context.Context, o models.ListAuditOpts) (a1 models.AuditPage, err error)
+	funcListAuditOrigin    string
+	inspectFuncListAudit   func(ctx context.Context, o models.ListAuditOpts)
+	afterListAuditCounter  uint64
+	beforeListAuditCounter uint64
+	ListAuditMock          mAdminMockListAudit
+
 	funcListClarifications          func(ctx context.Context, o models.ListClarificationsOpts) (c2 models.ClarificationsPage, err error)
 	funcListClarificationsOrigin    string
 	inspectFuncListClarifications   func(ctx context.Context, o models.ListClarificationsOpts)
@@ -58,6 +65,9 @@ func NewAdminMock(t minimock.Tester) *AdminMock {
 
 	m.HideSightingMock = mAdminMockHideSighting{mock: m}
 	m.HideSightingMock.callArgs = []*AdminMockHideSightingParams{}
+
+	m.ListAuditMock = mAdminMockListAudit{mock: m}
+	m.ListAuditMock.callArgs = []*AdminMockListAuditParams{}
 
 	m.ListClarificationsMock = mAdminMockListClarifications{mock: m}
 	m.ListClarificationsMock.callArgs = []*AdminMockListClarificationsParams{}
@@ -444,6 +454,349 @@ func (m *AdminMock) MinimockHideSightingInspect() {
 	if !m.HideSightingMock.invocationsDone() && afterHideSightingCounter > 0 {
 		m.t.Errorf("Expected %d calls to AdminMock.HideSighting at\n%s but found %d calls",
 			mm_atomic.LoadUint64(&m.HideSightingMock.expectedInvocations), m.HideSightingMock.expectedInvocationsOrigin, afterHideSightingCounter)
+	}
+}
+
+type mAdminMockListAudit struct {
+	optional           bool
+	mock               *AdminMock
+	defaultExpectation *AdminMockListAuditExpectation
+	expectations       []*AdminMockListAuditExpectation
+
+	callArgs []*AdminMockListAuditParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// AdminMockListAuditExpectation specifies expectation struct of the admin.ListAudit
+type AdminMockListAuditExpectation struct {
+	mock               *AdminMock
+	params             *AdminMockListAuditParams
+	paramPtrs          *AdminMockListAuditParamPtrs
+	expectationOrigins AdminMockListAuditExpectationOrigins
+	results            *AdminMockListAuditResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// AdminMockListAuditParams contains parameters of the admin.ListAudit
+type AdminMockListAuditParams struct {
+	ctx context.Context
+	o   models.ListAuditOpts
+}
+
+// AdminMockListAuditParamPtrs contains pointers to parameters of the admin.ListAudit
+type AdminMockListAuditParamPtrs struct {
+	ctx *context.Context
+	o   *models.ListAuditOpts
+}
+
+// AdminMockListAuditResults contains results of the admin.ListAudit
+type AdminMockListAuditResults struct {
+	a1  models.AuditPage
+	err error
+}
+
+// AdminMockListAuditOrigins contains origins of expectations of the admin.ListAudit
+type AdminMockListAuditExpectationOrigins struct {
+	origin    string
+	originCtx string
+	originO   string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmListAudit *mAdminMockListAudit) Optional() *mAdminMockListAudit {
+	mmListAudit.optional = true
+	return mmListAudit
+}
+
+// Expect sets up expected params for admin.ListAudit
+func (mmListAudit *mAdminMockListAudit) Expect(ctx context.Context, o models.ListAuditOpts) *mAdminMockListAudit {
+	if mmListAudit.mock.funcListAudit != nil {
+		mmListAudit.mock.t.Fatalf("AdminMock.ListAudit mock is already set by Set")
+	}
+
+	if mmListAudit.defaultExpectation == nil {
+		mmListAudit.defaultExpectation = &AdminMockListAuditExpectation{}
+	}
+
+	if mmListAudit.defaultExpectation.paramPtrs != nil {
+		mmListAudit.mock.t.Fatalf("AdminMock.ListAudit mock is already set by ExpectParams functions")
+	}
+
+	mmListAudit.defaultExpectation.params = &AdminMockListAuditParams{ctx, o}
+	mmListAudit.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmListAudit.expectations {
+		if minimock.Equal(e.params, mmListAudit.defaultExpectation.params) {
+			mmListAudit.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmListAudit.defaultExpectation.params)
+		}
+	}
+
+	return mmListAudit
+}
+
+// ExpectCtxParam1 sets up expected param ctx for admin.ListAudit
+func (mmListAudit *mAdminMockListAudit) ExpectCtxParam1(ctx context.Context) *mAdminMockListAudit {
+	if mmListAudit.mock.funcListAudit != nil {
+		mmListAudit.mock.t.Fatalf("AdminMock.ListAudit mock is already set by Set")
+	}
+
+	if mmListAudit.defaultExpectation == nil {
+		mmListAudit.defaultExpectation = &AdminMockListAuditExpectation{}
+	}
+
+	if mmListAudit.defaultExpectation.params != nil {
+		mmListAudit.mock.t.Fatalf("AdminMock.ListAudit mock is already set by Expect")
+	}
+
+	if mmListAudit.defaultExpectation.paramPtrs == nil {
+		mmListAudit.defaultExpectation.paramPtrs = &AdminMockListAuditParamPtrs{}
+	}
+	mmListAudit.defaultExpectation.paramPtrs.ctx = &ctx
+	mmListAudit.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmListAudit
+}
+
+// ExpectOParam2 sets up expected param o for admin.ListAudit
+func (mmListAudit *mAdminMockListAudit) ExpectOParam2(o models.ListAuditOpts) *mAdminMockListAudit {
+	if mmListAudit.mock.funcListAudit != nil {
+		mmListAudit.mock.t.Fatalf("AdminMock.ListAudit mock is already set by Set")
+	}
+
+	if mmListAudit.defaultExpectation == nil {
+		mmListAudit.defaultExpectation = &AdminMockListAuditExpectation{}
+	}
+
+	if mmListAudit.defaultExpectation.params != nil {
+		mmListAudit.mock.t.Fatalf("AdminMock.ListAudit mock is already set by Expect")
+	}
+
+	if mmListAudit.defaultExpectation.paramPtrs == nil {
+		mmListAudit.defaultExpectation.paramPtrs = &AdminMockListAuditParamPtrs{}
+	}
+	mmListAudit.defaultExpectation.paramPtrs.o = &o
+	mmListAudit.defaultExpectation.expectationOrigins.originO = minimock.CallerInfo(1)
+
+	return mmListAudit
+}
+
+// Inspect accepts an inspector function that has same arguments as the admin.ListAudit
+func (mmListAudit *mAdminMockListAudit) Inspect(f func(ctx context.Context, o models.ListAuditOpts)) *mAdminMockListAudit {
+	if mmListAudit.mock.inspectFuncListAudit != nil {
+		mmListAudit.mock.t.Fatalf("Inspect function is already set for AdminMock.ListAudit")
+	}
+
+	mmListAudit.mock.inspectFuncListAudit = f
+
+	return mmListAudit
+}
+
+// Return sets up results that will be returned by admin.ListAudit
+func (mmListAudit *mAdminMockListAudit) Return(a1 models.AuditPage, err error) *AdminMock {
+	if mmListAudit.mock.funcListAudit != nil {
+		mmListAudit.mock.t.Fatalf("AdminMock.ListAudit mock is already set by Set")
+	}
+
+	if mmListAudit.defaultExpectation == nil {
+		mmListAudit.defaultExpectation = &AdminMockListAuditExpectation{mock: mmListAudit.mock}
+	}
+	mmListAudit.defaultExpectation.results = &AdminMockListAuditResults{a1, err}
+	mmListAudit.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmListAudit.mock
+}
+
+// Set uses given function f to mock the admin.ListAudit method
+func (mmListAudit *mAdminMockListAudit) Set(f func(ctx context.Context, o models.ListAuditOpts) (a1 models.AuditPage, err error)) *AdminMock {
+	if mmListAudit.defaultExpectation != nil {
+		mmListAudit.mock.t.Fatalf("Default expectation is already set for the admin.ListAudit method")
+	}
+
+	if len(mmListAudit.expectations) > 0 {
+		mmListAudit.mock.t.Fatalf("Some expectations are already set for the admin.ListAudit method")
+	}
+
+	mmListAudit.mock.funcListAudit = f
+	mmListAudit.mock.funcListAuditOrigin = minimock.CallerInfo(1)
+	return mmListAudit.mock
+}
+
+// When sets expectation for the admin.ListAudit which will trigger the result defined by the following
+// Then helper
+func (mmListAudit *mAdminMockListAudit) When(ctx context.Context, o models.ListAuditOpts) *AdminMockListAuditExpectation {
+	if mmListAudit.mock.funcListAudit != nil {
+		mmListAudit.mock.t.Fatalf("AdminMock.ListAudit mock is already set by Set")
+	}
+
+	expectation := &AdminMockListAuditExpectation{
+		mock:               mmListAudit.mock,
+		params:             &AdminMockListAuditParams{ctx, o},
+		expectationOrigins: AdminMockListAuditExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmListAudit.expectations = append(mmListAudit.expectations, expectation)
+	return expectation
+}
+
+// Then sets up admin.ListAudit return parameters for the expectation previously defined by the When method
+func (e *AdminMockListAuditExpectation) Then(a1 models.AuditPage, err error) *AdminMock {
+	e.results = &AdminMockListAuditResults{a1, err}
+	return e.mock
+}
+
+// Times sets number of times admin.ListAudit should be invoked
+func (mmListAudit *mAdminMockListAudit) Times(n uint64) *mAdminMockListAudit {
+	if n == 0 {
+		mmListAudit.mock.t.Fatalf("Times of AdminMock.ListAudit mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmListAudit.expectedInvocations, n)
+	mmListAudit.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmListAudit
+}
+
+func (mmListAudit *mAdminMockListAudit) invocationsDone() bool {
+	if len(mmListAudit.expectations) == 0 && mmListAudit.defaultExpectation == nil && mmListAudit.mock.funcListAudit == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmListAudit.mock.afterListAuditCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmListAudit.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// ListAudit implements mm_implementation.admin
+func (mmListAudit *AdminMock) ListAudit(ctx context.Context, o models.ListAuditOpts) (a1 models.AuditPage, err error) {
+	mm_atomic.AddUint64(&mmListAudit.beforeListAuditCounter, 1)
+	defer mm_atomic.AddUint64(&mmListAudit.afterListAuditCounter, 1)
+
+	mmListAudit.t.Helper()
+
+	if mmListAudit.inspectFuncListAudit != nil {
+		mmListAudit.inspectFuncListAudit(ctx, o)
+	}
+
+	mm_params := AdminMockListAuditParams{ctx, o}
+
+	// Record call args
+	mmListAudit.ListAuditMock.mutex.Lock()
+	mmListAudit.ListAuditMock.callArgs = append(mmListAudit.ListAuditMock.callArgs, &mm_params)
+	mmListAudit.ListAuditMock.mutex.Unlock()
+
+	for _, e := range mmListAudit.ListAuditMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.a1, e.results.err
+		}
+	}
+
+	if mmListAudit.ListAuditMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmListAudit.ListAuditMock.defaultExpectation.Counter, 1)
+		mm_want := mmListAudit.ListAuditMock.defaultExpectation.params
+		mm_want_ptrs := mmListAudit.ListAuditMock.defaultExpectation.paramPtrs
+
+		mm_got := AdminMockListAuditParams{ctx, o}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmListAudit.t.Errorf("AdminMock.ListAudit got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmListAudit.ListAuditMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.o != nil && !minimock.Equal(*mm_want_ptrs.o, mm_got.o) {
+				mmListAudit.t.Errorf("AdminMock.ListAudit got unexpected parameter o, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmListAudit.ListAuditMock.defaultExpectation.expectationOrigins.originO, *mm_want_ptrs.o, mm_got.o, minimock.Diff(*mm_want_ptrs.o, mm_got.o))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmListAudit.t.Errorf("AdminMock.ListAudit got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmListAudit.ListAuditMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmListAudit.ListAuditMock.defaultExpectation.results
+		if mm_results == nil {
+			mmListAudit.t.Fatal("No results are set for the AdminMock.ListAudit")
+		}
+		return (*mm_results).a1, (*mm_results).err
+	}
+	if mmListAudit.funcListAudit != nil {
+		return mmListAudit.funcListAudit(ctx, o)
+	}
+	mmListAudit.t.Fatalf("Unexpected call to AdminMock.ListAudit. %v %v", ctx, o)
+	return
+}
+
+// ListAuditAfterCounter returns a count of finished AdminMock.ListAudit invocations
+func (mmListAudit *AdminMock) ListAuditAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmListAudit.afterListAuditCounter)
+}
+
+// ListAuditBeforeCounter returns a count of AdminMock.ListAudit invocations
+func (mmListAudit *AdminMock) ListAuditBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmListAudit.beforeListAuditCounter)
+}
+
+// Calls returns a list of arguments used in each call to AdminMock.ListAudit.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmListAudit *mAdminMockListAudit) Calls() []*AdminMockListAuditParams {
+	mmListAudit.mutex.RLock()
+
+	argCopy := make([]*AdminMockListAuditParams, len(mmListAudit.callArgs))
+	copy(argCopy, mmListAudit.callArgs)
+
+	mmListAudit.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockListAuditDone returns true if the count of the ListAudit invocations corresponds
+// the number of defined expectations
+func (m *AdminMock) MinimockListAuditDone() bool {
+	if m.ListAuditMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.ListAuditMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.ListAuditMock.invocationsDone()
+}
+
+// MinimockListAuditInspect logs each unmet expectation
+func (m *AdminMock) MinimockListAuditInspect() {
+	for _, e := range m.ListAuditMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to AdminMock.ListAudit at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterListAuditCounter := mm_atomic.LoadUint64(&m.afterListAuditCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.ListAuditMock.defaultExpectation != nil && afterListAuditCounter < 1 {
+		if m.ListAuditMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to AdminMock.ListAudit at\n%s", m.ListAuditMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to AdminMock.ListAudit at\n%s with params: %#v", m.ListAuditMock.defaultExpectation.expectationOrigins.origin, *m.ListAuditMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcListAudit != nil && afterListAuditCounter < 1 {
+		m.t.Errorf("Expected call to AdminMock.ListAudit at\n%s", m.funcListAuditOrigin)
+	}
+
+	if !m.ListAuditMock.invocationsDone() && afterListAuditCounter > 0 {
+		m.t.Errorf("Expected %d calls to AdminMock.ListAudit at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.ListAuditMock.expectedInvocations), m.ListAuditMock.expectedInvocationsOrigin, afterListAuditCounter)
 	}
 }
 
@@ -1513,6 +1866,8 @@ func (m *AdminMock) MinimockFinish() {
 		if !m.minimockDone() {
 			m.MinimockHideSightingInspect()
 
+			m.MinimockListAuditInspect()
+
 			m.MinimockListClarificationsInspect()
 
 			m.MinimockRestoreSightingPhotoInspect()
@@ -1542,6 +1897,7 @@ func (m *AdminMock) minimockDone() bool {
 	done := true
 	return done &&
 		m.MinimockHideSightingDone() &&
+		m.MinimockListAuditDone() &&
 		m.MinimockListClarificationsDone() &&
 		m.MinimockRestoreSightingPhotoDone() &&
 		m.MinimockSetClarificationStatusDone()

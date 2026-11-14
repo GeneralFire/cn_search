@@ -232,6 +232,33 @@
         ]
       }
     },
+    "/carsearch.CarSearchService/ListAdminAudit": {
+      "post": {
+        "summary": "ListAdminAudit — журнал действий админов (скрытие, разбор уточнений и жалоб, токены…),\nот новых к старым, с фильтрами по действию и объекту. Нужен admin-token.",
+        "operationId": "CarSearchService_ListAdminAudit",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchListAdminAuditResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchListAdminAuditRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
     "/carsearch.CarSearchService/ListApiTokens": {
       "post": {
         "summary": "ListApiTokens — токены от новых к старым (админ).",
@@ -855,6 +882,46 @@
     }
   },
   "definitions": {
+    "carsearchAdminAuditEntry": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string",
+          "description": "Действие: hide_sighting, show_sighting, restore_photo, set_clarification_status,\nresolve_complaint, set_camera_status, create_api_token, revoke_api_token."
+        },
+        "actor": {
+          "type": "string",
+          "description": "Кто действовал (сейчас всегда admin-token)."
+        },
+        "targetType": {
+          "type": "string",
+          "description": "Тип объекта: sighting, clarification, complaint, camera_request, api_token."
+        },
+        "targetId": {
+          "type": "string"
+        },
+        "details": {
+          "type": "string",
+          "description": "Что изменилось: JSON-объект {\"from\": {…}, \"to\": {…}} (from = null у созданных)."
+        },
+        "requestId": {
+          "type": "string",
+          "description": "ID запроса (x-request-id), в котором сделано действие."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "targetName": {
+          "type": "string",
+          "description": "Имя объекта (токен) — если нашлось."
+        }
+      },
+      "description": "AdminAuditEntry — запись журнала действий админа."
+    },
     "carsearchApiToken": {
       "type": "object",
       "properties": {
@@ -1257,6 +1324,47 @@
           "type": "integer",
           "format": "int32",
           "description": "Сколько загрузок ещё можно за последние 24 часа (тариф Free); не задано — без ограничений (Pro)."
+        }
+      }
+    },
+    "carsearchListAdminAuditRequest": {
+      "type": "object",
+      "properties": {
+        "offset": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Размер страницы, 1..100; 0 — по умолчанию (30)."
+        },
+        "action": {
+          "type": "string",
+          "description": "Только это действие; пусто — все."
+        },
+        "targetId": {
+          "type": "string",
+          "description": "Только действия над этим объектом; пусто — все."
+        }
+      }
+    },
+    "carsearchListAdminAuditResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchAdminAuditEntry"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "nextOffset": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

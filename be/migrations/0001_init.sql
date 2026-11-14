@@ -180,6 +180,21 @@ CREATE INDEX plate_views_plate_created_at_idx ON plate_views (plate_id, created_
 -- Общий журнал без фильтра.
 CREATE INDEX plate_views_created_at_idx ON plate_views (created_at DESC, id);
 
+-- Журнал действий админов: пишется в той же транзакции, что и само действие.
+CREATE TABLE admin_audit (
+    id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+    action      text        NOT NULL, -- hide_sighting, show_sighting, restore_photo, set_clarification_status, …
+    actor       text        NOT NULL DEFAULT 'admin-token', -- кто действовал (админ пока один)
+    target_type text        NOT NULL, -- sighting, clarification, complaint, camera_request, api_token
+    target_id   text        NOT NULL,
+    details     jsonb       NOT NULL DEFAULT '{}', -- {"from": …, "to": …}
+    request_id  text        NOT NULL DEFAULT '',   -- x-request-id запроса
+    created_at  timestamptz NOT NULL DEFAULT clock_timestamp() -- не now(): порядок записей внутри одной транзакции
+);
+CREATE INDEX admin_audit_created_at_idx ON admin_audit (created_at DESC, id);
+CREATE INDEX admin_audit_action_created_at_idx ON admin_audit (action, created_at DESC);
+CREATE INDEX admin_audit_target_idx ON admin_audit (target_id, created_at DESC);
+
 -- Кто загрузил фиксацию (rpc Ingest) и когда. created_at — время съёмки (может быть в прошлом, из EXIF),
 -- поэтому суточная квота загрузок считается по uploaded_at. NULL — не загрузка пользователя (тестовые данные).
 ALTER TABLE plate_sightings
@@ -210,6 +225,7 @@ CREATE TABLE watches (
 -- +goose Down
 DROP TABLE watches;
 DROP FUNCTION plate_watch_key(text);
+DROP TABLE admin_audit;
 DROP TABLE plate_views;
 DROP TABLE api_tokens;
 DROP TABLE camera_requests;

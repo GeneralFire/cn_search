@@ -52,8 +52,23 @@ func TestSetCameraRequestStatusInWriteTx(t *testing.T) {
 	tx := dbmocks.NewExecutorMock(t)
 	repo := mocks.NewCameraRequestsRepositoryMock(t)
 	repo.SetCameraRequestStatusMock.Expect(minimock.AnyContext, tx, "r1", models.CameraRequestApproved).Return(models.CameraRequest{}, models.ErrNotFound)
+	repo.AuditSnapshotMock.Return(nil, nil) // журнал не пишется: WriteAudit не ожидается
 
 	if _, err := NewCameraRequests(writeTx(t, tx), repo).SetStatus(context.Background(), "r1", models.CameraRequestApproved); !errors.Is(err, models.ErrNotFound) {
 		t.Errorf("err = %v, want ErrNotFound", err)
 	}
+}
+
+func TestSetCameraRequestStatusWritesAudit(t *testing.T) {
+	tx := dbmocks.NewExecutorMock(t)
+	repo := mocks.NewCameraRequestsRepositoryMock(t)
+	repo.SetCameraRequestStatusMock.Expect(minimock.AnyContext, tx, "r1", models.CameraRequestApproved).Return(models.CameraRequest{ID: "r1"}, nil)
+	rec := &auditRec{snaps: []string{`{"status":"new"}`, `{"status":"approved"}`}}
+	repo.AuditSnapshotMock.Set(rec.snapshot)
+	repo.WriteAuditMock.Set(rec.write)
+
+	if _, err := NewCameraRequests(writeTx(t, tx), repo).SetStatus(ctxReq(), "r1", models.CameraRequestApproved); err != nil {
+		t.Fatal(err)
+	}
+	rec.check(t, models.AuditSetCameraStatus, models.AuditTargetCameraRequest, "r1", `{"status":"new"}`, `{"status":"approved"}`)
 }

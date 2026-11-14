@@ -20,8 +20,14 @@ func NewAdmin(tx transactor, repo adminRepository) *Admin {
 // HideSighting — скрыть фиксацию или вернуть её (транзакция на запись).
 func (u *Admin) HideSighting(ctx context.Context, id string, hidden bool) (s models.PlateSighting, err error) {
 	err = u.tx.InWriteTx(ctx, func(ctx context.Context, tx db.Executor) error {
-		s, err = u.repo.HideSighting(ctx, tx, id, hidden)
-		return err
+		action := models.AuditShowSighting
+		if hidden {
+			action = models.AuditHideSighting
+		}
+		return audited(ctx, u.repo, tx, action, models.AuditTargetSighting, id, func() (err error) {
+			s, err = u.repo.HideSighting(ctx, tx, id, hidden)
+			return err
+		})
 	})
 	return s, err
 }
@@ -29,8 +35,10 @@ func (u *Admin) HideSighting(ctx context.Context, id string, hidden bool) (s mod
 // RestoreSightingPhoto — вернуть фото, скрытое по жалобам (транзакция на запись).
 func (u *Admin) RestoreSightingPhoto(ctx context.Context, id string) (s models.PlateSighting, err error) {
 	err = u.tx.InWriteTx(ctx, func(ctx context.Context, tx db.Executor) error {
-		s, err = u.repo.RestoreSightingPhoto(ctx, tx, id)
-		return err
+		return audited(ctx, u.repo, tx, models.AuditRestorePhoto, models.AuditTargetSighting, id, func() (err error) {
+			s, err = u.repo.RestoreSightingPhoto(ctx, tx, id)
+			return err
+		})
 	})
 	return s, err
 }
@@ -38,8 +46,10 @@ func (u *Admin) RestoreSightingPhoto(ctx context.Context, id string) (s models.P
 // SetClarificationStatus — принять или отклонить уточнение вручную (транзакция на запись).
 func (u *Admin) SetClarificationStatus(ctx context.Context, id string, st models.ClarificationStatus) (c models.Clarification, err error) {
 	err = u.tx.InWriteTx(ctx, func(ctx context.Context, tx db.Executor) error {
-		c, err = u.repo.SetClarificationStatus(ctx, tx, id, st)
-		return err
+		return audited(ctx, u.repo, tx, models.AuditSetClarificationState, models.AuditTargetClarification, id, func() (err error) {
+			c, err = u.repo.SetClarificationStatus(ctx, tx, id, st)
+			return err
+		})
 	})
 	return c, err
 }

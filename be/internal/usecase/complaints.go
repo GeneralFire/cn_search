@@ -45,10 +45,12 @@ func (u *Complaints) ListComplaints(ctx context.Context, o models.ListComplaints
 // ResolveComplaint — отметить жалобу решённой и снять скрытие фото её фиксации (транзакция на запись).
 func (u *Complaints) ResolveComplaint(ctx context.Context, id string) (c models.Complaint, err error) {
 	err = u.tx.InWriteTx(ctx, func(ctx context.Context, tx db.Executor) error {
-		if c, err = u.repo.ResolveComplaint(ctx, tx, id); err != nil {
-			return err
-		}
-		return u.repo.ShowComplaintPhoto(ctx, tx, id)
+		return audited(ctx, u.repo, tx, models.AuditResolveComplaint, models.AuditTargetComplaint, id, func() (err error) {
+			if c, err = u.repo.ResolveComplaint(ctx, tx, id); err != nil {
+				return err
+			}
+			return u.repo.ShowComplaintPhoto(ctx, tx, id)
+		})
 	})
 	return c, err
 }

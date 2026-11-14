@@ -57,6 +57,10 @@ func TestAdminMethodsDenied(t *testing.T) {
 			_, err := svc.SetClarificationStatus(ctx, &pb.SetClarificationStatusRequest{Id: id, Status: pb.ClarificationStatus_CLARIFICATION_STATUS_ACCEPTED})
 			return err
 		},
+		"ListAdminAudit": func(ctx context.Context) error {
+			_, err := svc.ListAdminAudit(ctx, &pb.ListAdminAuditRequest{})
+			return err
+		},
 		"ListClarifications": func(ctx context.Context) error {
 			_, err := svc.ListClarifications(ctx, &pb.ListClarificationsRequest{})
 			return err
@@ -177,5 +181,26 @@ func TestIncludeHiddenOnlyForAdmin(t *testing.T) {
 		if _, err := svc.SeeAlso(tt.ctx, &pb.SeeAlsoRequest{}); err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestListAdminAudit(t *testing.T) {
+	svc, a, _ := newAdminSvc(t)
+	next := 1
+	a.ListAuditMock.Expect(minimock.AnyContext, models.ListAuditOpts{Action: models.AuditHideSighting, Offset: 0, Limit: defaultComplaintsLimit}).
+		Return(models.AuditPage{Total: 2, NextOffset: &next, Items: []models.AuditEntry{{
+			ID: "a1", Action: models.AuditHideSighting, Actor: "admin-token", TargetType: models.AuditTargetSighting,
+			TargetID: sighting.ID, Details: []byte(`{"from":{"hidden":false},"to":{"hidden":true}}`), RequestID: "req-1",
+		}}}, nil)
+
+	resp, err := svc.ListAdminAudit(adminCtx(testAdminToken), &pb.ListAdminAuditRequest{Action: models.AuditHideSighting})
+	if err != nil || resp.GetTotal() != 2 || resp.GetNextOffset() != 1 || len(resp.GetItems()) != 1 {
+		t.Fatalf("ListAdminAudit: %v %v", resp, err)
+	}
+	if it := resp.Items[0]; it.RequestId != "req-1" || it.Actor != "admin-token" || it.Details != `{"from":{"hidden":false},"to":{"hidden":true}}` {
+		t.Errorf("item: %v", it)
+	}
+	if _, err := svc.ListAdminAudit(adminCtx(testAdminToken), &pb.ListAdminAuditRequest{TargetId: "не-uuid"}); status.Code(err) != codes.InvalidArgument {
+		t.Errorf("target_id: %v", err)
 	}
 }

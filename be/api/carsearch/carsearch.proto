@@ -125,6 +125,10 @@ service CarSearchService {
   // ListPlateViews — журнал открытий страниц номеров (rpc Get), от новых к старым (админ).
   rpc ListPlateViews(ListPlateViewsRequest) returns (ListPlateViewsResponse);
 
+  // ListAdminAudit — журнал действий админов (скрытие, разбор уточнений и жалоб, токены…),
+  // от новых к старым, с фильтрами по действию и объекту. Нужен admin-token.
+  rpc ListAdminAudit(ListAdminAuditRequest) returns (ListAdminAuditResponse);
+
   // TokenInfo — остаток API-токена запроса (cookie cs_token или authorization: Bearer cst_…).
   // Нет токена или он недействителен — UNAUTHENTICATED.
   rpc TokenInfo(TokenInfoRequest) returns (ApiToken);
@@ -655,6 +659,42 @@ message ListPlateViewsRequest {
 
 message ListPlateViewsResponse {
   repeated PlateView items = 1;
+  int32 total = 2;
+  optional int32 next_offset = 3;
+}
+
+// AdminAuditEntry — запись журнала действий админа.
+message AdminAuditEntry {
+  string id = 1;
+  // Действие: hide_sighting, show_sighting, restore_photo, set_clarification_status,
+  // resolve_complaint, set_camera_status, create_api_token, revoke_api_token.
+  string action = 2;
+  // Кто действовал (сейчас всегда admin-token).
+  string actor = 3;
+  // Тип объекта: sighting, clarification, complaint, camera_request, api_token.
+  string target_type = 4;
+  string target_id = 5;
+  // Что изменилось: JSON-объект {"from": {…}, "to": {…}} (from = null у созданных).
+  string details = 6;
+  // ID запроса (x-request-id), в котором сделано действие.
+  string request_id = 7;
+  google.protobuf.Timestamp created_at = 8;
+  // Имя объекта (токен) — если нашлось.
+  string target_name = 9;
+}
+
+message ListAdminAuditRequest {
+  int32 offset = 1;
+  // Размер страницы, 1..100; 0 — по умолчанию (30).
+  int32 limit = 2;
+  // Только это действие; пусто — все.
+  string action = 3;
+  // Только действия над этим объектом; пусто — все.
+  string target_id = 4;
+}
+
+message ListAdminAuditResponse {
+  repeated AdminAuditEntry items = 1;
   int32 total = 2;
   optional int32 next_offset = 3;
 }

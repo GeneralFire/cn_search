@@ -48,6 +48,11 @@ func RequestID(ctx context.Context) string {
 	return id
 }
 
+// WithRequestID кладёт ID запроса в контекст (для тестов и фоновых задач).
+func WithRequestID(ctx context.Context, id string) context.Context {
+	return context.WithValue(ctx, keyID, id)
+}
+
 // From — логгер запроса (request_id, method, user_id); вне запроса — slog.Default().
 func From(ctx context.Context) *slog.Logger {
 	if l, ok := ctx.Value(keyLogger).(*slog.Logger); ok {

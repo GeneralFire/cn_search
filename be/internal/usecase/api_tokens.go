@@ -31,8 +31,10 @@ func (u *ApiTokens) CreateApiToken(ctx context.Context, name string, requests in
 	id := uuid.NewString()
 	token, hash := u.signer.Issue(id, u.now())
 	err = u.tx.InWriteTx(ctx, func(ctx context.Context, tx db.Executor) error {
-		t, err = u.repo.CreateApiToken(ctx, tx, models.CreateApiTokenOpts{ID: id, Name: name, Requests: requests, SignatureHash: hash})
-		return err
+		return audited(ctx, u.repo, tx, models.AuditCreateApiToken, models.AuditTargetApiToken, id, func() (err error) {
+			t, err = u.repo.CreateApiToken(ctx, tx, models.CreateApiTokenOpts{ID: id, Name: name, Requests: requests, SignatureHash: hash})
+			return err
+		})
 	})
 	if err != nil {
 		return "", models.ApiToken{}, err
@@ -50,8 +52,10 @@ func (u *ApiTokens) ListApiTokens(ctx context.Context, o models.ListApiTokensOpt
 
 func (u *ApiTokens) RevokeApiToken(ctx context.Context, id string) (t models.ApiToken, err error) {
 	err = u.tx.InWriteTx(ctx, func(ctx context.Context, tx db.Executor) error {
-		t, err = u.repo.RevokeApiToken(ctx, tx, id)
-		return err
+		return audited(ctx, u.repo, tx, models.AuditRevokeApiToken, models.AuditTargetApiToken, id, func() (err error) {
+			t, err = u.repo.RevokeApiToken(ctx, tx, id)
+			return err
+		})
 	})
 	return t, err
 }

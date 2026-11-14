@@ -6,6 +6,7 @@ package mocks
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 	mm_atomic "sync/atomic"
 	mm_time "time"
@@ -19,6 +20,13 @@ import (
 type ComplaintsRepositoryMock struct {
 	t          minimock.Tester
 	finishOnce sync.Once
+
+	funcAuditSnapshot          func(ctx context.Context, tx db.Executor, targetType string, id string) (r1 json.RawMessage, err error)
+	funcAuditSnapshotOrigin    string
+	inspectFuncAuditSnapshot   func(ctx context.Context, tx db.Executor, targetType string, id string)
+	afterAuditSnapshotCounter  uint64
+	beforeAuditSnapshotCounter uint64
+	AuditSnapshotMock          mComplaintsRepositoryMockAuditSnapshot
 
 	funcCreateComplaint          func(ctx context.Context, tx db.Executor, o models.ComplainOpts) (c2 models.Complaint, err error)
 	funcCreateComplaintOrigin    string
@@ -54,6 +62,13 @@ type ComplaintsRepositoryMock struct {
 	afterShowComplaintPhotoCounter  uint64
 	beforeShowComplaintPhotoCounter uint64
 	ShowComplaintPhotoMock          mComplaintsRepositoryMockShowComplaintPhoto
+
+	funcWriteAudit          func(ctx context.Context, tx db.Executor, e models.AuditEntry) (err error)
+	funcWriteAuditOrigin    string
+	inspectFuncWriteAudit   func(ctx context.Context, tx db.Executor, e models.AuditEntry)
+	afterWriteAuditCounter  uint64
+	beforeWriteAuditCounter uint64
+	WriteAuditMock          mComplaintsRepositoryMockWriteAudit
 }
 
 // NewComplaintsRepositoryMock returns a mock for mm_usecase.complaintsRepository
@@ -63,6 +78,9 @@ func NewComplaintsRepositoryMock(t minimock.Tester) *ComplaintsRepositoryMock {
 	if controller, ok := t.(minimock.MockController); ok {
 		controller.RegisterMocker(m)
 	}
+
+	m.AuditSnapshotMock = mComplaintsRepositoryMockAuditSnapshot{mock: m}
+	m.AuditSnapshotMock.callArgs = []*ComplaintsRepositoryMockAuditSnapshotParams{}
 
 	m.CreateComplaintMock = mComplaintsRepositoryMockCreateComplaint{mock: m}
 	m.CreateComplaintMock.callArgs = []*ComplaintsRepositoryMockCreateComplaintParams{}
@@ -79,9 +97,417 @@ func NewComplaintsRepositoryMock(t minimock.Tester) *ComplaintsRepositoryMock {
 	m.ShowComplaintPhotoMock = mComplaintsRepositoryMockShowComplaintPhoto{mock: m}
 	m.ShowComplaintPhotoMock.callArgs = []*ComplaintsRepositoryMockShowComplaintPhotoParams{}
 
+	m.WriteAuditMock = mComplaintsRepositoryMockWriteAudit{mock: m}
+	m.WriteAuditMock.callArgs = []*ComplaintsRepositoryMockWriteAuditParams{}
+
 	t.Cleanup(m.MinimockFinish)
 
 	return m
+}
+
+type mComplaintsRepositoryMockAuditSnapshot struct {
+	optional           bool
+	mock               *ComplaintsRepositoryMock
+	defaultExpectation *ComplaintsRepositoryMockAuditSnapshotExpectation
+	expectations       []*ComplaintsRepositoryMockAuditSnapshotExpectation
+
+	callArgs []*ComplaintsRepositoryMockAuditSnapshotParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// ComplaintsRepositoryMockAuditSnapshotExpectation specifies expectation struct of the complaintsRepository.AuditSnapshot
+type ComplaintsRepositoryMockAuditSnapshotExpectation struct {
+	mock               *ComplaintsRepositoryMock
+	params             *ComplaintsRepositoryMockAuditSnapshotParams
+	paramPtrs          *ComplaintsRepositoryMockAuditSnapshotParamPtrs
+	expectationOrigins ComplaintsRepositoryMockAuditSnapshotExpectationOrigins
+	results            *ComplaintsRepositoryMockAuditSnapshotResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// ComplaintsRepositoryMockAuditSnapshotParams contains parameters of the complaintsRepository.AuditSnapshot
+type ComplaintsRepositoryMockAuditSnapshotParams struct {
+	ctx        context.Context
+	tx         db.Executor
+	targetType string
+	id         string
+}
+
+// ComplaintsRepositoryMockAuditSnapshotParamPtrs contains pointers to parameters of the complaintsRepository.AuditSnapshot
+type ComplaintsRepositoryMockAuditSnapshotParamPtrs struct {
+	ctx        *context.Context
+	tx         *db.Executor
+	targetType *string
+	id         *string
+}
+
+// ComplaintsRepositoryMockAuditSnapshotResults contains results of the complaintsRepository.AuditSnapshot
+type ComplaintsRepositoryMockAuditSnapshotResults struct {
+	r1  json.RawMessage
+	err error
+}
+
+// ComplaintsRepositoryMockAuditSnapshotOrigins contains origins of expectations of the complaintsRepository.AuditSnapshot
+type ComplaintsRepositoryMockAuditSnapshotExpectationOrigins struct {
+	origin           string
+	originCtx        string
+	originTx         string
+	originTargetType string
+	originId         string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmAuditSnapshot *mComplaintsRepositoryMockAuditSnapshot) Optional() *mComplaintsRepositoryMockAuditSnapshot {
+	mmAuditSnapshot.optional = true
+	return mmAuditSnapshot
+}
+
+// Expect sets up expected params for complaintsRepository.AuditSnapshot
+func (mmAuditSnapshot *mComplaintsRepositoryMockAuditSnapshot) Expect(ctx context.Context, tx db.Executor, targetType string, id string) *mComplaintsRepositoryMockAuditSnapshot {
+	if mmAuditSnapshot.mock.funcAuditSnapshot != nil {
+		mmAuditSnapshot.mock.t.Fatalf("ComplaintsRepositoryMock.AuditSnapshot mock is already set by Set")
+	}
+
+	if mmAuditSnapshot.defaultExpectation == nil {
+		mmAuditSnapshot.defaultExpectation = &ComplaintsRepositoryMockAuditSnapshotExpectation{}
+	}
+
+	if mmAuditSnapshot.defaultExpectation.paramPtrs != nil {
+		mmAuditSnapshot.mock.t.Fatalf("ComplaintsRepositoryMock.AuditSnapshot mock is already set by ExpectParams functions")
+	}
+
+	mmAuditSnapshot.defaultExpectation.params = &ComplaintsRepositoryMockAuditSnapshotParams{ctx, tx, targetType, id}
+	mmAuditSnapshot.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmAuditSnapshot.expectations {
+		if minimock.Equal(e.params, mmAuditSnapshot.defaultExpectation.params) {
+			mmAuditSnapshot.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmAuditSnapshot.defaultExpectation.params)
+		}
+	}
+
+	return mmAuditSnapshot
+}
+
+// ExpectCtxParam1 sets up expected param ctx for complaintsRepository.AuditSnapshot
+func (mmAuditSnapshot *mComplaintsRepositoryMockAuditSnapshot) ExpectCtxParam1(ctx context.Context) *mComplaintsRepositoryMockAuditSnapshot {
+	if mmAuditSnapshot.mock.funcAuditSnapshot != nil {
+		mmAuditSnapshot.mock.t.Fatalf("ComplaintsRepositoryMock.AuditSnapshot mock is already set by Set")
+	}
+
+	if mmAuditSnapshot.defaultExpectation == nil {
+		mmAuditSnapshot.defaultExpectation = &ComplaintsRepositoryMockAuditSnapshotExpectation{}
+	}
+
+	if mmAuditSnapshot.defaultExpectation.params != nil {
+		mmAuditSnapshot.mock.t.Fatalf("ComplaintsRepositoryMock.AuditSnapshot mock is already set by Expect")
+	}
+
+	if mmAuditSnapshot.defaultExpectation.paramPtrs == nil {
+		mmAuditSnapshot.defaultExpectation.paramPtrs = &ComplaintsRepositoryMockAuditSnapshotParamPtrs{}
+	}
+	mmAuditSnapshot.defaultExpectation.paramPtrs.ctx = &ctx
+	mmAuditSnapshot.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmAuditSnapshot
+}
+
+// ExpectTxParam2 sets up expected param tx for complaintsRepository.AuditSnapshot
+func (mmAuditSnapshot *mComplaintsRepositoryMockAuditSnapshot) ExpectTxParam2(tx db.Executor) *mComplaintsRepositoryMockAuditSnapshot {
+	if mmAuditSnapshot.mock.funcAuditSnapshot != nil {
+		mmAuditSnapshot.mock.t.Fatalf("ComplaintsRepositoryMock.AuditSnapshot mock is already set by Set")
+	}
+
+	if mmAuditSnapshot.defaultExpectation == nil {
+		mmAuditSnapshot.defaultExpectation = &ComplaintsRepositoryMockAuditSnapshotExpectation{}
+	}
+
+	if mmAuditSnapshot.defaultExpectation.params != nil {
+		mmAuditSnapshot.mock.t.Fatalf("ComplaintsRepositoryMock.AuditSnapshot mock is already set by Expect")
+	}
+
+	if mmAuditSnapshot.defaultExpectation.paramPtrs == nil {
+		mmAuditSnapshot.defaultExpectation.paramPtrs = &ComplaintsRepositoryMockAuditSnapshotParamPtrs{}
+	}
+	mmAuditSnapshot.defaultExpectation.paramPtrs.tx = &tx
+	mmAuditSnapshot.defaultExpectation.expectationOrigins.originTx = minimock.CallerInfo(1)
+
+	return mmAuditSnapshot
+}
+
+// ExpectTargetTypeParam3 sets up expected param targetType for complaintsRepository.AuditSnapshot
+func (mmAuditSnapshot *mComplaintsRepositoryMockAuditSnapshot) ExpectTargetTypeParam3(targetType string) *mComplaintsRepositoryMockAuditSnapshot {
+	if mmAuditSnapshot.mock.funcAuditSnapshot != nil {
+		mmAuditSnapshot.mock.t.Fatalf("ComplaintsRepositoryMock.AuditSnapshot mock is already set by Set")
+	}
+
+	if mmAuditSnapshot.defaultExpectation == nil {
+		mmAuditSnapshot.defaultExpectation = &ComplaintsRepositoryMockAuditSnapshotExpectation{}
+	}
+
+	if mmAuditSnapshot.defaultExpectation.params != nil {
+		mmAuditSnapshot.mock.t.Fatalf("ComplaintsRepositoryMock.AuditSnapshot mock is already set by Expect")
+	}
+
+	if mmAuditSnapshot.defaultExpectation.paramPtrs == nil {
+		mmAuditSnapshot.defaultExpectation.paramPtrs = &ComplaintsRepositoryMockAuditSnapshotParamPtrs{}
+	}
+	mmAuditSnapshot.defaultExpectation.paramPtrs.targetType = &targetType
+	mmAuditSnapshot.defaultExpectation.expectationOrigins.originTargetType = minimock.CallerInfo(1)
+
+	return mmAuditSnapshot
+}
+
+// ExpectIdParam4 sets up expected param id for complaintsRepository.AuditSnapshot
+func (mmAuditSnapshot *mComplaintsRepositoryMockAuditSnapshot) ExpectIdParam4(id string) *mComplaintsRepositoryMockAuditSnapshot {
+	if mmAuditSnapshot.mock.funcAuditSnapshot != nil {
+		mmAuditSnapshot.mock.t.Fatalf("ComplaintsRepositoryMock.AuditSnapshot mock is already set by Set")
+	}
+
+	if mmAuditSnapshot.defaultExpectation == nil {
+		mmAuditSnapshot.defaultExpectation = &ComplaintsRepositoryMockAuditSnapshotExpectation{}
+	}
+
+	if mmAuditSnapshot.defaultExpectation.params != nil {
+		mmAuditSnapshot.mock.t.Fatalf("ComplaintsRepositoryMock.AuditSnapshot mock is already set by Expect")
+	}
+
+	if mmAuditSnapshot.defaultExpectation.paramPtrs == nil {
+		mmAuditSnapshot.defaultExpectation.paramPtrs = &ComplaintsRepositoryMockAuditSnapshotParamPtrs{}
+	}
+	mmAuditSnapshot.defaultExpectation.paramPtrs.id = &id
+	mmAuditSnapshot.defaultExpectation.expectationOrigins.originId = minimock.CallerInfo(1)
+
+	return mmAuditSnapshot
+}
+
+// Inspect accepts an inspector function that has same arguments as the complaintsRepository.AuditSnapshot
+func (mmAuditSnapshot *mComplaintsRepositoryMockAuditSnapshot) Inspect(f func(ctx context.Context, tx db.Executor, targetType string, id string)) *mComplaintsRepositoryMockAuditSnapshot {
+	if mmAuditSnapshot.mock.inspectFuncAuditSnapshot != nil {
+		mmAuditSnapshot.mock.t.Fatalf("Inspect function is already set for ComplaintsRepositoryMock.AuditSnapshot")
+	}
+
+	mmAuditSnapshot.mock.inspectFuncAuditSnapshot = f
+
+	return mmAuditSnapshot
+}
+
+// Return sets up results that will be returned by complaintsRepository.AuditSnapshot
+func (mmAuditSnapshot *mComplaintsRepositoryMockAuditSnapshot) Return(r1 json.RawMessage, err error) *ComplaintsRepositoryMock {
+	if mmAuditSnapshot.mock.funcAuditSnapshot != nil {
+		mmAuditSnapshot.mock.t.Fatalf("ComplaintsRepositoryMock.AuditSnapshot mock is already set by Set")
+	}
+
+	if mmAuditSnapshot.defaultExpectation == nil {
+		mmAuditSnapshot.defaultExpectation = &ComplaintsRepositoryMockAuditSnapshotExpectation{mock: mmAuditSnapshot.mock}
+	}
+	mmAuditSnapshot.defaultExpectation.results = &ComplaintsRepositoryMockAuditSnapshotResults{r1, err}
+	mmAuditSnapshot.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmAuditSnapshot.mock
+}
+
+// Set uses given function f to mock the complaintsRepository.AuditSnapshot method
+func (mmAuditSnapshot *mComplaintsRepositoryMockAuditSnapshot) Set(f func(ctx context.Context, tx db.Executor, targetType string, id string) (r1 json.RawMessage, err error)) *ComplaintsRepositoryMock {
+	if mmAuditSnapshot.defaultExpectation != nil {
+		mmAuditSnapshot.mock.t.Fatalf("Default expectation is already set for the complaintsRepository.AuditSnapshot method")
+	}
+
+	if len(mmAuditSnapshot.expectations) > 0 {
+		mmAuditSnapshot.mock.t.Fatalf("Some expectations are already set for the complaintsRepository.AuditSnapshot method")
+	}
+
+	mmAuditSnapshot.mock.funcAuditSnapshot = f
+	mmAuditSnapshot.mock.funcAuditSnapshotOrigin = minimock.CallerInfo(1)
+	return mmAuditSnapshot.mock
+}
+
+// When sets expectation for the complaintsRepository.AuditSnapshot which will trigger the result defined by the following
+// Then helper
+func (mmAuditSnapshot *mComplaintsRepositoryMockAuditSnapshot) When(ctx context.Context, tx db.Executor, targetType string, id string) *ComplaintsRepositoryMockAuditSnapshotExpectation {
+	if mmAuditSnapshot.mock.funcAuditSnapshot != nil {
+		mmAuditSnapshot.mock.t.Fatalf("ComplaintsRepositoryMock.AuditSnapshot mock is already set by Set")
+	}
+
+	expectation := &ComplaintsRepositoryMockAuditSnapshotExpectation{
+		mock:               mmAuditSnapshot.mock,
+		params:             &ComplaintsRepositoryMockAuditSnapshotParams{ctx, tx, targetType, id},
+		expectationOrigins: ComplaintsRepositoryMockAuditSnapshotExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmAuditSnapshot.expectations = append(mmAuditSnapshot.expectations, expectation)
+	return expectation
+}
+
+// Then sets up complaintsRepository.AuditSnapshot return parameters for the expectation previously defined by the When method
+func (e *ComplaintsRepositoryMockAuditSnapshotExpectation) Then(r1 json.RawMessage, err error) *ComplaintsRepositoryMock {
+	e.results = &ComplaintsRepositoryMockAuditSnapshotResults{r1, err}
+	return e.mock
+}
+
+// Times sets number of times complaintsRepository.AuditSnapshot should be invoked
+func (mmAuditSnapshot *mComplaintsRepositoryMockAuditSnapshot) Times(n uint64) *mComplaintsRepositoryMockAuditSnapshot {
+	if n == 0 {
+		mmAuditSnapshot.mock.t.Fatalf("Times of ComplaintsRepositoryMock.AuditSnapshot mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmAuditSnapshot.expectedInvocations, n)
+	mmAuditSnapshot.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmAuditSnapshot
+}
+
+func (mmAuditSnapshot *mComplaintsRepositoryMockAuditSnapshot) invocationsDone() bool {
+	if len(mmAuditSnapshot.expectations) == 0 && mmAuditSnapshot.defaultExpectation == nil && mmAuditSnapshot.mock.funcAuditSnapshot == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmAuditSnapshot.mock.afterAuditSnapshotCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmAuditSnapshot.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// AuditSnapshot implements mm_usecase.complaintsRepository
+func (mmAuditSnapshot *ComplaintsRepositoryMock) AuditSnapshot(ctx context.Context, tx db.Executor, targetType string, id string) (r1 json.RawMessage, err error) {
+	mm_atomic.AddUint64(&mmAuditSnapshot.beforeAuditSnapshotCounter, 1)
+	defer mm_atomic.AddUint64(&mmAuditSnapshot.afterAuditSnapshotCounter, 1)
+
+	mmAuditSnapshot.t.Helper()
+
+	if mmAuditSnapshot.inspectFuncAuditSnapshot != nil {
+		mmAuditSnapshot.inspectFuncAuditSnapshot(ctx, tx, targetType, id)
+	}
+
+	mm_params := ComplaintsRepositoryMockAuditSnapshotParams{ctx, tx, targetType, id}
+
+	// Record call args
+	mmAuditSnapshot.AuditSnapshotMock.mutex.Lock()
+	mmAuditSnapshot.AuditSnapshotMock.callArgs = append(mmAuditSnapshot.AuditSnapshotMock.callArgs, &mm_params)
+	mmAuditSnapshot.AuditSnapshotMock.mutex.Unlock()
+
+	for _, e := range mmAuditSnapshot.AuditSnapshotMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.r1, e.results.err
+		}
+	}
+
+	if mmAuditSnapshot.AuditSnapshotMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmAuditSnapshot.AuditSnapshotMock.defaultExpectation.Counter, 1)
+		mm_want := mmAuditSnapshot.AuditSnapshotMock.defaultExpectation.params
+		mm_want_ptrs := mmAuditSnapshot.AuditSnapshotMock.defaultExpectation.paramPtrs
+
+		mm_got := ComplaintsRepositoryMockAuditSnapshotParams{ctx, tx, targetType, id}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmAuditSnapshot.t.Errorf("ComplaintsRepositoryMock.AuditSnapshot got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmAuditSnapshot.AuditSnapshotMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.tx != nil && !minimock.Equal(*mm_want_ptrs.tx, mm_got.tx) {
+				mmAuditSnapshot.t.Errorf("ComplaintsRepositoryMock.AuditSnapshot got unexpected parameter tx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmAuditSnapshot.AuditSnapshotMock.defaultExpectation.expectationOrigins.originTx, *mm_want_ptrs.tx, mm_got.tx, minimock.Diff(*mm_want_ptrs.tx, mm_got.tx))
+			}
+
+			if mm_want_ptrs.targetType != nil && !minimock.Equal(*mm_want_ptrs.targetType, mm_got.targetType) {
+				mmAuditSnapshot.t.Errorf("ComplaintsRepositoryMock.AuditSnapshot got unexpected parameter targetType, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmAuditSnapshot.AuditSnapshotMock.defaultExpectation.expectationOrigins.originTargetType, *mm_want_ptrs.targetType, mm_got.targetType, minimock.Diff(*mm_want_ptrs.targetType, mm_got.targetType))
+			}
+
+			if mm_want_ptrs.id != nil && !minimock.Equal(*mm_want_ptrs.id, mm_got.id) {
+				mmAuditSnapshot.t.Errorf("ComplaintsRepositoryMock.AuditSnapshot got unexpected parameter id, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmAuditSnapshot.AuditSnapshotMock.defaultExpectation.expectationOrigins.originId, *mm_want_ptrs.id, mm_got.id, minimock.Diff(*mm_want_ptrs.id, mm_got.id))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmAuditSnapshot.t.Errorf("ComplaintsRepositoryMock.AuditSnapshot got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmAuditSnapshot.AuditSnapshotMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmAuditSnapshot.AuditSnapshotMock.defaultExpectation.results
+		if mm_results == nil {
+			mmAuditSnapshot.t.Fatal("No results are set for the ComplaintsRepositoryMock.AuditSnapshot")
+		}
+		return (*mm_results).r1, (*mm_results).err
+	}
+	if mmAuditSnapshot.funcAuditSnapshot != nil {
+		return mmAuditSnapshot.funcAuditSnapshot(ctx, tx, targetType, id)
+	}
+	mmAuditSnapshot.t.Fatalf("Unexpected call to ComplaintsRepositoryMock.AuditSnapshot. %v %v %v %v", ctx, tx, targetType, id)
+	return
+}
+
+// AuditSnapshotAfterCounter returns a count of finished ComplaintsRepositoryMock.AuditSnapshot invocations
+func (mmAuditSnapshot *ComplaintsRepositoryMock) AuditSnapshotAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmAuditSnapshot.afterAuditSnapshotCounter)
+}
+
+// AuditSnapshotBeforeCounter returns a count of ComplaintsRepositoryMock.AuditSnapshot invocations
+func (mmAuditSnapshot *ComplaintsRepositoryMock) AuditSnapshotBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmAuditSnapshot.beforeAuditSnapshotCounter)
+}
+
+// Calls returns a list of arguments used in each call to ComplaintsRepositoryMock.AuditSnapshot.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmAuditSnapshot *mComplaintsRepositoryMockAuditSnapshot) Calls() []*ComplaintsRepositoryMockAuditSnapshotParams {
+	mmAuditSnapshot.mutex.RLock()
+
+	argCopy := make([]*ComplaintsRepositoryMockAuditSnapshotParams, len(mmAuditSnapshot.callArgs))
+	copy(argCopy, mmAuditSnapshot.callArgs)
+
+	mmAuditSnapshot.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockAuditSnapshotDone returns true if the count of the AuditSnapshot invocations corresponds
+// the number of defined expectations
+func (m *ComplaintsRepositoryMock) MinimockAuditSnapshotDone() bool {
+	if m.AuditSnapshotMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.AuditSnapshotMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.AuditSnapshotMock.invocationsDone()
+}
+
+// MinimockAuditSnapshotInspect logs each unmet expectation
+func (m *ComplaintsRepositoryMock) MinimockAuditSnapshotInspect() {
+	for _, e := range m.AuditSnapshotMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to ComplaintsRepositoryMock.AuditSnapshot at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterAuditSnapshotCounter := mm_atomic.LoadUint64(&m.afterAuditSnapshotCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.AuditSnapshotMock.defaultExpectation != nil && afterAuditSnapshotCounter < 1 {
+		if m.AuditSnapshotMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to ComplaintsRepositoryMock.AuditSnapshot at\n%s", m.AuditSnapshotMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to ComplaintsRepositoryMock.AuditSnapshot at\n%s with params: %#v", m.AuditSnapshotMock.defaultExpectation.expectationOrigins.origin, *m.AuditSnapshotMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcAuditSnapshot != nil && afterAuditSnapshotCounter < 1 {
+		m.t.Errorf("Expected call to ComplaintsRepositoryMock.AuditSnapshot at\n%s", m.funcAuditSnapshotOrigin)
+	}
+
+	if !m.AuditSnapshotMock.invocationsDone() && afterAuditSnapshotCounter > 0 {
+		m.t.Errorf("Expected %d calls to ComplaintsRepositoryMock.AuditSnapshot at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.AuditSnapshotMock.expectedInvocations), m.AuditSnapshotMock.expectedInvocationsOrigin, afterAuditSnapshotCounter)
+	}
 }
 
 type mComplaintsRepositoryMockCreateComplaint struct {
@@ -1984,10 +2410,385 @@ func (m *ComplaintsRepositoryMock) MinimockShowComplaintPhotoInspect() {
 	}
 }
 
+type mComplaintsRepositoryMockWriteAudit struct {
+	optional           bool
+	mock               *ComplaintsRepositoryMock
+	defaultExpectation *ComplaintsRepositoryMockWriteAuditExpectation
+	expectations       []*ComplaintsRepositoryMockWriteAuditExpectation
+
+	callArgs []*ComplaintsRepositoryMockWriteAuditParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// ComplaintsRepositoryMockWriteAuditExpectation specifies expectation struct of the complaintsRepository.WriteAudit
+type ComplaintsRepositoryMockWriteAuditExpectation struct {
+	mock               *ComplaintsRepositoryMock
+	params             *ComplaintsRepositoryMockWriteAuditParams
+	paramPtrs          *ComplaintsRepositoryMockWriteAuditParamPtrs
+	expectationOrigins ComplaintsRepositoryMockWriteAuditExpectationOrigins
+	results            *ComplaintsRepositoryMockWriteAuditResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// ComplaintsRepositoryMockWriteAuditParams contains parameters of the complaintsRepository.WriteAudit
+type ComplaintsRepositoryMockWriteAuditParams struct {
+	ctx context.Context
+	tx  db.Executor
+	e   models.AuditEntry
+}
+
+// ComplaintsRepositoryMockWriteAuditParamPtrs contains pointers to parameters of the complaintsRepository.WriteAudit
+type ComplaintsRepositoryMockWriteAuditParamPtrs struct {
+	ctx *context.Context
+	tx  *db.Executor
+	e   *models.AuditEntry
+}
+
+// ComplaintsRepositoryMockWriteAuditResults contains results of the complaintsRepository.WriteAudit
+type ComplaintsRepositoryMockWriteAuditResults struct {
+	err error
+}
+
+// ComplaintsRepositoryMockWriteAuditOrigins contains origins of expectations of the complaintsRepository.WriteAudit
+type ComplaintsRepositoryMockWriteAuditExpectationOrigins struct {
+	origin    string
+	originCtx string
+	originTx  string
+	originE   string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmWriteAudit *mComplaintsRepositoryMockWriteAudit) Optional() *mComplaintsRepositoryMockWriteAudit {
+	mmWriteAudit.optional = true
+	return mmWriteAudit
+}
+
+// Expect sets up expected params for complaintsRepository.WriteAudit
+func (mmWriteAudit *mComplaintsRepositoryMockWriteAudit) Expect(ctx context.Context, tx db.Executor, e models.AuditEntry) *mComplaintsRepositoryMockWriteAudit {
+	if mmWriteAudit.mock.funcWriteAudit != nil {
+		mmWriteAudit.mock.t.Fatalf("ComplaintsRepositoryMock.WriteAudit mock is already set by Set")
+	}
+
+	if mmWriteAudit.defaultExpectation == nil {
+		mmWriteAudit.defaultExpectation = &ComplaintsRepositoryMockWriteAuditExpectation{}
+	}
+
+	if mmWriteAudit.defaultExpectation.paramPtrs != nil {
+		mmWriteAudit.mock.t.Fatalf("ComplaintsRepositoryMock.WriteAudit mock is already set by ExpectParams functions")
+	}
+
+	mmWriteAudit.defaultExpectation.params = &ComplaintsRepositoryMockWriteAuditParams{ctx, tx, e}
+	mmWriteAudit.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmWriteAudit.expectations {
+		if minimock.Equal(e.params, mmWriteAudit.defaultExpectation.params) {
+			mmWriteAudit.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmWriteAudit.defaultExpectation.params)
+		}
+	}
+
+	return mmWriteAudit
+}
+
+// ExpectCtxParam1 sets up expected param ctx for complaintsRepository.WriteAudit
+func (mmWriteAudit *mComplaintsRepositoryMockWriteAudit) ExpectCtxParam1(ctx context.Context) *mComplaintsRepositoryMockWriteAudit {
+	if mmWriteAudit.mock.funcWriteAudit != nil {
+		mmWriteAudit.mock.t.Fatalf("ComplaintsRepositoryMock.WriteAudit mock is already set by Set")
+	}
+
+	if mmWriteAudit.defaultExpectation == nil {
+		mmWriteAudit.defaultExpectation = &ComplaintsRepositoryMockWriteAuditExpectation{}
+	}
+
+	if mmWriteAudit.defaultExpectation.params != nil {
+		mmWriteAudit.mock.t.Fatalf("ComplaintsRepositoryMock.WriteAudit mock is already set by Expect")
+	}
+
+	if mmWriteAudit.defaultExpectation.paramPtrs == nil {
+		mmWriteAudit.defaultExpectation.paramPtrs = &ComplaintsRepositoryMockWriteAuditParamPtrs{}
+	}
+	mmWriteAudit.defaultExpectation.paramPtrs.ctx = &ctx
+	mmWriteAudit.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmWriteAudit
+}
+
+// ExpectTxParam2 sets up expected param tx for complaintsRepository.WriteAudit
+func (mmWriteAudit *mComplaintsRepositoryMockWriteAudit) ExpectTxParam2(tx db.Executor) *mComplaintsRepositoryMockWriteAudit {
+	if mmWriteAudit.mock.funcWriteAudit != nil {
+		mmWriteAudit.mock.t.Fatalf("ComplaintsRepositoryMock.WriteAudit mock is already set by Set")
+	}
+
+	if mmWriteAudit.defaultExpectation == nil {
+		mmWriteAudit.defaultExpectation = &ComplaintsRepositoryMockWriteAuditExpectation{}
+	}
+
+	if mmWriteAudit.defaultExpectation.params != nil {
+		mmWriteAudit.mock.t.Fatalf("ComplaintsRepositoryMock.WriteAudit mock is already set by Expect")
+	}
+
+	if mmWriteAudit.defaultExpectation.paramPtrs == nil {
+		mmWriteAudit.defaultExpectation.paramPtrs = &ComplaintsRepositoryMockWriteAuditParamPtrs{}
+	}
+	mmWriteAudit.defaultExpectation.paramPtrs.tx = &tx
+	mmWriteAudit.defaultExpectation.expectationOrigins.originTx = minimock.CallerInfo(1)
+
+	return mmWriteAudit
+}
+
+// ExpectEParam3 sets up expected param e for complaintsRepository.WriteAudit
+func (mmWriteAudit *mComplaintsRepositoryMockWriteAudit) ExpectEParam3(e models.AuditEntry) *mComplaintsRepositoryMockWriteAudit {
+	if mmWriteAudit.mock.funcWriteAudit != nil {
+		mmWriteAudit.mock.t.Fatalf("ComplaintsRepositoryMock.WriteAudit mock is already set by Set")
+	}
+
+	if mmWriteAudit.defaultExpectation == nil {
+		mmWriteAudit.defaultExpectation = &ComplaintsRepositoryMockWriteAuditExpectation{}
+	}
+
+	if mmWriteAudit.defaultExpectation.params != nil {
+		mmWriteAudit.mock.t.Fatalf("ComplaintsRepositoryMock.WriteAudit mock is already set by Expect")
+	}
+
+	if mmWriteAudit.defaultExpectation.paramPtrs == nil {
+		mmWriteAudit.defaultExpectation.paramPtrs = &ComplaintsRepositoryMockWriteAuditParamPtrs{}
+	}
+	mmWriteAudit.defaultExpectation.paramPtrs.e = &e
+	mmWriteAudit.defaultExpectation.expectationOrigins.originE = minimock.CallerInfo(1)
+
+	return mmWriteAudit
+}
+
+// Inspect accepts an inspector function that has same arguments as the complaintsRepository.WriteAudit
+func (mmWriteAudit *mComplaintsRepositoryMockWriteAudit) Inspect(f func(ctx context.Context, tx db.Executor, e models.AuditEntry)) *mComplaintsRepositoryMockWriteAudit {
+	if mmWriteAudit.mock.inspectFuncWriteAudit != nil {
+		mmWriteAudit.mock.t.Fatalf("Inspect function is already set for ComplaintsRepositoryMock.WriteAudit")
+	}
+
+	mmWriteAudit.mock.inspectFuncWriteAudit = f
+
+	return mmWriteAudit
+}
+
+// Return sets up results that will be returned by complaintsRepository.WriteAudit
+func (mmWriteAudit *mComplaintsRepositoryMockWriteAudit) Return(err error) *ComplaintsRepositoryMock {
+	if mmWriteAudit.mock.funcWriteAudit != nil {
+		mmWriteAudit.mock.t.Fatalf("ComplaintsRepositoryMock.WriteAudit mock is already set by Set")
+	}
+
+	if mmWriteAudit.defaultExpectation == nil {
+		mmWriteAudit.defaultExpectation = &ComplaintsRepositoryMockWriteAuditExpectation{mock: mmWriteAudit.mock}
+	}
+	mmWriteAudit.defaultExpectation.results = &ComplaintsRepositoryMockWriteAuditResults{err}
+	mmWriteAudit.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmWriteAudit.mock
+}
+
+// Set uses given function f to mock the complaintsRepository.WriteAudit method
+func (mmWriteAudit *mComplaintsRepositoryMockWriteAudit) Set(f func(ctx context.Context, tx db.Executor, e models.AuditEntry) (err error)) *ComplaintsRepositoryMock {
+	if mmWriteAudit.defaultExpectation != nil {
+		mmWriteAudit.mock.t.Fatalf("Default expectation is already set for the complaintsRepository.WriteAudit method")
+	}
+
+	if len(mmWriteAudit.expectations) > 0 {
+		mmWriteAudit.mock.t.Fatalf("Some expectations are already set for the complaintsRepository.WriteAudit method")
+	}
+
+	mmWriteAudit.mock.funcWriteAudit = f
+	mmWriteAudit.mock.funcWriteAuditOrigin = minimock.CallerInfo(1)
+	return mmWriteAudit.mock
+}
+
+// When sets expectation for the complaintsRepository.WriteAudit which will trigger the result defined by the following
+// Then helper
+func (mmWriteAudit *mComplaintsRepositoryMockWriteAudit) When(ctx context.Context, tx db.Executor, e models.AuditEntry) *ComplaintsRepositoryMockWriteAuditExpectation {
+	if mmWriteAudit.mock.funcWriteAudit != nil {
+		mmWriteAudit.mock.t.Fatalf("ComplaintsRepositoryMock.WriteAudit mock is already set by Set")
+	}
+
+	expectation := &ComplaintsRepositoryMockWriteAuditExpectation{
+		mock:               mmWriteAudit.mock,
+		params:             &ComplaintsRepositoryMockWriteAuditParams{ctx, tx, e},
+		expectationOrigins: ComplaintsRepositoryMockWriteAuditExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmWriteAudit.expectations = append(mmWriteAudit.expectations, expectation)
+	return expectation
+}
+
+// Then sets up complaintsRepository.WriteAudit return parameters for the expectation previously defined by the When method
+func (e *ComplaintsRepositoryMockWriteAuditExpectation) Then(err error) *ComplaintsRepositoryMock {
+	e.results = &ComplaintsRepositoryMockWriteAuditResults{err}
+	return e.mock
+}
+
+// Times sets number of times complaintsRepository.WriteAudit should be invoked
+func (mmWriteAudit *mComplaintsRepositoryMockWriteAudit) Times(n uint64) *mComplaintsRepositoryMockWriteAudit {
+	if n == 0 {
+		mmWriteAudit.mock.t.Fatalf("Times of ComplaintsRepositoryMock.WriteAudit mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmWriteAudit.expectedInvocations, n)
+	mmWriteAudit.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmWriteAudit
+}
+
+func (mmWriteAudit *mComplaintsRepositoryMockWriteAudit) invocationsDone() bool {
+	if len(mmWriteAudit.expectations) == 0 && mmWriteAudit.defaultExpectation == nil && mmWriteAudit.mock.funcWriteAudit == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmWriteAudit.mock.afterWriteAuditCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmWriteAudit.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// WriteAudit implements mm_usecase.complaintsRepository
+func (mmWriteAudit *ComplaintsRepositoryMock) WriteAudit(ctx context.Context, tx db.Executor, e models.AuditEntry) (err error) {
+	mm_atomic.AddUint64(&mmWriteAudit.beforeWriteAuditCounter, 1)
+	defer mm_atomic.AddUint64(&mmWriteAudit.afterWriteAuditCounter, 1)
+
+	mmWriteAudit.t.Helper()
+
+	if mmWriteAudit.inspectFuncWriteAudit != nil {
+		mmWriteAudit.inspectFuncWriteAudit(ctx, tx, e)
+	}
+
+	mm_params := ComplaintsRepositoryMockWriteAuditParams{ctx, tx, e}
+
+	// Record call args
+	mmWriteAudit.WriteAuditMock.mutex.Lock()
+	mmWriteAudit.WriteAuditMock.callArgs = append(mmWriteAudit.WriteAuditMock.callArgs, &mm_params)
+	mmWriteAudit.WriteAuditMock.mutex.Unlock()
+
+	for _, e := range mmWriteAudit.WriteAuditMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.err
+		}
+	}
+
+	if mmWriteAudit.WriteAuditMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmWriteAudit.WriteAuditMock.defaultExpectation.Counter, 1)
+		mm_want := mmWriteAudit.WriteAuditMock.defaultExpectation.params
+		mm_want_ptrs := mmWriteAudit.WriteAuditMock.defaultExpectation.paramPtrs
+
+		mm_got := ComplaintsRepositoryMockWriteAuditParams{ctx, tx, e}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmWriteAudit.t.Errorf("ComplaintsRepositoryMock.WriteAudit got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmWriteAudit.WriteAuditMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.tx != nil && !minimock.Equal(*mm_want_ptrs.tx, mm_got.tx) {
+				mmWriteAudit.t.Errorf("ComplaintsRepositoryMock.WriteAudit got unexpected parameter tx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmWriteAudit.WriteAuditMock.defaultExpectation.expectationOrigins.originTx, *mm_want_ptrs.tx, mm_got.tx, minimock.Diff(*mm_want_ptrs.tx, mm_got.tx))
+			}
+
+			if mm_want_ptrs.e != nil && !minimock.Equal(*mm_want_ptrs.e, mm_got.e) {
+				mmWriteAudit.t.Errorf("ComplaintsRepositoryMock.WriteAudit got unexpected parameter e, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmWriteAudit.WriteAuditMock.defaultExpectation.expectationOrigins.originE, *mm_want_ptrs.e, mm_got.e, minimock.Diff(*mm_want_ptrs.e, mm_got.e))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmWriteAudit.t.Errorf("ComplaintsRepositoryMock.WriteAudit got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmWriteAudit.WriteAuditMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmWriteAudit.WriteAuditMock.defaultExpectation.results
+		if mm_results == nil {
+			mmWriteAudit.t.Fatal("No results are set for the ComplaintsRepositoryMock.WriteAudit")
+		}
+		return (*mm_results).err
+	}
+	if mmWriteAudit.funcWriteAudit != nil {
+		return mmWriteAudit.funcWriteAudit(ctx, tx, e)
+	}
+	mmWriteAudit.t.Fatalf("Unexpected call to ComplaintsRepositoryMock.WriteAudit. %v %v %v", ctx, tx, e)
+	return
+}
+
+// WriteAuditAfterCounter returns a count of finished ComplaintsRepositoryMock.WriteAudit invocations
+func (mmWriteAudit *ComplaintsRepositoryMock) WriteAuditAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmWriteAudit.afterWriteAuditCounter)
+}
+
+// WriteAuditBeforeCounter returns a count of ComplaintsRepositoryMock.WriteAudit invocations
+func (mmWriteAudit *ComplaintsRepositoryMock) WriteAuditBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmWriteAudit.beforeWriteAuditCounter)
+}
+
+// Calls returns a list of arguments used in each call to ComplaintsRepositoryMock.WriteAudit.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmWriteAudit *mComplaintsRepositoryMockWriteAudit) Calls() []*ComplaintsRepositoryMockWriteAuditParams {
+	mmWriteAudit.mutex.RLock()
+
+	argCopy := make([]*ComplaintsRepositoryMockWriteAuditParams, len(mmWriteAudit.callArgs))
+	copy(argCopy, mmWriteAudit.callArgs)
+
+	mmWriteAudit.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockWriteAuditDone returns true if the count of the WriteAudit invocations corresponds
+// the number of defined expectations
+func (m *ComplaintsRepositoryMock) MinimockWriteAuditDone() bool {
+	if m.WriteAuditMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.WriteAuditMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.WriteAuditMock.invocationsDone()
+}
+
+// MinimockWriteAuditInspect logs each unmet expectation
+func (m *ComplaintsRepositoryMock) MinimockWriteAuditInspect() {
+	for _, e := range m.WriteAuditMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to ComplaintsRepositoryMock.WriteAudit at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterWriteAuditCounter := mm_atomic.LoadUint64(&m.afterWriteAuditCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.WriteAuditMock.defaultExpectation != nil && afterWriteAuditCounter < 1 {
+		if m.WriteAuditMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to ComplaintsRepositoryMock.WriteAudit at\n%s", m.WriteAuditMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to ComplaintsRepositoryMock.WriteAudit at\n%s with params: %#v", m.WriteAuditMock.defaultExpectation.expectationOrigins.origin, *m.WriteAuditMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcWriteAudit != nil && afterWriteAuditCounter < 1 {
+		m.t.Errorf("Expected call to ComplaintsRepositoryMock.WriteAudit at\n%s", m.funcWriteAuditOrigin)
+	}
+
+	if !m.WriteAuditMock.invocationsDone() && afterWriteAuditCounter > 0 {
+		m.t.Errorf("Expected %d calls to ComplaintsRepositoryMock.WriteAudit at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.WriteAuditMock.expectedInvocations), m.WriteAuditMock.expectedInvocationsOrigin, afterWriteAuditCounter)
+	}
+}
+
 // MinimockFinish checks that all mocked methods have been called the expected number of times
 func (m *ComplaintsRepositoryMock) MinimockFinish() {
 	m.finishOnce.Do(func() {
 		if !m.minimockDone() {
+			m.MinimockAuditSnapshotInspect()
+
 			m.MinimockCreateComplaintInspect()
 
 			m.MinimockHidePhotoIfComplainedInspect()
@@ -1997,6 +2798,8 @@ func (m *ComplaintsRepositoryMock) MinimockFinish() {
 			m.MinimockResolveComplaintInspect()
 
 			m.MinimockShowComplaintPhotoInspect()
+
+			m.MinimockWriteAuditInspect()
 		}
 	})
 }
@@ -2020,9 +2823,11 @@ func (m *ComplaintsRepositoryMock) MinimockWait(timeout mm_time.Duration) {
 func (m *ComplaintsRepositoryMock) minimockDone() bool {
 	done := true
 	return done &&
+		m.MinimockAuditSnapshotDone() &&
 		m.MinimockCreateComplaintDone() &&
 		m.MinimockHidePhotoIfComplainedDone() &&
 		m.MinimockListComplaintsDone() &&
 		m.MinimockResolveComplaintDone() &&
-		m.MinimockShowComplaintPhotoDone()
+		m.MinimockShowComplaintPhotoDone() &&
+		m.MinimockWriteAuditDone()
 }

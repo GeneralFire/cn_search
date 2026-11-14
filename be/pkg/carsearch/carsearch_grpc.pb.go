@@ -48,6 +48,7 @@ const (
 	CarSearchService_ListApiTokens_FullMethodName          = "/carsearch.CarSearchService/ListApiTokens"
 	CarSearchService_RevokeApiToken_FullMethodName         = "/carsearch.CarSearchService/RevokeApiToken"
 	CarSearchService_ListPlateViews_FullMethodName         = "/carsearch.CarSearchService/ListPlateViews"
+	CarSearchService_ListAdminAudit_FullMethodName         = "/carsearch.CarSearchService/ListAdminAudit"
 	CarSearchService_TokenInfo_FullMethodName              = "/carsearch.CarSearchService/TokenInfo"
 	CarSearchService_Ingest_FullMethodName                 = "/carsearch.CarSearchService/Ingest"
 )
@@ -142,6 +143,9 @@ type CarSearchServiceClient interface {
 	RevokeApiToken(ctx context.Context, in *RevokeApiTokenRequest, opts ...grpc.CallOption) (*ApiToken, error)
 	// ListPlateViews — журнал открытий страниц номеров (rpc Get), от новых к старым (админ).
 	ListPlateViews(ctx context.Context, in *ListPlateViewsRequest, opts ...grpc.CallOption) (*ListPlateViewsResponse, error)
+	// ListAdminAudit — журнал действий админов (скрытие, разбор уточнений и жалоб, токены…),
+	// от новых к старым, с фильтрами по действию и объекту. Нужен admin-token.
+	ListAdminAudit(ctx context.Context, in *ListAdminAuditRequest, opts ...grpc.CallOption) (*ListAdminAuditResponse, error)
 	// TokenInfo — остаток API-токена запроса (cookie cs_token или authorization: Bearer cst_…).
 	// Нет токена или он недействителен — UNAUTHENTICATED.
 	TokenInfo(ctx context.Context, in *TokenInfoRequest, opts ...grpc.CallOption) (*ApiToken, error)
@@ -451,6 +455,16 @@ func (c *carSearchServiceClient) ListPlateViews(ctx context.Context, in *ListPla
 	return out, nil
 }
 
+func (c *carSearchServiceClient) ListAdminAudit(ctx context.Context, in *ListAdminAuditRequest, opts ...grpc.CallOption) (*ListAdminAuditResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListAdminAuditResponse)
+	err := c.cc.Invoke(ctx, CarSearchService_ListAdminAudit_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *carSearchServiceClient) TokenInfo(ctx context.Context, in *TokenInfoRequest, opts ...grpc.CallOption) (*ApiToken, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ApiToken)
@@ -561,6 +575,9 @@ type CarSearchServiceServer interface {
 	RevokeApiToken(context.Context, *RevokeApiTokenRequest) (*ApiToken, error)
 	// ListPlateViews — журнал открытий страниц номеров (rpc Get), от новых к старым (админ).
 	ListPlateViews(context.Context, *ListPlateViewsRequest) (*ListPlateViewsResponse, error)
+	// ListAdminAudit — журнал действий админов (скрытие, разбор уточнений и жалоб, токены…),
+	// от новых к старым, с фильтрами по действию и объекту. Нужен admin-token.
+	ListAdminAudit(context.Context, *ListAdminAuditRequest) (*ListAdminAuditResponse, error)
 	// TokenInfo — остаток API-токена запроса (cookie cs_token или authorization: Bearer cst_…).
 	// Нет токена или он недействителен — UNAUTHENTICATED.
 	TokenInfo(context.Context, *TokenInfoRequest) (*ApiToken, error)
@@ -666,6 +683,9 @@ func (UnimplementedCarSearchServiceServer) RevokeApiToken(context.Context, *Revo
 }
 func (UnimplementedCarSearchServiceServer) ListPlateViews(context.Context, *ListPlateViewsRequest) (*ListPlateViewsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListPlateViews not implemented")
+}
+func (UnimplementedCarSearchServiceServer) ListAdminAudit(context.Context, *ListAdminAuditRequest) (*ListAdminAuditResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListAdminAudit not implemented")
 }
 func (UnimplementedCarSearchServiceServer) TokenInfo(context.Context, *TokenInfoRequest) (*ApiToken, error) {
 	return nil, status.Error(codes.Unimplemented, "method TokenInfo not implemented")
@@ -1216,6 +1236,24 @@ func _CarSearchService_ListPlateViews_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CarSearchService_ListAdminAudit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAdminAuditRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).ListAdminAudit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_ListAdminAudit_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).ListAdminAudit(ctx, req.(*ListAdminAuditRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CarSearchService_TokenInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TokenInfoRequest)
 	if err := dec(in); err != nil {
@@ -1374,6 +1412,10 @@ var CarSearchService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListPlateViews",
 			Handler:    _CarSearchService_ListPlateViews_Handler,
+		},
+		{
+			MethodName: "ListAdminAudit",
+			Handler:    _CarSearchService_ListAdminAudit_Handler,
 		},
 		{
 			MethodName: "TokenInfo",

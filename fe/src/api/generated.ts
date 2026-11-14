@@ -27,6 +27,9 @@ export type CarSearchServiceHideSightingData = CarsearchPlateSighting;
 
 export type CarSearchServiceIngestData = CarsearchIngestResponse;
 
+export type CarSearchServiceListAdminAuditData =
+  CarsearchListAdminAuditResponse;
+
 export type CarSearchServiceListApiTokensData = CarsearchListApiTokensResponse;
 
 export type CarSearchServiceListCameraRequestsData =
@@ -77,6 +80,29 @@ export type CarSearchServiceUnwatchData = CarsearchUnwatchResponse;
 export type CarSearchServiceVoteCameraRequestData = CarsearchCameraRequest;
 
 export type CarSearchServiceWatchData = CarsearchWatchResponse;
+
+/** AdminAuditEntry — запись журнала действий админа. */
+export interface CarsearchAdminAuditEntry {
+  /**
+   * Действие: hide_sighting, show_sighting, restore_photo, set_clarification_status,
+   * resolve_complaint, set_camera_status, create_api_token, revoke_api_token.
+   */
+  action?: string;
+  /** Кто действовал (сейчас всегда admin-token). */
+  actor?: string;
+  /** @format date-time */
+  createdAt?: string;
+  /** Что изменилось: JSON-объект {"from": {…}, "to": {…}} (from = null у созданных). */
+  details?: string;
+  id?: string;
+  /** ID запроса (x-request-id), в котором сделано действие. */
+  requestId?: string;
+  targetId?: string;
+  /** Имя объекта (токен) — если нашлось. */
+  targetName?: string;
+  /** Тип объекта: sighting, clarification, complaint, camera_request, api_token. */
+  targetType?: string;
+}
 
 /** ApiToken — API-токен без самого токена (он показывается один раз в CreateApiToken). */
 export interface CarsearchApiToken {
@@ -331,6 +357,28 @@ export interface CarsearchIngestResponse {
    * @format int32
    */
   uploadsLeft?: number;
+}
+
+export interface CarsearchListAdminAuditRequest {
+  /** Только это действие; пусто — все. */
+  action?: string;
+  /**
+   * Размер страницы, 1..100; 0 — по умолчанию (30).
+   * @format int32
+   */
+  limit?: number;
+  /** @format int32 */
+  offset?: number;
+  /** Только действия над этим объектом; пусто — все. */
+  targetId?: string;
+}
+
+export interface CarsearchListAdminAuditResponse {
+  items?: CarsearchAdminAuditEntry[];
+  /** @format int32 */
+  nextOffset?: number;
+  /** @format int32 */
+  total?: number;
 }
 
 export interface CarsearchListApiTokensRequest {
@@ -1290,6 +1338,27 @@ export class CarSearchApi<
     ) =>
       this.request<CarSearchServiceIngestData, any>({
         path: `/carsearch.CarSearchService/Ingest`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
+     * @name CarSearchServiceListAdminAudit
+     * @summary ListAdminAudit — журнал действий админов (скрытие, разбор уточнений и жалоб, токены…), от новых к старым, с фильтрами по действию и объекту. Нужен admin-token.
+     * @request POST:/carsearch.CarSearchService/ListAdminAudit
+     */
+    carSearchServiceListAdminAudit: (
+      body: CarsearchListAdminAuditRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceListAdminAuditData, any>({
+        path: `/carsearch.CarSearchService/ListAdminAudit`,
         method: "POST",
         body: body,
         type: ContentType.Json,

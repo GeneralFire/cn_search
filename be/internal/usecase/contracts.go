@@ -14,6 +14,7 @@ package usecase
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/GeneralFire/cn_search/be/internal/db"
@@ -41,6 +42,8 @@ type repository interface {
 
 // complaintsRepository — запросы к жалобам на фото (реализация — repository.New()).
 type complaintsRepository interface {
+	WriteAudit(ctx context.Context, tx db.Executor, e models.AuditEntry) error
+	AuditSnapshot(ctx context.Context, tx db.Executor, targetType, id string) (json.RawMessage, error)
 	CreateComplaint(ctx context.Context, tx db.Executor, o models.ComplainOpts) (models.Complaint, error)
 	ListComplaints(ctx context.Context, tx db.Executor, o models.ListComplaintsOpts) (models.ComplaintsPage, error)
 	ResolveComplaint(ctx context.Context, tx db.Executor, id string) (models.Complaint, error)
@@ -48,8 +51,18 @@ type complaintsRepository interface {
 	ShowComplaintPhoto(ctx context.Context, tx db.Executor, complaintID string) error
 }
 
+// auditRepository — журнал действий админов; эти методы повторены в репозиториях админских сценариев
+// (minimock не разворачивает встроенные неэкспортируемые интерфейсы).
+type auditRepository interface {
+	WriteAudit(ctx context.Context, tx db.Executor, e models.AuditEntry) error
+	AuditSnapshot(ctx context.Context, tx db.Executor, targetType, id string) (json.RawMessage, error)
+}
+
 // adminRepository — админские запросы: скрытие фиксаций, разбор уточнений (реализация — repository.New()).
 type adminRepository interface {
+	WriteAudit(ctx context.Context, tx db.Executor, e models.AuditEntry) error
+	AuditSnapshot(ctx context.Context, tx db.Executor, targetType, id string) (json.RawMessage, error)
+	ListAudit(ctx context.Context, tx db.Executor, o models.ListAuditOpts) (models.AuditPage, error)
 	HideSighting(ctx context.Context, tx db.Executor, id string, hidden bool) (models.PlateSighting, error)
 	RestoreSightingPhoto(ctx context.Context, tx db.Executor, id string) (models.PlateSighting, error)
 	SetClarificationStatus(ctx context.Context, tx db.Executor, id string, st models.ClarificationStatus) (models.Clarification, error)
@@ -69,6 +82,8 @@ type accountsRepository interface {
 
 // cameraRequestsRepository — запросы к заявкам на камеры (реализация — repository.New()).
 type cameraRequestsRepository interface {
+	WriteAudit(ctx context.Context, tx db.Executor, e models.AuditEntry) error
+	AuditSnapshot(ctx context.Context, tx db.Executor, targetType, id string) (json.RawMessage, error)
 	CreateCameraRequest(ctx context.Context, tx db.Executor, o models.SubmitCameraRequestOpts) (models.CameraRequest, error)
 	ListCameraRequests(ctx context.Context, tx db.Executor, o models.ListCameraRequestsOpts) (models.CameraRequestsPage, error)
 	VoteCameraRequest(ctx context.Context, tx db.Executor, o models.VoteCameraRequestOpts) (models.CameraRequest, error)
@@ -85,6 +100,8 @@ type watchesRepository interface {
 
 // apiTokensRepository — API-токены и журнал открытий страниц номеров (реализация — repository.New()).
 type apiTokensRepository interface {
+	WriteAudit(ctx context.Context, tx db.Executor, e models.AuditEntry) error
+	AuditSnapshot(ctx context.Context, tx db.Executor, targetType, id string) (json.RawMessage, error)
 	CreateApiToken(ctx context.Context, tx db.Executor, o models.CreateApiTokenOpts) (models.ApiToken, error)
 	ListApiTokens(ctx context.Context, tx db.Executor, o models.ListApiTokensOpts) (models.ApiTokensPage, error)
 	RevokeApiToken(ctx context.Context, tx db.Executor, id string) (models.ApiToken, error)

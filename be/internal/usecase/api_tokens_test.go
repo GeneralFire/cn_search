@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -29,10 +30,19 @@ func TestCreateApiTokenStoresOnlyHash(t *testing.T) {
 		saved = o
 		return models.ApiToken{ID: o.ID, Name: o.Name, RequestsTotal: o.Requests, RequestsLeft: o.Requests}, nil
 	})
-	token, info, err := NewApiTokens(writeTx(t, tx), repo, tokSigner).CreateApiToken(context.Background(), "партнёр", 3)
+	rec := &auditRec{snaps: []string{`null`, `{"name":"партнёр","requests_total":3,"revoked":false}`}}
+	repo.AuditSnapshotMock.Set(func(ctx context.Context, tx db.Executor, tt, id string) (json.RawMessage, error) {
+		if tt != models.AuditTargetApiToken || id == "" {
+			t.Errorf("snapshot(%q, %q)", tt, id)
+		}
+		return rec.snapshot(ctx, tx, tt, id)
+	})
+	repo.WriteAuditMock.Set(rec.write)
+	token, info, err := NewApiTokens(writeTx(t, tx), repo, tokSigner).CreateApiToken(ctxReq(), "партнёр", 3)
 	if err != nil || info.RequestsLeft != 3 {
 		t.Fatalf("CreateApiToken: %+v %v", info, err)
 	}
+	rec.check(t, models.AuditCreateApiToken, models.AuditTargetApiToken, saved.ID, `null`, `{"name":"партнёр","requests_total":3,"revoked":false}`)
 	id, hash, err := tokSigner.Verify(token)
 	if err != nil || id != saved.ID || hash != saved.SignatureHash || saved.Name != "партнёр" {
 		t.Fatalf("сохранено %+v, токен %q → %q %q %v", saved, token, id, hash, err)
@@ -109,4 +119,19 @@ func TestOpenPlate(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
+}
+
+func TestRevokeApiTokenWritesAudit(t *testing.T) {
+	tx := dbmocks.NewExecutorMock(t)
+	repo := mocks.NewApiTokensRepositoryMock(t)
+	repo.RevokeApiTokenMock.Return(models.ApiToken{ID: tokID, Revoked: true}, nil)
+	rec := &auditRec{snaps: []string{`{"name":"n","requests_total":3,"revoked":false}`, `{"name":"n","requests_total":3,"revoked":true}`}}
+	repo.AuditSnapshotMock.Set(rec.snapshot)
+	repo.WriteAuditMock.Set(rec.write)
+
+	if _, err := NewApiTokens(writeTx(t, tx), repo, tokSigner).RevokeApiToken(ctxReq(), tokID); err != nil {
+		t.Fatal(err)
+	}
+	rec.check(t, models.AuditRevokeApiToken, models.AuditTargetApiToken, tokID,
+		`{"name":"n","requests_total":3,"revoked":false}`, `{"name":"n","requests_total":3,"revoked":true}`)
 }

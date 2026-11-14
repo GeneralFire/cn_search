@@ -22,6 +22,7 @@ import { adminTabs, registerAdminTab } from "./admintabs";
 import "./adminclar";
 import "./admin-cameras";
 import "./admin-tokens";
+import "./admin-audit";
 import { plateHref } from "./router";
 import { escapeHtml, formatDate, photoAttrs, plateHtml } from "./ui";
 import { t } from "./i18n/i18n";

@@ -40,6 +40,7 @@ func TestResolveComplaintInWriteTx(t *testing.T) {
 	tx := dbmocks.NewExecutorMock(t)
 	repo := mocks.NewComplaintsRepositoryMock(t)
 	repo.ResolveComplaintMock.Expect(minimock.AnyContext, tx, "c1").Return(models.Complaint{}, models.ErrNotFound)
+	repo.AuditSnapshotMock.Return(nil, nil) // журнал не пишется: WriteAudit не ожидается
 
 	if _, err := NewComplaints(writeTx(t, tx), repo).ResolveComplaint(context.Background(), "c1"); !errors.Is(err, models.ErrNotFound) {
 		t.Errorf("err = %v, want ErrNotFound", err)
@@ -76,18 +77,27 @@ func TestResolveComplaintShowsPhoto(t *testing.T) {
 	repo := mocks.NewComplaintsRepositoryMock(t)
 	repo.ResolveComplaintMock.Expect(minimock.AnyContext, tx, "c1").Return(models.Complaint{ID: "c1", Status: models.ComplaintResolved}, nil)
 	repo.ShowComplaintPhotoMock.Expect(minimock.AnyContext, tx, "c1").Return(nil)
+	rec := &auditRec{snaps: []string{`{"status":"new","photo_hidden":true}`, `{"status":"resolved","photo_hidden":false}`}}
+	repo.AuditSnapshotMock.Set(rec.snapshot)
+	repo.WriteAuditMock.Set(rec.write)
 
-	if c, err := NewComplaints(writeTx(t, tx), repo).ResolveComplaint(context.Background(), "c1"); err != nil || c.Status != models.ComplaintResolved {
+	if c, err := NewComplaints(writeTx(t, tx), repo).ResolveComplaint(ctxReq(), "c1"); err != nil || c.Status != models.ComplaintResolved {
 		t.Fatalf("ResolveComplaint: %+v %v", c, err)
 	}
+	rec.check(t, models.AuditResolveComplaint, models.AuditTargetComplaint, "c1",
+		`{"status":"new","photo_hidden":true}`, `{"status":"resolved","photo_hidden":false}`)
 }
 
 func TestRestoreSightingPhotoInWriteTx(t *testing.T) {
 	tx := dbmocks.NewExecutorMock(t)
 	repo := mocks.NewAdminRepositoryMock(t)
 	repo.RestoreSightingPhotoMock.Expect(minimock.AnyContext, tx, "s1").Return(models.PlateSighting{ID: "s1"}, nil)
+	rec := &auditRec{snaps: []string{`{"photo_hidden":true}`, `{"photo_hidden":false}`}}
+	repo.AuditSnapshotMock.Set(rec.snapshot)
+	repo.WriteAuditMock.Set(rec.write)
 
-	if s, err := NewAdmin(writeTx(t, tx), repo).RestoreSightingPhoto(context.Background(), "s1"); err != nil || s.ID != "s1" {
+	if s, err := NewAdmin(writeTx(t, tx), repo).RestoreSightingPhoto(ctxReq(), "s1"); err != nil || s.ID != "s1" {
 		t.Fatalf("RestoreSightingPhoto: %+v %v", s, err)
 	}
+	rec.check(t, models.AuditRestorePhoto, models.AuditTargetSighting, "s1", `{"photo_hidden":true}`, `{"photo_hidden":false}`)
 }

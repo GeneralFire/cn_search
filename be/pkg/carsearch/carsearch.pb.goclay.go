@@ -1468,6 +1468,53 @@ func (d *CarSearchServiceDesc) RegisterHTTP(mux transport.Router) {
 	}
 
 	{
+		// Handler for ListAdminAudit, binding: POST /carsearch.CarSearchService/ListAdminAudit
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_ListAdminAudit_0(r)
+			rsp, err := _CarSearchService_ListAdminAudit_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_ListAdminAudit_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_ListAdminAudit_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
+	{
 		// Handler for TokenInfo, binding: POST /carsearch.CarSearchService/TokenInfo
 		var h http.HandlerFunc
 		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -3056,6 +3103,57 @@ func (c *CarSearchService_httpClient) ListPlateViews(ctx context.Context, in *Li
 	return &ret, errors.Wrap(err, "can't unmarshal response")
 }
 
+func (c *CarSearchService_httpClient) ListAdminAudit(ctx context.Context, in *ListAdminAuditRequest, opts ...grpc.CallOption) (*ListAdminAuditResponse, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_ListAdminAudit_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := ListAdminAuditResponse{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
 func (c *CarSearchService_httpClient) TokenInfo(ctx context.Context, in *TokenInfoRequest, opts ...grpc.CallOption) (*ApiToken, error) {
 	mw, err := httpclient.NewMiddlewareGRPC(opts)
 	if err != nil {
@@ -3566,6 +3664,20 @@ var (
 
 	unmarshaler_goclay_CarSearchService_ListPlateViews_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 
+	pattern_goclay_CarSearchService_ListAdminAudit_0 = "/carsearch.CarSearchService/ListAdminAudit"
+
+	pattern_goclay_CarSearchService_ListAdminAudit_0_builder = func(in *ListAdminAuditRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/ListAdminAudit"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_ListAdminAudit_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
 	pattern_goclay_CarSearchService_TokenInfo_0 = "/carsearch.CarSearchService/TokenInfo"
 
 	pattern_goclay_CarSearchService_TokenInfo_0_builder = func(in *TokenInfoRequest) string {
@@ -4061,6 +4173,22 @@ var (
 		}
 	}
 
+	unmarshaler_goclay_CarSearchService_ListAdminAudit_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*ListAdminAuditRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_ListAdminAudit_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
+
 	unmarshaler_goclay_CarSearchService_TokenInfo_0 = func(r *http.Request) func(interface{}) error {
 		return func(rif interface{}) error {
 			req := rif.(*TokenInfoRequest)
@@ -4320,6 +4448,33 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
             "required": true,
             "schema": {
               "$ref": "#/definitions/carsearchIngestRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/ListAdminAudit": {
+      "post": {
+        "summary": "ListAdminAudit — журнал действий админов (скрытие, разбор уточнений и жалоб, токены…),\nот новых к старым, с фильтрами по действию и объекту. Нужен admin-token.",
+        "operationId": "CarSearchService_ListAdminAudit",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchListAdminAuditResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchListAdminAuditRequest"
             }
           }
         ],
@@ -4951,6 +5106,46 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
     }
   },
   "definitions": {
+    "carsearchAdminAuditEntry": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string",
+          "description": "Действие: hide_sighting, show_sighting, restore_photo, set_clarification_status,\nresolve_complaint, set_camera_status, create_api_token, revoke_api_token."
+        },
+        "actor": {
+          "type": "string",
+          "description": "Кто действовал (сейчас всегда admin-token)."
+        },
+        "targetType": {
+          "type": "string",
+          "description": "Тип объекта: sighting, clarification, complaint, camera_request, api_token."
+        },
+        "targetId": {
+          "type": "string"
+        },
+        "details": {
+          "type": "string",
+          "description": "Что изменилось: JSON-объект {\"from\": {…}, \"to\": {…}} (from = null у созданных)."
+        },
+        "requestId": {
+          "type": "string",
+          "description": "ID запроса (x-request-id), в котором сделано действие."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "targetName": {
+          "type": "string",
+          "description": "Имя объекта (токен) — если нашлось."
+        }
+      },
+      "description": "AdminAuditEntry — запись журнала действий админа."
+    },
     "carsearchApiToken": {
       "type": "object",
       "properties": {
@@ -5353,6 +5548,47 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
           "type": "integer",
           "format": "int32",
           "description": "Сколько загрузок ещё можно за последние 24 часа (тариф Free); не задано — без ограничений (Pro)."
+        }
+      }
+    },
+    "carsearchListAdminAuditRequest": {
+      "type": "object",
+      "properties": {
+        "offset": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Размер страницы, 1..100; 0 — по умолчанию (30)."
+        },
+        "action": {
+          "type": "string",
+          "description": "Только это действие; пусто — все."
+        },
+        "targetId": {
+          "type": "string",
+          "description": "Только действия над этим объектом; пусто — все."
+        }
+      }
+    },
+    "carsearchListAdminAuditResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchAdminAuditEntry"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "nextOffset": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

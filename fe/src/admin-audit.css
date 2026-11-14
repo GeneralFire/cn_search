@@ -1,0 +1,15 @@
+/* ---------- Админка: вкладка «Журнал» (admin-audit.ts) ---------- */
+
+.au-filter { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--muted); }
+.au-select {
+  font: inherit; color: var(--text); padding: 8px 12px; border-radius: 12px;
+  border: 1px solid var(--border); background: var(--surface); outline: none;
+}
+.au-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+.au-table td { vertical-align: top; }
+.au-chg { display: block; }
+.au-chg b { font-weight: 600; }
+.au-id { font-family: ui-monospace, monospace; }
+.au-meta { margin-top: 2px; font-size: 0.72rem; color: var(--muted); }
+.au-req { font-family: ui-monospace, monospace; word-break: break-all; }

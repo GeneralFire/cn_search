@@ -16,6 +16,7 @@ import {
   type CarsearchUser,
   type CarsearchPlateSighting,
   type CarsearchPlateView,
+  type CarsearchAdminAuditEntry,
   type CarsearchSearchRequest,
   type CarsearchSearchResponse,
 } from "./generated";
@@ -847,4 +848,59 @@ export async function listWatches(signal?: AbortSignal): Promise<WatchedPlate[]>
 /** Пользователь увидел все фиксации номера (сбрасывает счётчик новых). */
 export async function markWatchSeen(plate: string): Promise<void> {
   await call(() => api.carsearchCarSearchService.carSearchServiceMarkWatchSeen({ plate }));
+}
+
+/** Запись журнала действий админа. details — JSON {"from": …, "to": …} (разобран; null у created). */
+export interface AuditEntry {
+  id: string;
+  action: string;
+  actor: string;
+  targetType: string;
+  targetId: string;
+  targetName: string;
+  from: Record<string, unknown> | null;
+  to: Record<string, unknown> | null;
+  requestId: string;
+  createdAt: string;
+}
+
+export interface AuditPage {
+  items: AuditEntry[];
+  total: number;
+  nextOffset: number | null;
+}
+
+function parseAuditDetails(raw: string | undefined): { from: Record<string, unknown> | null; to: Record<string, unknown> | null } {
+  try {
+    const d = JSON.parse(raw || "{}");
+    return { from: d?.from ?? null, to: d?.to ?? null };
+  } catch {
+    return { from: null, to: null };
+  }
+}
+
+/** Журнал действий админов (админ); action / targetId "" — без фильтра. */
+export async function listAdminAudit(
+  filter: { action?: string; targetId?: string },
+  offset: number,
+  limit = 30
+): Promise<AuditPage> {
+  const data = await call(() =>
+    api.carsearchCarSearchService.carSearchServiceListAdminAudit({ ...filter, offset, limit }, adminParams())
+  );
+  return {
+    items: (data.items ?? []).map((e: CarsearchAdminAuditEntry) => ({
+      id: e.id ?? "",
+      action: e.action ?? "",
+      actor: e.actor ?? "",
+      targetType: e.targetType ?? "",
+      targetId: e.targetId ?? "",
+      targetName: e.targetName ?? "",
+      ...parseAuditDetails(e.details),
+      requestId: e.requestId ?? "",
+      createdAt: e.createdAt ?? "",
+    })),
+    total: data.total ?? 0,
+    nextOffset: data.nextOffset ?? null,
+  };
 }

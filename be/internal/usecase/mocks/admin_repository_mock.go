@@ -6,6 +6,7 @@ package mocks
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 	mm_atomic "sync/atomic"
 	mm_time "time"
@@ -20,12 +21,26 @@ type AdminRepositoryMock struct {
 	t          minimock.Tester
 	finishOnce sync.Once
 
+	funcAuditSnapshot          func(ctx context.Context, tx db.Executor, targetType string, id string) (r1 json.RawMessage, err error)
+	funcAuditSnapshotOrigin    string
+	inspectFuncAuditSnapshot   func(ctx context.Context, tx db.Executor, targetType string, id string)
+	afterAuditSnapshotCounter  uint64
+	beforeAuditSnapshotCounter uint64
+	AuditSnapshotMock          mAdminRepositoryMockAuditSnapshot
+
 	funcHideSighting          func(ctx context.Context, tx db.Executor, id string, hidden bool) (p1 models.PlateSighting, err error)
 	funcHideSightingOrigin    string
 	inspectFuncHideSighting   func(ctx context.Context, tx db.Executor, id string, hidden bool)
 	afterHideSightingCounter  uint64
 	beforeHideSightingCounter uint64
 	HideSightingMock          mAdminRepositoryMockHideSighting
+
+	funcListAudit          func(ctx context.Context, tx db.Executor, o models.ListAuditOpts) (a1 models.AuditPage, err error)
+	funcListAuditOrigin    string
+	inspectFuncListAudit   func(ctx context.Context, tx db.Executor, o models.ListAuditOpts)
+	afterListAuditCounter  uint64
+	beforeListAuditCounter uint64
+	ListAuditMock          mAdminRepositoryMockListAudit
 
 	funcListClarifications          func(ctx context.Context, tx db.Executor, o models.ListClarificationsOpts) (c2 models.ClarificationsPage, err error)
 	funcListClarificationsOrigin    string
@@ -47,6 +62,13 @@ type AdminRepositoryMock struct {
 	afterSetClarificationStatusCounter  uint64
 	beforeSetClarificationStatusCounter uint64
 	SetClarificationStatusMock          mAdminRepositoryMockSetClarificationStatus
+
+	funcWriteAudit          func(ctx context.Context, tx db.Executor, e models.AuditEntry) (err error)
+	funcWriteAuditOrigin    string
+	inspectFuncWriteAudit   func(ctx context.Context, tx db.Executor, e models.AuditEntry)
+	afterWriteAuditCounter  uint64
+	beforeWriteAuditCounter uint64
+	WriteAuditMock          mAdminRepositoryMockWriteAudit
 }
 
 // NewAdminRepositoryMock returns a mock for mm_usecase.adminRepository
@@ -57,8 +79,14 @@ func NewAdminRepositoryMock(t minimock.Tester) *AdminRepositoryMock {
 		controller.RegisterMocker(m)
 	}
 
+	m.AuditSnapshotMock = mAdminRepositoryMockAuditSnapshot{mock: m}
+	m.AuditSnapshotMock.callArgs = []*AdminRepositoryMockAuditSnapshotParams{}
+
 	m.HideSightingMock = mAdminRepositoryMockHideSighting{mock: m}
 	m.HideSightingMock.callArgs = []*AdminRepositoryMockHideSightingParams{}
+
+	m.ListAuditMock = mAdminRepositoryMockListAudit{mock: m}
+	m.ListAuditMock.callArgs = []*AdminRepositoryMockListAuditParams{}
 
 	m.ListClarificationsMock = mAdminRepositoryMockListClarifications{mock: m}
 	m.ListClarificationsMock.callArgs = []*AdminRepositoryMockListClarificationsParams{}
@@ -69,9 +97,417 @@ func NewAdminRepositoryMock(t minimock.Tester) *AdminRepositoryMock {
 	m.SetClarificationStatusMock = mAdminRepositoryMockSetClarificationStatus{mock: m}
 	m.SetClarificationStatusMock.callArgs = []*AdminRepositoryMockSetClarificationStatusParams{}
 
+	m.WriteAuditMock = mAdminRepositoryMockWriteAudit{mock: m}
+	m.WriteAuditMock.callArgs = []*AdminRepositoryMockWriteAuditParams{}
+
 	t.Cleanup(m.MinimockFinish)
 
 	return m
+}
+
+type mAdminRepositoryMockAuditSnapshot struct {
+	optional           bool
+	mock               *AdminRepositoryMock
+	defaultExpectation *AdminRepositoryMockAuditSnapshotExpectation
+	expectations       []*AdminRepositoryMockAuditSnapshotExpectation
+
+	callArgs []*AdminRepositoryMockAuditSnapshotParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// AdminRepositoryMockAuditSnapshotExpectation specifies expectation struct of the adminRepository.AuditSnapshot
+type AdminRepositoryMockAuditSnapshotExpectation struct {
+	mock               *AdminRepositoryMock
+	params             *AdminRepositoryMockAuditSnapshotParams
+	paramPtrs          *AdminRepositoryMockAuditSnapshotParamPtrs
+	expectationOrigins AdminRepositoryMockAuditSnapshotExpectationOrigins
+	results            *AdminRepositoryMockAuditSnapshotResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// AdminRepositoryMockAuditSnapshotParams contains parameters of the adminRepository.AuditSnapshot
+type AdminRepositoryMockAuditSnapshotParams struct {
+	ctx        context.Context
+	tx         db.Executor
+	targetType string
+	id         string
+}
+
+// AdminRepositoryMockAuditSnapshotParamPtrs contains pointers to parameters of the adminRepository.AuditSnapshot
+type AdminRepositoryMockAuditSnapshotParamPtrs struct {
+	ctx        *context.Context
+	tx         *db.Executor
+	targetType *string
+	id         *string
+}
+
+// AdminRepositoryMockAuditSnapshotResults contains results of the adminRepository.AuditSnapshot
+type AdminRepositoryMockAuditSnapshotResults struct {
+	r1  json.RawMessage
+	err error
+}
+
+// AdminRepositoryMockAuditSnapshotOrigins contains origins of expectations of the adminRepository.AuditSnapshot
+type AdminRepositoryMockAuditSnapshotExpectationOrigins struct {
+	origin           string
+	originCtx        string
+	originTx         string
+	originTargetType string
+	originId         string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmAuditSnapshot *mAdminRepositoryMockAuditSnapshot) Optional() *mAdminRepositoryMockAuditSnapshot {
+	mmAuditSnapshot.optional = true
+	return mmAuditSnapshot
+}
+
+// Expect sets up expected params for adminRepository.AuditSnapshot
+func (mmAuditSnapshot *mAdminRepositoryMockAuditSnapshot) Expect(ctx context.Context, tx db.Executor, targetType string, id string) *mAdminRepositoryMockAuditSnapshot {
+	if mmAuditSnapshot.mock.funcAuditSnapshot != nil {
+		mmAuditSnapshot.mock.t.Fatalf("AdminRepositoryMock.AuditSnapshot mock is already set by Set")
+	}
+
+	if mmAuditSnapshot.defaultExpectation == nil {
+		mmAuditSnapshot.defaultExpectation = &AdminRepositoryMockAuditSnapshotExpectation{}
+	}
+
+	if mmAuditSnapshot.defaultExpectation.paramPtrs != nil {
+		mmAuditSnapshot.mock.t.Fatalf("AdminRepositoryMock.AuditSnapshot mock is already set by ExpectParams functions")
+	}
+
+	mmAuditSnapshot.defaultExpectation.params = &AdminRepositoryMockAuditSnapshotParams{ctx, tx, targetType, id}
+	mmAuditSnapshot.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmAuditSnapshot.expectations {
+		if minimock.Equal(e.params, mmAuditSnapshot.defaultExpectation.params) {
+			mmAuditSnapshot.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmAuditSnapshot.defaultExpectation.params)
+		}
+	}
+
+	return mmAuditSnapshot
+}
+
+// ExpectCtxParam1 sets up expected param ctx for adminRepository.AuditSnapshot
+func (mmAuditSnapshot *mAdminRepositoryMockAuditSnapshot) ExpectCtxParam1(ctx context.Context) *mAdminRepositoryMockAuditSnapshot {
+	if mmAuditSnapshot.mock.funcAuditSnapshot != nil {
+		mmAuditSnapshot.mock.t.Fatalf("AdminRepositoryMock.AuditSnapshot mock is already set by Set")
+	}
+
+	if mmAuditSnapshot.defaultExpectation == nil {
+		mmAuditSnapshot.defaultExpectation = &AdminRepositoryMockAuditSnapshotExpectation{}
+	}
+
+	if mmAuditSnapshot.defaultExpectation.params != nil {
+		mmAuditSnapshot.mock.t.Fatalf("AdminRepositoryMock.AuditSnapshot mock is already set by Expect")
+	}
+
+	if mmAuditSnapshot.defaultExpectation.paramPtrs == nil {
+		mmAuditSnapshot.defaultExpectation.paramPtrs = &AdminRepositoryMockAuditSnapshotParamPtrs{}
+	}
+	mmAuditSnapshot.defaultExpectation.paramPtrs.ctx = &ctx
+	mmAuditSnapshot.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmAuditSnapshot
+}
+
+// ExpectTxParam2 sets up expected param tx for adminRepository.AuditSnapshot
+func (mmAuditSnapshot *mAdminRepositoryMockAuditSnapshot) ExpectTxParam2(tx db.Executor) *mAdminRepositoryMockAuditSnapshot {
+	if mmAuditSnapshot.mock.funcAuditSnapshot != nil {
+		mmAuditSnapshot.mock.t.Fatalf("AdminRepositoryMock.AuditSnapshot mock is already set by Set")
+	}
+
+	if mmAuditSnapshot.defaultExpectation == nil {
+		mmAuditSnapshot.defaultExpectation = &AdminRepositoryMockAuditSnapshotExpectation{}
+	}
+
+	if mmAuditSnapshot.defaultExpectation.params != nil {
+		mmAuditSnapshot.mock.t.Fatalf("AdminRepositoryMock.AuditSnapshot mock is already set by Expect")
+	}
+
+	if mmAuditSnapshot.defaultExpectation.paramPtrs == nil {
+		mmAuditSnapshot.defaultExpectation.paramPtrs = &AdminRepositoryMockAuditSnapshotParamPtrs{}
+	}
+	mmAuditSnapshot.defaultExpectation.paramPtrs.tx = &tx
+	mmAuditSnapshot.defaultExpectation.expectationOrigins.originTx = minimock.CallerInfo(1)
+
+	return mmAuditSnapshot
+}
+
+// ExpectTargetTypeParam3 sets up expected param targetType for adminRepository.AuditSnapshot
+func (mmAuditSnapshot *mAdminRepositoryMockAuditSnapshot) ExpectTargetTypeParam3(targetType string) *mAdminRepositoryMockAuditSnapshot {
+	if mmAuditSnapshot.mock.funcAuditSnapshot != nil {
+		mmAuditSnapshot.mock.t.Fatalf("AdminRepositoryMock.AuditSnapshot mock is already set by Set")
+	}
+
+	if mmAuditSnapshot.defaultExpectation == nil {
+		mmAuditSnapshot.defaultExpectation = &AdminRepositoryMockAuditSnapshotExpectation{}
+	}
+
+	if mmAuditSnapshot.defaultExpectation.params != nil {
+		mmAuditSnapshot.mock.t.Fatalf("AdminRepositoryMock.AuditSnapshot mock is already set by Expect")
+	}
+
+	if mmAuditSnapshot.defaultExpectation.paramPtrs == nil {
+		mmAuditSnapshot.defaultExpectation.paramPtrs = &AdminRepositoryMockAuditSnapshotParamPtrs{}
+	}
+	mmAuditSnapshot.defaultExpectation.paramPtrs.targetType = &targetType
+	mmAuditSnapshot.defaultExpectation.expectationOrigins.originTargetType = minimock.CallerInfo(1)
+
+	return mmAuditSnapshot
+}
+
+// ExpectIdParam4 sets up expected param id for adminRepository.AuditSnapshot
+func (mmAuditSnapshot *mAdminRepositoryMockAuditSnapshot) ExpectIdParam4(id string) *mAdminRepositoryMockAuditSnapshot {
+	if mmAuditSnapshot.mock.funcAuditSnapshot != nil {
+		mmAuditSnapshot.mock.t.Fatalf("AdminRepositoryMock.AuditSnapshot mock is already set by Set")
+	}
+
+	if mmAuditSnapshot.defaultExpectation == nil {
+		mmAuditSnapshot.defaultExpectation = &AdminRepositoryMockAuditSnapshotExpectation{}
+	}
+
+	if mmAuditSnapshot.defaultExpectation.params != nil {
+		mmAuditSnapshot.mock.t.Fatalf("AdminRepositoryMock.AuditSnapshot mock is already set by Expect")
+	}
+
+	if mmAuditSnapshot.defaultExpectation.paramPtrs == nil {
+		mmAuditSnapshot.defaultExpectation.paramPtrs = &AdminRepositoryMockAuditSnapshotParamPtrs{}
+	}
+	mmAuditSnapshot.defaultExpectation.paramPtrs.id = &id
+	mmAuditSnapshot.defaultExpectation.expectationOrigins.originId = minimock.CallerInfo(1)
+
+	return mmAuditSnapshot
+}
+
+// Inspect accepts an inspector function that has same arguments as the adminRepository.AuditSnapshot
+func (mmAuditSnapshot *mAdminRepositoryMockAuditSnapshot) Inspect(f func(ctx context.Context, tx db.Executor, targetType string, id string)) *mAdminRepositoryMockAuditSnapshot {
+	if mmAuditSnapshot.mock.inspectFuncAuditSnapshot != nil {
+		mmAuditSnapshot.mock.t.Fatalf("Inspect function is already set for AdminRepositoryMock.AuditSnapshot")
+	}
+
+	mmAuditSnapshot.mock.inspectFuncAuditSnapshot = f
+
+	return mmAuditSnapshot
+}
+
+// Return sets up results that will be returned by adminRepository.AuditSnapshot
+func (mmAuditSnapshot *mAdminRepositoryMockAuditSnapshot) Return(r1 json.RawMessage, err error) *AdminRepositoryMock {
+	if mmAuditSnapshot.mock.funcAuditSnapshot != nil {
+		mmAuditSnapshot.mock.t.Fatalf("AdminRepositoryMock.AuditSnapshot mock is already set by Set")
+	}
+
+	if mmAuditSnapshot.defaultExpectation == nil {
+		mmAuditSnapshot.defaultExpectation = &AdminRepositoryMockAuditSnapshotExpectation{mock: mmAuditSnapshot.mock}
+	}
+	mmAuditSnapshot.defaultExpectation.results = &AdminRepositoryMockAuditSnapshotResults{r1, err}
+	mmAuditSnapshot.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmAuditSnapshot.mock
+}
+
+// Set uses given function f to mock the adminRepository.AuditSnapshot method
+func (mmAuditSnapshot *mAdminRepositoryMockAuditSnapshot) Set(f func(ctx context.Context, tx db.Executor, targetType string, id string) (r1 json.RawMessage, err error)) *AdminRepositoryMock {
+	if mmAuditSnapshot.defaultExpectation != nil {
+		mmAuditSnapshot.mock.t.Fatalf("Default expectation is already set for the adminRepository.AuditSnapshot method")
+	}
+
+	if len(mmAuditSnapshot.expectations) > 0 {
+		mmAuditSnapshot.mock.t.Fatalf("Some expectations are already set for the adminRepository.AuditSnapshot method")
+	}
+
+	mmAuditSnapshot.mock.funcAuditSnapshot = f
+	mmAuditSnapshot.mock.funcAuditSnapshotOrigin = minimock.CallerInfo(1)
+	return mmAuditSnapshot.mock
+}
+
+// When sets expectation for the adminRepository.AuditSnapshot which will trigger the result defined by the following
+// Then helper
+func (mmAuditSnapshot *mAdminRepositoryMockAuditSnapshot) When(ctx context.Context, tx db.Executor, targetType string, id string) *AdminRepositoryMockAuditSnapshotExpectation {
+	if mmAuditSnapshot.mock.funcAuditSnapshot != nil {
+		mmAuditSnapshot.mock.t.Fatalf("AdminRepositoryMock.AuditSnapshot mock is already set by Set")
+	}
+
+	expectation := &AdminRepositoryMockAuditSnapshotExpectation{
+		mock:               mmAuditSnapshot.mock,
+		params:             &AdminRepositoryMockAuditSnapshotParams{ctx, tx, targetType, id},
+		expectationOrigins: AdminRepositoryMockAuditSnapshotExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmAuditSnapshot.expectations = append(mmAuditSnapshot.expectations, expectation)
+	return expectation
+}
+
+// Then sets up adminRepository.AuditSnapshot return parameters for the expectation previously defined by the When method
+func (e *AdminRepositoryMockAuditSnapshotExpectation) Then(r1 json.RawMessage, err error) *AdminRepositoryMock {
+	e.results = &AdminRepositoryMockAuditSnapshotResults{r1, err}
+	return e.mock
+}
+
+// Times sets number of times adminRepository.AuditSnapshot should be invoked
+func (mmAuditSnapshot *mAdminRepositoryMockAuditSnapshot) Times(n uint64) *mAdminRepositoryMockAuditSnapshot {
+	if n == 0 {
+		mmAuditSnapshot.mock.t.Fatalf("Times of AdminRepositoryMock.AuditSnapshot mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmAuditSnapshot.expectedInvocations, n)
+	mmAuditSnapshot.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmAuditSnapshot
+}
+
+func (mmAuditSnapshot *mAdminRepositoryMockAuditSnapshot) invocationsDone() bool {
+	if len(mmAuditSnapshot.expectations) == 0 && mmAuditSnapshot.defaultExpectation == nil && mmAuditSnapshot.mock.funcAuditSnapshot == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmAuditSnapshot.mock.afterAuditSnapshotCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmAuditSnapshot.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// AuditSnapshot implements mm_usecase.adminRepository
+func (mmAuditSnapshot *AdminRepositoryMock) AuditSnapshot(ctx context.Context, tx db.Executor, targetType string, id string) (r1 json.RawMessage, err error) {
+	mm_atomic.AddUint64(&mmAuditSnapshot.beforeAuditSnapshotCounter, 1)
+	defer mm_atomic.AddUint64(&mmAuditSnapshot.afterAuditSnapshotCounter, 1)
+
+	mmAuditSnapshot.t.Helper()
+
+	if mmAuditSnapshot.inspectFuncAuditSnapshot != nil {
+		mmAuditSnapshot.inspectFuncAuditSnapshot(ctx, tx, targetType, id)
+	}
+
+	mm_params := AdminRepositoryMockAuditSnapshotParams{ctx, tx, targetType, id}
+
+	// Record call args
+	mmAuditSnapshot.AuditSnapshotMock.mutex.Lock()
+	mmAuditSnapshot.AuditSnapshotMock.callArgs = append(mmAuditSnapshot.AuditSnapshotMock.callArgs, &mm_params)
+	mmAuditSnapshot.AuditSnapshotMock.mutex.Unlock()
+
+	for _, e := range mmAuditSnapshot.AuditSnapshotMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.r1, e.results.err
+		}
+	}
+
+	if mmAuditSnapshot.AuditSnapshotMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmAuditSnapshot.AuditSnapshotMock.defaultExpectation.Counter, 1)
+		mm_want := mmAuditSnapshot.AuditSnapshotMock.defaultExpectation.params
+		mm_want_ptrs := mmAuditSnapshot.AuditSnapshotMock.defaultExpectation.paramPtrs
+
+		mm_got := AdminRepositoryMockAuditSnapshotParams{ctx, tx, targetType, id}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmAuditSnapshot.t.Errorf("AdminRepositoryMock.AuditSnapshot got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmAuditSnapshot.AuditSnapshotMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.tx != nil && !minimock.Equal(*mm_want_ptrs.tx, mm_got.tx) {
+				mmAuditSnapshot.t.Errorf("AdminRepositoryMock.AuditSnapshot got unexpected parameter tx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmAuditSnapshot.AuditSnapshotMock.defaultExpectation.expectationOrigins.originTx, *mm_want_ptrs.tx, mm_got.tx, minimock.Diff(*mm_want_ptrs.tx, mm_got.tx))
+			}
+
+			if mm_want_ptrs.targetType != nil && !minimock.Equal(*mm_want_ptrs.targetType, mm_got.targetType) {
+				mmAuditSnapshot.t.Errorf("AdminRepositoryMock.AuditSnapshot got unexpected parameter targetType, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmAuditSnapshot.AuditSnapshotMock.defaultExpectation.expectationOrigins.originTargetType, *mm_want_ptrs.targetType, mm_got.targetType, minimock.Diff(*mm_want_ptrs.targetType, mm_got.targetType))
+			}
+
+			if mm_want_ptrs.id != nil && !minimock.Equal(*mm_want_ptrs.id, mm_got.id) {
+				mmAuditSnapshot.t.Errorf("AdminRepositoryMock.AuditSnapshot got unexpected parameter id, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmAuditSnapshot.AuditSnapshotMock.defaultExpectation.expectationOrigins.originId, *mm_want_ptrs.id, mm_got.id, minimock.Diff(*mm_want_ptrs.id, mm_got.id))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmAuditSnapshot.t.Errorf("AdminRepositoryMock.AuditSnapshot got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmAuditSnapshot.AuditSnapshotMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmAuditSnapshot.AuditSnapshotMock.defaultExpectation.results
+		if mm_results == nil {
+			mmAuditSnapshot.t.Fatal("No results are set for the AdminRepositoryMock.AuditSnapshot")
+		}
+		return (*mm_results).r1, (*mm_results).err
+	}
+	if mmAuditSnapshot.funcAuditSnapshot != nil {
+		return mmAuditSnapshot.funcAuditSnapshot(ctx, tx, targetType, id)
+	}
+	mmAuditSnapshot.t.Fatalf("Unexpected call to AdminRepositoryMock.AuditSnapshot. %v %v %v %v", ctx, tx, targetType, id)
+	return
+}
+
+// AuditSnapshotAfterCounter returns a count of finished AdminRepositoryMock.AuditSnapshot invocations
+func (mmAuditSnapshot *AdminRepositoryMock) AuditSnapshotAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmAuditSnapshot.afterAuditSnapshotCounter)
+}
+
+// AuditSnapshotBeforeCounter returns a count of AdminRepositoryMock.AuditSnapshot invocations
+func (mmAuditSnapshot *AdminRepositoryMock) AuditSnapshotBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmAuditSnapshot.beforeAuditSnapshotCounter)
+}
+
+// Calls returns a list of arguments used in each call to AdminRepositoryMock.AuditSnapshot.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmAuditSnapshot *mAdminRepositoryMockAuditSnapshot) Calls() []*AdminRepositoryMockAuditSnapshotParams {
+	mmAuditSnapshot.mutex.RLock()
+
+	argCopy := make([]*AdminRepositoryMockAuditSnapshotParams, len(mmAuditSnapshot.callArgs))
+	copy(argCopy, mmAuditSnapshot.callArgs)
+
+	mmAuditSnapshot.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockAuditSnapshotDone returns true if the count of the AuditSnapshot invocations corresponds
+// the number of defined expectations
+func (m *AdminRepositoryMock) MinimockAuditSnapshotDone() bool {
+	if m.AuditSnapshotMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.AuditSnapshotMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.AuditSnapshotMock.invocationsDone()
+}
+
+// MinimockAuditSnapshotInspect logs each unmet expectation
+func (m *AdminRepositoryMock) MinimockAuditSnapshotInspect() {
+	for _, e := range m.AuditSnapshotMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to AdminRepositoryMock.AuditSnapshot at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterAuditSnapshotCounter := mm_atomic.LoadUint64(&m.afterAuditSnapshotCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.AuditSnapshotMock.defaultExpectation != nil && afterAuditSnapshotCounter < 1 {
+		if m.AuditSnapshotMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to AdminRepositoryMock.AuditSnapshot at\n%s", m.AuditSnapshotMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to AdminRepositoryMock.AuditSnapshot at\n%s with params: %#v", m.AuditSnapshotMock.defaultExpectation.expectationOrigins.origin, *m.AuditSnapshotMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcAuditSnapshot != nil && afterAuditSnapshotCounter < 1 {
+		m.t.Errorf("Expected call to AdminRepositoryMock.AuditSnapshot at\n%s", m.funcAuditSnapshotOrigin)
+	}
+
+	if !m.AuditSnapshotMock.invocationsDone() && afterAuditSnapshotCounter > 0 {
+		m.t.Errorf("Expected %d calls to AdminRepositoryMock.AuditSnapshot at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.AuditSnapshotMock.expectedInvocations), m.AuditSnapshotMock.expectedInvocationsOrigin, afterAuditSnapshotCounter)
+	}
 }
 
 type mAdminRepositoryMockHideSighting struct {
@@ -476,6 +912,380 @@ func (m *AdminRepositoryMock) MinimockHideSightingInspect() {
 	if !m.HideSightingMock.invocationsDone() && afterHideSightingCounter > 0 {
 		m.t.Errorf("Expected %d calls to AdminRepositoryMock.HideSighting at\n%s but found %d calls",
 			mm_atomic.LoadUint64(&m.HideSightingMock.expectedInvocations), m.HideSightingMock.expectedInvocationsOrigin, afterHideSightingCounter)
+	}
+}
+
+type mAdminRepositoryMockListAudit struct {
+	optional           bool
+	mock               *AdminRepositoryMock
+	defaultExpectation *AdminRepositoryMockListAuditExpectation
+	expectations       []*AdminRepositoryMockListAuditExpectation
+
+	callArgs []*AdminRepositoryMockListAuditParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// AdminRepositoryMockListAuditExpectation specifies expectation struct of the adminRepository.ListAudit
+type AdminRepositoryMockListAuditExpectation struct {
+	mock               *AdminRepositoryMock
+	params             *AdminRepositoryMockListAuditParams
+	paramPtrs          *AdminRepositoryMockListAuditParamPtrs
+	expectationOrigins AdminRepositoryMockListAuditExpectationOrigins
+	results            *AdminRepositoryMockListAuditResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// AdminRepositoryMockListAuditParams contains parameters of the adminRepository.ListAudit
+type AdminRepositoryMockListAuditParams struct {
+	ctx context.Context
+	tx  db.Executor
+	o   models.ListAuditOpts
+}
+
+// AdminRepositoryMockListAuditParamPtrs contains pointers to parameters of the adminRepository.ListAudit
+type AdminRepositoryMockListAuditParamPtrs struct {
+	ctx *context.Context
+	tx  *db.Executor
+	o   *models.ListAuditOpts
+}
+
+// AdminRepositoryMockListAuditResults contains results of the adminRepository.ListAudit
+type AdminRepositoryMockListAuditResults struct {
+	a1  models.AuditPage
+	err error
+}
+
+// AdminRepositoryMockListAuditOrigins contains origins of expectations of the adminRepository.ListAudit
+type AdminRepositoryMockListAuditExpectationOrigins struct {
+	origin    string
+	originCtx string
+	originTx  string
+	originO   string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmListAudit *mAdminRepositoryMockListAudit) Optional() *mAdminRepositoryMockListAudit {
+	mmListAudit.optional = true
+	return mmListAudit
+}
+
+// Expect sets up expected params for adminRepository.ListAudit
+func (mmListAudit *mAdminRepositoryMockListAudit) Expect(ctx context.Context, tx db.Executor, o models.ListAuditOpts) *mAdminRepositoryMockListAudit {
+	if mmListAudit.mock.funcListAudit != nil {
+		mmListAudit.mock.t.Fatalf("AdminRepositoryMock.ListAudit mock is already set by Set")
+	}
+
+	if mmListAudit.defaultExpectation == nil {
+		mmListAudit.defaultExpectation = &AdminRepositoryMockListAuditExpectation{}
+	}
+
+	if mmListAudit.defaultExpectation.paramPtrs != nil {
+		mmListAudit.mock.t.Fatalf("AdminRepositoryMock.ListAudit mock is already set by ExpectParams functions")
+	}
+
+	mmListAudit.defaultExpectation.params = &AdminRepositoryMockListAuditParams{ctx, tx, o}
+	mmListAudit.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmListAudit.expectations {
+		if minimock.Equal(e.params, mmListAudit.defaultExpectation.params) {
+			mmListAudit.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmListAudit.defaultExpectation.params)
+		}
+	}
+
+	return mmListAudit
+}
+
+// ExpectCtxParam1 sets up expected param ctx for adminRepository.ListAudit
+func (mmListAudit *mAdminRepositoryMockListAudit) ExpectCtxParam1(ctx context.Context) *mAdminRepositoryMockListAudit {
+	if mmListAudit.mock.funcListAudit != nil {
+		mmListAudit.mock.t.Fatalf("AdminRepositoryMock.ListAudit mock is already set by Set")
+	}
+
+	if mmListAudit.defaultExpectation == nil {
+		mmListAudit.defaultExpectation = &AdminRepositoryMockListAuditExpectation{}
+	}
+
+	if mmListAudit.defaultExpectation.params != nil {
+		mmListAudit.mock.t.Fatalf("AdminRepositoryMock.ListAudit mock is already set by Expect")
+	}
+
+	if mmListAudit.defaultExpectation.paramPtrs == nil {
+		mmListAudit.defaultExpectation.paramPtrs = &AdminRepositoryMockListAuditParamPtrs{}
+	}
+	mmListAudit.defaultExpectation.paramPtrs.ctx = &ctx
+	mmListAudit.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmListAudit
+}
+
+// ExpectTxParam2 sets up expected param tx for adminRepository.ListAudit
+func (mmListAudit *mAdminRepositoryMockListAudit) ExpectTxParam2(tx db.Executor) *mAdminRepositoryMockListAudit {
+	if mmListAudit.mock.funcListAudit != nil {
+		mmListAudit.mock.t.Fatalf("AdminRepositoryMock.ListAudit mock is already set by Set")
+	}
+
+	if mmListAudit.defaultExpectation == nil {
+		mmListAudit.defaultExpectation = &AdminRepositoryMockListAuditExpectation{}
+	}
+
+	if mmListAudit.defaultExpectation.params != nil {
+		mmListAudit.mock.t.Fatalf("AdminRepositoryMock.ListAudit mock is already set by Expect")
+	}
+
+	if mmListAudit.defaultExpectation.paramPtrs == nil {
+		mmListAudit.defaultExpectation.paramPtrs = &AdminRepositoryMockListAuditParamPtrs{}
+	}
+	mmListAudit.defaultExpectation.paramPtrs.tx = &tx
+	mmListAudit.defaultExpectation.expectationOrigins.originTx = minimock.CallerInfo(1)
+
+	return mmListAudit
+}
+
+// ExpectOParam3 sets up expected param o for adminRepository.ListAudit
+func (mmListAudit *mAdminRepositoryMockListAudit) ExpectOParam3(o models.ListAuditOpts) *mAdminRepositoryMockListAudit {
+	if mmListAudit.mock.funcListAudit != nil {
+		mmListAudit.mock.t.Fatalf("AdminRepositoryMock.ListAudit mock is already set by Set")
+	}
+
+	if mmListAudit.defaultExpectation == nil {
+		mmListAudit.defaultExpectation = &AdminRepositoryMockListAuditExpectation{}
+	}
+
+	if mmListAudit.defaultExpectation.params != nil {
+		mmListAudit.mock.t.Fatalf("AdminRepositoryMock.ListAudit mock is already set by Expect")
+	}
+
+	if mmListAudit.defaultExpectation.paramPtrs == nil {
+		mmListAudit.defaultExpectation.paramPtrs = &AdminRepositoryMockListAuditParamPtrs{}
+	}
+	mmListAudit.defaultExpectation.paramPtrs.o = &o
+	mmListAudit.defaultExpectation.expectationOrigins.originO = minimock.CallerInfo(1)
+
+	return mmListAudit
+}
+
+// Inspect accepts an inspector function that has same arguments as the adminRepository.ListAudit
+func (mmListAudit *mAdminRepositoryMockListAudit) Inspect(f func(ctx context.Context, tx db.Executor, o models.ListAuditOpts)) *mAdminRepositoryMockListAudit {
+	if mmListAudit.mock.inspectFuncListAudit != nil {
+		mmListAudit.mock.t.Fatalf("Inspect function is already set for AdminRepositoryMock.ListAudit")
+	}
+
+	mmListAudit.mock.inspectFuncListAudit = f
+
+	return mmListAudit
+}
+
+// Return sets up results that will be returned by adminRepository.ListAudit
+func (mmListAudit *mAdminRepositoryMockListAudit) Return(a1 models.AuditPage, err error) *AdminRepositoryMock {
+	if mmListAudit.mock.funcListAudit != nil {
+		mmListAudit.mock.t.Fatalf("AdminRepositoryMock.ListAudit mock is already set by Set")
+	}
+
+	if mmListAudit.defaultExpectation == nil {
+		mmListAudit.defaultExpectation = &AdminRepositoryMockListAuditExpectation{mock: mmListAudit.mock}
+	}
+	mmListAudit.defaultExpectation.results = &AdminRepositoryMockListAuditResults{a1, err}
+	mmListAudit.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmListAudit.mock
+}
+
+// Set uses given function f to mock the adminRepository.ListAudit method
+func (mmListAudit *mAdminRepositoryMockListAudit) Set(f func(ctx context.Context, tx db.Executor, o models.ListAuditOpts) (a1 models.AuditPage, err error)) *AdminRepositoryMock {
+	if mmListAudit.defaultExpectation != nil {
+		mmListAudit.mock.t.Fatalf("Default expectation is already set for the adminRepository.ListAudit method")
+	}
+
+	if len(mmListAudit.expectations) > 0 {
+		mmListAudit.mock.t.Fatalf("Some expectations are already set for the adminRepository.ListAudit method")
+	}
+
+	mmListAudit.mock.funcListAudit = f
+	mmListAudit.mock.funcListAuditOrigin = minimock.CallerInfo(1)
+	return mmListAudit.mock
+}
+
+// When sets expectation for the adminRepository.ListAudit which will trigger the result defined by the following
+// Then helper
+func (mmListAudit *mAdminRepositoryMockListAudit) When(ctx context.Context, tx db.Executor, o models.ListAuditOpts) *AdminRepositoryMockListAuditExpectation {
+	if mmListAudit.mock.funcListAudit != nil {
+		mmListAudit.mock.t.Fatalf("AdminRepositoryMock.ListAudit mock is already set by Set")
+	}
+
+	expectation := &AdminRepositoryMockListAuditExpectation{
+		mock:               mmListAudit.mock,
+		params:             &AdminRepositoryMockListAuditParams{ctx, tx, o},
+		expectationOrigins: AdminRepositoryMockListAuditExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmListAudit.expectations = append(mmListAudit.expectations, expectation)
+	return expectation
+}
+
+// Then sets up adminRepository.ListAudit return parameters for the expectation previously defined by the When method
+func (e *AdminRepositoryMockListAuditExpectation) Then(a1 models.AuditPage, err error) *AdminRepositoryMock {
+	e.results = &AdminRepositoryMockListAuditResults{a1, err}
+	return e.mock
+}
+
+// Times sets number of times adminRepository.ListAudit should be invoked
+func (mmListAudit *mAdminRepositoryMockListAudit) Times(n uint64) *mAdminRepositoryMockListAudit {
+	if n == 0 {
+		mmListAudit.mock.t.Fatalf("Times of AdminRepositoryMock.ListAudit mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmListAudit.expectedInvocations, n)
+	mmListAudit.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmListAudit
+}
+
+func (mmListAudit *mAdminRepositoryMockListAudit) invocationsDone() bool {
+	if len(mmListAudit.expectations) == 0 && mmListAudit.defaultExpectation == nil && mmListAudit.mock.funcListAudit == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmListAudit.mock.afterListAuditCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmListAudit.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// ListAudit implements mm_usecase.adminRepository
+func (mmListAudit *AdminRepositoryMock) ListAudit(ctx context.Context, tx db.Executor, o models.ListAuditOpts) (a1 models.AuditPage, err error) {
+	mm_atomic.AddUint64(&mmListAudit.beforeListAuditCounter, 1)
+	defer mm_atomic.AddUint64(&mmListAudit.afterListAuditCounter, 1)
+
+	mmListAudit.t.Helper()
+
+	if mmListAudit.inspectFuncListAudit != nil {
+		mmListAudit.inspectFuncListAudit(ctx, tx, o)
+	}
+
+	mm_params := AdminRepositoryMockListAuditParams{ctx, tx, o}
+
+	// Record call args
+	mmListAudit.ListAuditMock.mutex.Lock()
+	mmListAudit.ListAuditMock.callArgs = append(mmListAudit.ListAuditMock.callArgs, &mm_params)
+	mmListAudit.ListAuditMock.mutex.Unlock()
+
+	for _, e := range mmListAudit.ListAuditMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.a1, e.results.err
+		}
+	}
+
+	if mmListAudit.ListAuditMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmListAudit.ListAuditMock.defaultExpectation.Counter, 1)
+		mm_want := mmListAudit.ListAuditMock.defaultExpectation.params
+		mm_want_ptrs := mmListAudit.ListAuditMock.defaultExpectation.paramPtrs
+
+		mm_got := AdminRepositoryMockListAuditParams{ctx, tx, o}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmListAudit.t.Errorf("AdminRepositoryMock.ListAudit got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmListAudit.ListAuditMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.tx != nil && !minimock.Equal(*mm_want_ptrs.tx, mm_got.tx) {
+				mmListAudit.t.Errorf("AdminRepositoryMock.ListAudit got unexpected parameter tx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmListAudit.ListAuditMock.defaultExpectation.expectationOrigins.originTx, *mm_want_ptrs.tx, mm_got.tx, minimock.Diff(*mm_want_ptrs.tx, mm_got.tx))
+			}
+
+			if mm_want_ptrs.o != nil && !minimock.Equal(*mm_want_ptrs.o, mm_got.o) {
+				mmListAudit.t.Errorf("AdminRepositoryMock.ListAudit got unexpected parameter o, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmListAudit.ListAuditMock.defaultExpectation.expectationOrigins.originO, *mm_want_ptrs.o, mm_got.o, minimock.Diff(*mm_want_ptrs.o, mm_got.o))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmListAudit.t.Errorf("AdminRepositoryMock.ListAudit got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmListAudit.ListAuditMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmListAudit.ListAuditMock.defaultExpectation.results
+		if mm_results == nil {
+			mmListAudit.t.Fatal("No results are set for the AdminRepositoryMock.ListAudit")
+		}
+		return (*mm_results).a1, (*mm_results).err
+	}
+	if mmListAudit.funcListAudit != nil {
+		return mmListAudit.funcListAudit(ctx, tx, o)
+	}
+	mmListAudit.t.Fatalf("Unexpected call to AdminRepositoryMock.ListAudit. %v %v %v", ctx, tx, o)
+	return
+}
+
+// ListAuditAfterCounter returns a count of finished AdminRepositoryMock.ListAudit invocations
+func (mmListAudit *AdminRepositoryMock) ListAuditAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmListAudit.afterListAuditCounter)
+}
+
+// ListAuditBeforeCounter returns a count of AdminRepositoryMock.ListAudit invocations
+func (mmListAudit *AdminRepositoryMock) ListAuditBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmListAudit.beforeListAuditCounter)
+}
+
+// Calls returns a list of arguments used in each call to AdminRepositoryMock.ListAudit.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmListAudit *mAdminRepositoryMockListAudit) Calls() []*AdminRepositoryMockListAuditParams {
+	mmListAudit.mutex.RLock()
+
+	argCopy := make([]*AdminRepositoryMockListAuditParams, len(mmListAudit.callArgs))
+	copy(argCopy, mmListAudit.callArgs)
+
+	mmListAudit.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockListAuditDone returns true if the count of the ListAudit invocations corresponds
+// the number of defined expectations
+func (m *AdminRepositoryMock) MinimockListAuditDone() bool {
+	if m.ListAuditMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.ListAuditMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.ListAuditMock.invocationsDone()
+}
+
+// MinimockListAuditInspect logs each unmet expectation
+func (m *AdminRepositoryMock) MinimockListAuditInspect() {
+	for _, e := range m.ListAuditMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to AdminRepositoryMock.ListAudit at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterListAuditCounter := mm_atomic.LoadUint64(&m.afterListAuditCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.ListAuditMock.defaultExpectation != nil && afterListAuditCounter < 1 {
+		if m.ListAuditMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to AdminRepositoryMock.ListAudit at\n%s", m.ListAuditMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to AdminRepositoryMock.ListAudit at\n%s with params: %#v", m.ListAuditMock.defaultExpectation.expectationOrigins.origin, *m.ListAuditMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcListAudit != nil && afterListAuditCounter < 1 {
+		m.t.Errorf("Expected call to AdminRepositoryMock.ListAudit at\n%s", m.funcListAuditOrigin)
+	}
+
+	if !m.ListAuditMock.invocationsDone() && afterListAuditCounter > 0 {
+		m.t.Errorf("Expected %d calls to AdminRepositoryMock.ListAudit at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.ListAuditMock.expectedInvocations), m.ListAuditMock.expectedInvocationsOrigin, afterListAuditCounter)
 	}
 }
 
@@ -1632,17 +2442,396 @@ func (m *AdminRepositoryMock) MinimockSetClarificationStatusInspect() {
 	}
 }
 
+type mAdminRepositoryMockWriteAudit struct {
+	optional           bool
+	mock               *AdminRepositoryMock
+	defaultExpectation *AdminRepositoryMockWriteAuditExpectation
+	expectations       []*AdminRepositoryMockWriteAuditExpectation
+
+	callArgs []*AdminRepositoryMockWriteAuditParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// AdminRepositoryMockWriteAuditExpectation specifies expectation struct of the adminRepository.WriteAudit
+type AdminRepositoryMockWriteAuditExpectation struct {
+	mock               *AdminRepositoryMock
+	params             *AdminRepositoryMockWriteAuditParams
+	paramPtrs          *AdminRepositoryMockWriteAuditParamPtrs
+	expectationOrigins AdminRepositoryMockWriteAuditExpectationOrigins
+	results            *AdminRepositoryMockWriteAuditResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// AdminRepositoryMockWriteAuditParams contains parameters of the adminRepository.WriteAudit
+type AdminRepositoryMockWriteAuditParams struct {
+	ctx context.Context
+	tx  db.Executor
+	e   models.AuditEntry
+}
+
+// AdminRepositoryMockWriteAuditParamPtrs contains pointers to parameters of the adminRepository.WriteAudit
+type AdminRepositoryMockWriteAuditParamPtrs struct {
+	ctx *context.Context
+	tx  *db.Executor
+	e   *models.AuditEntry
+}
+
+// AdminRepositoryMockWriteAuditResults contains results of the adminRepository.WriteAudit
+type AdminRepositoryMockWriteAuditResults struct {
+	err error
+}
+
+// AdminRepositoryMockWriteAuditOrigins contains origins of expectations of the adminRepository.WriteAudit
+type AdminRepositoryMockWriteAuditExpectationOrigins struct {
+	origin    string
+	originCtx string
+	originTx  string
+	originE   string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmWriteAudit *mAdminRepositoryMockWriteAudit) Optional() *mAdminRepositoryMockWriteAudit {
+	mmWriteAudit.optional = true
+	return mmWriteAudit
+}
+
+// Expect sets up expected params for adminRepository.WriteAudit
+func (mmWriteAudit *mAdminRepositoryMockWriteAudit) Expect(ctx context.Context, tx db.Executor, e models.AuditEntry) *mAdminRepositoryMockWriteAudit {
+	if mmWriteAudit.mock.funcWriteAudit != nil {
+		mmWriteAudit.mock.t.Fatalf("AdminRepositoryMock.WriteAudit mock is already set by Set")
+	}
+
+	if mmWriteAudit.defaultExpectation == nil {
+		mmWriteAudit.defaultExpectation = &AdminRepositoryMockWriteAuditExpectation{}
+	}
+
+	if mmWriteAudit.defaultExpectation.paramPtrs != nil {
+		mmWriteAudit.mock.t.Fatalf("AdminRepositoryMock.WriteAudit mock is already set by ExpectParams functions")
+	}
+
+	mmWriteAudit.defaultExpectation.params = &AdminRepositoryMockWriteAuditParams{ctx, tx, e}
+	mmWriteAudit.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmWriteAudit.expectations {
+		if minimock.Equal(e.params, mmWriteAudit.defaultExpectation.params) {
+			mmWriteAudit.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmWriteAudit.defaultExpectation.params)
+		}
+	}
+
+	return mmWriteAudit
+}
+
+// ExpectCtxParam1 sets up expected param ctx for adminRepository.WriteAudit
+func (mmWriteAudit *mAdminRepositoryMockWriteAudit) ExpectCtxParam1(ctx context.Context) *mAdminRepositoryMockWriteAudit {
+	if mmWriteAudit.mock.funcWriteAudit != nil {
+		mmWriteAudit.mock.t.Fatalf("AdminRepositoryMock.WriteAudit mock is already set by Set")
+	}
+
+	if mmWriteAudit.defaultExpectation == nil {
+		mmWriteAudit.defaultExpectation = &AdminRepositoryMockWriteAuditExpectation{}
+	}
+
+	if mmWriteAudit.defaultExpectation.params != nil {
+		mmWriteAudit.mock.t.Fatalf("AdminRepositoryMock.WriteAudit mock is already set by Expect")
+	}
+
+	if mmWriteAudit.defaultExpectation.paramPtrs == nil {
+		mmWriteAudit.defaultExpectation.paramPtrs = &AdminRepositoryMockWriteAuditParamPtrs{}
+	}
+	mmWriteAudit.defaultExpectation.paramPtrs.ctx = &ctx
+	mmWriteAudit.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmWriteAudit
+}
+
+// ExpectTxParam2 sets up expected param tx for adminRepository.WriteAudit
+func (mmWriteAudit *mAdminRepositoryMockWriteAudit) ExpectTxParam2(tx db.Executor) *mAdminRepositoryMockWriteAudit {
+	if mmWriteAudit.mock.funcWriteAudit != nil {
+		mmWriteAudit.mock.t.Fatalf("AdminRepositoryMock.WriteAudit mock is already set by Set")
+	}
+
+	if mmWriteAudit.defaultExpectation == nil {
+		mmWriteAudit.defaultExpectation = &AdminRepositoryMockWriteAuditExpectation{}
+	}
+
+	if mmWriteAudit.defaultExpectation.params != nil {
+		mmWriteAudit.mock.t.Fatalf("AdminRepositoryMock.WriteAudit mock is already set by Expect")
+	}
+
+	if mmWriteAudit.defaultExpectation.paramPtrs == nil {
+		mmWriteAudit.defaultExpectation.paramPtrs = &AdminRepositoryMockWriteAuditParamPtrs{}
+	}
+	mmWriteAudit.defaultExpectation.paramPtrs.tx = &tx
+	mmWriteAudit.defaultExpectation.expectationOrigins.originTx = minimock.CallerInfo(1)
+
+	return mmWriteAudit
+}
+
+// ExpectEParam3 sets up expected param e for adminRepository.WriteAudit
+func (mmWriteAudit *mAdminRepositoryMockWriteAudit) ExpectEParam3(e models.AuditEntry) *mAdminRepositoryMockWriteAudit {
+	if mmWriteAudit.mock.funcWriteAudit != nil {
+		mmWriteAudit.mock.t.Fatalf("AdminRepositoryMock.WriteAudit mock is already set by Set")
+	}
+
+	if mmWriteAudit.defaultExpectation == nil {
+		mmWriteAudit.defaultExpectation = &AdminRepositoryMockWriteAuditExpectation{}
+	}
+
+	if mmWriteAudit.defaultExpectation.params != nil {
+		mmWriteAudit.mock.t.Fatalf("AdminRepositoryMock.WriteAudit mock is already set by Expect")
+	}
+
+	if mmWriteAudit.defaultExpectation.paramPtrs == nil {
+		mmWriteAudit.defaultExpectation.paramPtrs = &AdminRepositoryMockWriteAuditParamPtrs{}
+	}
+	mmWriteAudit.defaultExpectation.paramPtrs.e = &e
+	mmWriteAudit.defaultExpectation.expectationOrigins.originE = minimock.CallerInfo(1)
+
+	return mmWriteAudit
+}
+
+// Inspect accepts an inspector function that has same arguments as the adminRepository.WriteAudit
+func (mmWriteAudit *mAdminRepositoryMockWriteAudit) Inspect(f func(ctx context.Context, tx db.Executor, e models.AuditEntry)) *mAdminRepositoryMockWriteAudit {
+	if mmWriteAudit.mock.inspectFuncWriteAudit != nil {
+		mmWriteAudit.mock.t.Fatalf("Inspect function is already set for AdminRepositoryMock.WriteAudit")
+	}
+
+	mmWriteAudit.mock.inspectFuncWriteAudit = f
+
+	return mmWriteAudit
+}
+
+// Return sets up results that will be returned by adminRepository.WriteAudit
+func (mmWriteAudit *mAdminRepositoryMockWriteAudit) Return(err error) *AdminRepositoryMock {
+	if mmWriteAudit.mock.funcWriteAudit != nil {
+		mmWriteAudit.mock.t.Fatalf("AdminRepositoryMock.WriteAudit mock is already set by Set")
+	}
+
+	if mmWriteAudit.defaultExpectation == nil {
+		mmWriteAudit.defaultExpectation = &AdminRepositoryMockWriteAuditExpectation{mock: mmWriteAudit.mock}
+	}
+	mmWriteAudit.defaultExpectation.results = &AdminRepositoryMockWriteAuditResults{err}
+	mmWriteAudit.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmWriteAudit.mock
+}
+
+// Set uses given function f to mock the adminRepository.WriteAudit method
+func (mmWriteAudit *mAdminRepositoryMockWriteAudit) Set(f func(ctx context.Context, tx db.Executor, e models.AuditEntry) (err error)) *AdminRepositoryMock {
+	if mmWriteAudit.defaultExpectation != nil {
+		mmWriteAudit.mock.t.Fatalf("Default expectation is already set for the adminRepository.WriteAudit method")
+	}
+
+	if len(mmWriteAudit.expectations) > 0 {
+		mmWriteAudit.mock.t.Fatalf("Some expectations are already set for the adminRepository.WriteAudit method")
+	}
+
+	mmWriteAudit.mock.funcWriteAudit = f
+	mmWriteAudit.mock.funcWriteAuditOrigin = minimock.CallerInfo(1)
+	return mmWriteAudit.mock
+}
+
+// When sets expectation for the adminRepository.WriteAudit which will trigger the result defined by the following
+// Then helper
+func (mmWriteAudit *mAdminRepositoryMockWriteAudit) When(ctx context.Context, tx db.Executor, e models.AuditEntry) *AdminRepositoryMockWriteAuditExpectation {
+	if mmWriteAudit.mock.funcWriteAudit != nil {
+		mmWriteAudit.mock.t.Fatalf("AdminRepositoryMock.WriteAudit mock is already set by Set")
+	}
+
+	expectation := &AdminRepositoryMockWriteAuditExpectation{
+		mock:               mmWriteAudit.mock,
+		params:             &AdminRepositoryMockWriteAuditParams{ctx, tx, e},
+		expectationOrigins: AdminRepositoryMockWriteAuditExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmWriteAudit.expectations = append(mmWriteAudit.expectations, expectation)
+	return expectation
+}
+
+// Then sets up adminRepository.WriteAudit return parameters for the expectation previously defined by the When method
+func (e *AdminRepositoryMockWriteAuditExpectation) Then(err error) *AdminRepositoryMock {
+	e.results = &AdminRepositoryMockWriteAuditResults{err}
+	return e.mock
+}
+
+// Times sets number of times adminRepository.WriteAudit should be invoked
+func (mmWriteAudit *mAdminRepositoryMockWriteAudit) Times(n uint64) *mAdminRepositoryMockWriteAudit {
+	if n == 0 {
+		mmWriteAudit.mock.t.Fatalf("Times of AdminRepositoryMock.WriteAudit mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmWriteAudit.expectedInvocations, n)
+	mmWriteAudit.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmWriteAudit
+}
+
+func (mmWriteAudit *mAdminRepositoryMockWriteAudit) invocationsDone() bool {
+	if len(mmWriteAudit.expectations) == 0 && mmWriteAudit.defaultExpectation == nil && mmWriteAudit.mock.funcWriteAudit == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmWriteAudit.mock.afterWriteAuditCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmWriteAudit.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// WriteAudit implements mm_usecase.adminRepository
+func (mmWriteAudit *AdminRepositoryMock) WriteAudit(ctx context.Context, tx db.Executor, e models.AuditEntry) (err error) {
+	mm_atomic.AddUint64(&mmWriteAudit.beforeWriteAuditCounter, 1)
+	defer mm_atomic.AddUint64(&mmWriteAudit.afterWriteAuditCounter, 1)
+
+	mmWriteAudit.t.Helper()
+
+	if mmWriteAudit.inspectFuncWriteAudit != nil {
+		mmWriteAudit.inspectFuncWriteAudit(ctx, tx, e)
+	}
+
+	mm_params := AdminRepositoryMockWriteAuditParams{ctx, tx, e}
+
+	// Record call args
+	mmWriteAudit.WriteAuditMock.mutex.Lock()
+	mmWriteAudit.WriteAuditMock.callArgs = append(mmWriteAudit.WriteAuditMock.callArgs, &mm_params)
+	mmWriteAudit.WriteAuditMock.mutex.Unlock()
+
+	for _, e := range mmWriteAudit.WriteAuditMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.err
+		}
+	}
+
+	if mmWriteAudit.WriteAuditMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmWriteAudit.WriteAuditMock.defaultExpectation.Counter, 1)
+		mm_want := mmWriteAudit.WriteAuditMock.defaultExpectation.params
+		mm_want_ptrs := mmWriteAudit.WriteAuditMock.defaultExpectation.paramPtrs
+
+		mm_got := AdminRepositoryMockWriteAuditParams{ctx, tx, e}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmWriteAudit.t.Errorf("AdminRepositoryMock.WriteAudit got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmWriteAudit.WriteAuditMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.tx != nil && !minimock.Equal(*mm_want_ptrs.tx, mm_got.tx) {
+				mmWriteAudit.t.Errorf("AdminRepositoryMock.WriteAudit got unexpected parameter tx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmWriteAudit.WriteAuditMock.defaultExpectation.expectationOrigins.originTx, *mm_want_ptrs.tx, mm_got.tx, minimock.Diff(*mm_want_ptrs.tx, mm_got.tx))
+			}
+
+			if mm_want_ptrs.e != nil && !minimock.Equal(*mm_want_ptrs.e, mm_got.e) {
+				mmWriteAudit.t.Errorf("AdminRepositoryMock.WriteAudit got unexpected parameter e, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmWriteAudit.WriteAuditMock.defaultExpectation.expectationOrigins.originE, *mm_want_ptrs.e, mm_got.e, minimock.Diff(*mm_want_ptrs.e, mm_got.e))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmWriteAudit.t.Errorf("AdminRepositoryMock.WriteAudit got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmWriteAudit.WriteAuditMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmWriteAudit.WriteAuditMock.defaultExpectation.results
+		if mm_results == nil {
+			mmWriteAudit.t.Fatal("No results are set for the AdminRepositoryMock.WriteAudit")
+		}
+		return (*mm_results).err
+	}
+	if mmWriteAudit.funcWriteAudit != nil {
+		return mmWriteAudit.funcWriteAudit(ctx, tx, e)
+	}
+	mmWriteAudit.t.Fatalf("Unexpected call to AdminRepositoryMock.WriteAudit. %v %v %v", ctx, tx, e)
+	return
+}
+
+// WriteAuditAfterCounter returns a count of finished AdminRepositoryMock.WriteAudit invocations
+func (mmWriteAudit *AdminRepositoryMock) WriteAuditAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmWriteAudit.afterWriteAuditCounter)
+}
+
+// WriteAuditBeforeCounter returns a count of AdminRepositoryMock.WriteAudit invocations
+func (mmWriteAudit *AdminRepositoryMock) WriteAuditBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmWriteAudit.beforeWriteAuditCounter)
+}
+
+// Calls returns a list of arguments used in each call to AdminRepositoryMock.WriteAudit.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmWriteAudit *mAdminRepositoryMockWriteAudit) Calls() []*AdminRepositoryMockWriteAuditParams {
+	mmWriteAudit.mutex.RLock()
+
+	argCopy := make([]*AdminRepositoryMockWriteAuditParams, len(mmWriteAudit.callArgs))
+	copy(argCopy, mmWriteAudit.callArgs)
+
+	mmWriteAudit.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockWriteAuditDone returns true if the count of the WriteAudit invocations corresponds
+// the number of defined expectations
+func (m *AdminRepositoryMock) MinimockWriteAuditDone() bool {
+	if m.WriteAuditMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.WriteAuditMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.WriteAuditMock.invocationsDone()
+}
+
+// MinimockWriteAuditInspect logs each unmet expectation
+func (m *AdminRepositoryMock) MinimockWriteAuditInspect() {
+	for _, e := range m.WriteAuditMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to AdminRepositoryMock.WriteAudit at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterWriteAuditCounter := mm_atomic.LoadUint64(&m.afterWriteAuditCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.WriteAuditMock.defaultExpectation != nil && afterWriteAuditCounter < 1 {
+		if m.WriteAuditMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to AdminRepositoryMock.WriteAudit at\n%s", m.WriteAuditMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to AdminRepositoryMock.WriteAudit at\n%s with params: %#v", m.WriteAuditMock.defaultExpectation.expectationOrigins.origin, *m.WriteAuditMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcWriteAudit != nil && afterWriteAuditCounter < 1 {
+		m.t.Errorf("Expected call to AdminRepositoryMock.WriteAudit at\n%s", m.funcWriteAuditOrigin)
+	}
+
+	if !m.WriteAuditMock.invocationsDone() && afterWriteAuditCounter > 0 {
+		m.t.Errorf("Expected %d calls to AdminRepositoryMock.WriteAudit at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.WriteAuditMock.expectedInvocations), m.WriteAuditMock.expectedInvocationsOrigin, afterWriteAuditCounter)
+	}
+}
+
 // MinimockFinish checks that all mocked methods have been called the expected number of times
 func (m *AdminRepositoryMock) MinimockFinish() {
 	m.finishOnce.Do(func() {
 		if !m.minimockDone() {
+			m.MinimockAuditSnapshotInspect()
+
 			m.MinimockHideSightingInspect()
+
+			m.MinimockListAuditInspect()
 
 			m.MinimockListClarificationsInspect()
 
 			m.MinimockRestoreSightingPhotoInspect()
 
 			m.MinimockSetClarificationStatusInspect()
+
+			m.MinimockWriteAuditInspect()
 		}
 	})
 }
@@ -1666,8 +2855,11 @@ func (m *AdminRepositoryMock) MinimockWait(timeout mm_time.Duration) {
 func (m *AdminRepositoryMock) minimockDone() bool {
 	done := true
 	return done &&
+		m.MinimockAuditSnapshotDone() &&
 		m.MinimockHideSightingDone() &&
+		m.MinimockListAuditDone() &&
 		m.MinimockListClarificationsDone() &&
 		m.MinimockRestoreSightingPhotoDone() &&
-		m.MinimockSetClarificationStatusDone()
+		m.MinimockSetClarificationStatusDone() &&
+		m.MinimockWriteAuditDone()
 }

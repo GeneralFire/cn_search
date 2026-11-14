@@ -47,8 +47,10 @@ func (u *CameraRequests) Vote(ctx context.Context, o models.VoteCameraRequestOpt
 // SetStatus — сменить статус заявки (транзакция на запись).
 func (u *CameraRequests) SetStatus(ctx context.Context, id string, st models.CameraRequestStatus) (c models.CameraRequest, err error) {
 	err = u.tx.InWriteTx(ctx, func(ctx context.Context, tx db.Executor) error {
-		c, err = u.repo.SetCameraRequestStatus(ctx, tx, id, st)
-		return err
+		return audited(ctx, u.repo, tx, models.AuditSetCameraStatus, models.AuditTargetCameraRequest, id, func() (err error) {
+			c, err = u.repo.SetCameraRequestStatus(ctx, tx, id, st)
+			return err
+		})
 	})
 	return c, err
 }
