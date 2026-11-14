@@ -432,4 +432,8 @@ export const zh: Dict = {
   "pwa.label": "应用",
   "pwa.install": "安装应用",
   "pwa.hint": "添加到主屏幕",
+
+  // 摄像头申请页面的坐标地址查询（geocode.ts）。
+  "cameras.addressLoading": "正在查询地址…",
+  "cameras.osmCredit": "地址：© OpenStreetMap contributors",
 };

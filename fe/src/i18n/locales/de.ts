@@ -431,4 +431,8 @@ export const de: Dict = {
   "pwa.label": "App",
   "pwa.install": "App installieren",
   "pwa.hint": "Zum Startbildschirm hinzufügen",
+
+  // Adresse anhand der Koordinaten auf der Kamera-Antragsseite (geocode.ts).
+  "cameras.addressLoading": "Adresse wird ermittelt…",
+  "cameras.osmCredit": "Adresse: © OpenStreetMap contributors",
 };

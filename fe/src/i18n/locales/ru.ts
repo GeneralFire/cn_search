@@ -431,4 +431,8 @@ export const ru = {
   "pwa.label": "Приложение",
   "pwa.install": "Установить приложение",
   "pwa.hint": "Добавить на домашний экран",
+
+  // Адрес по координатам на странице заявки на камеру (geocode.ts).
+  "cameras.addressLoading": "определяем адрес…",
+  "cameras.osmCredit": "Адрес: © OpenStreetMap contributors",
 } as const;

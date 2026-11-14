@@ -431,4 +431,8 @@ export const uk: Dict = {
   "pwa.label": "Застосунок",
   "pwa.install": "Встановити застосунок",
   "pwa.hint": "Додати на головний екран",
+
+  // Адреса за координатами на сторінці заявки на камеру (geocode.ts).
+  "cameras.addressLoading": "визначаємо адресу…",
+  "cameras.osmCredit": "Адреса: © OpenStreetMap contributors",
 };

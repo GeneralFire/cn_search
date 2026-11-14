@@ -18,6 +18,7 @@ import { ATTRIBUTION, MAX_ZOOM, TILE_URL } from "./map";
 import { t, type Key } from "./i18n/i18n";
 import { escapeHtml, formatDate } from "./ui";
 import { mountSettings } from "./settings";
+import { createAddressLookup } from "./geocode";
 
 const PAGE_SIZE = 100;
 /** Вид карты, пока заявок нет: Европа целиком. */
@@ -45,6 +46,7 @@ export const cameraStatusHtml = (s: CameraStatus) =>
 
 let L: typeof import("leaflet") | null = null;
 let page: AbortController | null = null; // жизнь страницы: отмена — уход со страницы
+let addressLookup: ReturnType<typeof createAddressLookup> | null = null; // адрес по точке (geocode.ts)
 
 const state = {
   items: [] as CameraRequest[],
@@ -54,6 +56,7 @@ const state = {
   markers: new Map<string, Marker>(),
   picking: false,
   pick: null as Marker | null,
+  addressManual: false, // адрес правили руками — автозаполнение его не трогает
 };
 
 let $main: HTMLElement;
@@ -62,6 +65,7 @@ let $main: HTMLElement;
 export function leaveCamerasPage(): void {
   page?.abort();
   page = null;
+  addressLookup?.cancel();
 }
 
 /** Рисует страницу заявок в root (заново при каждом входе — данные свежие). */
@@ -69,7 +73,7 @@ export function renderCamerasPage(root: HTMLElement): void {
   leaveCamerasPage();
   page = new AbortController();
   const signal = page.signal;
-  Object.assign(state, { items: [], total: 0, next: null, map: null, markers: new Map(), picking: false, pick: null });
+  Object.assign(state, { items: [], total: 0, next: null, map: null, markers: new Map(), picking: false, pick: null, addressManual: false });
 
   root.innerHTML = `
     <header class="cam-bar">
@@ -95,8 +99,9 @@ export function renderCamerasPage(root: HTMLElement): void {
         <h2 class="cam-form__title">${t("cameras.formTitle")}</h2>
         <p class="cam-form__point" aria-live="polite"></p>
         <label class="cam-field">
-          <span>${t("cameras.address")} <small>${t("cameras.optional")}</small></span>
+          <span>${t("cameras.address")} <small>${t("cameras.optional")}</small> <small class="cam-addr-busy" hidden>${t("cameras.addressLoading")}</small></span>
           <input name="address" maxlength="300" autocomplete="street-address" placeholder="${escapeHtml(t("cameras.addressPlaceholder"))}" />
+          <small class="cam-field__hint"><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">${t("cameras.osmCredit")}</a></small>
         </label>
         <label class="cam-field">
           <span>${t("cameras.reason")}</span>
@@ -132,6 +137,18 @@ export function renderCamerasPage(root: HTMLElement): void {
   $main.querySelector(".cam-propose")!.addEventListener("click", () => setPicking(true));
   $main.querySelector(".cam-cancel")!.addEventListener("click", () => setPicking(false));
   $main.querySelector(".cam-locate")!.addEventListener("click", locate);
+  $main.querySelector<HTMLInputElement>('.cam-form [name="address"]')!.addEventListener("input", () => {
+    state.addressManual = true; // ручной ввод — дальше адрес не подставляем
+  });
+  addressLookup = createAddressLookup({
+    onLoading: (busy) => {
+      if (!signal.aborted) $main.querySelector<HTMLElement>(".cam-addr-busy")!.hidden = !busy;
+    },
+    onAddress: (addr) => {
+      if (signal.aborted || !addr || state.addressManual) return;
+      $main.querySelector<HTMLInputElement>('.cam-form [name="address"]')!.value = addr;
+    },
+  });
   $main.querySelector(".cam-form")!.addEventListener("submit", (e) => {
     e.preventDefault();
     void submit();
@@ -240,6 +257,8 @@ function setPicking(on: boolean): void {
   } else {
     state.pick?.remove();
     state.pick = null;
+    addressLookup?.cancel();
+    state.addressManual = false;
     $main.querySelector<HTMLFormElement>(".cam-form")!.reset();
   }
 }
@@ -253,11 +272,22 @@ function placePick(ll: LatLng): void {
       zIndexOffset: 2000,
       title: t("cameras.pickMarker"),
     }).addTo(state.map);
-    state.pick.on("dragend", updatePointText);
+    state.pick.on("dragend", () => {
+      updatePointText();
+      requestAddress(state.pick!.getLatLng());
+    });
   } else {
     state.pick.setLatLng(ll);
   }
   updatePointText();
+  requestAddress(ll);
+}
+
+/** Адрес по новой точке: прежнее автозаполнение стираем (оно от другой точки), ручной ввод не трогаем. */
+function requestAddress(ll: LatLng): void {
+  if (!addressLookup) return;
+  if (!state.addressManual) $main.querySelector<HTMLInputElement>('.cam-form [name="address"]')!.value = "";
+  addressLookup.request(ll.lat, ll.lng);
 }
 
 function updatePointText(): void {

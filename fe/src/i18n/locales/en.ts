@@ -431,4 +431,8 @@ export const en: Dict = {
   "pwa.label": "App",
   "pwa.install": "Install app",
   "pwa.hint": "Add to home screen",
+
+  // Address from coordinates on the camera request page (geocode.ts).
+  "cameras.addressLoading": "looking up address…",
+  "cameras.osmCredit": "Address: © OpenStreetMap contributors",
 };
