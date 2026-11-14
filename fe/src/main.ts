@@ -23,6 +23,9 @@ import {
   flagHtml, gridColumns, homeMarket, marketName, setTabInUrl, tabFromUrl, tabsHtml, visibleTabs, type Market,
 } from "./home";
 import { activeCount, filtersRequest, mountFilters } from "./filters";
+import { registerPwa } from "./pwa";
+
+registerPwa();
 
 const PAGE_SIZE = 35; // кратно 5 и 7 — по числу колонок сетки
 const SKELETON_CARDS = 7; // скелетон первой страницы ленты — один ряд при широком экране

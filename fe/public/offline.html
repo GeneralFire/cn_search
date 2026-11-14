@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="color-scheme" content="light dark" />
+<title>Нет соединения</title>
+<style>
+  :root { --bg:#f5f6f8; --text:#14171a; --muted:#626a77; --accent:#245ce8; --on-accent:#fff; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0f1115; --text:#eef0f3; --muted:#959dab; --accent:#6b95ff; --on-accent:#0f1115; } }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:grid; place-items:center; padding:24px; text-align:center;
+    background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  .logo { display:inline-grid; grid-template-rows:1fr 1fr; align-items:center; justify-items:center; width:104px; height:88px;
+    padding:6px 8px 4px; background:#fff; color:#111; border:4px solid #1a1a1a; border-radius:12px;
+    font-family:"Roboto Mono",ui-monospace,Menlo,monospace; font-weight:800; line-height:1; font-size:1.2rem; letter-spacing:.04em; }
+  .logo span:first-child { width:100%; border-bottom:3px solid #1a1a1a; padding-bottom:4px; }
+  h1 { margin:24px 0 8px; font-size:1.5rem; }
+  p { margin:0 0 24px; color:var(--muted); }
+  button { font:inherit; font-weight:600; padding:12px 28px; border:0; border-radius:12px; cursor:pointer;
+    background:var(--accent); color:var(--on-accent); }
+  button:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+</style>
+</head>
+<body>
+  <main>
+    <div class="logo" aria-hidden="true"><span>А123</span><span>ВС77</span></div>
+    <h1>Нет соединения</h1>
+    <p>Проверьте интернет и попробуйте ещё раз.</p>
+    <button type="button" onclick="location.reload()">Повторить</button>
+  </main>
+</body>
+</html>

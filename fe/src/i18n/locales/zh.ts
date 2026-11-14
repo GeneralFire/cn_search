@@ -427,4 +427,9 @@ export const zh: Dict = {
   "export.button": "下载",
   "export.csv": "CSV",
   "export.geojson": "GeoJSON",
+
+  // Установка PWA (pwa-install.ts).
+  "pwa.label": "应用",
+  "pwa.install": "安装应用",
+  "pwa.hint": "添加到主屏幕",
 };

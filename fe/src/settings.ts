@@ -7,6 +7,7 @@ import { adminSettingsHtml, bindAdminSettings } from "./adminmode";
 import { getTheme, setTheme, THEMES, type Theme } from "./theme";
 import { mountAccountSection, mountProBadge } from "./auth";
 import { mountApiTokenSection } from "./apitoken-settings";
+import { mountInstallSection } from "./pwa-install";
 
 // ---------- Секция «Тема» (переключатель auto/light/dark) ----------
 
@@ -77,6 +78,7 @@ export function mountSettings(root: HTMLElement): void {
         ${themeSectionHtml(id)}
         <div class="st-acc"></div>
         <div class="stk"></div>
+        <div class="pwa-install" hidden></div>
       </div>
     </div>`;
 
@@ -142,5 +144,6 @@ export function mountSettings(root: HTMLElement): void {
   // Секция «Аккаунт» и значок PRO у логотипа — auth.ts.
   mountAccountSection($panel.querySelector<HTMLElement>(".st-acc")!, () => setOpen(false));
   mountProBadge($box);
+  mountInstallSection($panel.querySelector<HTMLElement>(".pwa-install")!);
   mountApiTokenSection($panel.querySelector<HTMLElement>(".stk")!);
 }

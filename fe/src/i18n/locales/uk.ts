@@ -426,4 +426,9 @@ export const uk: Dict = {
   "export.button": "Завантажити",
   "export.csv": "CSV",
   "export.geojson": "GeoJSON",
+
+  // Установка PWA (pwa-install.ts).
+  "pwa.label": "Застосунок",
+  "pwa.install": "Встановити застосунок",
+  "pwa.hint": "Додати на головний екран",
 };

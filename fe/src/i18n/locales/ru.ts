@@ -426,4 +426,9 @@ export const ru = {
   "export.button": "Скачать",
   "export.csv": "CSV",
   "export.geojson": "GeoJSON",
+
+  // Установка PWA (pwa-install.ts).
+  "pwa.label": "Приложение",
+  "pwa.install": "Установить приложение",
+  "pwa.hint": "Добавить на домашний экран",
 } as const;

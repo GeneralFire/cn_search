@@ -426,4 +426,9 @@ export const de: Dict = {
   "export.button": "Herunterladen",
   "export.csv": "CSV",
   "export.geojson": "GeoJSON",
+
+  // Установка PWA (pwa-install.ts).
+  "pwa.label": "App",
+  "pwa.install": "App installieren",
+  "pwa.hint": "Zum Startbildschirm hinzufügen",
 };

@@ -1,0 +1,7 @@
+.pwa-install { margin-top: 12px; }
+.pwa-install__btn {
+  font: inherit; font-size: 0.85rem; font-weight: 600; padding: 6px 12px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent);
+}
+.pwa-install__btn:hover { background: var(--accent); color: var(--on-accent); }
+.pwa-install__btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
