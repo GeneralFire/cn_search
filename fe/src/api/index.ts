@@ -97,7 +97,7 @@ export async function search(req: CarsearchSearchRequest, signal?: AbortSignal):
     ({ data } = await api.carsearchCarSearchService.carSearchServiceSearch(req, { signal }));
   } catch (e) {
     if (signal?.aborted) throw e;
-    throw new ApiError(await errorMessage(e));
+    throw new ApiError(await errorMessage(e), e instanceof Response ? e.status : 0);
   }
   // proto3 JSON не передаёт нулевые значения: total = 0 и пустой items приходят как «нет поля».
   return {

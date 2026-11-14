@@ -2,6 +2,7 @@
 // с admin-token), фильтр по статусу, «Загрузить ещё» и смена статуса (select → SetCameraRequestStatus;
 // на карте /cameras маркер получает цвет нового статуса).
 import "./cameras.css";
+import { showErrorIn } from "./states";
 import {
   ApiError,
   CAMERA_STATUSES,
@@ -95,9 +96,7 @@ async function render(main: HTMLElement, onDenied: () => void): Promise<void> {
     } catch (e) {
       if (my !== seq || denied(e)) return;
       if (reset) $body.innerHTML = "";
-      $note.hidden = false;
-      $note.className = "adm-note is-error";
-      $note.textContent = `${t("error.loadFailed")}: ${e instanceof ApiError ? e.message : t("error.serverDown")}`;
+      showErrorIn($note, e, () => void load(reset));
     }
     $more.hidden = next === null;
     $btn.disabled = false;

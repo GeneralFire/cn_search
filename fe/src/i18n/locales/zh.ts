@@ -390,4 +390,14 @@ export const zh: Dict = {
   "notFound.title": "页面未找到",
   "notFound.text": "该地址不存在——链接可能已过期或输入有误。",
   "notFound.home": "← 返回首页",
+  // Состояния блоков: пусто / ошибка / офлайн (states.ts)
+  "states.offline": "没有网络连接",
+  "states.offlineHint": "请检查网络——恢复后将自动重试。",
+  "states.network": "服务器不可用",
+  "states.networkHint": "无法连接服务器，请稍后再试。",
+  "states.server": "服务器错误",
+  "states.serverHint": "服务器出现问题，请重试。",
+  "states.exhausted": "请求次数已用完",
+  "states.exhaustedHint": "令牌配额已用完——请充值或稍后再试。",
+  "states.retry": "重试",
 };

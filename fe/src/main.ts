@@ -14,6 +14,7 @@ import { renderUploadPage } from "./upload";
 import { cardHtml, escapeHtml, formatDate, icon, plateHtml } from "./ui";
 import { t, tp } from "./i18n/i18n";
 import { highlightPlate } from "./searchkey";
+import { bindRetry, cardSkeletonHtml, emptyStateHtml, errorStateHtml } from "./states";
 import { mountSettings } from "./settings";
 import { initHoverPreview } from "./hoverpreview";
 import { footerHtml } from "./footer";
@@ -23,6 +24,7 @@ import {
 } from "./home";
 
 const PAGE_SIZE = 35; // кратно 5 и 7 — по числу колонок сетки
+const SKELETON_CARDS = 7; // скелетон первой страницы ленты — один ряд при широком экране
 const DEBOUNCE_MS = 250;
 
 // ---------------------------------------------------------------------------
@@ -128,7 +130,8 @@ const hasQuery = () => $plate.value.trim() !== "";
 function render(): void {
   const shown = state.cars.size + state.skip;
   const home = !hasQuery();
-  $fy.hidden = !home || forYou.cars.length === 0;
+  // «Для вас» скрыт, если пуст; при его ошибке — виден, пока лента не упала тоже (одна ошибка на экран).
+  $fy.hidden = !home || (forYou.cars.length === 0 && !forYou.loading && !(forYou.failed && !state.failed));
   $tabs.hidden = !home;
   $title.textContent = home ? marketName(state.tab) : t("results.title");
   $count.textContent = state.total
@@ -136,7 +139,8 @@ function render(): void {
     : "";
 
   const hasMore = state.nextOffset !== null;
-  $more.hidden = !hasMore && !state.failed;
+  // Первая страница не пришла — «Повторить» уже в блоке ошибки ленты, второй кнопки не нужно.
+  $more.hidden = (!hasMore && !state.failed) || (state.failed && state.cars.size === 0);
   $moreBtn.disabled = state.loading;
   $moreBtn.classList.toggle("is-loading", state.loading);
   $moreBtn.textContent = t(state.loading ? "more.loading" : state.failed ? "more.retry" : "more.load");
@@ -154,6 +158,7 @@ async function loadMore(): Promise<void> {
   const ctrl = (state.ctrl = new AbortController());
   state.loading = true;
   state.failed = false;
+  if (state.cars.size === 0) $grid.innerHTML = cardSkeletonHtml(SKELETON_CARDS);
   render();
 
   try {
@@ -173,6 +178,7 @@ async function loadMore(): Promise<void> {
     if (gen !== state.generation) return; // пока грузили, запрос поменялся
 
     const startIndex = state.cars.size;
+    if (startIndex === 0) $grid.innerHTML = ""; // убрать скелетон
     page.items.forEach((c) => (state.cars.set(c.id, c), known.set(c.id, c)));
     $grid.insertAdjacentHTML("beforeend", page.items.map((c, i) => cardHtml(c, i)).join(""));
     if (!home) highlightCards(startIndex, page.items);
@@ -184,9 +190,9 @@ async function loadMore(): Promise<void> {
     if (ctrl.signal.aborted || gen !== state.generation) return;
     state.failed = true;
     if (state.cars.size === 0) {
-      $grid.innerHTML = `<div class="empty"><strong>${t("error.loadFailed")}</strong>${escapeHtml(
-        e instanceof ApiError ? e.message : t("error.serverDown")
-      )}</div>`;
+      // Первая страница не пришла — блок ошибки с «Повторить» (и автоповтором при возврате сети).
+      $grid.innerHTML = errorStateHtml(e);
+      bindRetry($grid, retryFeed);
     }
   } finally {
     if (gen === state.generation) {
@@ -221,12 +227,19 @@ function suggestionsHtml(cars: Car[]): string {
 
 function renderEmpty(suggestions: Car[] = []): void {
   if (hasQuery()) {
-    $grid.innerHTML = `<div class="empty"><strong>${t("empty.title")}</strong>${t("empty.hint")}${suggestionsHtml(suggestions)}</div>`;
+    $grid.innerHTML = emptyStateHtml(t("empty.title"), t("empty.hint"), suggestionsHtml(suggestions));
   } else if (state.skip > 0) {
     $grid.innerHTML = `<p class="feed__note">${t("homeTabs.allAbove")}</p>`;
   } else {
-    $grid.innerHTML = `<div class="empty"><strong>${t("homeTabs.emptyTitle")}</strong>${t("homeTabs.emptyHint")}</div>`;
+    $grid.innerHTML = emptyStateHtml(t("homeTabs.emptyTitle"), t("homeTabs.emptyHint"));
   }
+}
+
+/** «Повторить» в блоке ошибки (и автоповтор при возврате сети): блок «для вас», если он не загрузился,
+ *  грузится заново вместе с лентой — иначе первые карточки ленты повторили бы его. */
+function retryFeed(): void {
+  if (!hasQuery() && forYou.cars.length === 0) forYou.started = false;
+  newSearch();
 }
 
 function newSearch(): void {
@@ -254,6 +267,8 @@ function newSearch(): void {
 /** Блок «для вас»: первые 2 ряда номеров рынка языка; ready — сколько карточек показано. */
 const forYou = {
   started: false,
+  loading: false,
+  failed: false,
   cars: [] as Car[],
   ready: Promise.resolve(0),
 };
@@ -262,7 +277,10 @@ const forYou = {
 function loadForYou(): void {
   if (forYou.started) return;
   forYou.started = true;
+  forYou.failed = false;
+  forYou.loading = true;
   $fy.hidden = false; // чтобы сетка получила ширину и колонки
+  $fyGrid.innerHTML = cardSkeletonHtml(Math.min(2 * gridColumns($fyGrid), 14));
   const limit = Math.min(2 * gridColumns($fyGrid), 100);
   forYou.ready = search({ market: homeMarket(), offset: 0, limit })
     .then((page) => {
@@ -271,8 +289,18 @@ function loadForYou(): void {
       $fyGrid.innerHTML = page.items.map((c, i) => cardHtml(c, i)).join("");
       return page.items.length;
     })
-    .catch(() => 0) // не загрузился — блока нет, лента вкладки начинается с начала
-    .finally(render);
+    .catch((e) => {
+      // Не загрузился — лента вкладки начинается с начала; в блоке — ошибка с «Повторить»
+      // (видна, только если сама лента загрузилась, — иначе ошибку показывает лента).
+      forYou.failed = true;
+      $fyGrid.innerHTML = errorStateHtml(e, { compact: true });
+      bindRetry($fyGrid, retryFeed);
+      return 0;
+    })
+    .finally(() => {
+      forYou.loading = false;
+      render();
+    });
 }
 
 function renderTabs(): void {

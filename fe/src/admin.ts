@@ -15,6 +15,7 @@ import {
   type Complaint,
   type ComplaintStatus,
 } from "./api";
+import { showErrorIn } from "./states";
 import { enterAdminMode, exitAdminMode, shieldIcon } from "./adminmode";
 import { adminPath } from "./router";
 import { adminTabs, registerAdminTab } from "./admintabs";
@@ -232,9 +233,7 @@ async function load(reset: boolean): Promise<void> {
   } catch (e) {
     if (my !== state.seq || isDenied(e)) return;
     if (reset) $main.querySelector("tbody")!.innerHTML = "";
-    $note.hidden = false;
-    $note.className = "adm-note is-error";
-    $note.textContent = `${t("error.loadFailed")}: ${e instanceof ApiError ? e.message : t("error.serverDown")}`;
+    showErrorIn($note, e, () => void load(reset));
   }
   $main.querySelector(".adm-count")!.textContent = state.items.length
     ? t("admin.shown", { shown: state.items.length, total: state.total })

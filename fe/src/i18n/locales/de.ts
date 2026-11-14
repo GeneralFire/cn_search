@@ -389,4 +389,14 @@ export const de: Dict = {
   "notFound.title": "Seite nicht gefunden",
   "notFound.text": "Diese Adresse gibt es nicht – der Link ist vielleicht veraltet oder falsch geschrieben.",
   "notFound.home": "← Zur Startseite",
+  // Состояния блоков: пусто / ошибка / офлайн (states.ts)
+  "states.offline": "Keine Internetverbindung",
+  "states.offlineHint": "Prüfen Sie das Netzwerk — wir versuchen es automatisch erneut, sobald es wieder da ist.",
+  "states.network": "Server nicht erreichbar",
+  "states.networkHint": "Der Server antwortet nicht. Bitte in einer Minute erneut versuchen.",
+  "states.server": "Serverfehler",
+  "states.serverHint": "Auf dem Server ist etwas schiefgelaufen. Bitte erneut versuchen.",
+  "states.exhausted": "Anfragelimit erreicht",
+  "states.exhaustedHint": "Das Token-Kontingent ist aufgebraucht — aufladen oder später erneut versuchen.",
+  "states.retry": "Erneut versuchen",
 };

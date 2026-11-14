@@ -389,4 +389,14 @@ export const en: Dict = {
   "notFound.title": "Page not found",
   "notFound.text": "This address doesn't exist — the link may be outdated or mistyped.",
   "notFound.home": "← Home",
+  // Состояния блоков: пусто / ошибка / офлайн (states.ts)
+  "states.offline": "No internet connection",
+  "states.offlineHint": "Check your network — we'll retry automatically once it's back.",
+  "states.network": "Server unavailable",
+  "states.networkHint": "Couldn't reach the server. Please try again in a minute.",
+  "states.server": "Server error",
+  "states.serverHint": "Something went wrong on the server. Please try again.",
+  "states.exhausted": "Request limit reached",
+  "states.exhaustedHint": "Your token quota is used up — top it up or try again later.",
+  "states.retry": "Retry",
 };

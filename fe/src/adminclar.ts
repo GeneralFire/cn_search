@@ -1,6 +1,7 @@
 // Вкладка «Уточнения» админ-панели /admin: уточнения номеров с фильтром по статусу (по умолчанию —
 // непринятые), «Загрузить ещё», «Принять / Отклонить» (кнопки — точка расширения adminpanels.ts).
 import { ApiError, listClarifications, type Clarification, type ClarificationStatus } from "./api";
+import { showErrorIn } from "./states";
 import { registerAdminTab } from "./admintabs";
 import { adminReady, isAdminMode } from "./adminmode";
 import { bindClarificationControls, clarificationControlsHtml, clarificationStatusHtml } from "./adminpanels";
@@ -88,9 +89,7 @@ async function render(main: HTMLElement, onDenied: () => void): Promise<void> {
       if (my !== seq) return;
       if (e instanceof ApiError && e.status === 403) return onDenied();
       if (reset) $body.innerHTML = "";
-      $note.hidden = false;
-      $note.className = "adm-note is-error";
-      $note.textContent = `${t("error.loadFailed")}: ${e instanceof ApiError ? e.message : t("error.serverDown")}`;
+      showErrorIn($note, e, () => void load(reset));
     }
     $more.hidden = next === null;
   };

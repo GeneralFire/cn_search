@@ -2,6 +2,7 @@
 // и «Просмотры» (общий журнал открытий страниц номеров с фильтром по токену). Подключаются в реестр
 // admintabs.ts; оболочку вкладок и вход рисует admin.ts.
 import "./admin-tokens.css";
+import { showErrorIn } from "./states";
 import {
   ApiError,
   createApiToken,
@@ -108,9 +109,7 @@ function renderTokens($main: HTMLElement, onDenied: OnDenied): void {
       }
     } catch (e) {
       if (my !== seq || onDenied(e)) return;
-      $note.hidden = false;
-      $note.className = "adm-note is-error";
-      $note.textContent = `${t("error.loadFailed")}: ${errText(e)}`;
+      showErrorIn($note, e, () => void load(reset));
     }
     $more.hidden = next === null;
   };
@@ -268,9 +267,7 @@ function renderViews($box: HTMLElement, onDenied: OnDenied, tokenId: string, tok
       }
     } catch (e) {
       if (my !== seq || onDenied(e)) return;
-      $note.hidden = false;
-      $note.className = "adm-note is-error";
-      $note.textContent = `${t("error.loadFailed")}: ${errText(e)}`;
+      showErrorIn($note, e, () => void load(reset));
     }
     $more.hidden = next === null;
   };

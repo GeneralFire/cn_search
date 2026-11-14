@@ -14,6 +14,7 @@ import { adminReady } from "./adminmode";
 import { openClarify } from "./clarify";
 import { clarificationsHtml, clarifiedMarkHtml } from "./clarifications";
 import { bindShare, shareButtonHtml } from "./share";
+import { bindRetry, emptyStateHtml, errorStateHtml } from "./states";
 
 /** Сколько карточек показывать в «Свежих фиксациях» (ручка отдаёт не больше). */
 const SEE_ALSO_LIMIT = 21;
@@ -93,11 +94,13 @@ export async function renderPlatePage(root: HTMLElement, id: string, handlers: Q
       $main.innerHTML = tokenMsg;
       return;
     }
-    $main.innerHTML = `
-      <div class="empty pp-empty">
-        <strong>${t(notFound ? "plate.notFound" : "error.loadFailed")}</strong>
-        ${notFound ? t("plate.notFoundHint") : escapeHtml(e instanceof ApiError ? e.message : t("error.serverDown"))}
-      </div>`;
+    if (notFound) {
+      $main.innerHTML = `<div class="pp-empty">${emptyStateHtml(t("plate.notFound"), t("plate.notFoundHint"))}</div>`;
+      return;
+    }
+    // Сеть / сервер: блок ошибки с «Повторить» — страница загружается заново.
+    $main.innerHTML = `<div class="pp-empty">${errorStateHtml(e)}</div>`;
+    bindRetry($main, () => void renderPlatePage(root, id, handlers));
   }
 }
 
@@ -235,14 +238,10 @@ async function loadSeeAlso($main: HTMLElement, id: string, signal: AbortSignal):
       ? items.map((c, i) => miniCardHtml(c, i)).join("")
       : `<p class="pp-more__note">${t("seeAlso.none")}</p>`;
     fitPlates($grid);
-  } catch {
+  } catch (e) {
     if (signal.aborted) return;
-    $grid.innerHTML = `
-      <p class="pp-more__note pp-more__note--error">
-        ${t("seeAlso.failed")}
-        <button class="btn btn--ghost" type="button" data-retry>${t("more.retry")}</button>
-      </p>`;
-    $grid.querySelector("[data-retry]")?.addEventListener("click", () => void loadSeeAlso($main, id, signal));
+    $grid.innerHTML = errorStateHtml(e, { compact: true, title: t("seeAlso.failed") });
+    bindRetry($grid, () => void loadSeeAlso($main, id, signal));
   } finally {
     if (!signal.aborted) $grid.removeAttribute("aria-busy");
   }

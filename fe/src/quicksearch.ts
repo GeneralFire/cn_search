@@ -1,6 +1,7 @@
 // Поле поиска в шапке страницы номера: при вводе — выпадающий список номеров с прокруткой
 // и догрузкой страниц. Один номер — одна строка (последняя фиксация из выдачи).
-import { ApiError, search, type Car } from "./api";
+import { search, type Car } from "./api";
+import { errorLine } from "./states";
 import { escapeHtml, formatAgo, icon, plateHtml } from "./ui";
 import { t, tp } from "./i18n/i18n";
 import { highlightPlate, plateSearchKey } from "./searchkey";
@@ -100,7 +101,7 @@ export function mountQuickSearch(root: HTMLElement, h: QuickSearchHandlers): voi
 
   function renderFoot(error = ""): void {
     $foot.innerHTML = error
-      ? `<span class="qs__err">${escapeHtml(error)}</span>`
+      ? `<span class="qs__err">${escapeHtml(error)}</span><button class="qs__retry" type="button" data-qs-retry>${t("states.retry")}</button>`
       : st.loading
         ? `<span class="qs__spinner"></span>${t("qs.searching")}`
         : st.plates.size === 0
@@ -152,7 +153,12 @@ export function mountQuickSearch(root: HTMLElement, h: QuickSearchHandlers): voi
     } catch (e) {
       if (ctrl.signal.aborted || gen !== st.gen) return;
       st.loading = false;
-      renderFoot(e instanceof ApiError ? e.message : t("error.serverDown"));
+      // Кратко и без «rpc error: …»; «Повторить» — та же страница ещё раз.
+      renderFoot(errorLine(e));
+      $foot.querySelector("[data-qs-retry]")?.addEventListener("mousedown", (ev) => {
+        ev.preventDefault(); // не терять фокус поля — иначе выпадашка закроется
+        void loadMore();
+      });
     }
   }
 

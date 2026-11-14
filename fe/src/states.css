@@ -1,0 +1,51 @@
+/* Единые состояния блоков (states.ts): пусто / ошибка / офлайн, скелетон карточек. Цвета — из theme.css. */
+
+.ustate {
+  grid-column: 1 / -1;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--muted);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  overflow-wrap: anywhere;
+}
+.ustate__icon { display: inline-flex; color: var(--muted); margin-bottom: 4px; }
+.ustate--error .ustate__icon { color: var(--danger); }
+.ustate--offline .ustate__icon { color: var(--muted); }
+.ustate__title { color: var(--text); font-size: 1.1rem; }
+.ustate__text { max-width: 46ch; line-height: 1.45; }
+.ustate__retry { margin-top: 10px; font: inherit; font-weight: 600; cursor: pointer; }
+.ustate--error { border-color: color-mix(in srgb, var(--danger) 35%, var(--border)); }
+
+/* Компактный вариант — внутри небольших блоков («Свежие фиксации», подвал выпадашки). */
+.ustate--compact { padding: 20px 16px; gap: 4px; border-width: 1px; }
+.ustate--compact .ustate__icon svg { width: 22px; height: 22px; }
+.ustate--compact .ustate__title { font-size: 1rem; }
+.ustate--compact .ustate__retry { margin-top: 6px; }
+
+/* Скелетон карточки ленты: фото 11:5 и строка адреса, как у .card. */
+.ustate-sk { display: grid; gap: 8px; }
+.ustate-sk__photo { aspect-ratio: 11 / 5; border-radius: var(--radius); }
+.ustate-sk__line { height: 14px; width: 70%; border-radius: 6px; }
+
+@media (max-width: 600px) {
+  .ustate { padding: 32px 16px; }
+  .ustate__text { max-width: none; }
+}
+
+/* Блок «для вас» — flex, а не grid: скелетоны — как карточки, ошибка — на всю ширину. */
+.fy__grid > .ustate-sk {
+  flex: 1 1 calc(max(min(var(--min-card), 100%), (100% - (var(--max-cols) - 1) * var(--gap)) / var(--max-cols)) - 0.05px);
+  min-width: 0;
+}
+.fy__grid > .ustate { flex: 1 1 100%; }
+
+/* Быстрый поиск в шапке: ошибка в подвале выпадашки и «Повторить» справа. */
+.qs__err { flex: 1; min-width: 0; }
+.qs__retry {
+  flex-shrink: 0; font: inherit; font-weight: 600; cursor: pointer;
+  padding: 3px 10px; border-radius: 8px;
+  color: var(--accent); background: transparent; border: 1px solid var(--border);
+}
+.qs__retry:hover { background: var(--accent-soft); border-color: var(--accent); }
