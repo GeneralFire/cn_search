@@ -6,7 +6,6 @@ import (
 	"errors"
 	"image"
 	"image/jpeg"
-	"slices"
 	"testing"
 	"time"
 
@@ -32,18 +31,17 @@ type ingestDeps struct {
 	tx     *dbmocks.ExecutorMock
 	repo   *mocks.IngestRepositoryMock
 	ocr    *mocks.RecognizerMock
-	anon   *mocks.AnonymizerMock
 	photos *mocks.PhotoStorageMock
 }
 
 func newTestIngest(t *testing.T, withTx bool) (*Ingest, ingestDeps) {
-	d := ingestDeps{dbmocks.NewExecutorMock(t), mocks.NewIngestRepositoryMock(t), mocks.NewRecognizerMock(t), mocks.NewAnonymizerMock(t), mocks.NewPhotoStorageMock(t)}
+	d := ingestDeps{dbmocks.NewExecutorMock(t), mocks.NewIngestRepositoryMock(t), mocks.NewRecognizerMock(t), mocks.NewPhotoStorageMock(t)}
 	tr := mocks.NewTransactorMock(t)
 	if withTx {
 		tr.InReadTxMock.Optional().Set(func(ctx context.Context, fn db.TxFunc) error { return fn(ctx, d.tx) })
 		tr.InWriteTxMock.Set(func(ctx context.Context, fn db.TxFunc) error { return fn(ctx, d.tx) })
 	}
-	u := NewIngest(tr, d.repo, d.ocr, d.anon, d.photos)
+	u := NewIngest(tr, d.repo, d.ocr, d.photos)
 	u.now = func() time.Time { return time.Date(2026, 11, 13, 12, 0, 0, 0, time.UTC) }
 	u.newID = func() string { return "id1" }
 	return u, d
@@ -64,15 +62,8 @@ func TestIngest(t *testing.T) {
 		{Raw: "155880", Confidence: 0.39},
 		{Raw: "H311YO797", Confidence: 0.98, BBox: []int{1, 2, 3, 4}},
 	}, nil)
-	// Порядок: распознать → анонимизировать → сохранить; в S3 уходит обработанное фото, не оригинал.
-	var order []string
-	d.ocr.RecognizeMock.Inspect(func(context.Context, []byte) { order = append(order, "recognize") })
-	blurred := testJPEG(t, 3000, 1500)
-	d.anon.AnonymizeMock.Inspect(func(context.Context, []byte) { order = append(order, "anonymize") }).
-		Expect(minimock.AnyContext, photo).Return(blurred, nil)
 	sizes := map[string]int{}
 	d.photos.PutMock.Set(func(_ context.Context, key string, data []byte, ct string) error {
-		order = append(order, "put")
 		cfg, err := jpeg.DecodeConfig(bytes.NewReader(data))
 		if err != nil || ct != "image/jpeg" {
 			t.Errorf("%s: %v %s", key, err, ct)
@@ -102,9 +93,6 @@ func TestIngest(t *testing.T) {
 	if d.repo.CountUploadsAfterCounter() != 2 {
 		t.Errorf("CountUploads вызван %d раз", d.repo.CountUploadsAfterCounter())
 	}
-	if want := []string{"recognize", "anonymize", "put", "put"}; !slices.Equal(order, want) {
-		t.Errorf("порядок вызовов: %v, want %v", order, want)
-	}
 	if sizes["u/id1.jpg"] != photoMaxWidth || sizes["u/id1_thumb.jpg"] != thumbWidth {
 		t.Errorf("размеры: %v", sizes)
 	}
@@ -128,7 +116,6 @@ func TestIngestQuota(t *testing.T) {
 	})
 	d.repo.LockUserMock.Return(nil)
 	d.ocr.RecognizeMock.Return([]models.PlateCandidate{{Raw: "7ABC123", Confidence: 0.9}}, nil)
-	d.anon.AnonymizeMock.Return(testJPEG(t, 10, 10), nil)
 	d.photos.PutMock.Return(nil)
 	if _, err := u.Ingest(context.Background(), models.IngestOpts{Photo: testJPEG(t, 10, 10), User: freeUser}); !errors.As(err, &quota) {
 		t.Errorf("в транзакции: %v", err)
@@ -153,7 +140,6 @@ func TestIngestDefaults(t *testing.T) {
 	photo := testJPEG(t, 100, 50)
 	future := u.now().Add(time.Hour)
 	d.ocr.RecognizeMock.Return([]models.PlateCandidate{{Raw: "7ABC123", Confidence: 0.9}}, nil)
-	d.anon.AnonymizeMock.Return(testJPEG(t, 10, 10), nil)
 	d.photos.PutMock.Return(nil)
 	d.repo.UpsertPlateMock.Expect(minimock.AnyContext, d.tx, models.UpsertPlateOpts{Plate: "7ABC123", Type: "us"}).Return("p1", nil)
 	d.repo.CreateSightingMock.Expect(minimock.AnyContext, d.tx, models.CreateSightingOpts{
@@ -186,22 +172,6 @@ func TestIngestErrors(t *testing.T) {
 	d.ocr.RecognizeMock.Return(nil, models.ErrRecognizerUnavailable)
 	if _, err := u.Ingest(context.Background(), models.IngestOpts{Photo: testJPEG(t, 10, 10), User: proUser}); !errors.Is(err, models.ErrRecognizerUnavailable) {
 		t.Errorf("OCR недоступен: %v", err)
-	}
-
-	// Анонимизация не удалась: фото не сохраняется (у photos нет PutMock — любой Put упадёт), запись в БД не начата.
-	u, d = newTestIngest(t, false)
-	d.ocr.RecognizeMock.Return([]models.PlateCandidate{{Raw: "7ABC123", Confidence: 0.9}}, nil)
-	d.anon.AnonymizeMock.Return(nil, models.ErrRecognizerUnavailable)
-	if _, err := u.Ingest(context.Background(), models.IngestOpts{Photo: testJPEG(t, 10, 10), User: proUser}); !errors.Is(err, models.ErrRecognizerUnavailable) {
-		t.Errorf("анонимизация недоступна: %v", err)
-	}
-
-	// Сервис вернул не картинку — тоже Unavailable, а не сохранение мусора.
-	u, d = newTestIngest(t, false)
-	d.ocr.RecognizeMock.Return([]models.PlateCandidate{{Raw: "7ABC123", Confidence: 0.9}}, nil)
-	d.anon.AnonymizeMock.Return([]byte("garbage"), nil)
-	if _, err := u.Ingest(context.Background(), models.IngestOpts{Photo: testJPEG(t, 10, 10), User: proUser}); !errors.Is(err, models.ErrRecognizerUnavailable) {
-		t.Errorf("мусор вместо фото: %v", err)
 	}
 }
 

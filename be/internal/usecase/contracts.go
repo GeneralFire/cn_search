@@ -10,7 +10,6 @@ package usecase
 //go:generate minimock -i apiTokensRepository -o ./mocks/api_tokens_repository_mock.go -n ApiTokensRepositoryMock -p mocks
 //go:generate minimock -i ingestRepository -o ./mocks/ingest_repository_mock.go -n IngestRepositoryMock -p mocks
 //go:generate minimock -i recognizer -o ./mocks/recognizer_mock.go -n RecognizerMock -p mocks
-//go:generate minimock -i anonymizer -o ./mocks/anonymizer_mock.go -n AnonymizerMock -p mocks
 //go:generate minimock -i photoStorage -o ./mocks/photo_storage_mock.go -n PhotoStorageMock -p mocks
 
 import (
@@ -109,12 +108,6 @@ type ingestRepository interface {
 // Номера — как прочитала модель (латиница, цифры); ошибка связи — models.ErrRecognizerUnavailable.
 type recognizer interface {
 	Recognize(ctx context.Context, photo []byte) ([]models.PlateCandidate, error)
-}
-
-// anonymizer — размытие лиц на фото (реализация — ocr.Client, POST /anonymize); возвращает JPEG.
-// Сбой — models.ErrRecognizerUnavailable (Unavailable): неразмытое фото не сохраняется.
-type anonymizer interface {
-	Anonymize(ctx context.Context, photo []byte) ([]byte, error)
 }
 
 // photoStorage — хранилище фото (реализация — storage.S3).
