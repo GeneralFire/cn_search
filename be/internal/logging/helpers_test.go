@@ -12,7 +12,6 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-type slogT = slog.Logger
 
 func newSlog(w io.Writer) *slog.Logger { return slog.New(slog.NewJSONHandler(w, nil)) }
 
