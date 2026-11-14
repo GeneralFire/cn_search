@@ -4,12 +4,15 @@ import (
 	"context"
 	"crypto/sha256"
 	"crypto/subtle"
+	"encoding/hex"
 	"errors"
+	"net"
 	"net/http"
 	"strings"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 
 	"github.com/GeneralFire/cn_search/be/internal/models"
@@ -102,4 +105,52 @@ func (s *CarSearch) currentUser(ctx context.Context) (models.User, error) {
 		return models.User{}, status.Error(codes.Internal, "не удалось проверить токен")
 	}
 	return u, nil
+}
+
+// RateLimitKey — ключ клиента для ограничения частоты (ratelimit): пользователь по токену
+// (cookie cs_token или Bearer, в том числе cst_), иначе IP. Токен хешируется — в памяти лимитера
+// его нет. IP — последний адрес X-Forwarded-For (его дописывает наш прокси, левые значения
+// подделывает клиент), иначе адрес peer (gRPC; для HTTP его кладёт WithPeerFromRequest).
+func RateLimitKey(ctx context.Context) string {
+	if tok := userToken(ctx); tok != "" {
+		h := sha256.Sum256([]byte(tok))
+		return "u:" + hex.EncodeToString(h[:16])
+	}
+	return "ip:" + clientIP(ctx)
+}
+
+// clientIP — IP клиента: последний непустой адрес X-Forwarded-For, иначе peer; "" — неизвестен.
+func clientIP(ctx context.Context) string {
+	md, _ := metadata.FromIncomingContext(ctx)
+	if xff := md.Get("x-forwarded-for"); len(xff) > 0 {
+		parts := strings.Split(xff[len(xff)-1], ",")
+		for i := len(parts) - 1; i >= 0; i-- {
+			if ip := strings.TrimSpace(parts[i]); ip != "" {
+				return ip
+			}
+		}
+	}
+	if p, ok := peer.FromContext(ctx); ok && p.Addr != nil {
+		if host, _, err := net.SplitHostPort(p.Addr.String()); err == nil {
+			return host
+		}
+		return p.Addr.String()
+	}
+	return ""
+}
+
+// WithPeerFromRequest — HTTP-middleware: кладёт r.RemoteAddr в контекст как gRPC peer, чтобы
+// ручки clay (они вызывают тот же интерсептор) видели адрес клиента так же, как по gRPC.
+func WithPeerFromRequest(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if addr, err := net.ResolveTCPAddr("tcp", r.RemoteAddr); err == nil {
+			r = r.WithContext(peer.NewContext(r.Context(), &peer.Peer{Addr: addr}))
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// IsAdmin — запрос с верным admin-token (ограничение частоты на него не действует).
+func (s *CarSearch) IsAdmin(ctx context.Context) bool {
+	return requireAdmin(ctx, s.adminToken) == nil
 }

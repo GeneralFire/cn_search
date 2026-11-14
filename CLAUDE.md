@@ -49,6 +49,11 @@
   в `api_tokens` — только sha256 подписи и остаток `requests_left`. Токен — cookie `cs_token` или `authorization: Bearer`.
   rpc Get = `usecase.ApiTokens.OpenPlate` (одна InWriteTx): списание + запись в `plate_views`; admin-token квоту не тратит.
   Админка: вкладки «Токены»/«Просмотры» — `fe/src/admin-tokens.ts`, остаток в настройках — `fe/src/apitoken-settings.ts`.
+- Rate limit пишущих ручек (`be/internal/ratelimit`): token bucket в памяти, лимиты — `ratelimit.Limits` (Clarify/Complain 10/мин,
+  SubmitCameraRequest 5/мин, Vote 30/мин, Register 5/ч, Ingest 10/мин). Один unary interceptor на оба транспорта
+  (`grpc.UnaryInterceptor` + clay `desc.Apply(transport.WithUnaryInterceptor)`); ключ — `implementation.RateLimitKey`
+  (хеш токена пользователя, иначе последний X-Forwarded-For, иначе peer; для HTTP peer кладёт `WithPeerFromRequest`).
+  Превышение — ResourceExhausted (HTTP 429 + Retry-After), admin-token не ограничивается.
 - `GET /api/health` — liveness, `GET /api/ready` — readiness (`be/internal/health`: ping БД и HeadBucket S3, таймаут 1 с,
   иначе 503 с причиной); healthcheck `be` в compose — на `/api/ready`. Линтер — `make lint` (golangci-lint в docker,
   `be/.golangci.yml`, версия в Makefile и CI), обновления — `.github/dependabot.yml`.

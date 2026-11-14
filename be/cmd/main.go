@@ -19,6 +19,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-openapi/spec"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/utrack/clay/v3/transport"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
@@ -27,6 +28,7 @@ import (
 	"github.com/GeneralFire/cn_search/be/internal/health"
 	"github.com/GeneralFire/cn_search/be/internal/implementation"
 	"github.com/GeneralFire/cn_search/be/internal/ocr"
+	"github.com/GeneralFire/cn_search/be/internal/ratelimit"
 	"github.com/GeneralFire/cn_search/be/internal/repository"
 	"github.com/GeneralFire/cn_search/be/internal/storage"
 	"github.com/GeneralFire/cn_search/be/internal/usecase"
@@ -134,6 +136,11 @@ func serve(ctx context.Context, log *slog.Logger, cfg config) error {
 		}
 		desc := pb.NewCarSearchServiceServiceDesc(svc)
 
+		// Ограничение частоты пишущих ручек — один интерсептор на оба транспорта: clay вызывает его
+		// из HTTP-ручек (HTTP-заголовки уже в metadata, retry-after уходит в заголовок ответа).
+		limit := ratelimit.Interceptor(ratelimit.New(), ratelimit.Limits, implementation.RateLimitKey, svc.IsAdmin)
+		desc.Apply(transport.WithUnaryInterceptor(limit))
+
 		// HTTP: ручки clay под /api + health + swagger.
 		api := chi.NewRouter()
 		desc.RegisterHTTP(api)
@@ -145,7 +152,7 @@ func serve(ctx context.Context, log *slog.Logger, cfg config) error {
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write(swaggerJSON)
 		})
-		root.Mount(apiPrefix, api)
+		root.Mount(apiPrefix, implementation.WithPeerFromRequest(api))
 
 		httpSrv := &http.Server{
 			Addr:              ":" + cfg.HTTPPort,
@@ -158,7 +165,7 @@ func serve(ctx context.Context, log *slog.Logger, cfg config) error {
 
 		// gRPC — тот же сервис.
 		// Фото в rpc Ingest — до 8 МБ: стандартного предела gRPC (4 МБ) не хватает.
-		grpcSrv := grpc.NewServer(grpc.MaxRecvMsgSize(implementation.MaxPhotoBytes + 1<<20))
+		grpcSrv := grpc.NewServer(grpc.MaxRecvMsgSize(implementation.MaxPhotoBytes+1<<20), grpc.UnaryInterceptor(limit))
 		desc.RegisterGRPC(grpcSrv)
 		reflection.Register(grpcSrv)
 		grpcLis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
