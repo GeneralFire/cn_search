@@ -43,7 +43,7 @@ Open **http://localhost:7173** (from the local network: `http://<your-IP>:7173`)
 | `be` | clay HTTP handlers + gRPC | `127.0.0.1:8080` (HTTP), `127.0.0.1:8082` (gRPC) |
 | `db` | Postgres 17 | `127.0.0.1:5432`, database `carsearch` |
 | `s3` | [RustFS](https://github.com/rustfs/rustfs), S3-compatible storage | `127.0.0.1:9000` (S3 API), `127.0.0.1:9001` (console) |
-| `ocr` | plate recognition for `Ingest` (Python, [fast-alpr](https://github.com/ankandrew/fast-alpr), ONNX on CPU): `POST /recognize` | compose network only (`http://ocr:8000`), no published port |
+| `ocr` | plate recognition for `Ingest` (Python, [fast-alpr](https://github.com/ankandrew/fast-alpr), ONNX on CPU): `POST /recognize`, `POST /anonymize` (face blur, YuNet) | compose network only (`http://ocr:8000`), no published port |
 | `migrate` | [goose](https://github.com/pressly/goose) (`kukymbr/goose-docker`): `goose up` on `make etc` / `make run`, then exits | — |
 | `s3-init` | `amazon/aws-cli`: creates the `cars` bucket (anonymous read) and uploads the test photos, then exits | — |
 
@@ -62,7 +62,7 @@ So other people on your network need just one open port.
 car-search/
 ├── Makefile                 # all commands: make help
 ├── docker-compose.yml       # db + s3 + migrate + s3-init + ocr + be + fe
-├── ocr/                     # plate recognition service (Python, fast-alpr, ONNX/CPU): POST /recognize
+├── ocr/                     # plate recognition service (Python, fast-alpr, ONNX/CPU): POST /recognize, /anonymize (face blur)
 ├── .github/workflows/ci.yml # CI: go vet/test, tsc/vite build, registries, generated code
 ├── docs/
 │   ├── DATA_SOURCES.md      # where real sighting data could come from + legal notes

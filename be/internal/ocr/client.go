@@ -1,5 +1,5 @@
 // Package ocr — HTTP-клиент сервиса распознавания номеров (каталог ocr/ в корне репозитория):
-// POST /recognize, multipart-поле image → JSON [{plate, confidence, bbox}].
+// POST /recognize, multipart-поле image → JSON [{plate, confidence, bbox}]; POST /anonymize → JPEG с размытыми лицами.
 package ocr
 
 import (
@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"mime/multipart"
 	"net/http"
 	"strings"
@@ -17,6 +18,9 @@ import (
 
 // Timeout — сколько ждём ответа OCR (на CPU фото распознаётся за десятки–сотни миллисекунд).
 const Timeout = 15 * time.Second
+
+// maxAnonymized — предел размера ответа /anonymize.
+const maxAnonymized = 32 << 20
 
 // Client — клиент OCR-сервиса.
 type Client struct {
@@ -34,9 +38,8 @@ type candidate struct {
 	BBox       []int   `json:"bbox"`
 }
 
-// Recognize отправляет фото и возвращает номера как прочитала модель (Raw). Сеть, таймаут, 5xx —
-// models.ErrRecognizerUnavailable; 4xx (не картинка) — пустой список.
-func (c *Client) Recognize(ctx context.Context, photo []byte) ([]models.PlateCandidate, error) {
+// post отправляет фото multipart-полем image на path; 4xx возвращает как (resp.StatusCode, nil body).
+func (c *Client) post(ctx context.Context, path string, photo []byte) (*http.Response, error) {
 	var body bytes.Buffer
 	mw := multipart.NewWriter(&body)
 	fw, err := mw.CreateFormFile("image", "photo.jpg")
@@ -49,7 +52,7 @@ func (c *Client) Recognize(ctx context.Context, photo []byte) ([]models.PlateCan
 	if err := mw.Close(); err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.url+"/recognize", &body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.url+path, &body)
 	if err != nil {
 		return nil, err
 	}
@@ -57,6 +60,34 @@ func (c *Client) Recognize(ctx context.Context, photo []byte) ([]models.PlateCan
 	resp, err := c.http.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", models.ErrRecognizerUnavailable, err)
+	}
+	return resp, nil
+}
+
+// Anonymize отправляет фото на /anonymize и возвращает JPEG с размытыми лицами. Любой сбой
+// (сеть, таймаут, не 200, пустой ответ) — models.ErrRecognizerUnavailable: неразмытое фото не сохраняем.
+func (c *Client) Anonymize(ctx context.Context, photo []byte) ([]byte, error) {
+	resp, err := c.post(ctx, "/anonymize", photo)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("%w: anonymize status %d", models.ErrRecognizerUnavailable, resp.StatusCode)
+	}
+	out, err := io.ReadAll(io.LimitReader(resp.Body, maxAnonymized))
+	if err != nil || len(out) == 0 {
+		return nil, fmt.Errorf("%w: anonymize bad response: %v", models.ErrRecognizerUnavailable, err)
+	}
+	return out, nil
+}
+
+// Recognize отправляет фото и возвращает номера как прочитала модель (Raw). Сеть, таймаут, 5xx —
+// models.ErrRecognizerUnavailable; 4xx (не картинка) — пустой список.
+func (c *Client) Recognize(ctx context.Context, photo []byte) ([]models.PlateCandidate, error) {
+	resp, err := c.post(ctx, "/recognize", photo)
+	if err != nil {
+		return nil, err
 	}
 	defer resp.Body.Close()
 	switch {

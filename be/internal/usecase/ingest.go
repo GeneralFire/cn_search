@@ -35,19 +35,20 @@ type Ingest struct {
 	tx     transactor
 	repo   ingestRepository
 	ocr    recognizer
+	anon   anonymizer
 	photos photoStorage
 
 	now   func() time.Time
 	newID func() string
 }
 
-func NewIngest(tx transactor, repo ingestRepository, ocr recognizer, photos photoStorage) *Ingest {
-	return &Ingest{tx: tx, repo: repo, ocr: ocr, photos: photos, now: time.Now, newID: uuid.NewString}
+func NewIngest(tx transactor, repo ingestRepository, ocr recognizer, anon anonymizer, photos photoStorage) *Ingest {
+	return &Ingest{tx: tx, repo: repo, ocr: ocr, anon: anon, photos: photos, now: time.Now, newID: uuid.NewString}
 }
 
 // Ingest: фото декодируется (не фото — ValidationError), OCR находит номера, лучший по уверенности
 // (не ниже MinPlateConfidence, иначе ValidationError) нормализуется по формату (classifyPlate).
-// Фото (до 1600 px) и миниатюра (480 px) без EXIF — в S3, затем в одной транзакции номер
+// После распознавания фото анонимизируется (лица размыты, Anonymize), и уже оно (до 1600 px) с миниатюрой (480 px) без EXIF — в S3, затем в одной транзакции номер
 // находится или создаётся и создаётся фиксация. Время и координаты — из запроса, иначе из EXIF;
 // время — иначе сейчас. Если транзакция не прошла, фото остаются в S3 (их подчистит будущая уборка).
 //
@@ -79,6 +80,18 @@ func (u *Ingest) Ingest(ctx context.Context, o models.IngestOpts) (models.Ingest
 		return models.IngestResult{Candidates: cands}, &models.ValidationError{Message: errPlateNotRecognized}
 	}
 	best := cands[0]
+
+	// Приватность: лица размываются до сохранения; сервис недоступен — не сохраняем неразмытое фото.
+	// OCR выше смотрел оригинал (номера на нём не размыты), в S3 уходит только обработанная копия.
+	blurred, err := u.anon.Anonymize(ctx, o.Photo)
+	if err != nil {
+		return models.IngestResult{}, fmt.Errorf("anonymize: %w", err)
+	}
+	// У обработанного JPEG нет EXIF, ориентация уже применена сервисом; EXIF-метаданные берём из оригинала.
+	img, _, err = decodePhoto(blurred)
+	if err != nil {
+		return models.IngestResult{}, fmt.Errorf("anonymize: %w: bad image: %v", models.ErrRecognizerUnavailable, err)
+	}
 
 	full, err := encodeJPEG(img, photoMaxWidth, draw.ApproxBiLinear)
 	if err != nil {

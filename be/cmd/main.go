@@ -128,7 +128,8 @@ func serve(ctx context.Context, log *slog.Logger, cfg config) error {
 				return err
 			}
 			ready.With("s3", photos)
-			opts = append(opts, implementation.WithIngest(usecase.NewIngest(cluster, repo, ocr.New(cfg.OCRURL), photos)))
+			ocrClient := ocr.New(cfg.OCRURL)
+			opts = append(opts, implementation.WithIngest(usecase.NewIngest(cluster, repo, ocrClient, ocrClient, photos)))
 		} else {
 			log.Warn("OCR_URL или S3_ENDPOINT не заданы — загрузка фото (rpc Ingest) выключена")
 		}

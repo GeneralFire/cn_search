@@ -22,7 +22,9 @@ flowchart LR
     end
     D -->|"POST /recognize (multipart)"| OCR["ocr (Python, fast-alpr)<br/>YOLOv9 plate detector + CCT OCR<br/>ONNX Runtime, CPU"]
     OCR -->|"[{plate, confidence, bbox}]"| N
-    N -->|"photo ≤1600 px + thumb 480 px<br/>(re-encoded, no EXIF)"| S3[("S3 bucket cars/u/…")]
+    N -->|"POST /anonymize (multipart)"| ANON["ocr: YuNet face detector<br/>Gaussian blur of faces"]
+    ANON -->|"JPEG, X-Faces-Blurred: N"| S3P["blurred photo"]
+    S3P -->|"photo ≤1600 px + thumb 480 px<br/>(re-encoded, no EXIF)"| S3[("S3 bucket cars/u/…")]
     N -->|"upsert plate + insert sighting<br/>(one write tx)"| PG[("Postgres<br/>plates, plate_sightings")]
     PG --> S["rpc Search / Get<br/>(GIN index on plate_search_key)"]
 ```
@@ -52,12 +54,18 @@ Steps of `rpc Ingest` (`be/internal/usecase/ingest.go`):
      ES `1234 ABC` → region `E`, DE `MKD4419` → region `D`); anything else — type unknown.
 5. **Pick** the candidate with the highest confidence. Below `MinPlateConfidence` (0.5) or none →
    `INVALID_ARGUMENT` “plate not recognized”.
-6. **Store photos** in S3 under `u/<uuid>.jpg` (≤ 1600 px wide) and `u/<uuid>_thumb.jpg` (480 px),
+6. **Anonymize**: `POST http://ocr:8000/anonymize` (same client, same 15 s timeout) with the original
+   photo; the service returns a JPEG with blurred faces (header `X-Faces-Blurred: N`). This runs
+   *after* recognition (the plate is read from the original) and *before* anything is stored. Any
+   failure (network, timeout, non-200, not an image) → `UNAVAILABLE`: an unblurred photo is never saved.
+   The blurred JPEG replaces the original for everything below, including the thumbnail
+   (EXIF time/GPS still come from the original).
+7. **Store photos** in S3 under `u/<uuid>.jpg` (≤ 1600 px wide) and `u/<uuid>_thumb.jpg` (480 px),
    re-encoded as JPEG (EXIF, including GPS, is not kept in the stored files).
-7. **Write** in one transaction: find-or-create the plate (`plates.meta = {type, region}`),
+8. **Write** in one transaction: find-or-create the plate (`plates.meta = {type, region}`),
    insert the sighting (`is_test_data = false`, `address_locale` detected from the address script:
    Cyrillic → `ru`/`uk`, Han → `zh`, Latin with umlauts → `de`, Latin → `en`, empty → `ru`).
-8. **Respond** with the created sighting and all candidates with confidence and bbox.
+9. **Respond** with the created sighting and all candidates with confidence and bbox.
 
 The sighting is immediately visible to `rpc Search`: the plate goes through the same
 `plate_search_key()` as every other plate, so `р466ук`, `P466YK`, `0515` etc. match.
@@ -71,8 +79,10 @@ The `ocr/` service wraps [fast-alpr](https://github.com/ankandrew/fast-alpr) (MI
 | Plate detection | `yolo-v9-t-384-license-plate-end2end` ([open-image-models](https://github.com/ankandrew/open-image-models)) | 7.4 MB ONNX | GitHub releases |
 | Plate OCR | `cct-xs-v2-global-model` ([fast-plate-ocr](https://github.com/ankandrew/fast-plate-ocr)) | ~3 MB ONNX | GitHub releases |
 
+| Face detection | YuNet `face_detection_yunet_2023mar` ([opencv_zoo](https://github.com/opencv/opencv_zoo), Apache-2.0), via `cv2.FaceDetectorYN` | 0.23 MB ONNX | GitHub (SHA-256 checked in the Dockerfile) |
+
 Weights are public, no API keys. They are downloaded during `docker build` and baked into the image
-(image ≈ 600 MB: python slim + onnxruntime + OpenCV headless).
+(image ≈ 600 MB, face model adds ~0.2 MB: python slim + onnxruntime + OpenCV headless).
 
 **Speed (CPU, Apple Silicon via Colima, 1600×1067 photo):** ~60–170 ms per photo end-to-end
 in the OCR service (detector + OCR), first request after start slightly slower.
@@ -128,8 +138,20 @@ movements). Current state and TODO:
   Original uploads are not kept.
 - Users can report a photo (“Report” → `COMPLAINT_REASON_PERSONAL_DATA`), moderators handle it
   in `/admin`.
-- **TODO:** blur faces (and other plates in frame) before storing — e.g. a face detector in the
-  `ocr` service returning boxes, blurred in Go before encoding.
+- **Faces are blurred before storing** (step 6). `ocr/server.py` `/anonymize`: YuNet detector
+  (score ≥ 0.5, NMS 0.3), the image is downscaled to ≤ 1920 px on the long side for detection, each
+  box is expanded by 20 % per side and blurred with a strong Gaussian (kernel ≈ ⅓ of the box, so even a
+  large face becomes a smudge), then re-encoded as JPEG (q92). Plates are deliberately **not** blurred
+  (they are what the service records). CPU cost ≈ tens of ms per photo.
+  - *Accuracy* (spot check on CC0 Wikimedia street photos, 1920 px): all faces turned towards the
+    camera (7/7, 12/12 and 8/8 detections in three street scenes, including a face behind a van window)
+    were blurred. Misses to expect: heads seen from behind or in strong profile, very small/distant
+    people (< ~20 px faces), heavy occlusion, masks/sunglasses at an angle. The threshold is tuned for
+    recall, so false positives happen (a car wheel got blurred in one test). This is a best-effort
+    measure, not a guarantee — keep the report button and moderation.
+  - Not covered: other plates in the frame (not blurred), people recognizable by body/clothes,
+    text on signs; the OCR service sees the original photo in memory only (nothing is persisted there).
+  - Tunables (env of `ocr`): `FACE_SCORE` (detector threshold), `FACE_MODEL` (path to another YuNet/ONNX).
 - **TODO:** retention policy (delete photos after N days, keep only plate + time + coarse place),
   authentication/rate limiting for `Ingest`, cleanup of orphaned S3 objects when the DB write fails.
 - The OCR service has no published port and is reachable only inside the compose network.
