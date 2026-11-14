@@ -12,7 +12,6 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-
 func newSlog(w io.Writer) *slog.Logger { return slog.New(slog.NewJSONHandler(w, nil)) }
 
 // fakeStream — grpc.ServerTransportStream, запоминающий заголовки ответа.
