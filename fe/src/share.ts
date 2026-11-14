@@ -34,7 +34,8 @@ async function share(plate: string, sightings: number): Promise<void> {
     await navigator.clipboard.writeText(url);
     toast(t("share.copied"));
   } catch {
-    // Буфер недоступен (например, не https) — молча: ссылка видна в адресной строке.
+    // Буфер недоступен (например, не https) — говорим об этом, ссылка остаётся в адресной строке.
+    toast(t("share.copyFailed"));
   }
 }
 

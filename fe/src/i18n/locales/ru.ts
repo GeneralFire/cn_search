@@ -369,7 +369,6 @@ export const ru = {
   "upload.recognized": "Распознан номер",
   "upload.confidence": "Уверенность {pct}",
   "upload.open": "Открыть фиксацию",
-  "upload.others": "Другие номера на фото",
   "upload.needLogin": "Войдите по токену (панель на логотипе) или зарегистрируйтесь, чтобы загружать фото.",
   "upload.unlimited": "Тариф Pro: загрузки без ограничений.",
   "upload.quotaOver": "Лимит тарифа Free на сутки исчерпан — Pro снимает ограничение.",
@@ -378,6 +377,7 @@ export const ru = {
   // Поделиться (share.ts) — кнопка на странице номера.
   "share.button": "Поделиться",
   "share.copied": "Ссылка скопирована",
+  "share.copyFailed": "Не удалось скопировать ссылку",
   "share.text": { one: "Номер {plate} — {n} фиксация", few: "Номер {plate} — {n} фиксации", many: "Номер {plate} — {n} фиксаций", other: "Номер {plate} — {n} фиксаций" },
 
   // Автоскрытие фото по жалобам (admin.ts, вкладка жалоб).
@@ -421,4 +421,9 @@ export const ru = {
   "activity.title": "Когда обычно появляется",
   "activity.topPlaces": "Частые адреса",
   "activity.times": { one: "{n} фиксация", few: "{n} фиксации", many: "{n} фиксаций", other: "{n} фиксации" },
+
+// Экспорт истории номера (export.ts) — кнопка «Скачать» на странице номера.
+  "export.button": "Скачать",
+  "export.csv": "CSV",
+  "export.geojson": "GeoJSON",
 } as const;

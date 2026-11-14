@@ -1,0 +1,18 @@
+/* Кнопка «Скачать» с меню CSV / GeoJSON на странице номера (export.ts). */
+.ex { position: relative; display: inline-block; margin-left: 8px; }
+.ex__toggle { cursor: pointer; }
+
+.ex__menu {
+  display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 50;
+  min-width: 160px; padding: 4px; flex-direction: column;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); box-shadow: var(--shadow-hover);
+}
+.ex.is-open .ex__menu { display: flex; }
+
+.ex__item {
+  padding: 8px 12px; border: 0; border-radius: 6px; background: none;
+  color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.ex__item:hover,
+.ex__item:focus-visible { background: rgba(127, 127, 127, 0.12); outline: none; }

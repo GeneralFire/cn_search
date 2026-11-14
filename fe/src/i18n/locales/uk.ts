@@ -369,7 +369,6 @@ export const uk: Dict = {
   "upload.recognized": "Розпізнано номер",
   "upload.confidence": "Впевненість {pct}",
   "upload.open": "Відкрити фіксацію",
-  "upload.others": "Інші номери на фото",
   "upload.needLogin": "Увійдіть за токеном (панель на логотипі) або зареєструйтеся, щоб завантажувати фото.",
   "upload.unlimited": "Тариф Pro: завантаження без обмежень.",
   "upload.quotaOver": "Ліміт тарифу Free на добу вичерпано — Pro знімає обмеження.",
@@ -378,6 +377,7 @@ export const uk: Dict = {
   // Поділитися (share.ts) — кнопка на сторінці номера.
   "share.button": "Поділитися",
   "share.copied": "Посилання скопійовано",
+  "share.copyFailed": "Не вдалося скопіювати посилання",
   "share.text": { one: "Номер {plate} — {n} фіксація", few: "Номер {plate} — {n} фіксації", many: "Номер {plate} — {n} фіксацій", other: "Номер {plate} — {n} фіксацій" },
 
   // Автоскрытие фото по жалобам (admin.ts, вкладка жалоб).
@@ -421,4 +421,9 @@ export const uk: Dict = {
   "activity.title": "Коли зазвичай з’являється",
   "activity.topPlaces": "Часті адреси",
   "activity.times": { one: "{n} фіксація", few: "{n} фіксації", many: "{n} фіксацій", other: "{n} фіксації" },
+
+// Експорт історії номера (export.ts) — кнопка «Завантажити» на сторінці номера.
+  "export.button": "Завантажити",
+  "export.csv": "CSV",
+  "export.geojson": "GeoJSON",
 };

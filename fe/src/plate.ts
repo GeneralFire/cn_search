@@ -14,6 +14,7 @@ import { adminReady } from "./adminmode";
 import { openClarify } from "./clarify";
 import { clarificationsHtml, clarifiedMarkHtml } from "./clarifications";
 import { bindShare, shareButtonHtml } from "./share";
+import { bindExport, exportButtonHtml } from "./export";
 import { bindRetry, emptyStateHtml, errorStateHtml } from "./states";
 import { activityHtml } from "./activity";
 
@@ -80,6 +81,7 @@ export async function renderPlatePage(root: HTMLElement, id: string, handlers: Q
     const shown = items.find((c) => c.id === id) ?? items[0];
     $main.querySelector("[data-pc-clarify]")?.addEventListener("click", () => openClarify(shown, () => void reload()));
     bindShare($main, items[0].plate, items.length);
+    bindExport($main, items);
     void loadSeeAlso($main, id, my.signal);
     void mountPlateMap($main, items, id, my.signal);
     void mountPlateAdmin($main, items, id, my.signal); // админ-режим: панель «Управление»
@@ -143,7 +145,7 @@ function pageHtml(items: Car[], currentId: string): string {
           ${stat(escapeHtml(formatShortDate(first.createdAt)), t("stat.first"))}
           ${stat(escapeHtml(formatShortDate(latest.createdAt)), t("stat.last"))}
         </div>
-        ${shareButtonHtml()}
+        ${shareButtonHtml()}${exportButtonHtml()}
       </div>
     </section>
 

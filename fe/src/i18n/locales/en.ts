@@ -369,7 +369,6 @@ export const en: Dict = {
   "upload.recognized": "Recognized plate",
   "upload.confidence": "Confidence {pct}",
   "upload.open": "Open sighting",
-  "upload.others": "Other plates in the photo",
   "upload.needLogin": "Sign in with your token (panel on the logo) or sign up to upload photos.",
   "upload.unlimited": "Pro plan: unlimited uploads.",
   "upload.quotaOver": "Free plan daily limit reached — Pro removes the limit.",
@@ -378,6 +377,7 @@ export const en: Dict = {
   // Share (share.ts) — button on the plate page.
   "share.button": "Share",
   "share.copied": "Link copied",
+  "share.copyFailed": "Couldn't copy the link",
   "share.text": { one: "Plate {plate} — {n} sighting", other: "Plate {plate} — {n} sightings" },
 
   // Автоскрытие фото по жалобам (admin.ts, вкладка жалоб).
@@ -421,4 +421,9 @@ export const en: Dict = {
   "activity.title": "When it usually shows up",
   "activity.topPlaces": "Frequent addresses",
   "activity.times": { one: "{n} sighting", other: "{n} sightings" },
+
+// Export of the plate history (export.ts) — Download button on the plate page.
+  "export.button": "Download",
+  "export.csv": "CSV",
+  "export.geojson": "GeoJSON",
 };

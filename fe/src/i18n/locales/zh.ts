@@ -370,7 +370,6 @@ export const zh: Dict = {
   "upload.recognized": "识别出的车牌",
   "upload.confidence": "置信度 {pct}",
   "upload.open": "打开记录",
-  "upload.others": "照片中的其他车牌",
   "upload.needLogin": "请用令牌登录（点击徽标打开面板）或注册后再上传照片。",
   "upload.unlimited": "Pro 套餐：上传不限次数。",
   "upload.quotaOver": "Free 套餐今日上传次数已用完，升级 Pro 可解除限制。",
@@ -379,6 +378,7 @@ export const zh: Dict = {
   // 分享（share.ts）— 车牌页上的按钮。
   "share.button": "分享",
   "share.copied": "链接已复制",
+  "share.copyFailed": "无法复制链接",
   "share.text": { other: "车牌 {plate} — {n} 次记录" },
 
   // Автоскрытие фото по жалобам (admin.ts, вкладка жалоб).
@@ -422,4 +422,9 @@ export const zh: Dict = {
   "activity.title": "通常出现的时间",
   "activity.topPlaces": "常见地点",
   "activity.times": { other: "{n} 次记录" },
+
+// 导出车牌记录（export.ts）— 车牌页上的“下载”按钮。
+  "export.button": "下载",
+  "export.csv": "CSV",
+  "export.geojson": "GeoJSON",
 };

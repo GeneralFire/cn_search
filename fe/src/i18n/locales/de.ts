@@ -369,7 +369,6 @@ export const de: Dict = {
   "upload.recognized": "Erkanntes Kennzeichen",
   "upload.confidence": "Sicherheit {pct}",
   "upload.open": "Sichtung öffnen",
-  "upload.others": "Weitere Kennzeichen im Foto",
   "upload.needLogin": "Melden Sie sich mit Ihrem Token an (Panel am Logo) oder registrieren Sie sich, um Fotos hochzuladen.",
   "upload.unlimited": "Pro-Tarif: unbegrenzte Uploads.",
   "upload.quotaOver": "Tageslimit des Free-Tarifs erreicht — Pro hebt das Limit auf.",
@@ -378,6 +377,7 @@ export const de: Dict = {
   // Teilen (share.ts) — Schaltfläche auf der Kennzeichen-Seite.
   "share.button": "Teilen",
   "share.copied": "Link kopiert",
+  "share.copyFailed": "Link konnte nicht kopiert werden",
   "share.text": { one: "Kennzeichen {plate} — {n} Sichtung", other: "Kennzeichen {plate} — {n} Sichtungen" },
 
   // Автоскрытие фото по жалобам (admin.ts, вкладка жалоб).
@@ -421,4 +421,9 @@ export const de: Dict = {
   "activity.title": "Wann er meist auftaucht",
   "activity.topPlaces": "Häufige Adressen",
   "activity.times": { one: "{n} Sichtung", other: "{n} Sichtungen" },
+
+// Export des Kennzeichenverlaufs (export.ts) — Schaltfläche „Herunterladen“ auf der Kennzeichen-Seite.
+  "export.button": "Herunterladen",
+  "export.csv": "CSV",
+  "export.geojson": "GeoJSON",
 };
