@@ -62,7 +62,8 @@
   Поиск по номеру, бесконечная прокрутка + «Загрузить ещё», модалка «Уточнить» (`src/clarify.ts`; с карточек главной и со страницы номера),
   главная без запроса — блок «для вас» (2 ряда номеров «рынка» языка) и вкладки стран + «Прочее»
   (`src/home.ts`, `SearchRequest.market` → `models.Market` → условия по `plates.meta` type/region; вкладка — `?tab=`),
-  запрос поиска — в адресе `?q=` (F5, история, смена языка), страница номера `/plate/<id фиксации>` (`src/plate.ts`, роутер на History API — `src/router.ts`;
+  запрос поиска — в адресе `?q=` (F5, история, смена языка), фильтры выдачи (`src/filters.ts`: период → `SearchRequest.since/until`,
+  страна → `market`, «есть на карте» → `has_coords`; в адресе `?since=7d&market=de&geo=1`; на главной — только к ленте вкладки), страница номера `/plate/<id фиксации>` (`src/plate.ts`, роутер на History API — `src/router.ts`;
   плашка уточнений — `src/clarifications.ts`, данные — `GetResponse.clarifications`).
   Админ-режим: `src/adminmode.ts` (admin-token в sessionStorage → rpc Me → класс `is-admin` и заголовок во всех запросах),
   скрытые панели — `src/adminpanels.ts`, вкладки `/admin` — реестр `src/admintabs.ts`. Скрытые фиксации (`plate_sightings.hidden`)

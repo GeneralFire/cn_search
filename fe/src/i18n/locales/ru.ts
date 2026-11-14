@@ -399,4 +399,17 @@ export const ru = {
   "states.exhausted": "Лимит запросов исчерпан",
   "states.exhaustedHint": "Квота токена закончилась — пополните её или попробуйте позже.",
   "states.retry": "Повторить",
+
+  // Фильтры выдачи (filters.ts).
+  "filters.title": "Фильтры",
+  "filters.period": "Период",
+  "filters.period.today": "Сегодня",
+  "filters.period.7d": "7 дней",
+  "filters.period.30d": "30 дней",
+  "filters.period.all": "Всё время",
+  "filters.market": "Страна",
+  "filters.market.all": "Все",
+  "filters.geo": "Только с координатами",
+  "filters.reset": "Сбросить фильтры",
+  "filters.emptyHint": "Попробуйте ослабить или сбросить фильтры.",
 } as const;

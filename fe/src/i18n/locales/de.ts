@@ -399,4 +399,17 @@ export const de: Dict = {
   "states.exhausted": "Anfragelimit erreicht",
   "states.exhaustedHint": "Das Token-Kontingent ist aufgebraucht — aufladen oder später erneut versuchen.",
   "states.retry": "Erneut versuchen",
+
+  // Фильтры выдачи (filters.ts).
+  "filters.title": "Filter",
+  "filters.period": "Zeitraum",
+  "filters.period.today": "Heute",
+  "filters.period.7d": "7 Tage",
+  "filters.period.30d": "30 Tage",
+  "filters.period.all": "Gesamte Zeit",
+  "filters.market": "Land",
+  "filters.market.all": "Alle",
+  "filters.geo": "Nur mit Koordinaten",
+  "filters.reset": "Filter zurücksetzen",
+  "filters.emptyHint": "Lockern oder setzen Sie die Filter zurück.",
 };

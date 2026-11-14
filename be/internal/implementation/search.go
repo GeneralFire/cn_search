@@ -2,10 +2,12 @@ package implementation
 
 import (
 	"context"
+	"time"
 	"unicode/utf8"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/GeneralFire/cn_search/be/internal/models"
 	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch"
@@ -34,6 +36,9 @@ func (s *CarSearch) Search(ctx context.Context, req *pb.SearchRequest) (*pb.Sear
 		IncludeTestData: includeTestData(ctx),
 		Market:          models.Market(req.GetMarket()),
 		IncludeHidden:   s.isAdmin(ctx),
+		Since:           tsOrZero(req.GetSince()),
+		Until:           tsOrZero(req.GetUntil()),
+		HasCoords:       req.GetHasCoords(),
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, "не удалось выполнить поиск")
@@ -64,8 +69,20 @@ func validateSearch(req *pb.SearchRequest) error {
 		return status.Error(codes.InvalidArgument, "offset: не может быть отрицательным")
 	case !models.Market(req.GetMarket()).Valid():
 		return status.Error(codes.InvalidArgument, "market: ru, ua, de, us, cn, other или пусто")
+	case req.Since != nil && !req.GetSince().IsValid(), req.Until != nil && !req.GetUntil().IsValid():
+		return status.Error(codes.InvalidArgument, "since/until: некорректное время")
+	case req.Since != nil && req.Until != nil && !req.GetSince().AsTime().Before(req.GetUntil().AsTime()):
+		return status.Error(codes.InvalidArgument, "since: должно быть раньше until")
 	case req.GetLimit() < 0 || req.GetLimit() > MaxLimit:
 		return status.Errorf(codes.InvalidArgument, "limit: от 1 до %d (0 — по умолчанию %d)", MaxLimit, DefaultLimit)
 	}
 	return nil
+}
+
+// tsOrZero — время из Timestamp; не задано — нулевое (без границы).
+func tsOrZero(ts *timestamppb.Timestamp) time.Time {
+	if ts == nil {
+		return time.Time{}
+	}
+	return ts.AsTime()
 }

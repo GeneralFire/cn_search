@@ -399,4 +399,17 @@ export const en: Dict = {
   "states.exhausted": "Request limit reached",
   "states.exhaustedHint": "Your token quota is used up — top it up or try again later.",
   "states.retry": "Retry",
+
+  // Фильтры выдачи (filters.ts).
+  "filters.title": "Filters",
+  "filters.period": "Period",
+  "filters.period.today": "Today",
+  "filters.period.7d": "7 days",
+  "filters.period.30d": "30 days",
+  "filters.period.all": "All time",
+  "filters.market": "Country",
+  "filters.market.all": "All",
+  "filters.geo": "With coordinates only",
+  "filters.reset": "Reset filters",
+  "filters.emptyHint": "Try loosening or resetting the filters.",
 };

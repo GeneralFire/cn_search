@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/GeneralFire/cn_search/be/internal/db"
 	"github.com/GeneralFire/cn_search/be/internal/models"
@@ -46,6 +47,13 @@ func TestSuggestSQL(t *testing.T) {
 		}
 		if got := plates(models.SearchOpts{Plate: "А123ВС 778", Market: models.MarketUA, IncludeTestData: true}); slices.Contains(got, "А123ВС 777") {
 			t.Errorf("рынок ua: %v", got)
+		}
+		// Фильтры выдачи действуют и на подсказки: период в будущем — ничего.
+		if got := plates(models.SearchOpts{Plate: "А123ВС 778", Since: time.Now().Add(time.Hour), IncludeTestData: true}); len(got) != 0 {
+			t.Errorf("since в будущем: %v", got)
+		}
+		if got := plates(models.SearchOpts{Plate: "А123ВС 778", HasCoords: true, IncludeTestData: true}); !slices.Contains(got, "А123ВС 777") {
+			t.Errorf("has_coords: %v", got)
 		}
 	})
 }

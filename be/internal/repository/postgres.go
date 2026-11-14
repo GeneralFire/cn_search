@@ -86,6 +86,23 @@ func marketCond(m models.Market) string {
 	return `NOT (` + strings.Join(known, " OR ") + `)`
 }
 
+// filterConds добавляет фильтры выдачи (период по s.created_at — индекс plate_sightings_created_at_id_idx,
+// «есть на карте»); параметры нумеруются после уже набранных args.
+func filterConds(q models.SearchOpts, conds []string, args []any) ([]string, []any) {
+	if !q.Since.IsZero() {
+		args = append(args, q.Since)
+		conds = append(conds, fmt.Sprintf(`s.created_at >= $%d`, len(args)))
+	}
+	if !q.Until.IsZero() {
+		args = append(args, q.Until)
+		conds = append(conds, fmt.Sprintf(`s.created_at < $%d`, len(args)))
+	}
+	if q.HasCoords {
+		conds = append(conds, `s.lat IS NOT NULL`)
+	}
+	return conds, args
+}
+
 // latestPerPlate — по одной фиксации на номер (последней из подходящих), от новых к старым.
 func latestPerPlate(where string) string {
 	return fmt.Sprintf(`SELECT * FROM (
@@ -115,6 +132,7 @@ func (r *repository) Search(ctx context.Context, tx db.Executor, q models.Search
 	if c := marketCond(q.Market); c != "" {
 		conds = append(conds, c)
 	}
+	conds, args = filterConds(q, conds, args)
 	if !q.IncludeTestData {
 		conds = append(conds, notTestData)
 	}
@@ -153,12 +171,13 @@ func suggestKey(expr string) string {
 
 // Suggest — «возможно, вы искали»: номера, ключ которых не дальше models.SuggestMaxDistance правок
 // (levenshtein, расширение fuzzystrmatch) от ключа запроса; по одной (последней) фиксации на номер,
-// ближайшие первыми, затем свежие; не больше models.SuggestLimit. Рынок и тестовые данные — как в Search.
+// ближайшие первыми, затем свежие; не больше models.SuggestLimit. Рынок, фильтры и тестовые данные — как в Search.
 func (r *repository) Suggest(ctx context.Context, tx db.Executor, q models.SearchOpts) ([]models.PlateSighting, error) {
 	conds := []string{`levenshtein(` + suggestKey("p.plate") + `, ` + suggestKey("$1") + `) <= $2`}
 	if c := marketCond(q.Market); c != "" {
 		conds = append(conds, c)
 	}
+	conds, args := filterConds(q, conds, []any{q.Plate, models.SuggestMaxDistance, models.SuggestLimit})
 	if !q.IncludeTestData {
 		conds = append(conds, notTestData)
 	}
@@ -171,7 +190,7 @@ func (r *repository) Suggest(ctx context.Context, tx db.Executor, q models.Searc
 		models.PlateSighting
 		Distance int `db:"distance"`
 	}
-	if err := tx.Select(ctx, &rows, query, q.Plate, models.SuggestMaxDistance, models.SuggestLimit); err != nil {
+	if err := tx.Select(ctx, &rows, query, args...); err != nil {
 		return nil, fmt.Errorf("suggest: %w", err)
 	}
 	items := make([]models.PlateSighting, len(rows))

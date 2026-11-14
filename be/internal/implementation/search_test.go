@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/gojuno/minimock/v3"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/GeneralFire/cn_search/be/internal/models"
 	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch"
@@ -114,6 +116,32 @@ func TestPlateTypeMapping(t *testing.T) {
 		}
 		if typ != "" && plateTypeModel[want] != typ {
 			t.Errorf("clarify: %v → %q, want %q", want, plateTypeModel[want], typ)
+		}
+	}
+}
+
+func TestSearchPassesFilters(t *testing.T) {
+	svc, uc := newSvc(t)
+	since := time.Date(2026, 11, 1, 0, 0, 0, 0, time.UTC)
+	until := since.Add(24 * time.Hour)
+	uc.SearchMock.Expect(minimock.AnyContext, models.SearchOpts{Limit: DefaultLimit, Since: since, Until: until, HasCoords: true}).
+		Return(models.SearchPage{}, nil)
+	if _, err := svc.Search(context.Background(), &pb.SearchRequest{
+		Since: timestamppb.New(since), Until: timestamppb.New(until), HasCoords: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSearchBadPeriod(t *testing.T) {
+	svc, _ := newSvc(t)
+	at := timestamppb.New(time.Date(2026, 11, 1, 0, 0, 0, 0, time.UTC))
+	for _, req := range []*pb.SearchRequest{
+		{Since: at, Until: at},
+		{Since: &timestamppb.Timestamp{Seconds: 1, Nanos: -1}},
+	} {
+		if _, err := svc.Search(context.Background(), req); status.Code(err) != codes.InvalidArgument {
+			t.Errorf("%v: %v", req, err)
 		}
 	}
 }

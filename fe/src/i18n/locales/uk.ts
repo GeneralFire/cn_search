@@ -399,4 +399,17 @@ export const uk: Dict = {
   "states.exhausted": "Ліміт запитів вичерпано",
   "states.exhaustedHint": "Квота токена закінчилася — поповніть її або спробуйте пізніше.",
   "states.retry": "Повторити",
+
+  // Фильтры выдачи (filters.ts).
+  "filters.title": "Фільтри",
+  "filters.period": "Період",
+  "filters.period.today": "Сьогодні",
+  "filters.period.7d": "7 днів",
+  "filters.period.30d": "30 днів",
+  "filters.period.all": "Весь час",
+  "filters.market": "Країна",
+  "filters.market.all": "Усі",
+  "filters.geo": "Лише з координатами",
+  "filters.reset": "Скинути фільтри",
+  "filters.emptyHint": "Спробуйте послабити або скинути фільтри.",
 };

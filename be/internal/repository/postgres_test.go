@@ -4,6 +4,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/GeneralFire/cn_search/be/internal/models"
 )
@@ -62,5 +63,18 @@ func TestMarketCond(t *testing.T) {
 	}
 	if want := `(coalesce(p.meta->>'type', '') = 'eu' AND coalesce(p.meta->>'region', '') = 'D')`; marketCond(models.MarketDE) != want {
 		t.Errorf("de: %s", marketCond(models.MarketDE))
+	}
+}
+
+// Фильтры выдачи: параметры нумеруются после уже набранных, пустые фильтры условий не добавляют.
+func TestFilterConds(t *testing.T) {
+	if conds, args := filterConds(models.SearchOpts{}, nil, []any{"q"}); len(conds) != 0 || len(args) != 1 {
+		t.Errorf("пустые фильтры: %v %v", conds, args)
+	}
+	at := time.Date(2026, 11, 1, 0, 0, 0, 0, time.UTC)
+	conds, args := filterConds(models.SearchOpts{Since: at, Until: at.Add(time.Hour), HasCoords: true}, []string{"x"}, []any{"q"})
+	want := []string{"x", "s.created_at >= $2", "s.created_at < $3", "s.lat IS NOT NULL"}
+	if strings.Join(conds, "|") != strings.Join(want, "|") || len(args) != 3 || args[1] != at {
+		t.Errorf("фильтры: %v %v", conds, args)
 	}
 }

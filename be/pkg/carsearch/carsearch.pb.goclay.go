@@ -5322,6 +5322,19 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         "market": {
           "type": "string",
           "description": "«Рынок» номеров (главная: блок по языку интерфейса и вкладки стран):\n\"ru\" — российские, \"ua\" — украинские, \"de\" — ЕС с регионом D, \"us\" — США, \"cn\" — китайские,\n\"other\" — всё, что не попало ни в один рынок (формат неизвестен или другая страна).\nПусто — без фильтра."
+        },
+        "since": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Фильтр периода по времени фиксации: since \u003c= created_at \u003c until. Не задано — без границы."
+        },
+        "until": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "hasCoords": {
+          "type": "boolean",
+          "description": "Только фиксации с координатами (есть на карте)."
         }
       }
     },

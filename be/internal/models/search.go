@@ -3,6 +3,7 @@ package models
 import (
 	"errors"
 	"slices"
+	"time"
 )
 
 // ErrNotFound — запрошенной записи нет.
@@ -13,9 +14,12 @@ type SearchOpts struct {
 	Plate           string // строка поиска по началу слов номера; пусто — все записи
 	Offset          int
 	Limit           int
-	IncludeTestData bool   // отдавать и строки с is_test_data = true (заголовок include-test-data)
-	Market          Market // «рынок» номеров; пусто — без фильтра
-	IncludeHidden   bool   // отдавать и скрытые фиксации (plate_sightings.hidden) — только админу
+	IncludeTestData bool      // отдавать и строки с is_test_data = true (заголовок include-test-data)
+	Market          Market    // «рынок» номеров; пусто — без фильтра
+	IncludeHidden   bool      // отдавать и скрытые фиксации (plate_sightings.hidden) — только админу
+	Since           time.Time // фиксации не раньше (created_at >= Since); нулевое — без границы
+	Until           time.Time // фиксации раньше (created_at < Until); нулевое — без границы
+	HasCoords       bool      // только фиксации с координатами (lat/lon не NULL)
 }
 
 // Market — «рынок» номеров для главной: страна по формату номера (plates.meta: type, region).

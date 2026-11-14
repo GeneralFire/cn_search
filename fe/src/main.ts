@@ -22,6 +22,7 @@ import { mountHomeAdmin, refreshHomeAdmin } from "./adminpanels";
 import {
   flagHtml, gridColumns, homeMarket, marketName, setTabInUrl, tabFromUrl, tabsHtml, visibleTabs, type Market,
 } from "./home";
+import { activeCount, filtersRequest, mountFilters } from "./filters";
 
 const PAGE_SIZE = 35; // кратно 5 и 7 — по числу колонок сетки
 const SKELETON_CARDS = 7; // скелетон первой страницы ленты — один ряд при широком экране
@@ -59,6 +60,7 @@ app.innerHTML = `
   </header>
 
   <main class="content">
+    <div class="filters" id="filters"></div>
     <section class="fy" aria-labelledby="fy-title" hidden>
       <div class="fy__head">
         <h2 class="fy__title" id="fy-title">${flagHtml(homeMarket())}${t("homeTabs.forYou")} · <span class="fy__market">${escapeHtml(marketName(homeMarket()))}</span></h2>
@@ -102,6 +104,12 @@ const $moreBtn = app.querySelector<HTMLButtonElement>(".more__btn")!;
 const $moreInfo = app.querySelector<HTMLElement>(".more__info")!;
 
 mountSettings(app.querySelector<HTMLElement>(".hero__logo")!);
+
+// Фильтры выдачи (filters.ts): любое изменение — новая выдача.
+const filters = mountFilters(app.querySelector<HTMLElement>("#filters")!, () => {
+  clearTimeout(debounce);
+  newSearch();
+});
 
 
 
@@ -163,7 +171,7 @@ async function loadMore(): Promise<void> {
 
   try {
     const home = !hasQuery();
-    if (home && state.tab === homeMarket()) {
+    if (home && state.tab === homeMarket() && activeCount(filters.get(), true) === 0) {
       // Лента вкладки языка продолжает блок «для вас»: ждём его и пропускаем его карточки.
       const skip = await forYou.ready;
       if (gen !== state.generation) return;
@@ -171,8 +179,8 @@ async function loadMore(): Promise<void> {
     }
     const page = await search(
       home
-        ? { market: state.tab, offset: state.nextOffset!, limit: PAGE_SIZE }
-        : { plate: $plate.value, offset: state.nextOffset!, limit: PAGE_SIZE },
+        ? { market: state.tab, ...filtersRequest(filters.get(), true), offset: state.nextOffset!, limit: PAGE_SIZE }
+        : { plate: $plate.value, ...filtersRequest(filters.get(), false), offset: state.nextOffset!, limit: PAGE_SIZE },
       ctrl.signal
     );
     if (gen !== state.generation) return; // пока грузили, запрос поменялся
@@ -225,13 +233,17 @@ function suggestionsHtml(cars: Car[]): string {
     .join("")}</div>`;
 }
 
+/** Пустая выдача при заданных фильтрах — подсказка, что их можно сбросить. */
+const filtersHint = (home: boolean): string =>
+  activeCount(filters.get(), home) ? `<span class="flt__empty">${escapeHtml(t("filters.emptyHint"))}</span>` : "";
+
 function renderEmpty(suggestions: Car[] = []): void {
   if (hasQuery()) {
-    $grid.innerHTML = emptyStateHtml(t("empty.title"), t("empty.hint"), suggestionsHtml(suggestions));
+    $grid.innerHTML = emptyStateHtml(t("empty.title"), t("empty.hint"), filtersHint(false) + suggestionsHtml(suggestions));
   } else if (state.skip > 0) {
     $grid.innerHTML = `<p class="feed__note">${t("homeTabs.allAbove")}</p>`;
   } else {
-    $grid.innerHTML = emptyStateHtml(t("homeTabs.emptyTitle"), t("homeTabs.emptyHint"));
+    $grid.innerHTML = emptyStateHtml(t("homeTabs.emptyTitle"), t("homeTabs.emptyHint"), filtersHint(true));
   }
 }
 
@@ -252,6 +264,7 @@ function newSearch(): void {
   state.skip = 0;
   state.cars.clear();
   $grid.innerHTML = "";
+  filters.setHome(!hasQuery());
   if (!hasQuery()) {
     loadForYou();
     setTabInUrl(state.tab);
@@ -498,6 +511,14 @@ onRoute((route) => {
   void refreshHomeAdmin();
   if (!searchStarted) {
     searchStarted = true;
+    newSearch();
+  } else if (filters.syncFromUrl()) {
+    // Адрес с другими фильтрами (переход по истории) — новая выдача с ними.
+    clearTimeout(debounce);
+    setQuery(queryFromUrl());
+    if (!hasQuery()) state.tab = tabFromUrl();
+    renderTabs();
+    searchScroll = 0;
     newSearch();
   } else if (queryFromUrl() !== $plate.value) {
     // Адрес с другим запросом (переход по истории или ссылкой на главную) — новая выдача.

@@ -563,7 +563,12 @@ type SearchRequest struct {
 	// "ru" — российские, "ua" — украинские, "de" — ЕС с регионом D, "us" — США, "cn" — китайские,
 	// "other" — всё, что не попало ни в один рынок (формат неизвестен или другая страна).
 	// Пусто — без фильтра.
-	Market        string `protobuf:"bytes,4,opt,name=market,proto3" json:"market,omitempty"`
+	Market string `protobuf:"bytes,4,opt,name=market,proto3" json:"market,omitempty"`
+	// Фильтр периода по времени фиксации: since <= created_at < until. Не задано — без границы.
+	Since *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=since,proto3" json:"since,omitempty"`
+	Until *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=until,proto3" json:"until,omitempty"`
+	// Только фиксации с координатами (есть на карте).
+	HasCoords     bool `protobuf:"varint,7,opt,name=has_coords,json=hasCoords,proto3" json:"has_coords,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -624,6 +629,27 @@ func (x *SearchRequest) GetMarket() string {
 		return x.Market
 	}
 	return ""
+}
+
+func (x *SearchRequest) GetSince() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Since
+	}
+	return nil
+}
+
+func (x *SearchRequest) GetUntil() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Until
+	}
+	return nil
+}
+
+func (x *SearchRequest) GetHasCoords() bool {
+	if x != nil {
+		return x.HasCoords
+	}
+	return false
 }
 
 type SearchResponse struct {
@@ -4028,12 +4054,16 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\x06hidden\x18\f \x01(\bR\x06hidden\x12!\n" +
 	"\fphoto_hidden\x18\r \x01(\bR\vphotoHiddenB\x06\n" +
 	"\x04_latB\x06\n" +
-	"\x04_lon\"k\n" +
+	"\x04_lon\"\xee\x01\n" +
 	"\rSearchRequest\x12\x14\n" +
 	"\x05plate\x18\x01 \x01(\tR\x05plate\x12\x16\n" +
 	"\x06offset\x18\x02 \x01(\x05R\x06offset\x12\x14\n" +
 	"\x05limit\x18\x03 \x01(\x05R\x05limit\x12\x16\n" +
-	"\x06market\x18\x04 \x01(\tR\x06market\"\xc8\x01\n" +
+	"\x06market\x18\x04 \x01(\tR\x06market\x120\n" +
+	"\x05since\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x05since\x120\n" +
+	"\x05until\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x05until\x12\x1d\n" +
+	"\n" +
+	"has_coords\x18\a \x01(\bR\thasCoords\"\xc8\x01\n" +
 	"\x0eSearchResponse\x12.\n" +
 	"\x05items\x18\x01 \x03(\v2\x18.carsearch.PlateSightingR\x05items\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x05R\x05total\x12$\n" +
@@ -4449,120 +4479,122 @@ var file_carsearch_carsearch_proto_goTypes = []any{
 var file_carsearch_carsearch_proto_depIdxs = []int32{
 	62, // 0: carsearch.PlateSighting.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 1: carsearch.PlateSighting.plate_type:type_name -> carsearch.PlateType
-	7,  // 2: carsearch.SearchResponse.items:type_name -> carsearch.PlateSighting
-	7,  // 3: carsearch.SearchResponse.suggestions:type_name -> carsearch.PlateSighting
-	7,  // 4: carsearch.GetResponse.items:type_name -> carsearch.PlateSighting
-	12, // 5: carsearch.GetResponse.clarifications:type_name -> carsearch.PlateClarification
-	0,  // 6: carsearch.PlateClarification.plate_type:type_name -> carsearch.PlateType
-	1,  // 7: carsearch.PlateClarification.status:type_name -> carsearch.ClarificationStatus
-	15, // 8: carsearch.PlateClarification.items:type_name -> carsearch.Clarification
-	7,  // 9: carsearch.SeeAlsoResponse.items:type_name -> carsearch.PlateSighting
-	1,  // 10: carsearch.Clarification.status:type_name -> carsearch.ClarificationStatus
-	62, // 11: carsearch.Clarification.created_at:type_name -> google.protobuf.Timestamp
-	0,  // 12: carsearch.Clarification.plate_type:type_name -> carsearch.PlateType
-	7,  // 13: carsearch.Clarification.sighting:type_name -> carsearch.PlateSighting
-	0,  // 14: carsearch.ClarifyRequest.plate_type:type_name -> carsearch.PlateType
-	15, // 15: carsearch.ClarifyResponse.clarification:type_name -> carsearch.Clarification
-	2,  // 16: carsearch.Complaint.reason:type_name -> carsearch.ComplaintReason
-	3,  // 17: carsearch.Complaint.status:type_name -> carsearch.ComplaintStatus
-	62, // 18: carsearch.Complaint.created_at:type_name -> google.protobuf.Timestamp
-	7,  // 19: carsearch.Complaint.sighting:type_name -> carsearch.PlateSighting
-	2,  // 20: carsearch.ComplainRequest.reason:type_name -> carsearch.ComplaintReason
-	3,  // 21: carsearch.ListComplaintsRequest.status:type_name -> carsearch.ComplaintStatus
-	18, // 22: carsearch.ListComplaintsResponse.items:type_name -> carsearch.Complaint
-	1,  // 23: carsearch.SetClarificationStatusRequest.status:type_name -> carsearch.ClarificationStatus
-	1,  // 24: carsearch.ListClarificationsRequest.status:type_name -> carsearch.ClarificationStatus
-	15, // 25: carsearch.ListClarificationsResponse.items:type_name -> carsearch.Clarification
-	4,  // 26: carsearch.User.plan:type_name -> carsearch.UserPlan
-	62, // 27: carsearch.User.pro_until:type_name -> google.protobuf.Timestamp
-	62, // 28: carsearch.User.created_at:type_name -> google.protobuf.Timestamp
-	28, // 29: carsearch.MeResponse.user:type_name -> carsearch.User
-	28, // 30: carsearch.RegisterResponse.user:type_name -> carsearch.User
-	4,  // 31: carsearch.PlanInfo.plan:type_name -> carsearch.UserPlan
-	34, // 32: carsearch.PlansResponse.items:type_name -> carsearch.PlanInfo
-	4,  // 33: carsearch.Payment.plan:type_name -> carsearch.UserPlan
-	5,  // 34: carsearch.Payment.status:type_name -> carsearch.PaymentStatus
-	62, // 35: carsearch.Payment.created_at:type_name -> google.protobuf.Timestamp
-	62, // 36: carsearch.Payment.confirmed_at:type_name -> google.protobuf.Timestamp
-	4,  // 37: carsearch.CreatePaymentRequest.plan:type_name -> carsearch.UserPlan
-	36, // 38: carsearch.CreatePaymentResponse.payment:type_name -> carsearch.Payment
-	36, // 39: carsearch.ListMyPaymentsResponse.items:type_name -> carsearch.Payment
-	6,  // 40: carsearch.CameraRequest.status:type_name -> carsearch.CameraRequestStatus
-	62, // 41: carsearch.CameraRequest.created_at:type_name -> google.protobuf.Timestamp
-	44, // 42: carsearch.ListCameraRequestsRequest.bbox:type_name -> carsearch.GeoBox
-	6,  // 43: carsearch.ListCameraRequestsRequest.status:type_name -> carsearch.CameraRequestStatus
-	42, // 44: carsearch.ListCameraRequestsResponse.items:type_name -> carsearch.CameraRequest
-	6,  // 45: carsearch.SetCameraRequestStatusRequest.status:type_name -> carsearch.CameraRequestStatus
-	62, // 46: carsearch.ApiToken.created_at:type_name -> google.protobuf.Timestamp
-	62, // 47: carsearch.ApiToken.last_used_at:type_name -> google.protobuf.Timestamp
-	49, // 48: carsearch.CreateApiTokenResponse.info:type_name -> carsearch.ApiToken
-	49, // 49: carsearch.ListApiTokensResponse.items:type_name -> carsearch.ApiToken
-	62, // 50: carsearch.PlateView.created_at:type_name -> google.protobuf.Timestamp
-	7,  // 51: carsearch.PlateView.sighting:type_name -> carsearch.PlateSighting
-	55, // 52: carsearch.ListPlateViewsResponse.items:type_name -> carsearch.PlateView
-	62, // 53: carsearch.IngestRequest.taken_at:type_name -> google.protobuf.Timestamp
-	0,  // 54: carsearch.PlateCandidate.plate_type:type_name -> carsearch.PlateType
-	7,  // 55: carsearch.IngestResponse.sighting:type_name -> carsearch.PlateSighting
-	60, // 56: carsearch.IngestResponse.candidates:type_name -> carsearch.PlateCandidate
-	8,  // 57: carsearch.CarSearchService.Search:input_type -> carsearch.SearchRequest
-	10, // 58: carsearch.CarSearchService.Get:input_type -> carsearch.GetRequest
-	13, // 59: carsearch.CarSearchService.SeeAlso:input_type -> carsearch.SeeAlsoRequest
-	16, // 60: carsearch.CarSearchService.Clarify:input_type -> carsearch.ClarifyRequest
-	19, // 61: carsearch.CarSearchService.Complain:input_type -> carsearch.ComplainRequest
-	20, // 62: carsearch.CarSearchService.ListComplaints:input_type -> carsearch.ListComplaintsRequest
-	22, // 63: carsearch.CarSearchService.ResolveComplaint:input_type -> carsearch.ResolveComplaintRequest
-	23, // 64: carsearch.CarSearchService.SetClarificationStatus:input_type -> carsearch.SetClarificationStatusRequest
-	24, // 65: carsearch.CarSearchService.HideSighting:input_type -> carsearch.HideSightingRequest
-	25, // 66: carsearch.CarSearchService.RestoreSightingPhoto:input_type -> carsearch.RestoreSightingPhotoRequest
-	26, // 67: carsearch.CarSearchService.ListClarifications:input_type -> carsearch.ListClarificationsRequest
-	29, // 68: carsearch.CarSearchService.Me:input_type -> carsearch.MeRequest
-	31, // 69: carsearch.CarSearchService.Register:input_type -> carsearch.RegisterRequest
-	33, // 70: carsearch.CarSearchService.Plans:input_type -> carsearch.PlansRequest
-	37, // 71: carsearch.CarSearchService.CreatePayment:input_type -> carsearch.CreatePaymentRequest
-	39, // 72: carsearch.CarSearchService.ConfirmMockPayment:input_type -> carsearch.ConfirmMockPaymentRequest
-	40, // 73: carsearch.CarSearchService.ListMyPayments:input_type -> carsearch.ListMyPaymentsRequest
-	43, // 74: carsearch.CarSearchService.SubmitCameraRequest:input_type -> carsearch.SubmitCameraRequestRequest
-	45, // 75: carsearch.CarSearchService.ListCameraRequests:input_type -> carsearch.ListCameraRequestsRequest
-	47, // 76: carsearch.CarSearchService.VoteCameraRequest:input_type -> carsearch.VoteCameraRequestRequest
-	48, // 77: carsearch.CarSearchService.SetCameraRequestStatus:input_type -> carsearch.SetCameraRequestStatusRequest
-	50, // 78: carsearch.CarSearchService.CreateApiToken:input_type -> carsearch.CreateApiTokenRequest
-	52, // 79: carsearch.CarSearchService.ListApiTokens:input_type -> carsearch.ListApiTokensRequest
-	54, // 80: carsearch.CarSearchService.RevokeApiToken:input_type -> carsearch.RevokeApiTokenRequest
-	56, // 81: carsearch.CarSearchService.ListPlateViews:input_type -> carsearch.ListPlateViewsRequest
-	58, // 82: carsearch.CarSearchService.TokenInfo:input_type -> carsearch.TokenInfoRequest
-	59, // 83: carsearch.CarSearchService.Ingest:input_type -> carsearch.IngestRequest
-	9,  // 84: carsearch.CarSearchService.Search:output_type -> carsearch.SearchResponse
-	11, // 85: carsearch.CarSearchService.Get:output_type -> carsearch.GetResponse
-	14, // 86: carsearch.CarSearchService.SeeAlso:output_type -> carsearch.SeeAlsoResponse
-	17, // 87: carsearch.CarSearchService.Clarify:output_type -> carsearch.ClarifyResponse
-	18, // 88: carsearch.CarSearchService.Complain:output_type -> carsearch.Complaint
-	21, // 89: carsearch.CarSearchService.ListComplaints:output_type -> carsearch.ListComplaintsResponse
-	18, // 90: carsearch.CarSearchService.ResolveComplaint:output_type -> carsearch.Complaint
-	15, // 91: carsearch.CarSearchService.SetClarificationStatus:output_type -> carsearch.Clarification
-	7,  // 92: carsearch.CarSearchService.HideSighting:output_type -> carsearch.PlateSighting
-	7,  // 93: carsearch.CarSearchService.RestoreSightingPhoto:output_type -> carsearch.PlateSighting
-	27, // 94: carsearch.CarSearchService.ListClarifications:output_type -> carsearch.ListClarificationsResponse
-	30, // 95: carsearch.CarSearchService.Me:output_type -> carsearch.MeResponse
-	32, // 96: carsearch.CarSearchService.Register:output_type -> carsearch.RegisterResponse
-	35, // 97: carsearch.CarSearchService.Plans:output_type -> carsearch.PlansResponse
-	38, // 98: carsearch.CarSearchService.CreatePayment:output_type -> carsearch.CreatePaymentResponse
-	36, // 99: carsearch.CarSearchService.ConfirmMockPayment:output_type -> carsearch.Payment
-	41, // 100: carsearch.CarSearchService.ListMyPayments:output_type -> carsearch.ListMyPaymentsResponse
-	42, // 101: carsearch.CarSearchService.SubmitCameraRequest:output_type -> carsearch.CameraRequest
-	46, // 102: carsearch.CarSearchService.ListCameraRequests:output_type -> carsearch.ListCameraRequestsResponse
-	42, // 103: carsearch.CarSearchService.VoteCameraRequest:output_type -> carsearch.CameraRequest
-	42, // 104: carsearch.CarSearchService.SetCameraRequestStatus:output_type -> carsearch.CameraRequest
-	51, // 105: carsearch.CarSearchService.CreateApiToken:output_type -> carsearch.CreateApiTokenResponse
-	53, // 106: carsearch.CarSearchService.ListApiTokens:output_type -> carsearch.ListApiTokensResponse
-	49, // 107: carsearch.CarSearchService.RevokeApiToken:output_type -> carsearch.ApiToken
-	57, // 108: carsearch.CarSearchService.ListPlateViews:output_type -> carsearch.ListPlateViewsResponse
-	49, // 109: carsearch.CarSearchService.TokenInfo:output_type -> carsearch.ApiToken
-	61, // 110: carsearch.CarSearchService.Ingest:output_type -> carsearch.IngestResponse
-	84, // [84:111] is the sub-list for method output_type
-	57, // [57:84] is the sub-list for method input_type
-	57, // [57:57] is the sub-list for extension type_name
-	57, // [57:57] is the sub-list for extension extendee
-	0,  // [0:57] is the sub-list for field type_name
+	62, // 2: carsearch.SearchRequest.since:type_name -> google.protobuf.Timestamp
+	62, // 3: carsearch.SearchRequest.until:type_name -> google.protobuf.Timestamp
+	7,  // 4: carsearch.SearchResponse.items:type_name -> carsearch.PlateSighting
+	7,  // 5: carsearch.SearchResponse.suggestions:type_name -> carsearch.PlateSighting
+	7,  // 6: carsearch.GetResponse.items:type_name -> carsearch.PlateSighting
+	12, // 7: carsearch.GetResponse.clarifications:type_name -> carsearch.PlateClarification
+	0,  // 8: carsearch.PlateClarification.plate_type:type_name -> carsearch.PlateType
+	1,  // 9: carsearch.PlateClarification.status:type_name -> carsearch.ClarificationStatus
+	15, // 10: carsearch.PlateClarification.items:type_name -> carsearch.Clarification
+	7,  // 11: carsearch.SeeAlsoResponse.items:type_name -> carsearch.PlateSighting
+	1,  // 12: carsearch.Clarification.status:type_name -> carsearch.ClarificationStatus
+	62, // 13: carsearch.Clarification.created_at:type_name -> google.protobuf.Timestamp
+	0,  // 14: carsearch.Clarification.plate_type:type_name -> carsearch.PlateType
+	7,  // 15: carsearch.Clarification.sighting:type_name -> carsearch.PlateSighting
+	0,  // 16: carsearch.ClarifyRequest.plate_type:type_name -> carsearch.PlateType
+	15, // 17: carsearch.ClarifyResponse.clarification:type_name -> carsearch.Clarification
+	2,  // 18: carsearch.Complaint.reason:type_name -> carsearch.ComplaintReason
+	3,  // 19: carsearch.Complaint.status:type_name -> carsearch.ComplaintStatus
+	62, // 20: carsearch.Complaint.created_at:type_name -> google.protobuf.Timestamp
+	7,  // 21: carsearch.Complaint.sighting:type_name -> carsearch.PlateSighting
+	2,  // 22: carsearch.ComplainRequest.reason:type_name -> carsearch.ComplaintReason
+	3,  // 23: carsearch.ListComplaintsRequest.status:type_name -> carsearch.ComplaintStatus
+	18, // 24: carsearch.ListComplaintsResponse.items:type_name -> carsearch.Complaint
+	1,  // 25: carsearch.SetClarificationStatusRequest.status:type_name -> carsearch.ClarificationStatus
+	1,  // 26: carsearch.ListClarificationsRequest.status:type_name -> carsearch.ClarificationStatus
+	15, // 27: carsearch.ListClarificationsResponse.items:type_name -> carsearch.Clarification
+	4,  // 28: carsearch.User.plan:type_name -> carsearch.UserPlan
+	62, // 29: carsearch.User.pro_until:type_name -> google.protobuf.Timestamp
+	62, // 30: carsearch.User.created_at:type_name -> google.protobuf.Timestamp
+	28, // 31: carsearch.MeResponse.user:type_name -> carsearch.User
+	28, // 32: carsearch.RegisterResponse.user:type_name -> carsearch.User
+	4,  // 33: carsearch.PlanInfo.plan:type_name -> carsearch.UserPlan
+	34, // 34: carsearch.PlansResponse.items:type_name -> carsearch.PlanInfo
+	4,  // 35: carsearch.Payment.plan:type_name -> carsearch.UserPlan
+	5,  // 36: carsearch.Payment.status:type_name -> carsearch.PaymentStatus
+	62, // 37: carsearch.Payment.created_at:type_name -> google.protobuf.Timestamp
+	62, // 38: carsearch.Payment.confirmed_at:type_name -> google.protobuf.Timestamp
+	4,  // 39: carsearch.CreatePaymentRequest.plan:type_name -> carsearch.UserPlan
+	36, // 40: carsearch.CreatePaymentResponse.payment:type_name -> carsearch.Payment
+	36, // 41: carsearch.ListMyPaymentsResponse.items:type_name -> carsearch.Payment
+	6,  // 42: carsearch.CameraRequest.status:type_name -> carsearch.CameraRequestStatus
+	62, // 43: carsearch.CameraRequest.created_at:type_name -> google.protobuf.Timestamp
+	44, // 44: carsearch.ListCameraRequestsRequest.bbox:type_name -> carsearch.GeoBox
+	6,  // 45: carsearch.ListCameraRequestsRequest.status:type_name -> carsearch.CameraRequestStatus
+	42, // 46: carsearch.ListCameraRequestsResponse.items:type_name -> carsearch.CameraRequest
+	6,  // 47: carsearch.SetCameraRequestStatusRequest.status:type_name -> carsearch.CameraRequestStatus
+	62, // 48: carsearch.ApiToken.created_at:type_name -> google.protobuf.Timestamp
+	62, // 49: carsearch.ApiToken.last_used_at:type_name -> google.protobuf.Timestamp
+	49, // 50: carsearch.CreateApiTokenResponse.info:type_name -> carsearch.ApiToken
+	49, // 51: carsearch.ListApiTokensResponse.items:type_name -> carsearch.ApiToken
+	62, // 52: carsearch.PlateView.created_at:type_name -> google.protobuf.Timestamp
+	7,  // 53: carsearch.PlateView.sighting:type_name -> carsearch.PlateSighting
+	55, // 54: carsearch.ListPlateViewsResponse.items:type_name -> carsearch.PlateView
+	62, // 55: carsearch.IngestRequest.taken_at:type_name -> google.protobuf.Timestamp
+	0,  // 56: carsearch.PlateCandidate.plate_type:type_name -> carsearch.PlateType
+	7,  // 57: carsearch.IngestResponse.sighting:type_name -> carsearch.PlateSighting
+	60, // 58: carsearch.IngestResponse.candidates:type_name -> carsearch.PlateCandidate
+	8,  // 59: carsearch.CarSearchService.Search:input_type -> carsearch.SearchRequest
+	10, // 60: carsearch.CarSearchService.Get:input_type -> carsearch.GetRequest
+	13, // 61: carsearch.CarSearchService.SeeAlso:input_type -> carsearch.SeeAlsoRequest
+	16, // 62: carsearch.CarSearchService.Clarify:input_type -> carsearch.ClarifyRequest
+	19, // 63: carsearch.CarSearchService.Complain:input_type -> carsearch.ComplainRequest
+	20, // 64: carsearch.CarSearchService.ListComplaints:input_type -> carsearch.ListComplaintsRequest
+	22, // 65: carsearch.CarSearchService.ResolveComplaint:input_type -> carsearch.ResolveComplaintRequest
+	23, // 66: carsearch.CarSearchService.SetClarificationStatus:input_type -> carsearch.SetClarificationStatusRequest
+	24, // 67: carsearch.CarSearchService.HideSighting:input_type -> carsearch.HideSightingRequest
+	25, // 68: carsearch.CarSearchService.RestoreSightingPhoto:input_type -> carsearch.RestoreSightingPhotoRequest
+	26, // 69: carsearch.CarSearchService.ListClarifications:input_type -> carsearch.ListClarificationsRequest
+	29, // 70: carsearch.CarSearchService.Me:input_type -> carsearch.MeRequest
+	31, // 71: carsearch.CarSearchService.Register:input_type -> carsearch.RegisterRequest
+	33, // 72: carsearch.CarSearchService.Plans:input_type -> carsearch.PlansRequest
+	37, // 73: carsearch.CarSearchService.CreatePayment:input_type -> carsearch.CreatePaymentRequest
+	39, // 74: carsearch.CarSearchService.ConfirmMockPayment:input_type -> carsearch.ConfirmMockPaymentRequest
+	40, // 75: carsearch.CarSearchService.ListMyPayments:input_type -> carsearch.ListMyPaymentsRequest
+	43, // 76: carsearch.CarSearchService.SubmitCameraRequest:input_type -> carsearch.SubmitCameraRequestRequest
+	45, // 77: carsearch.CarSearchService.ListCameraRequests:input_type -> carsearch.ListCameraRequestsRequest
+	47, // 78: carsearch.CarSearchService.VoteCameraRequest:input_type -> carsearch.VoteCameraRequestRequest
+	48, // 79: carsearch.CarSearchService.SetCameraRequestStatus:input_type -> carsearch.SetCameraRequestStatusRequest
+	50, // 80: carsearch.CarSearchService.CreateApiToken:input_type -> carsearch.CreateApiTokenRequest
+	52, // 81: carsearch.CarSearchService.ListApiTokens:input_type -> carsearch.ListApiTokensRequest
+	54, // 82: carsearch.CarSearchService.RevokeApiToken:input_type -> carsearch.RevokeApiTokenRequest
+	56, // 83: carsearch.CarSearchService.ListPlateViews:input_type -> carsearch.ListPlateViewsRequest
+	58, // 84: carsearch.CarSearchService.TokenInfo:input_type -> carsearch.TokenInfoRequest
+	59, // 85: carsearch.CarSearchService.Ingest:input_type -> carsearch.IngestRequest
+	9,  // 86: carsearch.CarSearchService.Search:output_type -> carsearch.SearchResponse
+	11, // 87: carsearch.CarSearchService.Get:output_type -> carsearch.GetResponse
+	14, // 88: carsearch.CarSearchService.SeeAlso:output_type -> carsearch.SeeAlsoResponse
+	17, // 89: carsearch.CarSearchService.Clarify:output_type -> carsearch.ClarifyResponse
+	18, // 90: carsearch.CarSearchService.Complain:output_type -> carsearch.Complaint
+	21, // 91: carsearch.CarSearchService.ListComplaints:output_type -> carsearch.ListComplaintsResponse
+	18, // 92: carsearch.CarSearchService.ResolveComplaint:output_type -> carsearch.Complaint
+	15, // 93: carsearch.CarSearchService.SetClarificationStatus:output_type -> carsearch.Clarification
+	7,  // 94: carsearch.CarSearchService.HideSighting:output_type -> carsearch.PlateSighting
+	7,  // 95: carsearch.CarSearchService.RestoreSightingPhoto:output_type -> carsearch.PlateSighting
+	27, // 96: carsearch.CarSearchService.ListClarifications:output_type -> carsearch.ListClarificationsResponse
+	30, // 97: carsearch.CarSearchService.Me:output_type -> carsearch.MeResponse
+	32, // 98: carsearch.CarSearchService.Register:output_type -> carsearch.RegisterResponse
+	35, // 99: carsearch.CarSearchService.Plans:output_type -> carsearch.PlansResponse
+	38, // 100: carsearch.CarSearchService.CreatePayment:output_type -> carsearch.CreatePaymentResponse
+	36, // 101: carsearch.CarSearchService.ConfirmMockPayment:output_type -> carsearch.Payment
+	41, // 102: carsearch.CarSearchService.ListMyPayments:output_type -> carsearch.ListMyPaymentsResponse
+	42, // 103: carsearch.CarSearchService.SubmitCameraRequest:output_type -> carsearch.CameraRequest
+	46, // 104: carsearch.CarSearchService.ListCameraRequests:output_type -> carsearch.ListCameraRequestsResponse
+	42, // 105: carsearch.CarSearchService.VoteCameraRequest:output_type -> carsearch.CameraRequest
+	42, // 106: carsearch.CarSearchService.SetCameraRequestStatus:output_type -> carsearch.CameraRequest
+	51, // 107: carsearch.CarSearchService.CreateApiToken:output_type -> carsearch.CreateApiTokenResponse
+	53, // 108: carsearch.CarSearchService.ListApiTokens:output_type -> carsearch.ListApiTokensResponse
+	49, // 109: carsearch.CarSearchService.RevokeApiToken:output_type -> carsearch.ApiToken
+	57, // 110: carsearch.CarSearchService.ListPlateViews:output_type -> carsearch.ListPlateViewsResponse
+	49, // 111: carsearch.CarSearchService.TokenInfo:output_type -> carsearch.ApiToken
+	61, // 112: carsearch.CarSearchService.Ingest:output_type -> carsearch.IngestResponse
+	86, // [86:113] is the sub-list for method output_type
+	59, // [59:86] is the sub-list for method input_type
+	59, // [59:59] is the sub-list for extension type_name
+	59, // [59:59] is the sub-list for extension extendee
+	0,  // [0:59] is the sub-list for field type_name
 }
 
 func init() { file_carsearch_carsearch_proto_init() }

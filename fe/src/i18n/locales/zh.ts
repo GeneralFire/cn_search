@@ -400,4 +400,17 @@ export const zh: Dict = {
   "states.exhausted": "请求次数已用完",
   "states.exhaustedHint": "令牌配额已用完——请充值或稍后再试。",
   "states.retry": "重试",
+
+  // Фильтры выдачи (filters.ts).
+  "filters.title": "筛选",
+  "filters.period": "时间段",
+  "filters.period.today": "今天",
+  "filters.period.7d": "7 天",
+  "filters.period.30d": "30 天",
+  "filters.period.all": "全部时间",
+  "filters.market": "国家",
+  "filters.market.all": "全部",
+  "filters.geo": "仅有坐标",
+  "filters.reset": "重置筛选",
+  "filters.emptyHint": "请尝试放宽或重置筛选条件。",
 };

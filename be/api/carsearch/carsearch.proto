@@ -172,6 +172,11 @@ message SearchRequest {
   // "other" — всё, что не попало ни в один рынок (формат неизвестен или другая страна).
   // Пусто — без фильтра.
   string market = 4;
+  // Фильтр периода по времени фиксации: since <= created_at < until. Не задано — без границы.
+  google.protobuf.Timestamp since = 5;
+  google.protobuf.Timestamp until = 6;
+  // Только фиксации с координатами (есть на карте).
+  bool has_coords = 7;
 }
 
 message SearchResponse {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -89,5 +90,46 @@ func TestSearchLookAlikeDB(t *testing.T) {
 	}
 	if page := search(models.SearchOpts{Plate: "4502", Market: models.MarketRU, Limit: 10}); page.Total != 0 {
 		t.Errorf("украинский номер в рынке ru: %+v", page.Items)
+	}
+}
+
+// Фильтры периода и «есть на карте»: выдача — подмножество, время фиксаций в границах.
+func TestSearchFiltersDB(t *testing.T) {
+	search := searchDB(t)
+	all := search(models.SearchOpts{Limit: 1}).Total
+	// У тестовых фиксаций координаты обязательны (0002_test_data.sql), но другие тесты могут
+	// оставить фиксации без них — проверяем, что в выдаче только фиксации с координатами.
+	geo := search(models.SearchOpts{Limit: 100, HasCoords: true})
+	if geo.Total == 0 || geo.Total > all {
+		t.Errorf("has_coords: %d из %d", geo.Total, all)
+	}
+	for _, it := range geo.Items {
+		if it.Lat == nil {
+			t.Errorf("has_coords: %s без координат", it.Plate)
+		}
+	}
+	if got := search(models.SearchOpts{Limit: 1, Since: time.Now().Add(time.Hour)}).Total; got != 0 {
+		t.Errorf("since в будущем: %d", got)
+	}
+	if got := search(models.SearchOpts{Limit: 1, Until: time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)}).Total; got != 0 {
+		t.Errorf("until в прошлом: %d", got)
+	}
+	// Делим период по времени средней фиксации: обе половины непусты и не больше всего.
+	items := search(models.SearchOpts{Limit: 100}).Items
+	mid := items[len(items)/2].CreatedAt
+	newer := search(models.SearchOpts{Limit: 100, Since: mid})
+	older := search(models.SearchOpts{Limit: 100, Until: mid})
+	if newer.Total == 0 || older.Total == 0 || newer.Total > all || older.Total > all {
+		t.Errorf("половины: %d + %d из %d", newer.Total, older.Total, all)
+	}
+	for _, it := range newer.Items {
+		if it.CreatedAt.Before(mid) {
+			t.Errorf("since: %s раньше %s", it.CreatedAt, mid)
+		}
+	}
+	for _, it := range older.Items {
+		if !it.CreatedAt.Before(mid) {
+			t.Errorf("until: %s не раньше %s", it.CreatedAt, mid)
+		}
 	}
 }

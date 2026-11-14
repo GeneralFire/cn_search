@@ -678,6 +678,8 @@ export interface CarsearchRevokeApiTokenRequest {
 }
 
 export interface CarsearchSearchRequest {
+  /** Только фиксации с координатами (есть на карте). */
+  hasCoords?: boolean;
   /**
    * Размер страницы, 1..100; 0 — по умолчанию (35).
    * @format int32
@@ -701,6 +703,13 @@ export interface CarsearchSearchRequest {
    * серией "А123ВС" или регионом "777". Пусто — все записи.
    */
   plate?: string;
+  /**
+   * Фильтр периода по времени фиксации: since <= created_at < until. Не задано — без границы.
+   * @format date-time
+   */
+  since?: string;
+  /** @format date-time */
+  until?: string;
 }
 
 export interface CarsearchSearchResponse {
