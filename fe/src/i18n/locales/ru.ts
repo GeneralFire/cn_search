@@ -416,4 +416,9 @@ export const ru = {
   "upload.fix": "Номер распознан неверно? Исправить",
   "upload.alternatives": "Другие варианты",
   "upload.fixSent": "Уточнение отправлено",
+
+  // Тепловая карта активности на странице номера (activity.ts).
+  "activity.title": "Когда обычно появляется",
+  "activity.topPlaces": "Частые адреса",
+  "activity.times": { one: "{n} фиксация", few: "{n} фиксации", many: "{n} фиксаций", other: "{n} фиксации" },
 } as const;

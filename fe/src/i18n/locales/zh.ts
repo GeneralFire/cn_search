@@ -417,4 +417,9 @@ export const zh: Dict = {
   "upload.fix": "车牌识别有误？修正",
   "upload.alternatives": "其他选项",
   "upload.fixSent": "更正已发送",
+
+  // Тепловая карта активности на странице номера (activity.ts).
+  "activity.title": "通常出现的时间",
+  "activity.topPlaces": "常见地点",
+  "activity.times": { other: "{n} 次记录" },
 };

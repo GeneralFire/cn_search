@@ -416,4 +416,9 @@ export const en: Dict = {
   "upload.fix": "Plate recognized wrong? Fix it",
   "upload.alternatives": "Other options",
   "upload.fixSent": "Correction sent",
+
+  // Тепловая карта активности на странице номера (activity.ts).
+  "activity.title": "When it usually shows up",
+  "activity.topPlaces": "Frequent addresses",
+  "activity.times": { one: "{n} sighting", other: "{n} sightings" },
 };

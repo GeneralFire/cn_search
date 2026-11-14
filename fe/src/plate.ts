@@ -15,6 +15,7 @@ import { openClarify } from "./clarify";
 import { clarificationsHtml, clarifiedMarkHtml } from "./clarifications";
 import { bindShare, shareButtonHtml } from "./share";
 import { bindRetry, emptyStateHtml, errorStateHtml } from "./states";
+import { activityHtml } from "./activity";
 
 /** Сколько карточек показывать в «Свежих фиксациях» (ручка отдаёт не больше). */
 const SEE_ALSO_LIMIT = 21;
@@ -173,6 +174,8 @@ function pageHtml(items: Car[], currentId: string): string {
         </ol>
       </section>
     </div>
+
+    ${activityHtml(items)}
 
     <section class="pp-more" aria-labelledby="pp-more-title">
       <h2 id="pp-more-title">${t("seeAlso.title")}</h2>

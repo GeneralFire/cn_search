@@ -416,4 +416,9 @@ export const uk: Dict = {
   "upload.fix": "Номер розпізнано неправильно? Виправити",
   "upload.alternatives": "Інші варіанти",
   "upload.fixSent": "Уточнення надіслано",
+
+  // Тепловая карта активности на странице номера (activity.ts).
+  "activity.title": "Коли зазвичай з’являється",
+  "activity.topPlaces": "Часті адреси",
+  "activity.times": { one: "{n} фіксація", few: "{n} фіксації", many: "{n} фіксацій", other: "{n} фіксації" },
 };

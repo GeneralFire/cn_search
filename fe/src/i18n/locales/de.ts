@@ -416,4 +416,9 @@ export const de: Dict = {
   "upload.fix": "Kennzeichen falsch erkannt? Korrigieren",
   "upload.alternatives": "Andere Varianten",
   "upload.fixSent": "Korrektur gesendet",
+
+  // Тепловая карта активности на странице номера (activity.ts).
+  "activity.title": "Wann er meist auftaucht",
+  "activity.topPlaces": "Häufige Adressen",
+  "activity.times": { one: "{n} Sichtung", other: "{n} Sichtungen" },
 };
