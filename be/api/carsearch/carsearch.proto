@@ -167,6 +167,9 @@ message PlateSighting {
   // Фото скрыто по жалобам (≥ 3 новых жалоб bad_photo/personal_data): обычным пользователям photo_url
   // и thumb_url приходят пустыми, админу — как есть. Снимают ResolveComplaint и RestoreSightingPhoto.
   bool photo_hidden = 13;
+  // Координаты скрыты, потому что запрос без входа (нет токена пользователя, API-токена и admin-token):
+  // lat/lon пусты. Отличает «скрыто» от «координат нет».
+  bool coords_hidden = 14;
 }
 
 // Формат номерного знака — от него зависит, как его рисовать.

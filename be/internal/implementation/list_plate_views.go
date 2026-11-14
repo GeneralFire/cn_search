@@ -36,7 +36,7 @@ func (s *CarSearch) ListPlateViews(ctx context.Context, req *pb.ListPlateViewsRe
 	resp := &pb.ListPlateViewsResponse{Items: make([]*pb.PlateView, len(page.Items)), Total: int32(page.Total), NextOffset: nextOffsetPB(page.NextOffset)}
 	for i, v := range page.Items {
 		out := &pb.PlateView{
-			Id: v.ID, CreatedAt: timestamppb.New(v.CreatedAt), Sighting: s.toPB(v.Sighting),
+			Id: v.ID, CreatedAt: timestamppb.New(v.CreatedAt), Sighting: s.toPB(v.Sighting, true),
 			Consumed: v.Consumed, IsAdmin: v.IsAdmin, UserAgent: v.UserAgent,
 		}
 		if v.TokenID != nil {

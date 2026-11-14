@@ -6,7 +6,7 @@ import { escapeHtml, fitPlates, formatAgo, formatDate, formatShortDate, formatTi
 import { t, tp } from "./i18n/i18n";
 import { mountSettings } from "./settings";
 import { openLightbox } from "./lightbox";
-import { mountPlateMap, plateMapHtml } from "./map";
+import { bindCoordsLogin, mountPlateMap, plateMapHtml } from "./map";
 import { complainButtonHtml } from "./complaint";
 import { noPhotoHtml, photoHtml } from "./nophoto";
 import { bindClarificationControls, mountPlateAdmin } from "./adminpanels";
@@ -86,6 +86,7 @@ export async function renderPlatePage(root: HTMLElement, id: string, handlers: Q
 
     void mountWatchButton($main, items); // «Следить» рядом с «Поделиться»
     void loadSeeAlso($main, id, my.signal);
+    bindCoordsLogin($main);
     void mountPlateMap($main, items, id, my.signal);
     void mountPlateAdmin($main, items, id, my.signal); // админ-режим: панель «Управление»
     $main.querySelector<HTMLButtonElement>("[data-zoom]")?.addEventListener("click", (e) =>
@@ -148,7 +149,7 @@ function pageHtml(items: Car[], currentId: string): string {
           ${stat(escapeHtml(formatShortDate(first.createdAt)), t("stat.first"))}
           ${stat(escapeHtml(formatShortDate(latest.createdAt)), t("stat.last"))}
         </div>
-        ${shareButtonHtml()}${exportButtonHtml()}
+        ${shareButtonHtml()}${exportButtonHtml(items)}
       </div>
     </section>
 

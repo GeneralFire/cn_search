@@ -423,7 +423,10 @@ type PlateSighting struct {
 	Hidden bool `protobuf:"varint,12,opt,name=hidden,proto3" json:"hidden,omitempty"`
 	// Фото скрыто по жалобам (≥ 3 новых жалоб bad_photo/personal_data): обычным пользователям photo_url
 	// и thumb_url приходят пустыми, админу — как есть. Снимают ResolveComplaint и RestoreSightingPhoto.
-	PhotoHidden   bool `protobuf:"varint,13,opt,name=photo_hidden,json=photoHidden,proto3" json:"photo_hidden,omitempty"`
+	PhotoHidden bool `protobuf:"varint,13,opt,name=photo_hidden,json=photoHidden,proto3" json:"photo_hidden,omitempty"`
+	// Координаты скрыты, потому что запрос без входа (нет токена пользователя, API-токена и admin-token):
+	// lat/lon пусты. Отличает «скрыто» от «координат нет».
+	CoordsHidden  bool `protobuf:"varint,14,opt,name=coords_hidden,json=coordsHidden,proto3" json:"coords_hidden,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -545,6 +548,13 @@ func (x *PlateSighting) GetHidden() bool {
 func (x *PlateSighting) GetPhotoHidden() bool {
 	if x != nil {
 		return x.PhotoHidden
+	}
+	return false
+}
+
+func (x *PlateSighting) GetCoordsHidden() bool {
+	if x != nil {
+		return x.CoordsHidden
 	}
 	return false
 }
@@ -4688,7 +4698,7 @@ var File_carsearch_carsearch_proto protoreflect.FileDescriptor
 
 const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\n" +
-	"\x19carsearch/carsearch.proto\x12\tcarsearch\x1a\x1fgoogle/protobuf/timestamp.proto\"\xbc\x03\n" +
+	"\x19carsearch/carsearch.proto\x12\tcarsearch\x1a\x1fgoogle/protobuf/timestamp.proto\"\xe1\x03\n" +
 	"\rPlateSighting\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tphoto_url\x18\x02 \x01(\tR\bphotoUrl\x12\x18\n" +
@@ -4705,7 +4715,8 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	" \x01(\x01H\x00R\x03lat\x88\x01\x01\x12\x15\n" +
 	"\x03lon\x18\v \x01(\x01H\x01R\x03lon\x88\x01\x01\x12\x16\n" +
 	"\x06hidden\x18\f \x01(\bR\x06hidden\x12!\n" +
-	"\fphoto_hidden\x18\r \x01(\bR\vphotoHiddenB\x06\n" +
+	"\fphoto_hidden\x18\r \x01(\bR\vphotoHidden\x12#\n" +
+	"\rcoords_hidden\x18\x0e \x01(\bR\fcoordsHiddenB\x06\n" +
 	"\x04_latB\x06\n" +
 	"\x04_lon\"\x82\x02\n" +
 	"\rSearchRequest\x12\x14\n" +

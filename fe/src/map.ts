@@ -24,6 +24,8 @@ const hasCoords = (c: Car): c is Located => c.lat != null && c.lon != null;
 
 /** Разметка блока карты; у номера нет ни одной фиксации с координатами — пустая строка (блок скрыт). */
 export function plateMapHtml(items: Car[]): string {
+  // Аноним: координат нет не потому, что точка неизвестна, а потому что они скрыты — зовём войти.
+  if (items.some((c) => c.coordsHidden)) return coordsLoginHtml();
   const located = items.filter(hasCoords).length;
   if (!located) return "";
   const note =
@@ -36,6 +38,36 @@ export function plateMapHtml(items: Car[]): string {
       <div class="pp-map__canvas" role="region" aria-label="${escapeHtml(t("map.aria"))}"></div>
       ${note}
     </section>`;
+}
+
+/** Плашка вместо карты для анонима: «Войдите» (открывает панель настроек с полем токена) и «Регистрация». */
+function coordsLoginHtml(): string {
+  return `
+    <section class="pp-map pp-map--locked" aria-labelledby="pp-map-title">
+      <h2 id="pp-map-title" class="pp-map__title">${t("map.title")}</h2>
+      <div class="pp-map__lock">
+        <strong>${t("coords.loginTitle")}</strong>
+        <p>${t("coords.loginText")}</p>
+        <div class="pp-map__lock-actions">
+          <button class="btn btn--primary" type="button" data-coords-login>${t("coords.login")}</button>
+          <a class="btn btn--ghost" href="/signup" data-link>${t("coords.signup")}</a>
+        </div>
+      </div>
+    </section>`;
+}
+
+/** Вешает «Войти» плашки: открывает панель настроек на логотипе и ставит фокус в поле токена. */
+export function bindCoordsLogin($root: HTMLElement): void {
+  $root.querySelector("[data-coords-login]")?.addEventListener("click", () => {
+    // Логотип с панелью выводится дважды (шапка десктоп/мобильная) — берём видимый экземпляр.
+    const visible = <T extends HTMLElement>(sel: string) =>
+      [...document.querySelectorAll<T>(sel)].find((e) => e.getClientRects().length > 0);
+    const $btn = visible(".st__btn");
+    if (!$btn) return;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    $btn.focus(); // focusin на .st открывает панель
+    visible<HTMLInputElement>(".st__panel .st-acc input")?.focus();
+  });
 }
 
 /** Рисует карту в блоке из plateMapHtml внутри $root. signal — жизнь страницы: при его отмене

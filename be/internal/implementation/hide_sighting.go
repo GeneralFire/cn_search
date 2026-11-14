@@ -30,5 +30,5 @@ func (s *CarSearch) HideSighting(ctx context.Context, req *pb.HideSightingReques
 	case err != nil:
 		return nil, internalErr(ctx, err, "не удалось обновить фиксацию")
 	}
-	return s.toPB(c), nil
+	return s.toPB(c, true), nil
 }

@@ -6084,6 +6084,10 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         "photoHidden": {
           "type": "boolean",
           "description": "Фото скрыто по жалобам (≥ 3 новых жалоб bad_photo/personal_data): обычным пользователям photo_url\nи thumb_url приходят пустыми, админу — как есть. Снимают ResolveComplaint и RestoreSightingPhoto."
+        },
+        "coordsHidden": {
+          "type": "boolean",
+          "description": "Координаты скрыты, потому что запрос без входа (нет токена пользователя, API-токена и admin-token):\nlat/lon пусты. Отличает «скрыто» от «координат нет»."
         }
       },
       "description": "PlateSighting — фиксация номера: где и когда замечена машина."

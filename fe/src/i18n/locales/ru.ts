@@ -485,4 +485,13 @@ export const ru = {
   "audit.f.name": "имя",
   "audit.f.requests_total": "запросов",
   "audit.f.revoked": "отозван",
+
+
+
+  // Координаты скрыты от анонима (map.ts, export.ts).
+  "coords.loginTitle": "Войдите, чтобы увидеть фиксации на карте",
+  "coords.loginText": "Координаты мест фиксации видны только вошедшим пользователям. Поиск по номеру доступен всем.",
+  "coords.login": "Войти",
+  "coords.signup": "Регистрация",
+  "coords.exportHint": "Войдите, чтобы скачать GeoJSON",
 } as const;

@@ -4,10 +4,12 @@ package implementation
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/GeneralFire/cn_search/be/internal/apitoken"
 	"github.com/GeneralFire/cn_search/be/internal/models"
 	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch"
 )
@@ -86,7 +88,34 @@ func NewCarSearch(uc plateSightings, photoBaseURL string, opts ...Option) *CarSe
 	return s
 }
 
-func (s *CarSearch) toPB(c models.PlateSighting) *pb.PlateSighting {
+// canSeeCoords — запрос с входом: admin-token, действующий токен пользователя (cs_…) или API-токен (cst_…).
+// Аноним координат не видит (см. toPB). Неверный токен — тоже аноним.
+func (s *CarSearch) canSeeCoords(ctx context.Context) bool {
+	if s.isAdmin(ctx) {
+		return true
+	}
+	tok := userToken(ctx)
+	if tok == "" {
+		return false
+	}
+	if strings.HasPrefix(tok, apitoken.Prefix) {
+		if s.tokens == nil {
+			return false
+		}
+		_, err := s.tokens.TokenInfo(ctx, tok)
+		// Исчерпанный токен — всё равно действующий вход; неверный и отозванный — аноним.
+		return err == nil || errors.Is(err, models.ErrTokenExhausted)
+	}
+	if s.accounts == nil {
+		return false
+	}
+	_, err := s.accounts.UserByToken(ctx, tok, includeTestData(ctx))
+	return err == nil
+}
+
+// toPB — модель фиксации в ответ. coords=false (аноним, см. canSeeCoords): lat/lon не заполняются,
+// coords_hidden=true — единственное место, где скрываются координаты.
+func (s *CarSearch) toPB(c models.PlateSighting, coords bool) *pb.PlateSighting {
 	out := &pb.PlateSighting{
 		Id:        c.ID,
 		Address:   c.Address,
@@ -102,6 +131,9 @@ func (s *CarSearch) toPB(c models.PlateSighting) *pb.PlateSighting {
 
 		Hidden:      c.Hidden,
 		PhotoHidden: c.PhotoHidden,
+	}
+	if !coords {
+		out.Lat, out.Lon, out.CoordsHidden = nil, nil, true
 	}
 	if c.PhotoKey != "" {
 		out.PhotoUrl = s.photoBase + "/" + c.PhotoKey

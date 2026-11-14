@@ -486,4 +486,13 @@ export const zh: Dict = {
   "audit.f.name": "名称",
   "audit.f.requests_total": "请求数",
   "audit.f.revoked": "已撤销",
+
+
+
+  // Координаты скрыты от анонима (map.ts, export.ts).
+  "coords.loginTitle": "登录后可在地图上查看记录",
+  "coords.loginText": "仅登录用户可见记录的坐标，车牌搜索对所有人开放。",
+  "coords.login": "登录",
+  "coords.signup": "注册",
+  "coords.exportHint": "登录后可下载 GeoJSON",
 };

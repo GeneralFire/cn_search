@@ -111,7 +111,7 @@ func TestPlateTypeMapping(t *testing.T) {
 	} {
 		c := sighting
 		c.PlateType = typ
-		if got := svc.toPB(c).GetPlateType(); got != want {
+		if got := svc.toPB(c, true).GetPlateType(); got != want {
 			t.Errorf("%q → %v, want %v", typ, got, want)
 		}
 		if typ != "" && plateTypeModel[want] != typ {

@@ -485,4 +485,13 @@ export const uk: Dict = {
   "audit.f.name": "ім’я",
   "audit.f.requests_total": "запитів",
   "audit.f.revoked": "відкликано",
+
+
+
+  // Координаты скрыты от анонима (map.ts, export.ts).
+  "coords.loginTitle": "Увійдіть, щоб побачити фіксації на карті",
+  "coords.loginText": "Координати місць фіксації бачать лише користувачі, що увійшли. Пошук за номером доступний усім.",
+  "coords.login": "Увійти",
+  "coords.signup": "Реєстрація",
+  "coords.exportHint": "Увійдіть, щоб завантажити GeoJSON",
 };

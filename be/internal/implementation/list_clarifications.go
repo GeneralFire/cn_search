@@ -51,7 +51,7 @@ func (s *CarSearch) ListClarifications(ctx context.Context, req *pb.ListClarific
 	resp := &pb.ListClarificationsResponse{Items: make([]*pb.Clarification, len(page.Items)), Total: int32(page.Total)}
 	for i, it := range page.Items {
 		resp.Items[i] = clarificationPB(it.Clarification)
-		resp.Items[i].Sighting = s.toPB(it.Sighting)
+		resp.Items[i].Sighting = s.toPB(it.Sighting, true)
 	}
 	if page.NextOffset != nil {
 		next := int32(*page.NextOffset)

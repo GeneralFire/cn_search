@@ -35,6 +35,8 @@ export type Car = Required<Pick<CarsearchPlateSighting, "id" | "plate" | "addres
     hidden?: boolean;
     /** Фото скрыто по жалобам: обычным пользователям photoUrl/thumbUrl пустые, админу — как есть. */
     photoHidden?: boolean;
+    /** Координаты скрыты, потому что запрос без входа (lat/lon пусты) — отличает «скрыто» от «нет координат». */
+    coordsHidden?: boolean;
   };
 
 const plateTypes: Record<string, string> = {
@@ -89,6 +91,7 @@ function toCar(c: CarsearchPlateSighting): Car {
     ...(c.lat != null && c.lon != null ? { lat: c.lat, lon: c.lon } : {}),
     ...(c.hidden ? { hidden: true } : {}),
     ...(c.photoHidden ? { photoHidden: true } : {}),
+    ...(c.coordsHidden ? { coordsHidden: true } : {}),
   };
 }
 

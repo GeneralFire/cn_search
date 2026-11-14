@@ -42,12 +42,13 @@ func (s *CarSearch) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespons
 	case err != nil:
 		return nil, internalErr(ctx, err, "не удалось получить фиксации")
 	}
+	coords := s.canSeeCoords(ctx)
 	resp := &pb.GetResponse{
 		Items:          make([]*pb.PlateSighting, len(res.Items)),
 		Clarifications: make([]*pb.PlateClarification, len(res.Clarifications)),
 	}
 	for i, c := range res.Items {
-		resp.Items[i] = s.toPB(c)
+		resp.Items[i] = s.toPB(c, coords)
 	}
 	for i, c := range res.Clarifications {
 		resp.Clarifications[i] = &pb.PlateClarification{

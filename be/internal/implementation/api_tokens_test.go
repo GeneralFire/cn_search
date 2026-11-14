@@ -46,6 +46,7 @@ func TestGetWithTokens(t *testing.T) {
 	tok.OpenPlateMock.Expect(minimock.AnyContext, models.OpenPlateOpts{
 		SamePlateOpts: models.SamePlateOpts{ID: id}, Token: "cst_a.b", UserAgent: "curl",
 	}).Return(models.SamePlate{Items: []models.PlateSighting{sighting}}, nil)
+	tok.TokenInfoMock.Optional().Return(models.ApiToken{}, nil)
 	ctx := mdCtx("cookie", "cs_token=cst_a.b", "user-agent", "curl")
 	if resp, err := svc.Get(ctx, &pb.GetRequest{Id: id}); err != nil || len(resp.GetItems()) != 1 {
 		t.Fatalf("Get: %v %v", resp, err)

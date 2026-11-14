@@ -52,15 +52,16 @@ func (s *CarSearch) Search(ctx context.Context, req *pb.SearchRequest) (*pb.Sear
 		return nil, internalErr(ctx, err, "не удалось выполнить поиск")
 	}
 
+	coords := s.canSeeCoords(ctx)
 	resp := &pb.SearchResponse{
 		Items: make([]*pb.PlateSighting, len(page.Items)),
 		Total: int32(page.Total),
 	}
 	for i, c := range page.Items {
-		resp.Items[i] = s.toPB(c)
+		resp.Items[i] = s.toPB(c, coords)
 	}
 	for _, c := range page.Suggestions {
-		resp.Suggestions = append(resp.Suggestions, s.toPB(c))
+		resp.Suggestions = append(resp.Suggestions, s.toPB(c, coords))
 	}
 	if page.NextOffset != nil {
 		next := int32(*page.NextOffset)

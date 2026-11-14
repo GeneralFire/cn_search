@@ -37,9 +37,10 @@ func (s *CarSearch) SeeAlso(ctx context.Context, req *pb.SeeAlsoRequest) (*pb.Se
 	if err != nil {
 		return nil, internalErr(ctx, err, "не удалось получить свежие фиксации")
 	}
+	coords := s.canSeeCoords(ctx)
 	resp := &pb.SeeAlsoResponse{Items: make([]*pb.PlateSighting, len(items))}
 	for i, c := range items {
-		resp.Items[i] = s.toPB(c)
+		resp.Items[i] = s.toPB(c, coords)
 	}
 	return resp, nil
 }

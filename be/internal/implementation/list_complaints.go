@@ -54,7 +54,7 @@ func (s *CarSearch) ListComplaints(ctx context.Context, req *pb.ListComplaintsRe
 	resp := &pb.ListComplaintsResponse{Items: make([]*pb.Complaint, len(page.Items)), Total: int32(page.Total)}
 	for i, it := range page.Items {
 		resp.Items[i] = complaintPB(it.Complaint)
-		resp.Items[i].Sighting = s.toPB(it.Sighting)
+		resp.Items[i].Sighting = s.toPB(it.Sighting, true)
 	}
 	if page.NextOffset != nil {
 		next := int32(*page.NextOffset)

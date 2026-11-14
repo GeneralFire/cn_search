@@ -35,12 +35,11 @@ func TestGet(t *testing.T) {
 	if len(resp.GetItems()) != 2 || resp.GetItems()[0].GetId() != "00000000-0000-0000-0000-000000000004" || resp.GetItems()[1].GetId() != "00000000-0000-0000-0000-000000000001" {
 		t.Fatalf("Get(1): %v (порядок из usecase должен сохраниться)", resp)
 	}
-	// Координаты: есть — передаются как есть, нет — поля не заданы (а не 0, 0).
-	if got := resp.GetItems()[0]; got.Lat == nil || got.Lon == nil || got.GetLat() != lat || got.GetLon() != lon {
-		t.Errorf("координаты фиксации 4: %v, %v", got.Lat, got.Lon)
-	}
-	if got := resp.GetItems()[1]; got.Lat != nil || got.Lon != nil {
-		t.Errorf("фиксация 1 без координат: %v, %v", got.Lat, got.Lon)
+	// Запрос без входа: координаты скрыты (с входом — coords_test.go), у всех фиксаций coords_hidden.
+	for _, got := range resp.GetItems() {
+		if got.Lat != nil || got.Lon != nil || !got.GetCoordsHidden() {
+			t.Errorf("аноним: фиксация %s: %v, %v, coords_hidden=%v", got.GetId(), got.Lat, got.Lon, got.GetCoordsHidden())
+		}
 	}
 	// Уточнения — в порядке usecase, со статусом, форматом и фиксациями.
 	cl := resp.GetClarifications()

@@ -485,4 +485,13 @@ export const de: Dict = {
   "audit.f.name": "Name",
   "audit.f.requests_total": "Anfragen",
   "audit.f.revoked": "widerrufen",
+
+
+
+  // Координаты скрыты от анонима (map.ts, export.ts).
+  "coords.loginTitle": "Melden Sie sich an, um die Sichtungen auf der Karte zu sehen",
+  "coords.loginText": "Die Koordinaten der Sichtungen sehen nur angemeldete Nutzer. Die Kennzeichensuche steht allen offen.",
+  "coords.login": "Anmelden",
+  "coords.signup": "Registrieren",
+  "coords.exportHint": "Zum Herunterladen von GeoJSON anmelden",
 };

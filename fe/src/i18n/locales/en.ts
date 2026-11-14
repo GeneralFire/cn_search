@@ -485,4 +485,13 @@ export const en: Dict = {
   "audit.f.name": "name",
   "audit.f.requests_total": "requests",
   "audit.f.revoked": "revoked",
+
+
+
+  // Координаты скрыты от анонима (map.ts, export.ts).
+  "coords.loginTitle": "Sign in to see sightings on the map",
+  "coords.loginText": "Sighting coordinates are visible to signed-in users only. Searching by plate is open to everyone.",
+  "coords.login": "Sign in",
+  "coords.signup": "Sign up",
+  "coords.exportHint": "Sign in to download GeoJSON",
 };

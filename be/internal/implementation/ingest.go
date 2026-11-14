@@ -66,7 +66,7 @@ func (s *CarSearch) Ingest(ctx context.Context, req *pb.IngestRequest) (*pb.Inge
 	case err != nil:
 		return nil, internalErr(ctx, err, "не удалось сохранить фиксацию")
 	}
-	out := &pb.IngestResponse{Sighting: s.toPB(res.Sighting)}
+	out := &pb.IngestResponse{Sighting: s.toPB(res.Sighting, true)}
 	if res.UploadsLeft != nil {
 		out.UploadsLeft = proto.Int32(int32(*res.UploadsLeft))
 	}

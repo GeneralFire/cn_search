@@ -657,6 +657,11 @@ export interface CarsearchPlateSighting {
   /** Язык, на котором записан адрес: "ru", "en", "de", … */
   addressLocale?: string;
   /**
+   * Координаты скрыты, потому что запрос без входа (нет токена пользователя, API-токена и admin-token):
+   * lat/lon пусты. Отличает «скрыто» от «координат нет».
+   */
+  coordsHidden?: boolean;
+  /**
    * Когда номер зафиксирован.
    * @format date-time
    */

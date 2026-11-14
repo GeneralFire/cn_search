@@ -9,12 +9,17 @@ const downloadIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none
 const CSV_HEADER = ["id", "plate", "created_at", "address", "lat", "lon", "photo_url"];
 
 /** Кнопка с меню для шапки страницы номера (рядом с «Поделиться»). Обработчики вешает bindExport. */
-export function exportButtonHtml(): string {
+export function exportButtonHtml(items: Car[] = []): string {
+  // Аноним: координаты скрыты — GeoJSON недоступен (пункт неактивен с подсказкой «войдите»), CSV без lat/lon.
+  const locked = items.some((c) => c.coordsHidden);
+  const geo = locked
+    ? `<button class="ex__item" type="button" role="menuitem" disabled aria-disabled="true" title="${t("coords.exportHint")}">${t("export.geojson")}</button>`
+    : `<button class="ex__item" type="button" role="menuitem" data-export-format="geojson">${t("export.geojson")}</button>`;
   return `<div class="ex" data-export>
       <button class="btn btn--ghost pp-share ex__toggle" type="button" aria-haspopup="menu" aria-expanded="false" data-export-toggle>${downloadIcon}<span>${t("export.button")}</span></button>
       <div class="ex__menu" role="menu">
         <button class="ex__item" type="button" role="menuitem" data-export-format="csv">${t("export.csv")}</button>
-        <button class="ex__item" type="button" role="menuitem" data-export-format="geojson">${t("export.geojson")}</button>
+        ${geo}
       </div>
     </div>`;
 }
@@ -57,8 +62,15 @@ function exportPlate(items: Car[], format: "csv" | "geojson"): void {
 /** CSV: все значения в кавычках, " внутри удваивается; BOM — чтобы Excel открыл UTF-8 (кириллицу). */
 function toCsv(items: Car[]): string {
   const cell = (v: string | number | null | undefined) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const rows = items.map((c) => [c.id, c.plate, c.createdAt, c.address, c.lat, c.lon, c.photoUrl].map(cell).join(","));
-  return "\uFEFF" + [CSV_HEADER.join(","), ...rows].join("\r\n") + "\r\n";
+  // Аноним: колонок lat/lon нет совсем.
+  const noCoords = items.some((c) => c.coordsHidden);
+  const header = noCoords ? CSV_HEADER.filter((h) => h !== "lat" && h !== "lon") : CSV_HEADER;
+  const rows = items.map((c) =>
+    (noCoords ? [c.id, c.plate, c.createdAt, c.address, c.photoUrl] : [c.id, c.plate, c.createdAt, c.address, c.lat, c.lon, c.photoUrl])
+      .map(cell)
+      .join(",")
+  );
+  return "\uFEFF" + [header.join(","), ...rows].join("\r\n") + "\r\n";
 }
 
 /** GeoJSON: точка [lon, lat] на каждую фиксацию с координатами; без координат — пропускаем. */

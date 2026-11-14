@@ -54,3 +54,9 @@
 .pp-map__canvas .leaflet-bar a:hover { background: var(--bg); }
 .pp-map__canvas.leaflet-container .leaflet-control-attribution { background: color-mix(in srgb, var(--surface) 80%, transparent); color: var(--muted); }
 .pp-map__canvas.leaflet-container .leaflet-control-attribution a { color: var(--accent); }
+
+/* Аноним: вместо карты — приглашение войти (координаты скрыты бэком). */
+.pp-map__lock { display: grid; gap: 8px; padding: 6px 4px 2px; }
+.pp-map__lock p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.pp-map__lock-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.pp-map__lock-actions .btn { text-decoration: none; }
