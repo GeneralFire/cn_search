@@ -412,4 +412,8 @@ export const en: Dict = {
   "filters.geo": "With coordinates only",
   "filters.reset": "Reset filters",
   "filters.emptyHint": "Try loosening or resetting the filters.",
+  // Исправление номера после загрузки фото (upload.ts).
+  "upload.fix": "Plate recognized wrong? Fix it",
+  "upload.alternatives": "Other options",
+  "upload.fixSent": "Correction sent",
 };

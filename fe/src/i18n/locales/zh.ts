@@ -413,4 +413,8 @@ export const zh: Dict = {
   "filters.geo": "仅有坐标",
   "filters.reset": "重置筛选",
   "filters.emptyHint": "请尝试放宽或重置筛选条件。",
+  // Исправление номера после загрузки фото (upload.ts).
+  "upload.fix": "车牌识别有误？修正",
+  "upload.alternatives": "其他选项",
+  "upload.fixSent": "更正已发送",
 };

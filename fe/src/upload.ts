@@ -3,7 +3,8 @@
 // время и координаты бэк берёт из EXIF, координаты можно задать кнопкой «Моё место» (геолокация).
 // Загружать можно только после входа (токен cs_token); Free — 5 фото за сутки, остаток — над формой.
 import "./upload.css";
-import { ApiError, ingest, me, type PlateCandidate } from "./api";
+import { ApiError, ingest, me, type Car, type PlateCandidate } from "./api";
+import { openClarify } from "./clarify";
 import { plateHref } from "./router";
 import { escapeHtml, plateHtml } from "./ui";
 import { t } from "./i18n/i18n";
@@ -88,6 +89,7 @@ export function renderUploadPage(root: HTMLElement): void {
     if (f) setFile(f);
   });
   $(".up__geo").addEventListener("click", locate);
+  $(".up-result").addEventListener("click", onResultClick);
   $<HTMLFormElement>(".up__form").addEventListener("submit", (e) => {
     e.preventDefault();
     void submit();
@@ -170,7 +172,7 @@ async function submit(): Promise<void> {
     const photo = state.file.size > MAX_PHOTO_BYTES ? await shrink(state.file) : state.file;
     const address = $<HTMLInputElement>(".up__input").value.trim();
     const res = await ingest({ photo, address, ...(state.coords ?? {}) });
-    showResult(res.sighting.id, res.candidates);
+    showResult(res.sighting, res.candidates);
     quota.left = res.uploadsLeft;
   } catch (e) {
     showError(e instanceof ApiError ? e.message || t("upload.failed") : t("upload.failed"));
@@ -185,23 +187,57 @@ async function submit(): Promise<void> {
   }
 }
 
-function showResult(id: string, cands: PlateCandidate[]): void {
+/** Последний результат загрузки: нужен кнопкам «Исправить» и вариантам (модалка уточнения). */
+let last: { sighting: Car; candidates: PlateCandidate[] } | null = null;
+
+function showResult(sighting: Car, cands: PlateCandidate[]): void {
   const [best, ...rest] = cands;
+  last = { sighting, candidates: cands };
   const pct = (c: PlateCandidate) => `${Math.round(c.confidence * 100)}%`;
   const $res = $(".up-result");
   $res.innerHTML = `
     <h2 class="up-result__title">${t("upload.recognized")}</h2>
     <div class="up-result__plate">${plateHtml(best, "xl")}</div>
     <p class="up-result__conf">${t("upload.confidence", { pct: pct(best) })} · <span class="up-result__raw">${escapeHtml(best.raw)}</span></p>
-    <a class="btn btn--primary" href="${plateHref(id)}" data-link>${t("upload.open")}</a>
+    <div class="up-result__actions">
+      <a class="btn btn--primary" href="${plateHref(sighting.id)}" data-link>${t("upload.open")}</a>
+      <button class="btn btn--ghost up-result__fix" type="button">${t("upload.fix")}</button>
+    </div>
     ${
       rest.length
-        ? `<details class="up-result__more"><summary>${t("upload.others")}</summary><ul>${rest
-            .map((c) => `<li>${plateHtml(c)} <span>${pct(c)}</span></li>`)
-            .join("")}</ul></details>`
+        ? `<p class="up-result__alts">${t("upload.alternatives")}: ${rest
+            .map(
+              (c, i) =>
+                `<button class="up-result__alt" type="button" data-alt="${i}">${escapeHtml(c.plate)} <span>${c.confidence.toFixed(2)}</span></button>`
+            )
+            .join(", ")}</p>`
         : ""
-    }`;
+    }
+    <p class="up-result__sent" role="status" hidden>${t("upload.fixSent")}</p>`;
   $res.hidden = false;
+}
+
+/** Открывает модалку уточнения для распознанного номера (или одного из вариантов). */
+function openFix(plate: string, plateType: string, region = ""): void {
+  if (!last) return;
+  openClarify({ ...last.sighting, plate, plateType, plateRegion: region }, () => {
+    $(".up-result__sent").hidden = false;
+  });
+}
+
+function onResultClick(e: Event): void {
+  if (!last) return;
+  const target = e.target as Element;
+  if (target.closest(".up-result__fix")) {
+    const best = last.candidates[0];
+    openFix(best.plate, best.plateType, last.sighting.plateRegion ?? "");
+    return;
+  }
+  const alt = target.closest<HTMLElement>("[data-alt]");
+  if (alt) {
+    const c = last.candidates[Number(alt.dataset.alt) + 1];
+    openFix(c.plate, c.plateType);
+  }
 }
 
 /** Сжимает фото до SHRINK_MAX_SIDE по большей стороне (JPEG). EXIF не сохраняется. */

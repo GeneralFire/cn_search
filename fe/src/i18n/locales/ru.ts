@@ -412,4 +412,8 @@ export const ru = {
   "filters.geo": "Только с координатами",
   "filters.reset": "Сбросить фильтры",
   "filters.emptyHint": "Попробуйте ослабить или сбросить фильтры.",
+  // Исправление номера после загрузки фото (upload.ts).
+  "upload.fix": "Номер распознан неверно? Исправить",
+  "upload.alternatives": "Другие варианты",
+  "upload.fixSent": "Уточнение отправлено",
 } as const;

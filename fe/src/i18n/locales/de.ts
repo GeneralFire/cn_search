@@ -412,4 +412,8 @@ export const de: Dict = {
   "filters.geo": "Nur mit Koordinaten",
   "filters.reset": "Filter zurücksetzen",
   "filters.emptyHint": "Lockern oder setzen Sie die Filter zurück.",
+  // Исправление номера после загрузки фото (upload.ts).
+  "upload.fix": "Kennzeichen falsch erkannt? Korrigieren",
+  "upload.alternatives": "Andere Varianten",
+  "upload.fixSent": "Korrektur gesendet",
 };

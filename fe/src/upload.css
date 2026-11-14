@@ -43,8 +43,16 @@
 .up-result__title { margin: 0; font-size: 1.05rem; }
 .up-result__conf { margin: 0; color: var(--muted); }
 .up-result__raw { font-family: ui-monospace, monospace; }
-.up-result__more ul { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 8px; }
-.up-result__more li { display: flex; align-items: center; gap: 10px; color: var(--muted); }
+.up-result__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.up-result__fix { cursor: pointer; }
+.up-result__alts { margin: 0; color: var(--muted); font-size: 0.95rem; line-height: 1.8; }
+.up-result__alt {
+  font: inherit; cursor: pointer; padding: 0; border: 0; background: none; color: var(--accent);
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.up-result__alt span { color: var(--muted); }
+.up-result__sent { margin: 0; color: var(--accent); font-weight: 600; }
+.up-result__sent[hidden] { display: none; }
 .up-result .btn { text-decoration: none; }
 
 .up-quota { margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--accent-soft); font-size: 0.95rem; }
