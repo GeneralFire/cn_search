@@ -379,4 +379,10 @@ export const de: Dict = {
   "share.button": "Teilen",
   "share.copied": "Link kopiert",
   "share.text": { one: "Kennzeichen {plate} — {n} Sichtung", other: "Kennzeichen {plate} — {n} Sichtungen" },
+
+  // Автоскрытие фото по жалобам (admin.ts, вкладка жалоб).
+  "autohide.badge": "Foto ausgeblendet",
+  "autohide.badgeHint": "Nach Beschwerden automatisch ausgeblendet: Nutzer sehen „Kein Foto“",
+  "autohide.restore": "Foto wiederherstellen",
+  "autohide.restoreFailed": "Foto konnte nicht wiederhergestellt werden",
 };

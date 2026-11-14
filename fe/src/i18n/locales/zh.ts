@@ -380,4 +380,10 @@ export const zh: Dict = {
   "share.button": "分享",
   "share.copied": "链接已复制",
   "share.text": { other: "车牌 {plate} — {n} 次记录" },
+
+  // Автоскрытие фото по жалобам (admin.ts, вкладка жалоб).
+  "autohide.badge": "照片已隐藏",
+  "autohide.badgeHint": "因投诉自动隐藏：用户看到“无照片”",
+  "autohide.restore": "恢复照片",
+  "autohide.restoreFailed": "无法恢复照片",
 };

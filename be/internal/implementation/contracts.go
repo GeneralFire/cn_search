@@ -32,6 +32,7 @@ type complaints interface {
 // admin — админские сценарии: скрытие фиксаций и разбор уточнений (реализация — usecase.Admin).
 type admin interface {
 	HideSighting(ctx context.Context, id string, hidden bool) (models.PlateSighting, error)
+	RestoreSightingPhoto(ctx context.Context, id string) (models.PlateSighting, error)
 	SetClarificationStatus(ctx context.Context, id string, st models.ClarificationStatus) (models.Clarification, error)
 	ListClarifications(ctx context.Context, o models.ListClarificationsOpts) (models.ClarificationsPage, error)
 }

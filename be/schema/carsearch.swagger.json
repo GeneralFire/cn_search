@@ -502,6 +502,33 @@
         ]
       }
     },
+    "/carsearch.CarSearchService/RestoreSightingPhoto": {
+      "post": {
+        "summary": "RestoreSightingPhoto — вернуть фото, скрытое по жалобам (photo_hidden = false); новые жалобы\nна фото этой фиксации (bad_photo, personal_data) отмечаются решёнными. Нужен admin-token.",
+        "operationId": "CarSearchService_RestoreSightingPhoto",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchPlateSighting"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchRestoreSightingPhotoRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
     "/carsearch.CarSearchService/RevokeApiToken": {
       "post": {
         "summary": "RevokeApiToken — отозвать токен (админ): дальше Get с ним отвечает PERMISSION_DENIED.",
@@ -1587,6 +1614,10 @@
         "hidden": {
           "type": "boolean",
           "description": "Фиксация скрыта админом; приходит только админу (обычным пользователям скрытые не отдаются)."
+        },
+        "photoHidden": {
+          "type": "boolean",
+          "description": "Фото скрыто по жалобам (≥ 3 новых жалоб bad_photo/personal_data): обычным пользователям photo_url\nи thumb_url приходят пустыми, админу — как есть. Снимают ResolveComplaint и RestoreSightingPhoto."
         }
       },
       "description": "PlateSighting — фиксация номера: где и когда замечена машина."
@@ -1666,6 +1697,15 @@
         "id": {
           "type": "string",
           "description": "uuid жалобы."
+        }
+      }
+    },
+    "carsearchRestoreSightingPhotoRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "uuid фиксации."
         }
       }
     },

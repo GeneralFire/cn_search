@@ -34,6 +34,13 @@ type AdminRepositoryMock struct {
 	beforeListClarificationsCounter uint64
 	ListClarificationsMock          mAdminRepositoryMockListClarifications
 
+	funcRestoreSightingPhoto          func(ctx context.Context, tx db.Executor, id string) (p1 models.PlateSighting, err error)
+	funcRestoreSightingPhotoOrigin    string
+	inspectFuncRestoreSightingPhoto   func(ctx context.Context, tx db.Executor, id string)
+	afterRestoreSightingPhotoCounter  uint64
+	beforeRestoreSightingPhotoCounter uint64
+	RestoreSightingPhotoMock          mAdminRepositoryMockRestoreSightingPhoto
+
 	funcSetClarificationStatus          func(ctx context.Context, tx db.Executor, id string, st models.ClarificationStatus) (c2 models.Clarification, err error)
 	funcSetClarificationStatusOrigin    string
 	inspectFuncSetClarificationStatus   func(ctx context.Context, tx db.Executor, id string, st models.ClarificationStatus)
@@ -55,6 +62,9 @@ func NewAdminRepositoryMock(t minimock.Tester) *AdminRepositoryMock {
 
 	m.ListClarificationsMock = mAdminRepositoryMockListClarifications{mock: m}
 	m.ListClarificationsMock.callArgs = []*AdminRepositoryMockListClarificationsParams{}
+
+	m.RestoreSightingPhotoMock = mAdminRepositoryMockRestoreSightingPhoto{mock: m}
+	m.RestoreSightingPhotoMock.callArgs = []*AdminRepositoryMockRestoreSightingPhotoParams{}
 
 	m.SetClarificationStatusMock = mAdminRepositoryMockSetClarificationStatus{mock: m}
 	m.SetClarificationStatusMock.callArgs = []*AdminRepositoryMockSetClarificationStatusParams{}
@@ -843,6 +853,380 @@ func (m *AdminRepositoryMock) MinimockListClarificationsInspect() {
 	}
 }
 
+type mAdminRepositoryMockRestoreSightingPhoto struct {
+	optional           bool
+	mock               *AdminRepositoryMock
+	defaultExpectation *AdminRepositoryMockRestoreSightingPhotoExpectation
+	expectations       []*AdminRepositoryMockRestoreSightingPhotoExpectation
+
+	callArgs []*AdminRepositoryMockRestoreSightingPhotoParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// AdminRepositoryMockRestoreSightingPhotoExpectation specifies expectation struct of the adminRepository.RestoreSightingPhoto
+type AdminRepositoryMockRestoreSightingPhotoExpectation struct {
+	mock               *AdminRepositoryMock
+	params             *AdminRepositoryMockRestoreSightingPhotoParams
+	paramPtrs          *AdminRepositoryMockRestoreSightingPhotoParamPtrs
+	expectationOrigins AdminRepositoryMockRestoreSightingPhotoExpectationOrigins
+	results            *AdminRepositoryMockRestoreSightingPhotoResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// AdminRepositoryMockRestoreSightingPhotoParams contains parameters of the adminRepository.RestoreSightingPhoto
+type AdminRepositoryMockRestoreSightingPhotoParams struct {
+	ctx context.Context
+	tx  db.Executor
+	id  string
+}
+
+// AdminRepositoryMockRestoreSightingPhotoParamPtrs contains pointers to parameters of the adminRepository.RestoreSightingPhoto
+type AdminRepositoryMockRestoreSightingPhotoParamPtrs struct {
+	ctx *context.Context
+	tx  *db.Executor
+	id  *string
+}
+
+// AdminRepositoryMockRestoreSightingPhotoResults contains results of the adminRepository.RestoreSightingPhoto
+type AdminRepositoryMockRestoreSightingPhotoResults struct {
+	p1  models.PlateSighting
+	err error
+}
+
+// AdminRepositoryMockRestoreSightingPhotoOrigins contains origins of expectations of the adminRepository.RestoreSightingPhoto
+type AdminRepositoryMockRestoreSightingPhotoExpectationOrigins struct {
+	origin    string
+	originCtx string
+	originTx  string
+	originId  string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmRestoreSightingPhoto *mAdminRepositoryMockRestoreSightingPhoto) Optional() *mAdminRepositoryMockRestoreSightingPhoto {
+	mmRestoreSightingPhoto.optional = true
+	return mmRestoreSightingPhoto
+}
+
+// Expect sets up expected params for adminRepository.RestoreSightingPhoto
+func (mmRestoreSightingPhoto *mAdminRepositoryMockRestoreSightingPhoto) Expect(ctx context.Context, tx db.Executor, id string) *mAdminRepositoryMockRestoreSightingPhoto {
+	if mmRestoreSightingPhoto.mock.funcRestoreSightingPhoto != nil {
+		mmRestoreSightingPhoto.mock.t.Fatalf("AdminRepositoryMock.RestoreSightingPhoto mock is already set by Set")
+	}
+
+	if mmRestoreSightingPhoto.defaultExpectation == nil {
+		mmRestoreSightingPhoto.defaultExpectation = &AdminRepositoryMockRestoreSightingPhotoExpectation{}
+	}
+
+	if mmRestoreSightingPhoto.defaultExpectation.paramPtrs != nil {
+		mmRestoreSightingPhoto.mock.t.Fatalf("AdminRepositoryMock.RestoreSightingPhoto mock is already set by ExpectParams functions")
+	}
+
+	mmRestoreSightingPhoto.defaultExpectation.params = &AdminRepositoryMockRestoreSightingPhotoParams{ctx, tx, id}
+	mmRestoreSightingPhoto.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmRestoreSightingPhoto.expectations {
+		if minimock.Equal(e.params, mmRestoreSightingPhoto.defaultExpectation.params) {
+			mmRestoreSightingPhoto.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmRestoreSightingPhoto.defaultExpectation.params)
+		}
+	}
+
+	return mmRestoreSightingPhoto
+}
+
+// ExpectCtxParam1 sets up expected param ctx for adminRepository.RestoreSightingPhoto
+func (mmRestoreSightingPhoto *mAdminRepositoryMockRestoreSightingPhoto) ExpectCtxParam1(ctx context.Context) *mAdminRepositoryMockRestoreSightingPhoto {
+	if mmRestoreSightingPhoto.mock.funcRestoreSightingPhoto != nil {
+		mmRestoreSightingPhoto.mock.t.Fatalf("AdminRepositoryMock.RestoreSightingPhoto mock is already set by Set")
+	}
+
+	if mmRestoreSightingPhoto.defaultExpectation == nil {
+		mmRestoreSightingPhoto.defaultExpectation = &AdminRepositoryMockRestoreSightingPhotoExpectation{}
+	}
+
+	if mmRestoreSightingPhoto.defaultExpectation.params != nil {
+		mmRestoreSightingPhoto.mock.t.Fatalf("AdminRepositoryMock.RestoreSightingPhoto mock is already set by Expect")
+	}
+
+	if mmRestoreSightingPhoto.defaultExpectation.paramPtrs == nil {
+		mmRestoreSightingPhoto.defaultExpectation.paramPtrs = &AdminRepositoryMockRestoreSightingPhotoParamPtrs{}
+	}
+	mmRestoreSightingPhoto.defaultExpectation.paramPtrs.ctx = &ctx
+	mmRestoreSightingPhoto.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmRestoreSightingPhoto
+}
+
+// ExpectTxParam2 sets up expected param tx for adminRepository.RestoreSightingPhoto
+func (mmRestoreSightingPhoto *mAdminRepositoryMockRestoreSightingPhoto) ExpectTxParam2(tx db.Executor) *mAdminRepositoryMockRestoreSightingPhoto {
+	if mmRestoreSightingPhoto.mock.funcRestoreSightingPhoto != nil {
+		mmRestoreSightingPhoto.mock.t.Fatalf("AdminRepositoryMock.RestoreSightingPhoto mock is already set by Set")
+	}
+
+	if mmRestoreSightingPhoto.defaultExpectation == nil {
+		mmRestoreSightingPhoto.defaultExpectation = &AdminRepositoryMockRestoreSightingPhotoExpectation{}
+	}
+
+	if mmRestoreSightingPhoto.defaultExpectation.params != nil {
+		mmRestoreSightingPhoto.mock.t.Fatalf("AdminRepositoryMock.RestoreSightingPhoto mock is already set by Expect")
+	}
+
+	if mmRestoreSightingPhoto.defaultExpectation.paramPtrs == nil {
+		mmRestoreSightingPhoto.defaultExpectation.paramPtrs = &AdminRepositoryMockRestoreSightingPhotoParamPtrs{}
+	}
+	mmRestoreSightingPhoto.defaultExpectation.paramPtrs.tx = &tx
+	mmRestoreSightingPhoto.defaultExpectation.expectationOrigins.originTx = minimock.CallerInfo(1)
+
+	return mmRestoreSightingPhoto
+}
+
+// ExpectIdParam3 sets up expected param id for adminRepository.RestoreSightingPhoto
+func (mmRestoreSightingPhoto *mAdminRepositoryMockRestoreSightingPhoto) ExpectIdParam3(id string) *mAdminRepositoryMockRestoreSightingPhoto {
+	if mmRestoreSightingPhoto.mock.funcRestoreSightingPhoto != nil {
+		mmRestoreSightingPhoto.mock.t.Fatalf("AdminRepositoryMock.RestoreSightingPhoto mock is already set by Set")
+	}
+
+	if mmRestoreSightingPhoto.defaultExpectation == nil {
+		mmRestoreSightingPhoto.defaultExpectation = &AdminRepositoryMockRestoreSightingPhotoExpectation{}
+	}
+
+	if mmRestoreSightingPhoto.defaultExpectation.params != nil {
+		mmRestoreSightingPhoto.mock.t.Fatalf("AdminRepositoryMock.RestoreSightingPhoto mock is already set by Expect")
+	}
+
+	if mmRestoreSightingPhoto.defaultExpectation.paramPtrs == nil {
+		mmRestoreSightingPhoto.defaultExpectation.paramPtrs = &AdminRepositoryMockRestoreSightingPhotoParamPtrs{}
+	}
+	mmRestoreSightingPhoto.defaultExpectation.paramPtrs.id = &id
+	mmRestoreSightingPhoto.defaultExpectation.expectationOrigins.originId = minimock.CallerInfo(1)
+
+	return mmRestoreSightingPhoto
+}
+
+// Inspect accepts an inspector function that has same arguments as the adminRepository.RestoreSightingPhoto
+func (mmRestoreSightingPhoto *mAdminRepositoryMockRestoreSightingPhoto) Inspect(f func(ctx context.Context, tx db.Executor, id string)) *mAdminRepositoryMockRestoreSightingPhoto {
+	if mmRestoreSightingPhoto.mock.inspectFuncRestoreSightingPhoto != nil {
+		mmRestoreSightingPhoto.mock.t.Fatalf("Inspect function is already set for AdminRepositoryMock.RestoreSightingPhoto")
+	}
+
+	mmRestoreSightingPhoto.mock.inspectFuncRestoreSightingPhoto = f
+
+	return mmRestoreSightingPhoto
+}
+
+// Return sets up results that will be returned by adminRepository.RestoreSightingPhoto
+func (mmRestoreSightingPhoto *mAdminRepositoryMockRestoreSightingPhoto) Return(p1 models.PlateSighting, err error) *AdminRepositoryMock {
+	if mmRestoreSightingPhoto.mock.funcRestoreSightingPhoto != nil {
+		mmRestoreSightingPhoto.mock.t.Fatalf("AdminRepositoryMock.RestoreSightingPhoto mock is already set by Set")
+	}
+
+	if mmRestoreSightingPhoto.defaultExpectation == nil {
+		mmRestoreSightingPhoto.defaultExpectation = &AdminRepositoryMockRestoreSightingPhotoExpectation{mock: mmRestoreSightingPhoto.mock}
+	}
+	mmRestoreSightingPhoto.defaultExpectation.results = &AdminRepositoryMockRestoreSightingPhotoResults{p1, err}
+	mmRestoreSightingPhoto.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmRestoreSightingPhoto.mock
+}
+
+// Set uses given function f to mock the adminRepository.RestoreSightingPhoto method
+func (mmRestoreSightingPhoto *mAdminRepositoryMockRestoreSightingPhoto) Set(f func(ctx context.Context, tx db.Executor, id string) (p1 models.PlateSighting, err error)) *AdminRepositoryMock {
+	if mmRestoreSightingPhoto.defaultExpectation != nil {
+		mmRestoreSightingPhoto.mock.t.Fatalf("Default expectation is already set for the adminRepository.RestoreSightingPhoto method")
+	}
+
+	if len(mmRestoreSightingPhoto.expectations) > 0 {
+		mmRestoreSightingPhoto.mock.t.Fatalf("Some expectations are already set for the adminRepository.RestoreSightingPhoto method")
+	}
+
+	mmRestoreSightingPhoto.mock.funcRestoreSightingPhoto = f
+	mmRestoreSightingPhoto.mock.funcRestoreSightingPhotoOrigin = minimock.CallerInfo(1)
+	return mmRestoreSightingPhoto.mock
+}
+
+// When sets expectation for the adminRepository.RestoreSightingPhoto which will trigger the result defined by the following
+// Then helper
+func (mmRestoreSightingPhoto *mAdminRepositoryMockRestoreSightingPhoto) When(ctx context.Context, tx db.Executor, id string) *AdminRepositoryMockRestoreSightingPhotoExpectation {
+	if mmRestoreSightingPhoto.mock.funcRestoreSightingPhoto != nil {
+		mmRestoreSightingPhoto.mock.t.Fatalf("AdminRepositoryMock.RestoreSightingPhoto mock is already set by Set")
+	}
+
+	expectation := &AdminRepositoryMockRestoreSightingPhotoExpectation{
+		mock:               mmRestoreSightingPhoto.mock,
+		params:             &AdminRepositoryMockRestoreSightingPhotoParams{ctx, tx, id},
+		expectationOrigins: AdminRepositoryMockRestoreSightingPhotoExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmRestoreSightingPhoto.expectations = append(mmRestoreSightingPhoto.expectations, expectation)
+	return expectation
+}
+
+// Then sets up adminRepository.RestoreSightingPhoto return parameters for the expectation previously defined by the When method
+func (e *AdminRepositoryMockRestoreSightingPhotoExpectation) Then(p1 models.PlateSighting, err error) *AdminRepositoryMock {
+	e.results = &AdminRepositoryMockRestoreSightingPhotoResults{p1, err}
+	return e.mock
+}
+
+// Times sets number of times adminRepository.RestoreSightingPhoto should be invoked
+func (mmRestoreSightingPhoto *mAdminRepositoryMockRestoreSightingPhoto) Times(n uint64) *mAdminRepositoryMockRestoreSightingPhoto {
+	if n == 0 {
+		mmRestoreSightingPhoto.mock.t.Fatalf("Times of AdminRepositoryMock.RestoreSightingPhoto mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmRestoreSightingPhoto.expectedInvocations, n)
+	mmRestoreSightingPhoto.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmRestoreSightingPhoto
+}
+
+func (mmRestoreSightingPhoto *mAdminRepositoryMockRestoreSightingPhoto) invocationsDone() bool {
+	if len(mmRestoreSightingPhoto.expectations) == 0 && mmRestoreSightingPhoto.defaultExpectation == nil && mmRestoreSightingPhoto.mock.funcRestoreSightingPhoto == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmRestoreSightingPhoto.mock.afterRestoreSightingPhotoCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmRestoreSightingPhoto.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// RestoreSightingPhoto implements mm_usecase.adminRepository
+func (mmRestoreSightingPhoto *AdminRepositoryMock) RestoreSightingPhoto(ctx context.Context, tx db.Executor, id string) (p1 models.PlateSighting, err error) {
+	mm_atomic.AddUint64(&mmRestoreSightingPhoto.beforeRestoreSightingPhotoCounter, 1)
+	defer mm_atomic.AddUint64(&mmRestoreSightingPhoto.afterRestoreSightingPhotoCounter, 1)
+
+	mmRestoreSightingPhoto.t.Helper()
+
+	if mmRestoreSightingPhoto.inspectFuncRestoreSightingPhoto != nil {
+		mmRestoreSightingPhoto.inspectFuncRestoreSightingPhoto(ctx, tx, id)
+	}
+
+	mm_params := AdminRepositoryMockRestoreSightingPhotoParams{ctx, tx, id}
+
+	// Record call args
+	mmRestoreSightingPhoto.RestoreSightingPhotoMock.mutex.Lock()
+	mmRestoreSightingPhoto.RestoreSightingPhotoMock.callArgs = append(mmRestoreSightingPhoto.RestoreSightingPhotoMock.callArgs, &mm_params)
+	mmRestoreSightingPhoto.RestoreSightingPhotoMock.mutex.Unlock()
+
+	for _, e := range mmRestoreSightingPhoto.RestoreSightingPhotoMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.p1, e.results.err
+		}
+	}
+
+	if mmRestoreSightingPhoto.RestoreSightingPhotoMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmRestoreSightingPhoto.RestoreSightingPhotoMock.defaultExpectation.Counter, 1)
+		mm_want := mmRestoreSightingPhoto.RestoreSightingPhotoMock.defaultExpectation.params
+		mm_want_ptrs := mmRestoreSightingPhoto.RestoreSightingPhotoMock.defaultExpectation.paramPtrs
+
+		mm_got := AdminRepositoryMockRestoreSightingPhotoParams{ctx, tx, id}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmRestoreSightingPhoto.t.Errorf("AdminRepositoryMock.RestoreSightingPhoto got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmRestoreSightingPhoto.RestoreSightingPhotoMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.tx != nil && !minimock.Equal(*mm_want_ptrs.tx, mm_got.tx) {
+				mmRestoreSightingPhoto.t.Errorf("AdminRepositoryMock.RestoreSightingPhoto got unexpected parameter tx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmRestoreSightingPhoto.RestoreSightingPhotoMock.defaultExpectation.expectationOrigins.originTx, *mm_want_ptrs.tx, mm_got.tx, minimock.Diff(*mm_want_ptrs.tx, mm_got.tx))
+			}
+
+			if mm_want_ptrs.id != nil && !minimock.Equal(*mm_want_ptrs.id, mm_got.id) {
+				mmRestoreSightingPhoto.t.Errorf("AdminRepositoryMock.RestoreSightingPhoto got unexpected parameter id, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmRestoreSightingPhoto.RestoreSightingPhotoMock.defaultExpectation.expectationOrigins.originId, *mm_want_ptrs.id, mm_got.id, minimock.Diff(*mm_want_ptrs.id, mm_got.id))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmRestoreSightingPhoto.t.Errorf("AdminRepositoryMock.RestoreSightingPhoto got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmRestoreSightingPhoto.RestoreSightingPhotoMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmRestoreSightingPhoto.RestoreSightingPhotoMock.defaultExpectation.results
+		if mm_results == nil {
+			mmRestoreSightingPhoto.t.Fatal("No results are set for the AdminRepositoryMock.RestoreSightingPhoto")
+		}
+		return (*mm_results).p1, (*mm_results).err
+	}
+	if mmRestoreSightingPhoto.funcRestoreSightingPhoto != nil {
+		return mmRestoreSightingPhoto.funcRestoreSightingPhoto(ctx, tx, id)
+	}
+	mmRestoreSightingPhoto.t.Fatalf("Unexpected call to AdminRepositoryMock.RestoreSightingPhoto. %v %v %v", ctx, tx, id)
+	return
+}
+
+// RestoreSightingPhotoAfterCounter returns a count of finished AdminRepositoryMock.RestoreSightingPhoto invocations
+func (mmRestoreSightingPhoto *AdminRepositoryMock) RestoreSightingPhotoAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmRestoreSightingPhoto.afterRestoreSightingPhotoCounter)
+}
+
+// RestoreSightingPhotoBeforeCounter returns a count of AdminRepositoryMock.RestoreSightingPhoto invocations
+func (mmRestoreSightingPhoto *AdminRepositoryMock) RestoreSightingPhotoBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmRestoreSightingPhoto.beforeRestoreSightingPhotoCounter)
+}
+
+// Calls returns a list of arguments used in each call to AdminRepositoryMock.RestoreSightingPhoto.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmRestoreSightingPhoto *mAdminRepositoryMockRestoreSightingPhoto) Calls() []*AdminRepositoryMockRestoreSightingPhotoParams {
+	mmRestoreSightingPhoto.mutex.RLock()
+
+	argCopy := make([]*AdminRepositoryMockRestoreSightingPhotoParams, len(mmRestoreSightingPhoto.callArgs))
+	copy(argCopy, mmRestoreSightingPhoto.callArgs)
+
+	mmRestoreSightingPhoto.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockRestoreSightingPhotoDone returns true if the count of the RestoreSightingPhoto invocations corresponds
+// the number of defined expectations
+func (m *AdminRepositoryMock) MinimockRestoreSightingPhotoDone() bool {
+	if m.RestoreSightingPhotoMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.RestoreSightingPhotoMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.RestoreSightingPhotoMock.invocationsDone()
+}
+
+// MinimockRestoreSightingPhotoInspect logs each unmet expectation
+func (m *AdminRepositoryMock) MinimockRestoreSightingPhotoInspect() {
+	for _, e := range m.RestoreSightingPhotoMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to AdminRepositoryMock.RestoreSightingPhoto at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterRestoreSightingPhotoCounter := mm_atomic.LoadUint64(&m.afterRestoreSightingPhotoCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.RestoreSightingPhotoMock.defaultExpectation != nil && afterRestoreSightingPhotoCounter < 1 {
+		if m.RestoreSightingPhotoMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to AdminRepositoryMock.RestoreSightingPhoto at\n%s", m.RestoreSightingPhotoMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to AdminRepositoryMock.RestoreSightingPhoto at\n%s with params: %#v", m.RestoreSightingPhotoMock.defaultExpectation.expectationOrigins.origin, *m.RestoreSightingPhotoMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcRestoreSightingPhoto != nil && afterRestoreSightingPhotoCounter < 1 {
+		m.t.Errorf("Expected call to AdminRepositoryMock.RestoreSightingPhoto at\n%s", m.funcRestoreSightingPhotoOrigin)
+	}
+
+	if !m.RestoreSightingPhotoMock.invocationsDone() && afterRestoreSightingPhotoCounter > 0 {
+		m.t.Errorf("Expected %d calls to AdminRepositoryMock.RestoreSightingPhoto at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.RestoreSightingPhotoMock.expectedInvocations), m.RestoreSightingPhotoMock.expectedInvocationsOrigin, afterRestoreSightingPhotoCounter)
+	}
+}
+
 type mAdminRepositoryMockSetClarificationStatus struct {
 	optional           bool
 	mock               *AdminRepositoryMock
@@ -1256,6 +1640,8 @@ func (m *AdminRepositoryMock) MinimockFinish() {
 
 			m.MinimockListClarificationsInspect()
 
+			m.MinimockRestoreSightingPhotoInspect()
+
 			m.MinimockSetClarificationStatusInspect()
 		}
 	})
@@ -1282,5 +1668,6 @@ func (m *AdminRepositoryMock) minimockDone() bool {
 	return done &&
 		m.MinimockHideSightingDone() &&
 		m.MinimockListClarificationsDone() &&
+		m.MinimockRestoreSightingPhotoDone() &&
 		m.MinimockSetClarificationStatusDone()
 }

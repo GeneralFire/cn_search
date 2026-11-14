@@ -26,6 +26,15 @@ func (u *Admin) HideSighting(ctx context.Context, id string, hidden bool) (s mod
 	return s, err
 }
 
+// RestoreSightingPhoto — вернуть фото, скрытое по жалобам (транзакция на запись).
+func (u *Admin) RestoreSightingPhoto(ctx context.Context, id string) (s models.PlateSighting, err error) {
+	err = u.tx.InWriteTx(ctx, func(ctx context.Context, tx db.Executor) error {
+		s, err = u.repo.RestoreSightingPhoto(ctx, tx, id)
+		return err
+	})
+	return s, err
+}
+
 // SetClarificationStatus — принять или отклонить уточнение вручную (транзакция на запись).
 func (u *Admin) SetClarificationStatus(ctx context.Context, id string, st models.ClarificationStatus) (c models.Clarification, err error) {
 	err = u.tx.InWriteTx(ctx, func(ctx context.Context, tx db.Executor) error {

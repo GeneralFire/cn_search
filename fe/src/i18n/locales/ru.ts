@@ -379,4 +379,10 @@ export const ru = {
   "share.button": "Поделиться",
   "share.copied": "Ссылка скопирована",
   "share.text": { one: "Номер {plate} — {n} фиксация", few: "Номер {plate} — {n} фиксации", many: "Номер {plate} — {n} фиксаций", other: "Номер {plate} — {n} фиксаций" },
+
+  // Автоскрытие фото по жалобам (admin.ts, вкладка жалоб).
+  "autohide.badge": "Фото скрыто",
+  "autohide.badgeHint": "Скрыто автоматически по жалобам: пользователи видят «Нет фото»",
+  "autohide.restore": "Вернуть фото",
+  "autohide.restoreFailed": "Не удалось вернуть фото",
 } as const;

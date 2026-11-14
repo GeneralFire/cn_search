@@ -45,6 +45,16 @@ var plateMatch = `(` + plateTSVector("p.plate") + ` @@ ` + tsQueryFrom + `
 // notTestData — без include-test-data строки с is_test_data не отдаются (ни фиксации, ни номера).
 const notTestData = `NOT s.is_test_data AND NOT p.is_test_data`
 
+// maskHiddenPhotos убирает ключи фото у фиксаций, фото которых скрыто по жалобам (photo_hidden):
+// обычный пользователь видит заглушку «Нет фото». Админу (IncludeHidden) фото отдаётся как есть.
+func maskHiddenPhotos(items []models.PlateSighting) {
+	for i := range items {
+		if items[i].PhotoHidden {
+			items[i].PhotoKey, items[i].ThumbKey = "", ""
+		}
+	}
+}
+
 // notHidden — скрытые админом фиксации видит только админ (IncludeHidden).
 const notHidden = `NOT s.hidden`
 
@@ -125,6 +135,9 @@ func (r *repository) Search(ctx context.Context, tx db.Executor, q models.Search
 	if err := tx.Select(ctx, &page.Items, query, append(args, q.Limit, q.Offset)...); err != nil {
 		return models.SearchPage{}, fmt.Errorf("search: %w", err)
 	}
+	if !q.IncludeHidden {
+		maskHiddenPhotos(page.Items)
+	}
 
 	if next := q.Offset + len(page.Items); len(page.Items) > 0 && next < page.Total {
 		page.NextOffset = &next
@@ -165,6 +178,9 @@ func (r *repository) Suggest(ctx context.Context, tx db.Executor, q models.Searc
 	for i, row := range rows {
 		items[i] = row.PlateSighting
 	}
+	if !q.IncludeHidden {
+		maskHiddenPhotos(items)
+	}
 	return items, nil
 }
 
@@ -185,6 +201,9 @@ func (r *repository) SeeAlso(ctx context.Context, tx db.Executor, o models.SeeAl
 	items := []models.PlateSighting{}
 	if err := tx.Select(ctx, &items, latestPerPlate(whereClause(conds))+` LIMIT $1`, args...); err != nil {
 		return nil, fmt.Errorf("see also: %w", err)
+	}
+	if !o.IncludeHidden {
+		maskHiddenPhotos(items)
 	}
 	return items, nil
 }
@@ -265,6 +284,9 @@ func (r *repository) ListSamePlate(ctx context.Context, tx db.Executor, o models
 	}
 	if len(items) == 0 {
 		return nil, models.ErrNotFound
+	}
+	if !o.IncludeHidden {
+		maskHiddenPhotos(items)
 	}
 	return items, nil
 }

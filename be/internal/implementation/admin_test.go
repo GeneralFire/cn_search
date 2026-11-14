@@ -49,6 +49,10 @@ func TestAdminMethodsDenied(t *testing.T) {
 			_, err := svc.HideSighting(ctx, &pb.HideSightingRequest{Id: id, Hidden: true})
 			return err
 		},
+		"RestoreSightingPhoto": func(ctx context.Context) error {
+			_, err := svc.RestoreSightingPhoto(ctx, &pb.RestoreSightingPhotoRequest{Id: id})
+			return err
+		},
 		"SetClarificationStatus": func(ctx context.Context) error {
 			_, err := svc.SetClarificationStatus(ctx, &pb.SetClarificationStatusRequest{Id: id, Status: pb.ClarificationStatus_CLARIFICATION_STATUS_ACCEPTED})
 			return err
@@ -82,6 +86,23 @@ func TestHideSighting(t *testing.T) {
 	svc, a, _ = newAdminSvc(t)
 	a.HideSightingMock.Return(models.PlateSighting{}, models.ErrNotFound)
 	if _, err := svc.HideSighting(adminCtx(testAdminToken), &pb.HideSightingRequest{Id: sighting.ID}); status.Code(err) != codes.NotFound {
+		t.Errorf("нет фиксации: %v", err)
+	}
+}
+
+func TestRestoreSightingPhoto(t *testing.T) {
+	svc, a, _ := newAdminSvc(t)
+	a.RestoreSightingPhotoMock.Expect(minimock.AnyContext, sighting.ID).Return(sighting, nil)
+	resp, err := svc.RestoreSightingPhoto(adminCtx(testAdminToken), &pb.RestoreSightingPhotoRequest{Id: sighting.ID})
+	if err != nil || resp.GetPhotoHidden() || resp.GetId() != sighting.ID {
+		t.Fatalf("RestoreSightingPhoto: %v %v", resp, err)
+	}
+	if _, err := svc.RestoreSightingPhoto(adminCtx(testAdminToken), &pb.RestoreSightingPhotoRequest{Id: "x"}); status.Code(err) != codes.InvalidArgument {
+		t.Errorf("не uuid: %v", err)
+	}
+	svc, a, _ = newAdminSvc(t)
+	a.RestoreSightingPhotoMock.Return(models.PlateSighting{}, models.ErrNotFound)
+	if _, err := svc.RestoreSightingPhoto(adminCtx(testAdminToken), &pb.RestoreSightingPhotoRequest{Id: sighting.ID}); status.Code(err) != codes.NotFound {
 		t.Errorf("нет фиксации: %v", err)
 	}
 }

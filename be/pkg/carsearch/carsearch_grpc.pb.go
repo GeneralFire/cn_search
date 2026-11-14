@@ -28,6 +28,7 @@ const (
 	CarSearchService_ResolveComplaint_FullMethodName       = "/carsearch.CarSearchService/ResolveComplaint"
 	CarSearchService_SetClarificationStatus_FullMethodName = "/carsearch.CarSearchService/SetClarificationStatus"
 	CarSearchService_HideSighting_FullMethodName           = "/carsearch.CarSearchService/HideSighting"
+	CarSearchService_RestoreSightingPhoto_FullMethodName   = "/carsearch.CarSearchService/RestoreSightingPhoto"
 	CarSearchService_ListClarifications_FullMethodName     = "/carsearch.CarSearchService/ListClarifications"
 	CarSearchService_Me_FullMethodName                     = "/carsearch.CarSearchService/Me"
 	CarSearchService_Register_FullMethodName               = "/carsearch.CarSearchService/Register"
@@ -86,6 +87,9 @@ type CarSearchServiceClient interface {
 	// HideSighting — скрыть фиксацию (hidden = true) или вернуть её. Скрытые фиксации не попадают
 	// в Search/Get/SeeAlso обычных пользователей; админу отдаются с hidden = true. Нужен admin-token.
 	HideSighting(ctx context.Context, in *HideSightingRequest, opts ...grpc.CallOption) (*PlateSighting, error)
+	// RestoreSightingPhoto — вернуть фото, скрытое по жалобам (photo_hidden = false); новые жалобы
+	// на фото этой фиксации (bad_photo, personal_data) отмечаются решёнными. Нужен admin-token.
+	RestoreSightingPhoto(ctx context.Context, in *RestoreSightingPhotoRequest, opts ...grpc.CallOption) (*PlateSighting, error)
 	// ListClarifications — уточнения для админ-панели, от новых к старым, постранично, вместе с фиксацией.
 	// Нужен заголовок admin-token.
 	ListClarifications(ctx context.Context, in *ListClarificationsRequest, opts ...grpc.CallOption) (*ListClarificationsResponse, error)
@@ -226,6 +230,16 @@ func (c *carSearchServiceClient) HideSighting(ctx context.Context, in *HideSight
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PlateSighting)
 	err := c.cc.Invoke(ctx, CarSearchService_HideSighting_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carSearchServiceClient) RestoreSightingPhoto(ctx context.Context, in *RestoreSightingPhotoRequest, opts ...grpc.CallOption) (*PlateSighting, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PlateSighting)
+	err := c.cc.Invoke(ctx, CarSearchService_RestoreSightingPhoto_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -441,6 +455,9 @@ type CarSearchServiceServer interface {
 	// HideSighting — скрыть фиксацию (hidden = true) или вернуть её. Скрытые фиксации не попадают
 	// в Search/Get/SeeAlso обычных пользователей; админу отдаются с hidden = true. Нужен admin-token.
 	HideSighting(context.Context, *HideSightingRequest) (*PlateSighting, error)
+	// RestoreSightingPhoto — вернуть фото, скрытое по жалобам (photo_hidden = false); новые жалобы
+	// на фото этой фиксации (bad_photo, personal_data) отмечаются решёнными. Нужен admin-token.
+	RestoreSightingPhoto(context.Context, *RestoreSightingPhotoRequest) (*PlateSighting, error)
 	// ListClarifications — уточнения для админ-панели, от новых к старым, постранично, вместе с фиксацией.
 	// Нужен заголовок admin-token.
 	ListClarifications(context.Context, *ListClarificationsRequest) (*ListClarificationsResponse, error)
@@ -523,6 +540,9 @@ func (UnimplementedCarSearchServiceServer) SetClarificationStatus(context.Contex
 }
 func (UnimplementedCarSearchServiceServer) HideSighting(context.Context, *HideSightingRequest) (*PlateSighting, error) {
 	return nil, status.Error(codes.Unimplemented, "method HideSighting not implemented")
+}
+func (UnimplementedCarSearchServiceServer) RestoreSightingPhoto(context.Context, *RestoreSightingPhotoRequest) (*PlateSighting, error) {
+	return nil, status.Error(codes.Unimplemented, "method RestoreSightingPhoto not implemented")
 }
 func (UnimplementedCarSearchServiceServer) ListClarifications(context.Context, *ListClarificationsRequest) (*ListClarificationsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListClarifications not implemented")
@@ -754,6 +774,24 @@ func _CarSearchService_HideSighting_Handler(srv interface{}, ctx context.Context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CarSearchServiceServer).HideSighting(ctx, req.(*HideSightingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarSearchService_RestoreSightingPhoto_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RestoreSightingPhotoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).RestoreSightingPhoto(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_RestoreSightingPhoto_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).RestoreSightingPhoto(ctx, req.(*RestoreSightingPhotoRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1106,6 +1144,10 @@ var CarSearchService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "HideSighting",
 			Handler:    _CarSearchService_HideSighting_Handler,
+		},
+		{
+			MethodName: "RestoreSightingPhoto",
+			Handler:    _CarSearchService_RestoreSightingPhoto_Handler,
 		},
 		{
 			MethodName: "ListClarifications",

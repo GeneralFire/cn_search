@@ -27,6 +27,13 @@ type ComplaintsRepositoryMock struct {
 	beforeCreateComplaintCounter uint64
 	CreateComplaintMock          mComplaintsRepositoryMockCreateComplaint
 
+	funcHidePhotoIfComplained          func(ctx context.Context, tx db.Executor, sightingID string, threshold int) (b1 bool, err error)
+	funcHidePhotoIfComplainedOrigin    string
+	inspectFuncHidePhotoIfComplained   func(ctx context.Context, tx db.Executor, sightingID string, threshold int)
+	afterHidePhotoIfComplainedCounter  uint64
+	beforeHidePhotoIfComplainedCounter uint64
+	HidePhotoIfComplainedMock          mComplaintsRepositoryMockHidePhotoIfComplained
+
 	funcListComplaints          func(ctx context.Context, tx db.Executor, o models.ListComplaintsOpts) (c2 models.ComplaintsPage, err error)
 	funcListComplaintsOrigin    string
 	inspectFuncListComplaints   func(ctx context.Context, tx db.Executor, o models.ListComplaintsOpts)
@@ -40,6 +47,13 @@ type ComplaintsRepositoryMock struct {
 	afterResolveComplaintCounter  uint64
 	beforeResolveComplaintCounter uint64
 	ResolveComplaintMock          mComplaintsRepositoryMockResolveComplaint
+
+	funcShowComplaintPhoto          func(ctx context.Context, tx db.Executor, complaintID string) (err error)
+	funcShowComplaintPhotoOrigin    string
+	inspectFuncShowComplaintPhoto   func(ctx context.Context, tx db.Executor, complaintID string)
+	afterShowComplaintPhotoCounter  uint64
+	beforeShowComplaintPhotoCounter uint64
+	ShowComplaintPhotoMock          mComplaintsRepositoryMockShowComplaintPhoto
 }
 
 // NewComplaintsRepositoryMock returns a mock for mm_usecase.complaintsRepository
@@ -53,11 +67,17 @@ func NewComplaintsRepositoryMock(t minimock.Tester) *ComplaintsRepositoryMock {
 	m.CreateComplaintMock = mComplaintsRepositoryMockCreateComplaint{mock: m}
 	m.CreateComplaintMock.callArgs = []*ComplaintsRepositoryMockCreateComplaintParams{}
 
+	m.HidePhotoIfComplainedMock = mComplaintsRepositoryMockHidePhotoIfComplained{mock: m}
+	m.HidePhotoIfComplainedMock.callArgs = []*ComplaintsRepositoryMockHidePhotoIfComplainedParams{}
+
 	m.ListComplaintsMock = mComplaintsRepositoryMockListComplaints{mock: m}
 	m.ListComplaintsMock.callArgs = []*ComplaintsRepositoryMockListComplaintsParams{}
 
 	m.ResolveComplaintMock = mComplaintsRepositoryMockResolveComplaint{mock: m}
 	m.ResolveComplaintMock.callArgs = []*ComplaintsRepositoryMockResolveComplaintParams{}
+
+	m.ShowComplaintPhotoMock = mComplaintsRepositoryMockShowComplaintPhoto{mock: m}
+	m.ShowComplaintPhotoMock.callArgs = []*ComplaintsRepositoryMockShowComplaintPhotoParams{}
 
 	t.Cleanup(m.MinimockFinish)
 
@@ -435,6 +455,411 @@ func (m *ComplaintsRepositoryMock) MinimockCreateComplaintInspect() {
 	if !m.CreateComplaintMock.invocationsDone() && afterCreateComplaintCounter > 0 {
 		m.t.Errorf("Expected %d calls to ComplaintsRepositoryMock.CreateComplaint at\n%s but found %d calls",
 			mm_atomic.LoadUint64(&m.CreateComplaintMock.expectedInvocations), m.CreateComplaintMock.expectedInvocationsOrigin, afterCreateComplaintCounter)
+	}
+}
+
+type mComplaintsRepositoryMockHidePhotoIfComplained struct {
+	optional           bool
+	mock               *ComplaintsRepositoryMock
+	defaultExpectation *ComplaintsRepositoryMockHidePhotoIfComplainedExpectation
+	expectations       []*ComplaintsRepositoryMockHidePhotoIfComplainedExpectation
+
+	callArgs []*ComplaintsRepositoryMockHidePhotoIfComplainedParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// ComplaintsRepositoryMockHidePhotoIfComplainedExpectation specifies expectation struct of the complaintsRepository.HidePhotoIfComplained
+type ComplaintsRepositoryMockHidePhotoIfComplainedExpectation struct {
+	mock               *ComplaintsRepositoryMock
+	params             *ComplaintsRepositoryMockHidePhotoIfComplainedParams
+	paramPtrs          *ComplaintsRepositoryMockHidePhotoIfComplainedParamPtrs
+	expectationOrigins ComplaintsRepositoryMockHidePhotoIfComplainedExpectationOrigins
+	results            *ComplaintsRepositoryMockHidePhotoIfComplainedResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// ComplaintsRepositoryMockHidePhotoIfComplainedParams contains parameters of the complaintsRepository.HidePhotoIfComplained
+type ComplaintsRepositoryMockHidePhotoIfComplainedParams struct {
+	ctx        context.Context
+	tx         db.Executor
+	sightingID string
+	threshold  int
+}
+
+// ComplaintsRepositoryMockHidePhotoIfComplainedParamPtrs contains pointers to parameters of the complaintsRepository.HidePhotoIfComplained
+type ComplaintsRepositoryMockHidePhotoIfComplainedParamPtrs struct {
+	ctx        *context.Context
+	tx         *db.Executor
+	sightingID *string
+	threshold  *int
+}
+
+// ComplaintsRepositoryMockHidePhotoIfComplainedResults contains results of the complaintsRepository.HidePhotoIfComplained
+type ComplaintsRepositoryMockHidePhotoIfComplainedResults struct {
+	b1  bool
+	err error
+}
+
+// ComplaintsRepositoryMockHidePhotoIfComplainedOrigins contains origins of expectations of the complaintsRepository.HidePhotoIfComplained
+type ComplaintsRepositoryMockHidePhotoIfComplainedExpectationOrigins struct {
+	origin           string
+	originCtx        string
+	originTx         string
+	originSightingID string
+	originThreshold  string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmHidePhotoIfComplained *mComplaintsRepositoryMockHidePhotoIfComplained) Optional() *mComplaintsRepositoryMockHidePhotoIfComplained {
+	mmHidePhotoIfComplained.optional = true
+	return mmHidePhotoIfComplained
+}
+
+// Expect sets up expected params for complaintsRepository.HidePhotoIfComplained
+func (mmHidePhotoIfComplained *mComplaintsRepositoryMockHidePhotoIfComplained) Expect(ctx context.Context, tx db.Executor, sightingID string, threshold int) *mComplaintsRepositoryMockHidePhotoIfComplained {
+	if mmHidePhotoIfComplained.mock.funcHidePhotoIfComplained != nil {
+		mmHidePhotoIfComplained.mock.t.Fatalf("ComplaintsRepositoryMock.HidePhotoIfComplained mock is already set by Set")
+	}
+
+	if mmHidePhotoIfComplained.defaultExpectation == nil {
+		mmHidePhotoIfComplained.defaultExpectation = &ComplaintsRepositoryMockHidePhotoIfComplainedExpectation{}
+	}
+
+	if mmHidePhotoIfComplained.defaultExpectation.paramPtrs != nil {
+		mmHidePhotoIfComplained.mock.t.Fatalf("ComplaintsRepositoryMock.HidePhotoIfComplained mock is already set by ExpectParams functions")
+	}
+
+	mmHidePhotoIfComplained.defaultExpectation.params = &ComplaintsRepositoryMockHidePhotoIfComplainedParams{ctx, tx, sightingID, threshold}
+	mmHidePhotoIfComplained.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmHidePhotoIfComplained.expectations {
+		if minimock.Equal(e.params, mmHidePhotoIfComplained.defaultExpectation.params) {
+			mmHidePhotoIfComplained.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmHidePhotoIfComplained.defaultExpectation.params)
+		}
+	}
+
+	return mmHidePhotoIfComplained
+}
+
+// ExpectCtxParam1 sets up expected param ctx for complaintsRepository.HidePhotoIfComplained
+func (mmHidePhotoIfComplained *mComplaintsRepositoryMockHidePhotoIfComplained) ExpectCtxParam1(ctx context.Context) *mComplaintsRepositoryMockHidePhotoIfComplained {
+	if mmHidePhotoIfComplained.mock.funcHidePhotoIfComplained != nil {
+		mmHidePhotoIfComplained.mock.t.Fatalf("ComplaintsRepositoryMock.HidePhotoIfComplained mock is already set by Set")
+	}
+
+	if mmHidePhotoIfComplained.defaultExpectation == nil {
+		mmHidePhotoIfComplained.defaultExpectation = &ComplaintsRepositoryMockHidePhotoIfComplainedExpectation{}
+	}
+
+	if mmHidePhotoIfComplained.defaultExpectation.params != nil {
+		mmHidePhotoIfComplained.mock.t.Fatalf("ComplaintsRepositoryMock.HidePhotoIfComplained mock is already set by Expect")
+	}
+
+	if mmHidePhotoIfComplained.defaultExpectation.paramPtrs == nil {
+		mmHidePhotoIfComplained.defaultExpectation.paramPtrs = &ComplaintsRepositoryMockHidePhotoIfComplainedParamPtrs{}
+	}
+	mmHidePhotoIfComplained.defaultExpectation.paramPtrs.ctx = &ctx
+	mmHidePhotoIfComplained.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmHidePhotoIfComplained
+}
+
+// ExpectTxParam2 sets up expected param tx for complaintsRepository.HidePhotoIfComplained
+func (mmHidePhotoIfComplained *mComplaintsRepositoryMockHidePhotoIfComplained) ExpectTxParam2(tx db.Executor) *mComplaintsRepositoryMockHidePhotoIfComplained {
+	if mmHidePhotoIfComplained.mock.funcHidePhotoIfComplained != nil {
+		mmHidePhotoIfComplained.mock.t.Fatalf("ComplaintsRepositoryMock.HidePhotoIfComplained mock is already set by Set")
+	}
+
+	if mmHidePhotoIfComplained.defaultExpectation == nil {
+		mmHidePhotoIfComplained.defaultExpectation = &ComplaintsRepositoryMockHidePhotoIfComplainedExpectation{}
+	}
+
+	if mmHidePhotoIfComplained.defaultExpectation.params != nil {
+		mmHidePhotoIfComplained.mock.t.Fatalf("ComplaintsRepositoryMock.HidePhotoIfComplained mock is already set by Expect")
+	}
+
+	if mmHidePhotoIfComplained.defaultExpectation.paramPtrs == nil {
+		mmHidePhotoIfComplained.defaultExpectation.paramPtrs = &ComplaintsRepositoryMockHidePhotoIfComplainedParamPtrs{}
+	}
+	mmHidePhotoIfComplained.defaultExpectation.paramPtrs.tx = &tx
+	mmHidePhotoIfComplained.defaultExpectation.expectationOrigins.originTx = minimock.CallerInfo(1)
+
+	return mmHidePhotoIfComplained
+}
+
+// ExpectSightingIDParam3 sets up expected param sightingID for complaintsRepository.HidePhotoIfComplained
+func (mmHidePhotoIfComplained *mComplaintsRepositoryMockHidePhotoIfComplained) ExpectSightingIDParam3(sightingID string) *mComplaintsRepositoryMockHidePhotoIfComplained {
+	if mmHidePhotoIfComplained.mock.funcHidePhotoIfComplained != nil {
+		mmHidePhotoIfComplained.mock.t.Fatalf("ComplaintsRepositoryMock.HidePhotoIfComplained mock is already set by Set")
+	}
+
+	if mmHidePhotoIfComplained.defaultExpectation == nil {
+		mmHidePhotoIfComplained.defaultExpectation = &ComplaintsRepositoryMockHidePhotoIfComplainedExpectation{}
+	}
+
+	if mmHidePhotoIfComplained.defaultExpectation.params != nil {
+		mmHidePhotoIfComplained.mock.t.Fatalf("ComplaintsRepositoryMock.HidePhotoIfComplained mock is already set by Expect")
+	}
+
+	if mmHidePhotoIfComplained.defaultExpectation.paramPtrs == nil {
+		mmHidePhotoIfComplained.defaultExpectation.paramPtrs = &ComplaintsRepositoryMockHidePhotoIfComplainedParamPtrs{}
+	}
+	mmHidePhotoIfComplained.defaultExpectation.paramPtrs.sightingID = &sightingID
+	mmHidePhotoIfComplained.defaultExpectation.expectationOrigins.originSightingID = minimock.CallerInfo(1)
+
+	return mmHidePhotoIfComplained
+}
+
+// ExpectThresholdParam4 sets up expected param threshold for complaintsRepository.HidePhotoIfComplained
+func (mmHidePhotoIfComplained *mComplaintsRepositoryMockHidePhotoIfComplained) ExpectThresholdParam4(threshold int) *mComplaintsRepositoryMockHidePhotoIfComplained {
+	if mmHidePhotoIfComplained.mock.funcHidePhotoIfComplained != nil {
+		mmHidePhotoIfComplained.mock.t.Fatalf("ComplaintsRepositoryMock.HidePhotoIfComplained mock is already set by Set")
+	}
+
+	if mmHidePhotoIfComplained.defaultExpectation == nil {
+		mmHidePhotoIfComplained.defaultExpectation = &ComplaintsRepositoryMockHidePhotoIfComplainedExpectation{}
+	}
+
+	if mmHidePhotoIfComplained.defaultExpectation.params != nil {
+		mmHidePhotoIfComplained.mock.t.Fatalf("ComplaintsRepositoryMock.HidePhotoIfComplained mock is already set by Expect")
+	}
+
+	if mmHidePhotoIfComplained.defaultExpectation.paramPtrs == nil {
+		mmHidePhotoIfComplained.defaultExpectation.paramPtrs = &ComplaintsRepositoryMockHidePhotoIfComplainedParamPtrs{}
+	}
+	mmHidePhotoIfComplained.defaultExpectation.paramPtrs.threshold = &threshold
+	mmHidePhotoIfComplained.defaultExpectation.expectationOrigins.originThreshold = minimock.CallerInfo(1)
+
+	return mmHidePhotoIfComplained
+}
+
+// Inspect accepts an inspector function that has same arguments as the complaintsRepository.HidePhotoIfComplained
+func (mmHidePhotoIfComplained *mComplaintsRepositoryMockHidePhotoIfComplained) Inspect(f func(ctx context.Context, tx db.Executor, sightingID string, threshold int)) *mComplaintsRepositoryMockHidePhotoIfComplained {
+	if mmHidePhotoIfComplained.mock.inspectFuncHidePhotoIfComplained != nil {
+		mmHidePhotoIfComplained.mock.t.Fatalf("Inspect function is already set for ComplaintsRepositoryMock.HidePhotoIfComplained")
+	}
+
+	mmHidePhotoIfComplained.mock.inspectFuncHidePhotoIfComplained = f
+
+	return mmHidePhotoIfComplained
+}
+
+// Return sets up results that will be returned by complaintsRepository.HidePhotoIfComplained
+func (mmHidePhotoIfComplained *mComplaintsRepositoryMockHidePhotoIfComplained) Return(b1 bool, err error) *ComplaintsRepositoryMock {
+	if mmHidePhotoIfComplained.mock.funcHidePhotoIfComplained != nil {
+		mmHidePhotoIfComplained.mock.t.Fatalf("ComplaintsRepositoryMock.HidePhotoIfComplained mock is already set by Set")
+	}
+
+	if mmHidePhotoIfComplained.defaultExpectation == nil {
+		mmHidePhotoIfComplained.defaultExpectation = &ComplaintsRepositoryMockHidePhotoIfComplainedExpectation{mock: mmHidePhotoIfComplained.mock}
+	}
+	mmHidePhotoIfComplained.defaultExpectation.results = &ComplaintsRepositoryMockHidePhotoIfComplainedResults{b1, err}
+	mmHidePhotoIfComplained.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmHidePhotoIfComplained.mock
+}
+
+// Set uses given function f to mock the complaintsRepository.HidePhotoIfComplained method
+func (mmHidePhotoIfComplained *mComplaintsRepositoryMockHidePhotoIfComplained) Set(f func(ctx context.Context, tx db.Executor, sightingID string, threshold int) (b1 bool, err error)) *ComplaintsRepositoryMock {
+	if mmHidePhotoIfComplained.defaultExpectation != nil {
+		mmHidePhotoIfComplained.mock.t.Fatalf("Default expectation is already set for the complaintsRepository.HidePhotoIfComplained method")
+	}
+
+	if len(mmHidePhotoIfComplained.expectations) > 0 {
+		mmHidePhotoIfComplained.mock.t.Fatalf("Some expectations are already set for the complaintsRepository.HidePhotoIfComplained method")
+	}
+
+	mmHidePhotoIfComplained.mock.funcHidePhotoIfComplained = f
+	mmHidePhotoIfComplained.mock.funcHidePhotoIfComplainedOrigin = minimock.CallerInfo(1)
+	return mmHidePhotoIfComplained.mock
+}
+
+// When sets expectation for the complaintsRepository.HidePhotoIfComplained which will trigger the result defined by the following
+// Then helper
+func (mmHidePhotoIfComplained *mComplaintsRepositoryMockHidePhotoIfComplained) When(ctx context.Context, tx db.Executor, sightingID string, threshold int) *ComplaintsRepositoryMockHidePhotoIfComplainedExpectation {
+	if mmHidePhotoIfComplained.mock.funcHidePhotoIfComplained != nil {
+		mmHidePhotoIfComplained.mock.t.Fatalf("ComplaintsRepositoryMock.HidePhotoIfComplained mock is already set by Set")
+	}
+
+	expectation := &ComplaintsRepositoryMockHidePhotoIfComplainedExpectation{
+		mock:               mmHidePhotoIfComplained.mock,
+		params:             &ComplaintsRepositoryMockHidePhotoIfComplainedParams{ctx, tx, sightingID, threshold},
+		expectationOrigins: ComplaintsRepositoryMockHidePhotoIfComplainedExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmHidePhotoIfComplained.expectations = append(mmHidePhotoIfComplained.expectations, expectation)
+	return expectation
+}
+
+// Then sets up complaintsRepository.HidePhotoIfComplained return parameters for the expectation previously defined by the When method
+func (e *ComplaintsRepositoryMockHidePhotoIfComplainedExpectation) Then(b1 bool, err error) *ComplaintsRepositoryMock {
+	e.results = &ComplaintsRepositoryMockHidePhotoIfComplainedResults{b1, err}
+	return e.mock
+}
+
+// Times sets number of times complaintsRepository.HidePhotoIfComplained should be invoked
+func (mmHidePhotoIfComplained *mComplaintsRepositoryMockHidePhotoIfComplained) Times(n uint64) *mComplaintsRepositoryMockHidePhotoIfComplained {
+	if n == 0 {
+		mmHidePhotoIfComplained.mock.t.Fatalf("Times of ComplaintsRepositoryMock.HidePhotoIfComplained mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmHidePhotoIfComplained.expectedInvocations, n)
+	mmHidePhotoIfComplained.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmHidePhotoIfComplained
+}
+
+func (mmHidePhotoIfComplained *mComplaintsRepositoryMockHidePhotoIfComplained) invocationsDone() bool {
+	if len(mmHidePhotoIfComplained.expectations) == 0 && mmHidePhotoIfComplained.defaultExpectation == nil && mmHidePhotoIfComplained.mock.funcHidePhotoIfComplained == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmHidePhotoIfComplained.mock.afterHidePhotoIfComplainedCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmHidePhotoIfComplained.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// HidePhotoIfComplained implements mm_usecase.complaintsRepository
+func (mmHidePhotoIfComplained *ComplaintsRepositoryMock) HidePhotoIfComplained(ctx context.Context, tx db.Executor, sightingID string, threshold int) (b1 bool, err error) {
+	mm_atomic.AddUint64(&mmHidePhotoIfComplained.beforeHidePhotoIfComplainedCounter, 1)
+	defer mm_atomic.AddUint64(&mmHidePhotoIfComplained.afterHidePhotoIfComplainedCounter, 1)
+
+	mmHidePhotoIfComplained.t.Helper()
+
+	if mmHidePhotoIfComplained.inspectFuncHidePhotoIfComplained != nil {
+		mmHidePhotoIfComplained.inspectFuncHidePhotoIfComplained(ctx, tx, sightingID, threshold)
+	}
+
+	mm_params := ComplaintsRepositoryMockHidePhotoIfComplainedParams{ctx, tx, sightingID, threshold}
+
+	// Record call args
+	mmHidePhotoIfComplained.HidePhotoIfComplainedMock.mutex.Lock()
+	mmHidePhotoIfComplained.HidePhotoIfComplainedMock.callArgs = append(mmHidePhotoIfComplained.HidePhotoIfComplainedMock.callArgs, &mm_params)
+	mmHidePhotoIfComplained.HidePhotoIfComplainedMock.mutex.Unlock()
+
+	for _, e := range mmHidePhotoIfComplained.HidePhotoIfComplainedMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.b1, e.results.err
+		}
+	}
+
+	if mmHidePhotoIfComplained.HidePhotoIfComplainedMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmHidePhotoIfComplained.HidePhotoIfComplainedMock.defaultExpectation.Counter, 1)
+		mm_want := mmHidePhotoIfComplained.HidePhotoIfComplainedMock.defaultExpectation.params
+		mm_want_ptrs := mmHidePhotoIfComplained.HidePhotoIfComplainedMock.defaultExpectation.paramPtrs
+
+		mm_got := ComplaintsRepositoryMockHidePhotoIfComplainedParams{ctx, tx, sightingID, threshold}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmHidePhotoIfComplained.t.Errorf("ComplaintsRepositoryMock.HidePhotoIfComplained got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmHidePhotoIfComplained.HidePhotoIfComplainedMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.tx != nil && !minimock.Equal(*mm_want_ptrs.tx, mm_got.tx) {
+				mmHidePhotoIfComplained.t.Errorf("ComplaintsRepositoryMock.HidePhotoIfComplained got unexpected parameter tx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmHidePhotoIfComplained.HidePhotoIfComplainedMock.defaultExpectation.expectationOrigins.originTx, *mm_want_ptrs.tx, mm_got.tx, minimock.Diff(*mm_want_ptrs.tx, mm_got.tx))
+			}
+
+			if mm_want_ptrs.sightingID != nil && !minimock.Equal(*mm_want_ptrs.sightingID, mm_got.sightingID) {
+				mmHidePhotoIfComplained.t.Errorf("ComplaintsRepositoryMock.HidePhotoIfComplained got unexpected parameter sightingID, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmHidePhotoIfComplained.HidePhotoIfComplainedMock.defaultExpectation.expectationOrigins.originSightingID, *mm_want_ptrs.sightingID, mm_got.sightingID, minimock.Diff(*mm_want_ptrs.sightingID, mm_got.sightingID))
+			}
+
+			if mm_want_ptrs.threshold != nil && !minimock.Equal(*mm_want_ptrs.threshold, mm_got.threshold) {
+				mmHidePhotoIfComplained.t.Errorf("ComplaintsRepositoryMock.HidePhotoIfComplained got unexpected parameter threshold, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmHidePhotoIfComplained.HidePhotoIfComplainedMock.defaultExpectation.expectationOrigins.originThreshold, *mm_want_ptrs.threshold, mm_got.threshold, minimock.Diff(*mm_want_ptrs.threshold, mm_got.threshold))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmHidePhotoIfComplained.t.Errorf("ComplaintsRepositoryMock.HidePhotoIfComplained got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmHidePhotoIfComplained.HidePhotoIfComplainedMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmHidePhotoIfComplained.HidePhotoIfComplainedMock.defaultExpectation.results
+		if mm_results == nil {
+			mmHidePhotoIfComplained.t.Fatal("No results are set for the ComplaintsRepositoryMock.HidePhotoIfComplained")
+		}
+		return (*mm_results).b1, (*mm_results).err
+	}
+	if mmHidePhotoIfComplained.funcHidePhotoIfComplained != nil {
+		return mmHidePhotoIfComplained.funcHidePhotoIfComplained(ctx, tx, sightingID, threshold)
+	}
+	mmHidePhotoIfComplained.t.Fatalf("Unexpected call to ComplaintsRepositoryMock.HidePhotoIfComplained. %v %v %v %v", ctx, tx, sightingID, threshold)
+	return
+}
+
+// HidePhotoIfComplainedAfterCounter returns a count of finished ComplaintsRepositoryMock.HidePhotoIfComplained invocations
+func (mmHidePhotoIfComplained *ComplaintsRepositoryMock) HidePhotoIfComplainedAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmHidePhotoIfComplained.afterHidePhotoIfComplainedCounter)
+}
+
+// HidePhotoIfComplainedBeforeCounter returns a count of ComplaintsRepositoryMock.HidePhotoIfComplained invocations
+func (mmHidePhotoIfComplained *ComplaintsRepositoryMock) HidePhotoIfComplainedBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmHidePhotoIfComplained.beforeHidePhotoIfComplainedCounter)
+}
+
+// Calls returns a list of arguments used in each call to ComplaintsRepositoryMock.HidePhotoIfComplained.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmHidePhotoIfComplained *mComplaintsRepositoryMockHidePhotoIfComplained) Calls() []*ComplaintsRepositoryMockHidePhotoIfComplainedParams {
+	mmHidePhotoIfComplained.mutex.RLock()
+
+	argCopy := make([]*ComplaintsRepositoryMockHidePhotoIfComplainedParams, len(mmHidePhotoIfComplained.callArgs))
+	copy(argCopy, mmHidePhotoIfComplained.callArgs)
+
+	mmHidePhotoIfComplained.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockHidePhotoIfComplainedDone returns true if the count of the HidePhotoIfComplained invocations corresponds
+// the number of defined expectations
+func (m *ComplaintsRepositoryMock) MinimockHidePhotoIfComplainedDone() bool {
+	if m.HidePhotoIfComplainedMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.HidePhotoIfComplainedMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.HidePhotoIfComplainedMock.invocationsDone()
+}
+
+// MinimockHidePhotoIfComplainedInspect logs each unmet expectation
+func (m *ComplaintsRepositoryMock) MinimockHidePhotoIfComplainedInspect() {
+	for _, e := range m.HidePhotoIfComplainedMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to ComplaintsRepositoryMock.HidePhotoIfComplained at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterHidePhotoIfComplainedCounter := mm_atomic.LoadUint64(&m.afterHidePhotoIfComplainedCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.HidePhotoIfComplainedMock.defaultExpectation != nil && afterHidePhotoIfComplainedCounter < 1 {
+		if m.HidePhotoIfComplainedMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to ComplaintsRepositoryMock.HidePhotoIfComplained at\n%s", m.HidePhotoIfComplainedMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to ComplaintsRepositoryMock.HidePhotoIfComplained at\n%s with params: %#v", m.HidePhotoIfComplainedMock.defaultExpectation.expectationOrigins.origin, *m.HidePhotoIfComplainedMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcHidePhotoIfComplained != nil && afterHidePhotoIfComplainedCounter < 1 {
+		m.t.Errorf("Expected call to ComplaintsRepositoryMock.HidePhotoIfComplained at\n%s", m.funcHidePhotoIfComplainedOrigin)
+	}
+
+	if !m.HidePhotoIfComplainedMock.invocationsDone() && afterHidePhotoIfComplainedCounter > 0 {
+		m.t.Errorf("Expected %d calls to ComplaintsRepositoryMock.HidePhotoIfComplained at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.HidePhotoIfComplainedMock.expectedInvocations), m.HidePhotoIfComplainedMock.expectedInvocationsOrigin, afterHidePhotoIfComplainedCounter)
 	}
 }
 
@@ -1186,15 +1611,392 @@ func (m *ComplaintsRepositoryMock) MinimockResolveComplaintInspect() {
 	}
 }
 
+type mComplaintsRepositoryMockShowComplaintPhoto struct {
+	optional           bool
+	mock               *ComplaintsRepositoryMock
+	defaultExpectation *ComplaintsRepositoryMockShowComplaintPhotoExpectation
+	expectations       []*ComplaintsRepositoryMockShowComplaintPhotoExpectation
+
+	callArgs []*ComplaintsRepositoryMockShowComplaintPhotoParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// ComplaintsRepositoryMockShowComplaintPhotoExpectation specifies expectation struct of the complaintsRepository.ShowComplaintPhoto
+type ComplaintsRepositoryMockShowComplaintPhotoExpectation struct {
+	mock               *ComplaintsRepositoryMock
+	params             *ComplaintsRepositoryMockShowComplaintPhotoParams
+	paramPtrs          *ComplaintsRepositoryMockShowComplaintPhotoParamPtrs
+	expectationOrigins ComplaintsRepositoryMockShowComplaintPhotoExpectationOrigins
+	results            *ComplaintsRepositoryMockShowComplaintPhotoResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// ComplaintsRepositoryMockShowComplaintPhotoParams contains parameters of the complaintsRepository.ShowComplaintPhoto
+type ComplaintsRepositoryMockShowComplaintPhotoParams struct {
+	ctx         context.Context
+	tx          db.Executor
+	complaintID string
+}
+
+// ComplaintsRepositoryMockShowComplaintPhotoParamPtrs contains pointers to parameters of the complaintsRepository.ShowComplaintPhoto
+type ComplaintsRepositoryMockShowComplaintPhotoParamPtrs struct {
+	ctx         *context.Context
+	tx          *db.Executor
+	complaintID *string
+}
+
+// ComplaintsRepositoryMockShowComplaintPhotoResults contains results of the complaintsRepository.ShowComplaintPhoto
+type ComplaintsRepositoryMockShowComplaintPhotoResults struct {
+	err error
+}
+
+// ComplaintsRepositoryMockShowComplaintPhotoOrigins contains origins of expectations of the complaintsRepository.ShowComplaintPhoto
+type ComplaintsRepositoryMockShowComplaintPhotoExpectationOrigins struct {
+	origin            string
+	originCtx         string
+	originTx          string
+	originComplaintID string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmShowComplaintPhoto *mComplaintsRepositoryMockShowComplaintPhoto) Optional() *mComplaintsRepositoryMockShowComplaintPhoto {
+	mmShowComplaintPhoto.optional = true
+	return mmShowComplaintPhoto
+}
+
+// Expect sets up expected params for complaintsRepository.ShowComplaintPhoto
+func (mmShowComplaintPhoto *mComplaintsRepositoryMockShowComplaintPhoto) Expect(ctx context.Context, tx db.Executor, complaintID string) *mComplaintsRepositoryMockShowComplaintPhoto {
+	if mmShowComplaintPhoto.mock.funcShowComplaintPhoto != nil {
+		mmShowComplaintPhoto.mock.t.Fatalf("ComplaintsRepositoryMock.ShowComplaintPhoto mock is already set by Set")
+	}
+
+	if mmShowComplaintPhoto.defaultExpectation == nil {
+		mmShowComplaintPhoto.defaultExpectation = &ComplaintsRepositoryMockShowComplaintPhotoExpectation{}
+	}
+
+	if mmShowComplaintPhoto.defaultExpectation.paramPtrs != nil {
+		mmShowComplaintPhoto.mock.t.Fatalf("ComplaintsRepositoryMock.ShowComplaintPhoto mock is already set by ExpectParams functions")
+	}
+
+	mmShowComplaintPhoto.defaultExpectation.params = &ComplaintsRepositoryMockShowComplaintPhotoParams{ctx, tx, complaintID}
+	mmShowComplaintPhoto.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmShowComplaintPhoto.expectations {
+		if minimock.Equal(e.params, mmShowComplaintPhoto.defaultExpectation.params) {
+			mmShowComplaintPhoto.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmShowComplaintPhoto.defaultExpectation.params)
+		}
+	}
+
+	return mmShowComplaintPhoto
+}
+
+// ExpectCtxParam1 sets up expected param ctx for complaintsRepository.ShowComplaintPhoto
+func (mmShowComplaintPhoto *mComplaintsRepositoryMockShowComplaintPhoto) ExpectCtxParam1(ctx context.Context) *mComplaintsRepositoryMockShowComplaintPhoto {
+	if mmShowComplaintPhoto.mock.funcShowComplaintPhoto != nil {
+		mmShowComplaintPhoto.mock.t.Fatalf("ComplaintsRepositoryMock.ShowComplaintPhoto mock is already set by Set")
+	}
+
+	if mmShowComplaintPhoto.defaultExpectation == nil {
+		mmShowComplaintPhoto.defaultExpectation = &ComplaintsRepositoryMockShowComplaintPhotoExpectation{}
+	}
+
+	if mmShowComplaintPhoto.defaultExpectation.params != nil {
+		mmShowComplaintPhoto.mock.t.Fatalf("ComplaintsRepositoryMock.ShowComplaintPhoto mock is already set by Expect")
+	}
+
+	if mmShowComplaintPhoto.defaultExpectation.paramPtrs == nil {
+		mmShowComplaintPhoto.defaultExpectation.paramPtrs = &ComplaintsRepositoryMockShowComplaintPhotoParamPtrs{}
+	}
+	mmShowComplaintPhoto.defaultExpectation.paramPtrs.ctx = &ctx
+	mmShowComplaintPhoto.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmShowComplaintPhoto
+}
+
+// ExpectTxParam2 sets up expected param tx for complaintsRepository.ShowComplaintPhoto
+func (mmShowComplaintPhoto *mComplaintsRepositoryMockShowComplaintPhoto) ExpectTxParam2(tx db.Executor) *mComplaintsRepositoryMockShowComplaintPhoto {
+	if mmShowComplaintPhoto.mock.funcShowComplaintPhoto != nil {
+		mmShowComplaintPhoto.mock.t.Fatalf("ComplaintsRepositoryMock.ShowComplaintPhoto mock is already set by Set")
+	}
+
+	if mmShowComplaintPhoto.defaultExpectation == nil {
+		mmShowComplaintPhoto.defaultExpectation = &ComplaintsRepositoryMockShowComplaintPhotoExpectation{}
+	}
+
+	if mmShowComplaintPhoto.defaultExpectation.params != nil {
+		mmShowComplaintPhoto.mock.t.Fatalf("ComplaintsRepositoryMock.ShowComplaintPhoto mock is already set by Expect")
+	}
+
+	if mmShowComplaintPhoto.defaultExpectation.paramPtrs == nil {
+		mmShowComplaintPhoto.defaultExpectation.paramPtrs = &ComplaintsRepositoryMockShowComplaintPhotoParamPtrs{}
+	}
+	mmShowComplaintPhoto.defaultExpectation.paramPtrs.tx = &tx
+	mmShowComplaintPhoto.defaultExpectation.expectationOrigins.originTx = minimock.CallerInfo(1)
+
+	return mmShowComplaintPhoto
+}
+
+// ExpectComplaintIDParam3 sets up expected param complaintID for complaintsRepository.ShowComplaintPhoto
+func (mmShowComplaintPhoto *mComplaintsRepositoryMockShowComplaintPhoto) ExpectComplaintIDParam3(complaintID string) *mComplaintsRepositoryMockShowComplaintPhoto {
+	if mmShowComplaintPhoto.mock.funcShowComplaintPhoto != nil {
+		mmShowComplaintPhoto.mock.t.Fatalf("ComplaintsRepositoryMock.ShowComplaintPhoto mock is already set by Set")
+	}
+
+	if mmShowComplaintPhoto.defaultExpectation == nil {
+		mmShowComplaintPhoto.defaultExpectation = &ComplaintsRepositoryMockShowComplaintPhotoExpectation{}
+	}
+
+	if mmShowComplaintPhoto.defaultExpectation.params != nil {
+		mmShowComplaintPhoto.mock.t.Fatalf("ComplaintsRepositoryMock.ShowComplaintPhoto mock is already set by Expect")
+	}
+
+	if mmShowComplaintPhoto.defaultExpectation.paramPtrs == nil {
+		mmShowComplaintPhoto.defaultExpectation.paramPtrs = &ComplaintsRepositoryMockShowComplaintPhotoParamPtrs{}
+	}
+	mmShowComplaintPhoto.defaultExpectation.paramPtrs.complaintID = &complaintID
+	mmShowComplaintPhoto.defaultExpectation.expectationOrigins.originComplaintID = minimock.CallerInfo(1)
+
+	return mmShowComplaintPhoto
+}
+
+// Inspect accepts an inspector function that has same arguments as the complaintsRepository.ShowComplaintPhoto
+func (mmShowComplaintPhoto *mComplaintsRepositoryMockShowComplaintPhoto) Inspect(f func(ctx context.Context, tx db.Executor, complaintID string)) *mComplaintsRepositoryMockShowComplaintPhoto {
+	if mmShowComplaintPhoto.mock.inspectFuncShowComplaintPhoto != nil {
+		mmShowComplaintPhoto.mock.t.Fatalf("Inspect function is already set for ComplaintsRepositoryMock.ShowComplaintPhoto")
+	}
+
+	mmShowComplaintPhoto.mock.inspectFuncShowComplaintPhoto = f
+
+	return mmShowComplaintPhoto
+}
+
+// Return sets up results that will be returned by complaintsRepository.ShowComplaintPhoto
+func (mmShowComplaintPhoto *mComplaintsRepositoryMockShowComplaintPhoto) Return(err error) *ComplaintsRepositoryMock {
+	if mmShowComplaintPhoto.mock.funcShowComplaintPhoto != nil {
+		mmShowComplaintPhoto.mock.t.Fatalf("ComplaintsRepositoryMock.ShowComplaintPhoto mock is already set by Set")
+	}
+
+	if mmShowComplaintPhoto.defaultExpectation == nil {
+		mmShowComplaintPhoto.defaultExpectation = &ComplaintsRepositoryMockShowComplaintPhotoExpectation{mock: mmShowComplaintPhoto.mock}
+	}
+	mmShowComplaintPhoto.defaultExpectation.results = &ComplaintsRepositoryMockShowComplaintPhotoResults{err}
+	mmShowComplaintPhoto.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmShowComplaintPhoto.mock
+}
+
+// Set uses given function f to mock the complaintsRepository.ShowComplaintPhoto method
+func (mmShowComplaintPhoto *mComplaintsRepositoryMockShowComplaintPhoto) Set(f func(ctx context.Context, tx db.Executor, complaintID string) (err error)) *ComplaintsRepositoryMock {
+	if mmShowComplaintPhoto.defaultExpectation != nil {
+		mmShowComplaintPhoto.mock.t.Fatalf("Default expectation is already set for the complaintsRepository.ShowComplaintPhoto method")
+	}
+
+	if len(mmShowComplaintPhoto.expectations) > 0 {
+		mmShowComplaintPhoto.mock.t.Fatalf("Some expectations are already set for the complaintsRepository.ShowComplaintPhoto method")
+	}
+
+	mmShowComplaintPhoto.mock.funcShowComplaintPhoto = f
+	mmShowComplaintPhoto.mock.funcShowComplaintPhotoOrigin = minimock.CallerInfo(1)
+	return mmShowComplaintPhoto.mock
+}
+
+// When sets expectation for the complaintsRepository.ShowComplaintPhoto which will trigger the result defined by the following
+// Then helper
+func (mmShowComplaintPhoto *mComplaintsRepositoryMockShowComplaintPhoto) When(ctx context.Context, tx db.Executor, complaintID string) *ComplaintsRepositoryMockShowComplaintPhotoExpectation {
+	if mmShowComplaintPhoto.mock.funcShowComplaintPhoto != nil {
+		mmShowComplaintPhoto.mock.t.Fatalf("ComplaintsRepositoryMock.ShowComplaintPhoto mock is already set by Set")
+	}
+
+	expectation := &ComplaintsRepositoryMockShowComplaintPhotoExpectation{
+		mock:               mmShowComplaintPhoto.mock,
+		params:             &ComplaintsRepositoryMockShowComplaintPhotoParams{ctx, tx, complaintID},
+		expectationOrigins: ComplaintsRepositoryMockShowComplaintPhotoExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmShowComplaintPhoto.expectations = append(mmShowComplaintPhoto.expectations, expectation)
+	return expectation
+}
+
+// Then sets up complaintsRepository.ShowComplaintPhoto return parameters for the expectation previously defined by the When method
+func (e *ComplaintsRepositoryMockShowComplaintPhotoExpectation) Then(err error) *ComplaintsRepositoryMock {
+	e.results = &ComplaintsRepositoryMockShowComplaintPhotoResults{err}
+	return e.mock
+}
+
+// Times sets number of times complaintsRepository.ShowComplaintPhoto should be invoked
+func (mmShowComplaintPhoto *mComplaintsRepositoryMockShowComplaintPhoto) Times(n uint64) *mComplaintsRepositoryMockShowComplaintPhoto {
+	if n == 0 {
+		mmShowComplaintPhoto.mock.t.Fatalf("Times of ComplaintsRepositoryMock.ShowComplaintPhoto mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmShowComplaintPhoto.expectedInvocations, n)
+	mmShowComplaintPhoto.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmShowComplaintPhoto
+}
+
+func (mmShowComplaintPhoto *mComplaintsRepositoryMockShowComplaintPhoto) invocationsDone() bool {
+	if len(mmShowComplaintPhoto.expectations) == 0 && mmShowComplaintPhoto.defaultExpectation == nil && mmShowComplaintPhoto.mock.funcShowComplaintPhoto == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmShowComplaintPhoto.mock.afterShowComplaintPhotoCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmShowComplaintPhoto.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// ShowComplaintPhoto implements mm_usecase.complaintsRepository
+func (mmShowComplaintPhoto *ComplaintsRepositoryMock) ShowComplaintPhoto(ctx context.Context, tx db.Executor, complaintID string) (err error) {
+	mm_atomic.AddUint64(&mmShowComplaintPhoto.beforeShowComplaintPhotoCounter, 1)
+	defer mm_atomic.AddUint64(&mmShowComplaintPhoto.afterShowComplaintPhotoCounter, 1)
+
+	mmShowComplaintPhoto.t.Helper()
+
+	if mmShowComplaintPhoto.inspectFuncShowComplaintPhoto != nil {
+		mmShowComplaintPhoto.inspectFuncShowComplaintPhoto(ctx, tx, complaintID)
+	}
+
+	mm_params := ComplaintsRepositoryMockShowComplaintPhotoParams{ctx, tx, complaintID}
+
+	// Record call args
+	mmShowComplaintPhoto.ShowComplaintPhotoMock.mutex.Lock()
+	mmShowComplaintPhoto.ShowComplaintPhotoMock.callArgs = append(mmShowComplaintPhoto.ShowComplaintPhotoMock.callArgs, &mm_params)
+	mmShowComplaintPhoto.ShowComplaintPhotoMock.mutex.Unlock()
+
+	for _, e := range mmShowComplaintPhoto.ShowComplaintPhotoMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.err
+		}
+	}
+
+	if mmShowComplaintPhoto.ShowComplaintPhotoMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmShowComplaintPhoto.ShowComplaintPhotoMock.defaultExpectation.Counter, 1)
+		mm_want := mmShowComplaintPhoto.ShowComplaintPhotoMock.defaultExpectation.params
+		mm_want_ptrs := mmShowComplaintPhoto.ShowComplaintPhotoMock.defaultExpectation.paramPtrs
+
+		mm_got := ComplaintsRepositoryMockShowComplaintPhotoParams{ctx, tx, complaintID}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmShowComplaintPhoto.t.Errorf("ComplaintsRepositoryMock.ShowComplaintPhoto got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmShowComplaintPhoto.ShowComplaintPhotoMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.tx != nil && !minimock.Equal(*mm_want_ptrs.tx, mm_got.tx) {
+				mmShowComplaintPhoto.t.Errorf("ComplaintsRepositoryMock.ShowComplaintPhoto got unexpected parameter tx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmShowComplaintPhoto.ShowComplaintPhotoMock.defaultExpectation.expectationOrigins.originTx, *mm_want_ptrs.tx, mm_got.tx, minimock.Diff(*mm_want_ptrs.tx, mm_got.tx))
+			}
+
+			if mm_want_ptrs.complaintID != nil && !minimock.Equal(*mm_want_ptrs.complaintID, mm_got.complaintID) {
+				mmShowComplaintPhoto.t.Errorf("ComplaintsRepositoryMock.ShowComplaintPhoto got unexpected parameter complaintID, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmShowComplaintPhoto.ShowComplaintPhotoMock.defaultExpectation.expectationOrigins.originComplaintID, *mm_want_ptrs.complaintID, mm_got.complaintID, minimock.Diff(*mm_want_ptrs.complaintID, mm_got.complaintID))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmShowComplaintPhoto.t.Errorf("ComplaintsRepositoryMock.ShowComplaintPhoto got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmShowComplaintPhoto.ShowComplaintPhotoMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmShowComplaintPhoto.ShowComplaintPhotoMock.defaultExpectation.results
+		if mm_results == nil {
+			mmShowComplaintPhoto.t.Fatal("No results are set for the ComplaintsRepositoryMock.ShowComplaintPhoto")
+		}
+		return (*mm_results).err
+	}
+	if mmShowComplaintPhoto.funcShowComplaintPhoto != nil {
+		return mmShowComplaintPhoto.funcShowComplaintPhoto(ctx, tx, complaintID)
+	}
+	mmShowComplaintPhoto.t.Fatalf("Unexpected call to ComplaintsRepositoryMock.ShowComplaintPhoto. %v %v %v", ctx, tx, complaintID)
+	return
+}
+
+// ShowComplaintPhotoAfterCounter returns a count of finished ComplaintsRepositoryMock.ShowComplaintPhoto invocations
+func (mmShowComplaintPhoto *ComplaintsRepositoryMock) ShowComplaintPhotoAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmShowComplaintPhoto.afterShowComplaintPhotoCounter)
+}
+
+// ShowComplaintPhotoBeforeCounter returns a count of ComplaintsRepositoryMock.ShowComplaintPhoto invocations
+func (mmShowComplaintPhoto *ComplaintsRepositoryMock) ShowComplaintPhotoBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmShowComplaintPhoto.beforeShowComplaintPhotoCounter)
+}
+
+// Calls returns a list of arguments used in each call to ComplaintsRepositoryMock.ShowComplaintPhoto.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmShowComplaintPhoto *mComplaintsRepositoryMockShowComplaintPhoto) Calls() []*ComplaintsRepositoryMockShowComplaintPhotoParams {
+	mmShowComplaintPhoto.mutex.RLock()
+
+	argCopy := make([]*ComplaintsRepositoryMockShowComplaintPhotoParams, len(mmShowComplaintPhoto.callArgs))
+	copy(argCopy, mmShowComplaintPhoto.callArgs)
+
+	mmShowComplaintPhoto.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockShowComplaintPhotoDone returns true if the count of the ShowComplaintPhoto invocations corresponds
+// the number of defined expectations
+func (m *ComplaintsRepositoryMock) MinimockShowComplaintPhotoDone() bool {
+	if m.ShowComplaintPhotoMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.ShowComplaintPhotoMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.ShowComplaintPhotoMock.invocationsDone()
+}
+
+// MinimockShowComplaintPhotoInspect logs each unmet expectation
+func (m *ComplaintsRepositoryMock) MinimockShowComplaintPhotoInspect() {
+	for _, e := range m.ShowComplaintPhotoMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to ComplaintsRepositoryMock.ShowComplaintPhoto at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterShowComplaintPhotoCounter := mm_atomic.LoadUint64(&m.afterShowComplaintPhotoCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.ShowComplaintPhotoMock.defaultExpectation != nil && afterShowComplaintPhotoCounter < 1 {
+		if m.ShowComplaintPhotoMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to ComplaintsRepositoryMock.ShowComplaintPhoto at\n%s", m.ShowComplaintPhotoMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to ComplaintsRepositoryMock.ShowComplaintPhoto at\n%s with params: %#v", m.ShowComplaintPhotoMock.defaultExpectation.expectationOrigins.origin, *m.ShowComplaintPhotoMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcShowComplaintPhoto != nil && afterShowComplaintPhotoCounter < 1 {
+		m.t.Errorf("Expected call to ComplaintsRepositoryMock.ShowComplaintPhoto at\n%s", m.funcShowComplaintPhotoOrigin)
+	}
+
+	if !m.ShowComplaintPhotoMock.invocationsDone() && afterShowComplaintPhotoCounter > 0 {
+		m.t.Errorf("Expected %d calls to ComplaintsRepositoryMock.ShowComplaintPhoto at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.ShowComplaintPhotoMock.expectedInvocations), m.ShowComplaintPhotoMock.expectedInvocationsOrigin, afterShowComplaintPhotoCounter)
+	}
+}
+
 // MinimockFinish checks that all mocked methods have been called the expected number of times
 func (m *ComplaintsRepositoryMock) MinimockFinish() {
 	m.finishOnce.Do(func() {
 		if !m.minimockDone() {
 			m.MinimockCreateComplaintInspect()
 
+			m.MinimockHidePhotoIfComplainedInspect()
+
 			m.MinimockListComplaintsInspect()
 
 			m.MinimockResolveComplaintInspect()
+
+			m.MinimockShowComplaintPhotoInspect()
 		}
 	})
 }
@@ -1219,6 +2021,8 @@ func (m *ComplaintsRepositoryMock) minimockDone() bool {
 	done := true
 	return done &&
 		m.MinimockCreateComplaintDone() &&
+		m.MinimockHidePhotoIfComplainedDone() &&
 		m.MinimockListComplaintsDone() &&
-		m.MinimockResolveComplaintDone()
+		m.MinimockResolveComplaintDone() &&
+		m.MinimockShowComplaintPhotoDone()
 }

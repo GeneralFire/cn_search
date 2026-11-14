@@ -17,7 +17,7 @@ const clarificationColumns = `id, sighting_id, plate, status, created_at, plate_
 // plateSightingSelect — колонки фиксации вместе с номером; совпадают с тегами db models.PlateSighting.
 const plateSightingSelect = `s.id, s.plate_id, p.plate, s.address, s.photo_key, s.photo_thumb_key, s.created_at,
 	coalesce(p.meta->>'type', '') AS plate_type, coalesce(p.meta->>'region', '') AS plate_region, s.address_locale,
-	s.lat, s.lon, s.hidden`
+	s.lat, s.lon, s.hidden, s.photo_hidden`
 
 // plateSightingFrom — фиксации с JOIN номера.
 const plateSightingFrom = plateSightingsTable + ` s JOIN ` + platesTable + ` p ON p.id = s.plate_id`

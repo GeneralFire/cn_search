@@ -21,4 +21,6 @@ type PlateSighting struct {
 	Lon *float64 `db:"lon"` // долгота
 
 	Hidden bool `db:"hidden"` // скрыта админом: обычным пользователям не отдаётся
+
+	PhotoHidden bool `db:"photo_hidden"` // фото скрыто по жалобам: обычным пользователям — без PhotoKey/ThumbKey
 }

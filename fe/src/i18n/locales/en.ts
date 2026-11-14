@@ -379,4 +379,10 @@ export const en: Dict = {
   "share.button": "Share",
   "share.copied": "Link copied",
   "share.text": { one: "Plate {plate} — {n} sighting", other: "Plate {plate} — {n} sightings" },
+
+  // Автоскрытие фото по жалобам (admin.ts, вкладка жалоб).
+  "autohide.badge": "Photo hidden",
+  "autohide.badgeHint": "Hidden automatically after complaints: users see “No photo”",
+  "autohide.restore": "Restore photo",
+  "autohide.restoreFailed": "Failed to restore photo",
 };

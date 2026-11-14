@@ -93,3 +93,100 @@ func TestComplaintsSQL(t *testing.T) {
 		}
 	})
 }
+
+// Автоскрытие фото: 3 новые жалобы на фото → скрыто для обычных (ключи пустые), админ видит;
+// решение жалобы и RestoreSightingPhoto возвращают фото.
+func TestPhotoAutoHideSQL(t *testing.T) {
+	const sightingID = "00000000-0000-0000-0000-000000000001" // уже есть 1 новая personal_data (0002_test_data)
+	r := New()
+	same := func(ctx context.Context, tx db.Executor, admin bool) models.PlateSighting {
+		t.Helper()
+		items, err := r.ListSamePlate(ctx, tx, models.SamePlateOpts{ID: sightingID, IncludeTestData: true, IncludeHidden: admin})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, it := range items {
+			if it.ID == sightingID {
+				return it
+			}
+		}
+		t.Fatal("фиксации нет в ListSamePlate")
+		return models.PlateSighting{}
+	}
+	complain := func(ctx context.Context, tx db.Executor, reason models.ComplaintReason) (models.Complaint, bool) {
+		t.Helper()
+		c, err := r.CreateComplaint(ctx, tx, models.ComplainOpts{SightingID: sightingID, Reason: reason, IncludeTestData: true})
+		if err != nil {
+			t.Fatal(err)
+		}
+		hidden, err := r.HidePhotoIfComplained(ctx, tx, sightingID, models.PhotoHideThreshold)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return c, hidden
+	}
+	inRollbackTx(t, func(ctx context.Context, tx db.Executor) {
+		if _, hidden := complain(ctx, tx, models.ComplaintBadPhoto); hidden {
+			t.Fatal("скрыто после 2 жалоб")
+		}
+		// wrong_plate в счёт не идёт (repository считает только причины фото).
+		if _, err := r.CreateComplaint(ctx, tx, models.ComplainOpts{SightingID: sightingID, Reason: models.ComplaintWrongPlate, IncludeTestData: true}); err != nil {
+			t.Fatal(err)
+		}
+		if hidden, _ := r.HidePhotoIfComplained(ctx, tx, sightingID, models.PhotoHideThreshold); hidden {
+			t.Fatal("wrong_plate засчитана как жалоба на фото")
+		}
+		c3, hidden := complain(ctx, tx, models.ComplaintPersonalData)
+		if !hidden {
+			t.Fatal("3 жалобы на фото — фото не скрыто")
+		}
+		if u := same(ctx, tx, false); !u.PhotoHidden || u.PhotoKey != "" || u.ThumbKey != "" {
+			t.Errorf("обычный пользователь: %+v", u)
+		}
+		if a := same(ctx, tx, true); !a.PhotoHidden || a.PhotoKey == "" || a.ThumbKey == "" {
+			t.Errorf("админ: %+v", a)
+		}
+		page, err := r.Search(ctx, tx, models.SearchOpts{Plate: "А123ВС", IncludeTestData: true, Limit: 10})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, it := range page.Items {
+			if it.ID == sightingID && it.PhotoKey != "" {
+				t.Errorf("Search отдал скрытое фото: %+v", it)
+			}
+		}
+		if lc, _ := r.ListComplaints(ctx, tx, models.ListComplaintsOpts{SightingID: sightingID, Limit: 1, IncludeTestData: true}); len(lc.Items) != 1 || !lc.Items[0].Sighting.PhotoHidden || lc.Items[0].Sighting.PhotoKey == "" {
+			t.Errorf("админка жалоб: %+v", lc.Items)
+		}
+
+		// Решение жалобы снимает скрытие.
+		if _, err := r.ResolveComplaint(ctx, tx, c3.ID); err != nil {
+			t.Fatal(err)
+		}
+		if err := r.ShowComplaintPhoto(ctx, tx, c3.ID); err != nil {
+			t.Fatal(err)
+		}
+		if u := same(ctx, tx, false); u.PhotoHidden || u.PhotoKey == "" {
+			t.Errorf("после resolve: %+v", u)
+		}
+
+		// Снова 3 новые → скрыто; «Вернуть фото» показывает его и решает жалобы на фото.
+		if _, hidden := complain(ctx, tx, models.ComplaintBadPhoto); !hidden {
+			t.Fatal("повторно не скрыто")
+		}
+		s, err := r.RestoreSightingPhoto(ctx, tx, sightingID)
+		if err != nil || s.PhotoHidden || s.PhotoKey == "" || s.ID != sightingID {
+			t.Fatalf("RestoreSightingPhoto: %+v %v", s, err)
+		}
+		var left int
+		if err := tx.Get(ctx, &left, `SELECT count(*) FROM complaints c WHERE `+photoComplaintsNew, sightingID); err != nil || left != 0 {
+			t.Errorf("новых жалоб на фото осталось %d: %v", left, err)
+		}
+		if _, hidden := complain(ctx, tx, models.ComplaintBadPhoto); hidden {
+			t.Error("после «Вернуть фото» одна жалоба снова скрыла фото")
+		}
+		if _, err := r.RestoreSightingPhoto(ctx, tx, "00000000-0000-0000-0000-0000000fffff"); !errors.Is(err, models.ErrNotFound) {
+			t.Errorf("нет фиксации: %v", err)
+		}
+	})
+}

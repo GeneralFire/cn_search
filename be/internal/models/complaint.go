@@ -12,6 +12,14 @@ const (
 	ComplaintOther        ComplaintReason = "other"
 )
 
+// PhotoHideThreshold — столько новых жалоб на фото (IsPhotoReason) скрывают фото фиксации автоматически.
+const PhotoHideThreshold = 3
+
+// IsPhotoReason — жалоба на само фото (плохое фото или личные данные в кадре): такие копятся до автоскрытия.
+func (r ComplaintReason) IsPhotoReason() bool {
+	return r == ComplaintBadPhoto || r == ComplaintPersonalData
+}
+
 // ComplaintStatus — статус жалобы (enum complaint_status в БД).
 type ComplaintStatus string
 

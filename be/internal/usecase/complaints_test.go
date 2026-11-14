@@ -45,3 +45,49 @@ func TestResolveComplaintInWriteTx(t *testing.T) {
 		t.Errorf("err = %v, want ErrNotFound", err)
 	}
 }
+
+func TestComplainPhotoReasonHidesPhoto(t *testing.T) {
+	tx := dbmocks.NewExecutorMock(t)
+	repo := mocks.NewComplaintsRepositoryMock(t)
+	o := models.ComplainOpts{SightingID: "s1", Reason: models.ComplaintPersonalData}
+	repo.CreateComplaintMock.Expect(minimock.AnyContext, tx, o).
+		Return(models.Complaint{ID: "c1", SightingID: "s1", Reason: models.ComplaintPersonalData}, nil)
+	repo.HidePhotoIfComplainedMock.Expect(minimock.AnyContext, tx, "s1", models.PhotoHideThreshold).Return(true, nil)
+
+	if _, err := NewComplaints(writeTx(t, tx), repo).Complain(context.Background(), o); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestComplainOtherReasonKeepsPhoto(t *testing.T) {
+	tx := dbmocks.NewExecutorMock(t)
+	repo := mocks.NewComplaintsRepositoryMock(t)
+	o := models.ComplainOpts{SightingID: "s1", Reason: models.ComplaintWrongPlate}
+	repo.CreateComplaintMock.Return(models.Complaint{ID: "c1", SightingID: "s1", Reason: models.ComplaintWrongPlate}, nil)
+
+	// HidePhotoIfComplained не ожидается: минимок упадёт при неожиданном вызове.
+	if _, err := NewComplaints(writeTx(t, tx), repo).Complain(context.Background(), o); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestResolveComplaintShowsPhoto(t *testing.T) {
+	tx := dbmocks.NewExecutorMock(t)
+	repo := mocks.NewComplaintsRepositoryMock(t)
+	repo.ResolveComplaintMock.Expect(minimock.AnyContext, tx, "c1").Return(models.Complaint{ID: "c1", Status: models.ComplaintResolved}, nil)
+	repo.ShowComplaintPhotoMock.Expect(minimock.AnyContext, tx, "c1").Return(nil)
+
+	if c, err := NewComplaints(writeTx(t, tx), repo).ResolveComplaint(context.Background(), "c1"); err != nil || c.Status != models.ComplaintResolved {
+		t.Fatalf("ResolveComplaint: %+v %v", c, err)
+	}
+}
+
+func TestRestoreSightingPhotoInWriteTx(t *testing.T) {
+	tx := dbmocks.NewExecutorMock(t)
+	repo := mocks.NewAdminRepositoryMock(t)
+	repo.RestoreSightingPhotoMock.Expect(minimock.AnyContext, tx, "s1").Return(models.PlateSighting{ID: "s1"}, nil)
+
+	if s, err := NewAdmin(writeTx(t, tx), repo).RestoreSightingPhoto(context.Background(), "s1"); err != nil || s.ID != "s1" {
+		t.Fatalf("RestoreSightingPhoto: %+v %v", s, err)
+	}
+}

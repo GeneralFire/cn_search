@@ -39,6 +39,7 @@ CREATE TABLE plate_sightings (
     lon        double precision,
     is_test_data boolean   NOT NULL DEFAULT false, -- тестовые данные (миграция 0002_test_data)
     hidden     boolean     NOT NULL DEFAULT false, -- скрыта админом (rpc HideSighting): обычным пользователям не отдаётся
+    photo_hidden boolean   NOT NULL DEFAULT false, -- фото скрыто по жалобам (bad_photo/personal_data): обычным пользователям — без фото
     CHECK ((lat IS NULL) = (lon IS NULL) AND lat BETWEEN -90 AND 90 AND lon BETWEEN -180 AND 180)
 );
 

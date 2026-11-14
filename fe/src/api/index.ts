@@ -32,6 +32,8 @@ export type Car = Required<Pick<CarsearchPlateSighting, "id" | "plate" | "addres
     lon?: number;
     /** Скрыта админом — приходит только в админ-режиме. */
     hidden?: boolean;
+    /** Фото скрыто по жалобам: обычным пользователям photoUrl/thumbUrl пустые, админу — как есть. */
+    photoHidden?: boolean;
   };
 
 const plateTypes: Record<string, string> = {
@@ -85,6 +87,7 @@ function toCar(c: CarsearchPlateSighting): Car {
     // Координаты — только парой: optional double в proto3 JSON приходит, только если задан.
     ...(c.lat != null && c.lon != null ? { lat: c.lat, lon: c.lon } : {}),
     ...(c.hidden ? { hidden: true } : {}),
+    ...(c.photoHidden ? { photoHidden: true } : {}),
   };
 }
 
@@ -305,6 +308,16 @@ export async function checkAdmin(token: string): Promise<boolean> {
 export async function hideSighting(id: string, hidden: boolean): Promise<Car> {
   try {
     const { data } = await api.carsearchCarSearchService.carSearchServiceHideSighting({ id, hidden }, adminParams());
+    return toCar(data);
+  } catch (e) {
+    throw new ApiError(await errorMessage(e), e instanceof Response ? e.status : 0);
+  }
+}
+
+/** Вернуть фото, скрытое по жалобам (админ); новые жалобы на фото фиксации бэк отмечает решёнными. */
+export async function restoreSightingPhoto(id: string): Promise<Car> {
+  try {
+    const { data } = await api.carsearchCarSearchService.carSearchServiceRestoreSightingPhoto({ id }, adminParams());
     return toCar(data);
   } catch (e) {
     throw new ApiError(await errorMessage(e), e instanceof Response ? e.status : 0);

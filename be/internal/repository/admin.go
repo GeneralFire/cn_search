@@ -84,3 +84,23 @@ func (r *repository) ListClarifications(ctx context.Context, tx db.Executor, o m
 	}
 	return page, nil
 }
+
+// RestoreSightingPhoto возвращает фото, скрытое по жалобам (photo_hidden = false), и отмечает решёнными
+// новые жалобы на фото этой фиксации (иначе следующая жалоба сразу скрыла бы его снова).
+// models.ErrNotFound — фиксации нет.
+func (r *repository) RestoreSightingPhoto(ctx context.Context, tx db.Executor, id string) (models.PlateSighting, error) {
+	if _, err := tx.Exec(ctx, `UPDATE `+complaintsTable+` c SET status = 'resolved' WHERE `+photoComplaintsNew, id); err != nil {
+		return models.PlateSighting{}, fmt.Errorf("resolve photo complaints: %w", err)
+	}
+	var s models.PlateSighting
+	err := tx.Get(ctx, &s, `WITH s AS (
+			UPDATE `+plateSightingsTable+` SET photo_hidden = false WHERE id = $1 RETURNING *
+		) SELECT `+plateSightingSelect+` FROM s JOIN `+platesTable+` p ON p.id = s.plate_id`, id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return models.PlateSighting{}, models.ErrNotFound
+	}
+	if err != nil {
+		return models.PlateSighting{}, fmt.Errorf("restore photo: %w", err)
+	}
+	return s, nil
+}

@@ -379,4 +379,10 @@ export const uk: Dict = {
   "share.button": "Поділитися",
   "share.copied": "Посилання скопійовано",
   "share.text": { one: "Номер {plate} — {n} фіксація", few: "Номер {plate} — {n} фіксації", many: "Номер {plate} — {n} фіксацій", other: "Номер {plate} — {n} фіксацій" },
+
+  // Автоскрытие фото по жалобам (admin.ts, вкладка жалоб).
+  "autohide.badge": "Фото приховано",
+  "autohide.badgeHint": "Приховано автоматично через скарги: користувачі бачать «Немає фото»",
+  "autohide.restore": "Повернути фото",
+  "autohide.restoreFailed": "Не вдалося повернути фото",
 };

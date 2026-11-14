@@ -52,6 +52,8 @@ export type CarSearchServiceRegisterData = CarsearchRegisterResponse;
 
 export type CarSearchServiceResolveComplaintData = CarsearchComplaint;
 
+export type CarSearchServiceRestoreSightingPhotoData = CarsearchPlateSighting;
+
 export type CarSearchServiceRevokeApiTokenData = CarsearchApiToken;
 
 export type CarSearchServiceSearchData = CarsearchSearchResponse;
@@ -601,6 +603,11 @@ export interface CarsearchPlateSighting {
   lat?: number;
   /** @format double */
   lon?: number;
+  /**
+   * Фото скрыто по жалобам (≥ 3 новых жалоб bad_photo/personal_data): обычным пользователям photo_url
+   * и thumb_url приходят пустыми, админу — как есть. Снимают ResolveComplaint и RestoreSightingPhoto.
+   */
+  photoHidden?: boolean;
   /** URL полного фото (S3). */
   photoUrl?: string;
   /** Госномер кириллицей: "А123ВС 777". */
@@ -657,6 +664,11 @@ export interface CarsearchRegisterResponse {
 
 export interface CarsearchResolveComplaintRequest {
   /** uuid жалобы. */
+  id?: string;
+}
+
+export interface CarsearchRestoreSightingPhotoRequest {
+  /** uuid фиксации. */
   id?: string;
 }
 
@@ -1423,6 +1435,27 @@ export class CarSearchApi<
     ) =>
       this.request<CarSearchServiceResolveComplaintData, any>({
         path: `/carsearch.CarSearchService/ResolveComplaint`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
+     * @name CarSearchServiceRestoreSightingPhoto
+     * @summary RestoreSightingPhoto — вернуть фото, скрытое по жалобам (photo_hidden = false); новые жалобы на фото этой фиксации (bad_photo, personal_data) отмечаются решёнными. Нужен admin-token.
+     * @request POST:/carsearch.CarSearchService/RestoreSightingPhoto
+     */
+    carSearchServiceRestoreSightingPhoto: (
+      body: CarsearchRestoreSightingPhotoRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceRestoreSightingPhotoData, any>({
+        path: `/carsearch.CarSearchService/RestoreSightingPhoto`,
         method: "POST",
         body: body,
         type: ContentType.Json,

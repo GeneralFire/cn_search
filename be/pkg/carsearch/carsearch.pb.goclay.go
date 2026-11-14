@@ -528,6 +528,53 @@ func (d *CarSearchServiceDesc) RegisterHTTP(mux transport.Router) {
 	}
 
 	{
+		// Handler for RestoreSightingPhoto, binding: POST /carsearch.CarSearchService/RestoreSightingPhoto
+		var h http.HandlerFunc
+		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+
+			unmFunc := unmarshaler_goclay_CarSearchService_RestoreSightingPhoto_0(r)
+			rsp, err := _CarSearchService_RestoreSightingPhoto_Handler(d.svc, r.Context(), unmFunc, d.opts.UnaryInterceptor)
+
+			if err != nil {
+				if err, ok := err.(httptransport.MarshalerError); ok {
+					httpruntime.SetError(r.Context(), r, w, errors.Wrap(err.Err, "couldn't parse request"))
+					return
+				}
+				httpruntime.SetError(r.Context(), r, w, err)
+				return
+			}
+
+			if ctxErr := r.Context().Err(); ctxErr != nil && ctxErr == context.Canceled {
+				w.WriteHeader(499) // Client Closed Request
+				return
+			}
+
+			_, outbound := httpruntime.MarshalerForRequest(r)
+			w.Header().Set("Content-Type", outbound.ContentType())
+			err = outbound.Marshal(w, rsp)
+			if err != nil {
+				httpruntime.SetError(r.Context(), r, w, errors.Wrap(err, "couldn't write response"))
+				return
+			}
+		})
+
+		h = httpmw.DefaultChain(h)
+
+		if isChi {
+			chiMux.Method("POST", pattern_goclay_CarSearchService_RestoreSightingPhoto_0, h)
+		} else {
+			mux.Handle(pattern_goclay_CarSearchService_RestoreSightingPhoto_0, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != "POST" {
+					w.WriteHeader(http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}))
+		}
+	}
+
+	{
 		// Handler for ListClarifications, binding: POST /carsearch.CarSearchService/ListClarifications
 		var h http.HandlerFunc
 		h = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1801,6 +1848,57 @@ func (c *CarSearchService_httpClient) HideSighting(ctx context.Context, in *Hide
 	return &ret, errors.Wrap(err, "can't unmarshal response")
 }
 
+func (c *CarSearchService_httpClient) RestoreSightingPhoto(ctx context.Context, in *RestoreSightingPhotoRequest, opts ...grpc.CallOption) (*PlateSighting, error) {
+	mw, err := httpclient.NewMiddlewareGRPC(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	path := pattern_goclay_CarSearchService_RestoreSightingPhoto_0_builder(in)
+
+	buf := bytes.NewBuffer(nil)
+
+	m := httpruntime.DefaultMarshaler(nil)
+
+	if err = m.Marshal(buf, in); err != nil {
+		return nil, errors.Wrap(err, "can't marshal request")
+	}
+
+	req, err := http.NewRequest("POST", c.host+path, buf)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't initiate HTTP request")
+	}
+	req = req.WithContext(ctx)
+
+	req.Header.Add("Accept", m.ContentType())
+
+	req, err = mw.ProcessRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	rsp, err := c.c.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "error from client")
+	}
+	defer rsp.Body.Close()
+
+	rsp, err = mw.ProcessResponse(rsp)
+	if err != nil {
+		return nil, err
+	}
+
+	if rsp.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(rsp.Body)
+		return nil, errors.Errorf("%v %v: server returned HTTP %v: '%v'", req.Method, req.URL.String(), rsp.StatusCode, string(b))
+	}
+
+	ret := PlateSighting{}
+
+	err = m.Unmarshal(rsp.Body, &ret)
+
+	return &ret, errors.Wrap(err, "can't unmarshal response")
+}
+
 func (c *CarSearchService_httpClient) ListClarifications(ctx context.Context, in *ListClarificationsRequest, opts ...grpc.CallOption) (*ListClarificationsResponse, error) {
 	mw, err := httpclient.NewMiddlewareGRPC(opts)
 	if err != nil {
@@ -2796,6 +2894,20 @@ var (
 
 	unmarshaler_goclay_CarSearchService_HideSighting_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 
+	pattern_goclay_CarSearchService_RestoreSightingPhoto_0 = "/carsearch.CarSearchService/RestoreSightingPhoto"
+
+	pattern_goclay_CarSearchService_RestoreSightingPhoto_0_builder = func(in *RestoreSightingPhotoRequest) string {
+		values := url.Values{}
+
+		u := url.URL{
+			Path:     fmt.Sprintf("/carsearch.CarSearchService/RestoreSightingPhoto"),
+			RawQuery: values.Encode(),
+		}
+		return u.String()
+	}
+
+	unmarshaler_goclay_CarSearchService_RestoreSightingPhoto_0_boundParams = &utilities.DoubleArray{Encoding: map[string]int{"": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+
 	pattern_goclay_CarSearchService_ListClarifications_0 = "/carsearch.CarSearchService/ListClarifications"
 
 	pattern_goclay_CarSearchService_ListClarifications_0_builder = func(in *ListClarificationsRequest) string {
@@ -3170,6 +3282,22 @@ var (
 			req := rif.(*HideSightingRequest)
 
 			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_HideSighting_0_boundParams), "couldn't populate query parameters"); err != nil {
+				return httpruntime.TransformUnmarshalerError(err)
+			}
+
+			inbound, _ := httpruntime.MarshalerForRequest(r)
+			if err := errors.Wrap(inbound.Unmarshal(r.Body, &req), "couldn't read request JSON"); err != nil {
+				return httptransport.NewMarshalerError(httpruntime.TransformUnmarshalerError(err))
+			}
+			return nil
+		}
+	}
+
+	unmarshaler_goclay_CarSearchService_RestoreSightingPhoto_0 = func(r *http.Request) func(interface{}) error {
+		return func(rif interface{}) error {
+			req := rif.(*RestoreSightingPhotoRequest)
+
+			if err := errors.Wrap(runtime.PopulateQueryParameters(req, r.URL.Query(), unmarshaler_goclay_CarSearchService_RestoreSightingPhoto_0_boundParams), "couldn't populate query parameters"); err != nil {
 				return httpruntime.TransformUnmarshalerError(err)
 			}
 
@@ -3950,6 +4078,33 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
             "required": true,
             "schema": {
               "$ref": "#/definitions/carsearchResolveComplaintRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/RestoreSightingPhoto": {
+      "post": {
+        "summary": "RestoreSightingPhoto — вернуть фото, скрытое по жалобам (photo_hidden = false); новые жалобы\nна фото этой фиксации (bad_photo, personal_data) отмечаются решёнными. Нужен admin-token.",
+        "operationId": "CarSearchService_RestoreSightingPhoto",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchPlateSighting"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchRestoreSightingPhotoRequest"
             }
           }
         ],
@@ -5043,6 +5198,10 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         "hidden": {
           "type": "boolean",
           "description": "Фиксация скрыта админом; приходит только админу (обычным пользователям скрытые не отдаются)."
+        },
+        "photoHidden": {
+          "type": "boolean",
+          "description": "Фото скрыто по жалобам (≥ 3 новых жалоб bad_photo/personal_data): обычным пользователям photo_url\nи thumb_url приходят пустыми, админу — как есть. Снимают ResolveComplaint и RestoreSightingPhoto."
         }
       },
       "description": "PlateSighting — фиксация номера: где и когда замечена машина."
@@ -5122,6 +5281,15 @@ var _swaggerDef_carsearch_carsearch_proto = []byte(`{
         "id": {
           "type": "string",
           "description": "uuid жалобы."
+        }
+      }
+    },
+    "carsearchRestoreSightingPhotoRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "uuid фиксации."
         }
       }
     },

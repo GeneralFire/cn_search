@@ -50,6 +50,10 @@ service CarSearchService {
   // в Search/Get/SeeAlso обычных пользователей; админу отдаются с hidden = true. Нужен admin-token.
   rpc HideSighting(HideSightingRequest) returns (PlateSighting);
 
+  // RestoreSightingPhoto — вернуть фото, скрытое по жалобам (photo_hidden = false); новые жалобы
+  // на фото этой фиксации (bad_photo, personal_data) отмечаются решёнными. Нужен admin-token.
+  rpc RestoreSightingPhoto(RestoreSightingPhotoRequest) returns (PlateSighting);
+
   // ListClarifications — уточнения для админ-панели, от новых к старым, постранично, вместе с фиксацией.
   // Нужен заголовок admin-token.
   rpc ListClarifications(ListClarificationsRequest) returns (ListClarificationsResponse);
@@ -139,6 +143,9 @@ message PlateSighting {
   optional double lon = 11;
   // Фиксация скрыта админом; приходит только админу (обычным пользователям скрытые не отдаются).
   bool hidden = 12;
+  // Фото скрыто по жалобам (≥ 3 новых жалоб bad_photo/personal_data): обычным пользователям photo_url
+  // и thumb_url приходят пустыми, админу — как есть. Снимают ResolveComplaint и RestoreSightingPhoto.
+  bool photo_hidden = 13;
 }
 
 // Формат номерного знака — от него зависит, как его рисовать.
@@ -332,6 +339,11 @@ message HideSightingRequest {
   string id = 1;
   // true — скрыть, false — показать снова.
   bool hidden = 2;
+}
+
+message RestoreSightingPhotoRequest {
+  // uuid фиксации.
+  string id = 1;
 }
 
 message ListClarificationsRequest {

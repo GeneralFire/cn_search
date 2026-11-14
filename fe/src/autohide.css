@@ -1,0 +1,5 @@
+/* Автоскрытие фото по жалобам: бейдж под миниатюрой и кнопка «Вернуть фото» во вкладке жалоб. */
+.autohide-badge { display: block; width: max-content; margin-top: 4px; padding: 2px 8px; border-radius: 999px;
+  font-size: 0.72rem; font-weight: 600; white-space: nowrap;
+  background: color-mix(in srgb, #e5484d 14%, transparent); color: #e5484d; }
+.autohide-actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }

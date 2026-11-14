@@ -3,8 +3,18 @@
 // админ-режим (adminmode.ts); без токена или с неверным (бэк ответил 403) — форма ввода.
 // Жалобы: таблица с фильтром по статусу, «Загрузить ещё», кнопка «Решено»; ?sighting=<id> — только
 // жалобы на эту фиксацию (ссылка из панели «Управление»); клик по номеру — страница фиксации.
+// Фото, скрытое по жалобам (≥ 3 новых bad_photo/personal_data), — бейдж «Фото скрыто» и кнопка «Вернуть фото».
 import "./admin.css";
-import { ApiError, getAdminToken, listComplaints, resolveComplaint, type Complaint, type ComplaintStatus } from "./api";
+import "./autohide.css";
+import {
+  ApiError,
+  getAdminToken,
+  listComplaints,
+  resolveComplaint,
+  restoreSightingPhoto,
+  type Complaint,
+  type ComplaintStatus,
+} from "./api";
 import { enterAdminMode, exitAdminMode, shieldIcon } from "./adminmode";
 import { adminTabs, registerAdminTab } from "./admintabs";
 import "./adminclar";
@@ -185,6 +195,8 @@ async function showList(): Promise<void> {
   $main.querySelector("tbody")!.addEventListener("click", (e) => {
     const b = (e.target as Element).closest<HTMLButtonElement>("[data-resolve]");
     if (b) void resolve(b);
+    const r = (e.target as Element).closest<HTMLButtonElement>("[data-restore-photo]");
+    if (r) void restorePhoto(r);
   });
   await load(true);
 }
@@ -242,14 +254,18 @@ function rowHtml(c: Complaint): string {
   const thumb = photoHtml(src);
   return `
     <tr data-id="${escapeHtml(c.id)}">
-      <td>${href ? `<a class="adm-thumb" href="${href}" data-link tabindex="-1">${thumb}</a>` : `<span class="adm-thumb">${thumb}</span>`}</td>
+      <td>${href ? `<a class="adm-thumb" href="${href}" data-link tabindex="-1">${thumb}</a>` : `<span class="adm-thumb">${thumb}</span>`}${
+        s?.photoHidden ? `<span class="autohide-badge" title="${t("autohide.badgeHint")}">${t("autohide.badge")}</span>` : ""
+      }</td>
       <td>${s ? `<a class="adm-plate" href="${href}" data-link>${plateHtml(s)}</a>` : ""}</td>
       <td class="adm-addr">${escapeHtml(s?.address ?? "")}</td>
       <td><span class="adm-reason adm-reason--${c.reason}">${t(`complaint.reason.${c.reason}`)}</span></td>
       <td class="adm-comment">${escapeHtml(c.comment) || "—"}</td>
       <td class="adm-time"><time datetime="${escapeHtml(c.createdAt)}">${escapeHtml(formatDate(c.createdAt))}</time></td>
       <td class="adm-status-cell">${statusHtml(c.status)}</td>
-      <td>${c.status === "new" ? `<button class="btn btn--ghost" type="button" data-resolve="${escapeHtml(c.id)}">${t("admin.resolve")}</button>` : ""}</td>
+      <td class="autohide-actions">${c.status === "new" ? `<button class="btn btn--ghost" type="button" data-resolve="${escapeHtml(c.id)}">${t("admin.resolve")}</button>` : ""}${
+        s?.photoHidden ? `<button class="btn btn--ghost" type="button" data-restore-photo="${escapeHtml(s.id)}">${t("autohide.restore")}</button>` : ""
+      }</td>
     </tr>`;
 }
 
@@ -262,6 +278,8 @@ async function resolve(b: HTMLButtonElement): Promise<void> {
   try {
     await resolveComplaint(b.dataset.resolve!);
     const c = state.items.find((x) => x.id === b.dataset.resolve);
+    // Решение жалобы снимает скрытие фото — перерисовать все строки этой фиксации.
+    if (c?.sighting?.photoHidden) return void load(true);
     if (c) c.status = "resolved";
     const $row = b.closest("tr")!;
     $row.querySelector(".adm-status-cell")!.innerHTML = statusHtml("resolved");
@@ -271,6 +289,20 @@ async function resolve(b: HTMLButtonElement): Promise<void> {
     if (isDenied(e)) return;
     b.disabled = false;
     b.title = `${t("admin.resolveFailed")}: ${e instanceof ApiError ? e.message : t("error.serverDown")}`;
+    b.classList.add("is-error");
+  }
+}
+
+// «Вернуть фото»: снять скрытие по жалобам; бэк заодно решает новые жалобы на фото — список перечитывается.
+async function restorePhoto(b: HTMLButtonElement): Promise<void> {
+  b.disabled = true;
+  try {
+    await restoreSightingPhoto(b.dataset.restorePhoto!);
+    void load(true);
+  } catch (e) {
+    if (isDenied(e)) return;
+    b.disabled = false;
+    b.title = `${t("autohide.restoreFailed")}: ${e instanceof ApiError ? e.message : t("error.serverDown")}`;
     b.classList.add("is-error");
   }
 }

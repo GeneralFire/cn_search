@@ -94,7 +94,8 @@ func (s *CarSearch) toPB(c models.PlateSighting) *pb.PlateSighting {
 		Lat: c.Lat,
 		Lon: c.Lon,
 
-		Hidden: c.Hidden,
+		Hidden:      c.Hidden,
+		PhotoHidden: c.PhotoHidden,
 	}
 	if c.PhotoKey != "" {
 		out.PhotoUrl = s.photoBase + "/" + c.PhotoKey
