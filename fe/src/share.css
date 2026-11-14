@@ -1,0 +1,13 @@
+/* Кнопка «Поделиться» на странице номера и подсказка «Ссылка скопирована» (share.ts). */
+.pp-share { display: inline-flex; align-items: center; gap: 6px; font: inherit; cursor: pointer; }
+.pp-share svg { color: var(--accent); }
+
+.share-toast {
+  position: fixed; left: 50%; bottom: 24px; z-index: 1000;
+  transform: translate(-50%, 8px); opacity: 0; pointer-events: none;
+  padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); color: var(--text); box-shadow: var(--shadow-hover);
+  font-size: 0.9rem; white-space: nowrap;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.share-toast.is-visible { opacity: 1; transform: translate(-50%, 0); }

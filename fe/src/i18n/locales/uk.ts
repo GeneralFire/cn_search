@@ -374,4 +374,9 @@ export const uk: Dict = {
   "upload.unlimited": "Тариф Pro: завантаження без обмежень.",
   "upload.quotaOver": "Ліміт тарифу Free на добу вичерпано — Pro знімає обмеження.",
   "upload.quotaLeft": "Залишилось завантажень на добу: {n} з 5 (тариф Free).",
+
+  // Поділитися (share.ts) — кнопка на сторінці номера.
+  "share.button": "Поділитися",
+  "share.copied": "Посилання скопійовано",
+  "share.text": { one: "Номер {plate} — {n} фіксація", few: "Номер {plate} — {n} фіксації", many: "Номер {plate} — {n} фіксацій", other: "Номер {plate} — {n} фіксацій" },
 };

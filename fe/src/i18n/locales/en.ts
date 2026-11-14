@@ -374,4 +374,9 @@ export const en: Dict = {
   "upload.unlimited": "Pro plan: unlimited uploads.",
   "upload.quotaOver": "Free plan daily limit reached — Pro removes the limit.",
   "upload.quotaLeft": "Uploads left today: {n} of 5 (Free plan).",
+
+  // Share (share.ts) — button on the plate page.
+  "share.button": "Share",
+  "share.copied": "Link copied",
+  "share.text": { one: "Plate {plate} — {n} sighting", other: "Plate {plate} — {n} sightings" },
 };

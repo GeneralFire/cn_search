@@ -374,4 +374,9 @@ export const de: Dict = {
   "upload.unlimited": "Pro-Tarif: unbegrenzte Uploads.",
   "upload.quotaOver": "Tageslimit des Free-Tarifs erreicht — Pro hebt das Limit auf.",
   "upload.quotaLeft": "Verbleibende Uploads heute: {n} von 5 (Free-Tarif).",
+
+  // Teilen (share.ts) — Schaltfläche auf der Kennzeichen-Seite.
+  "share.button": "Teilen",
+  "share.copied": "Link kopiert",
+  "share.text": { one: "Kennzeichen {plate} — {n} Sichtung", other: "Kennzeichen {plate} — {n} Sichtungen" },
 };

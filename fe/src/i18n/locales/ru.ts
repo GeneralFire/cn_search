@@ -374,4 +374,9 @@ export const ru = {
   "upload.unlimited": "Тариф Pro: загрузки без ограничений.",
   "upload.quotaOver": "Лимит тарифа Free на сутки исчерпан — Pro снимает ограничение.",
   "upload.quotaLeft": "Осталось загрузок за сутки: {n} из 5 (тариф Free).",
+
+  // Поделиться (share.ts) — кнопка на странице номера.
+  "share.button": "Поделиться",
+  "share.copied": "Ссылка скопирована",
+  "share.text": { one: "Номер {plate} — {n} фиксация", few: "Номер {plate} — {n} фиксации", many: "Номер {plate} — {n} фиксаций", other: "Номер {plate} — {n} фиксаций" },
 } as const;

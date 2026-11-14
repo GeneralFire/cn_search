@@ -375,4 +375,9 @@ export const zh: Dict = {
   "upload.unlimited": "Pro 套餐：上传不限次数。",
   "upload.quotaOver": "Free 套餐今日上传次数已用完，升级 Pro 可解除限制。",
   "upload.quotaLeft": "今日剩余上传次数：{n}/5（Free 套餐）。",
+
+  // 分享（share.ts）— 车牌页上的按钮。
+  "share.button": "分享",
+  "share.copied": "链接已复制",
+  "share.text": { other: "车牌 {plate} — {n} 次记录" },
 };

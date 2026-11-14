@@ -13,6 +13,7 @@ import { bindClarificationControls, mountPlateAdmin } from "./adminpanels";
 import { adminReady } from "./adminmode";
 import { openClarify } from "./clarify";
 import { clarificationsHtml, clarifiedMarkHtml } from "./clarifications";
+import { bindShare, shareButtonHtml } from "./share";
 
 /** Сколько карточек показывать в «Свежих фиксациях» (ручка отдаёт не больше). */
 const SEE_ALSO_LIMIT = 21;
@@ -76,6 +77,7 @@ export async function renderPlatePage(root: HTMLElement, id: string, handlers: Q
     // «Уточнить» — к открытой фиксации.
     const shown = items.find((c) => c.id === id) ?? items[0];
     $main.querySelector("[data-pc-clarify]")?.addEventListener("click", () => openClarify(shown, () => void reload()));
+    bindShare($main, items[0].plate, items.length);
     void loadSeeAlso($main, id, my.signal);
     void mountPlateMap($main, items, id, my.signal);
     void mountPlateAdmin($main, items, id, my.signal); // админ-режим: панель «Управление»
@@ -137,6 +139,7 @@ function pageHtml(items: Car[], currentId: string): string {
           ${stat(escapeHtml(formatShortDate(first.createdAt)), t("stat.first"))}
           ${stat(escapeHtml(formatShortDate(latest.createdAt)), t("stat.last"))}
         </div>
+        ${shareButtonHtml()}
       </div>
     </section>
 
