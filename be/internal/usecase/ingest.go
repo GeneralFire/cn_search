@@ -63,7 +63,7 @@ func (u *Ingest) Ingest(ctx context.Context, o models.IngestOpts) (models.Ingest
 	if left != nil && *left == 0 {
 		return models.IngestResult{}, &models.UploadQuotaError{Limit: FreeUploadsPerDay}
 	}
-	img, meta, err := decodePhoto(o.Photo)
+	_, meta, err := decodePhoto(o.Photo) // здесь — проверка, что это фото, и EXIF; пиксели берём из анонимизированной копии
 	if err != nil {
 		return models.IngestResult{}, &models.ValidationError{Message: errNotPhoto}
 	}
@@ -88,7 +88,7 @@ func (u *Ingest) Ingest(ctx context.Context, o models.IngestOpts) (models.Ingest
 		return models.IngestResult{}, fmt.Errorf("anonymize: %w", err)
 	}
 	// У обработанного JPEG нет EXIF, ориентация уже применена сервисом; EXIF-метаданные берём из оригинала.
-	img, _, err = decodePhoto(blurred)
+	img, _, err := decodePhoto(blurred)
 	if err != nil {
 		return models.IngestResult{}, fmt.Errorf("anonymize: %w: bad image: %v", models.ErrRecognizerUnavailable, err)
 	}
