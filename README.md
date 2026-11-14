@@ -197,6 +197,15 @@ The same service is available over gRPC on `:8082` (with reflection: `grpcurl -p
   each) within Levenshtein distance ≤ 2 of the query, compared by `plate_search_key` without spaces
   (`levenshtein` from the `fuzzystrmatch` contrib extension, created by migration 0001), closest first.
 - Clarifications of a sighting (accepted or not) are searched along with its plate.
+- **Mask search** (`"mask": true`): `plate` is a mask where `*` stands for exactly one arbitrary character, matched
+  against the whole plate without spaces (`А*23ВС 77*` and `a*23bc77*` both find `А123ВС 777`). Only letters, digits,
+  spaces and `*` are kept (the rest is dropped; `%` and `_` are not wildcards); fewer than 3 known characters
+  (not `*`) is `InvalidArgument`. The pattern goes through `plate_search_key` in SQL, so look-alike characters
+  and case do not matter. It replaces the word-prefix search (no `suggestions`); filters, test data, hidden
+  sightings, one card per plate, `total` and paging work as usual.
+  **Performance:** the mask is a `LIKE` over every plate — it cannot use the GIN index, so it is a full scan of
+  the plates (fine for the demo data, linear in the number of plates). `pg_trgm` is deliberately not used.
+  In the UI it is the `*` "Mask" toggle next to the search field (`?mask=1` in the address).
 - `limit`: 1–100, `0` means the default 35 (a multiple of 5 and 7 — grid column counts).
 - `market` — plate "market" for the home page, by plate format in `plates.meta` (`type`, `region`):
   `ru`, `ua`, `de` (EU with region `D`), `us`, `cn`, and `other` — everything not in any of those. Empty — no filter.

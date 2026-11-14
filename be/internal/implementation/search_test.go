@@ -145,3 +145,20 @@ func TestSearchBadPeriod(t *testing.T) {
 		}
 	}
 }
+
+// Маска: ввод очищается от лишнего, «*» остаётся; меньше 3 известных символов — InvalidArgument.
+func TestSearchMask(t *testing.T) {
+	svc, uc := newSvc(t)
+	uc.SearchMock.Expect(minimock.AnyContext, models.SearchOpts{Plate: "А*23ВС 77*", Limit: DefaultLimit, Mask: true}).
+		Return(models.SearchPage{Items: []models.PlateSighting{sighting}, Total: 1}, nil)
+	if resp, err := svc.Search(context.Background(), &pb.SearchRequest{Plate: "А*23ВС% 77*_-", Mask: true}); err != nil || resp.GetTotal() != 1 {
+		t.Fatalf("маска: %v %v", resp, err)
+	}
+
+	for _, plate := range []string{"", "*", "А*3", "А1*** *", "%%%12"} {
+		_, err := svc.Search(context.Background(), &pb.SearchRequest{Plate: plate, Mask: true})
+		if status.Code(err) != codes.InvalidArgument {
+			t.Errorf("%q: %v", plate, err)
+		}
+	}
+}

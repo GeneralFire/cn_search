@@ -27,7 +27,7 @@ func (u *PlateSightings) Search(ctx context.Context, q models.SearchOpts) (page 
 		if page, err = u.repo.Search(ctx, tx, q); err != nil {
 			return err
 		}
-		if page.Total > 0 || strings.TrimSpace(q.Plate) == "" {
+		if q.Mask || page.Total > 0 || strings.TrimSpace(q.Plate) == "" { // для маски подсказок нет
 			return nil
 		}
 		page.Suggestions, err = u.repo.Suggest(ctx, tx, q)

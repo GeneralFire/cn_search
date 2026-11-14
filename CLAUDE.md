@@ -41,7 +41,7 @@
   `fe` ничего из `be` не импортирует; шлёт заголовок при `VITE_INCLUDE_TEST_DATA=true`.
 - БД: `plates` (id uuid, plate, meta jsonb, is_test_data) и `plate_sightings` (id uuid, `plate_id → plates.id`,
   is_test_data). Поиск — по началу слов: `to_tsvector('simple', p.plate) @@ to_tsquery(<слова:* через &>)`,
-  запрос собирается в SQL (не в Go), GIN-индекс, без pg_trgm. Похожие символы (кириллица/латиница, О/0, дефис)
+  запрос собирается в SQL (не в Go), GIN-индекс, без pg_trgm. Маска (`SearchRequest.mask`, кнопка «*» — `fe/src/mask.ts`, `?mask=1`): «*» = ровно один символ, `LIKE` по `plate_search_key` без пробелов, без индекса (полный перебор), ≥3 известных символа, без подсказок. Похожие символы (кириллица/латиница, О/0, дефис)
   сводит `plate_search_key()` — одинаково в индексе и в запросе (тест `repository` следит за совпадением). `Get(id)` — все фиксации того же номера.
   Пустая выдача по непустому запросу — `SearchResponse.suggestions` («возможно, вы искали»): до 5 номеров
   с `levenshtein` (fuzzystrmatch, contrib) ≤ 2 по `plate_search_key` без пробелов (`repository.Suggest`).

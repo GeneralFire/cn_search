@@ -42,6 +42,13 @@ var plateMatch = `(` + plateTSVector("p.plate") + ` @@ ` + tsQueryFrom + `
 	OR EXISTS (SELECT 1 FROM ` + clarificationsTable + ` c
 		WHERE c.sighting_id = s.id AND ` + plateTSVector("c.plate") + ` @@ ` + tsQueryFrom + `))`
 
+// maskMatch — поиск по маске ($1): ключ номера без пробелов целиком совпадает с шаблоном LIKE.
+// Шаблон: ключ маски (похожие символы — как в индексе), нижний регистр, без пробелов, LIKE-спецсимволы
+// \ % _ экранированы (ESCAPE '\'), затем «*» → «_» (ровно один символ). Индекс не используется —
+// полный перебор номеров (pg_trgm сознательно не подключён).
+const maskMatch = `lower(replace(plate_search_key(p.plate), ' ', '')) LIKE replace(replace(replace(replace(
+	lower(replace(plate_search_key($1), ' ', '')), '\', '\\'), '%', '\%'), '_', '\_'), '*', '_') ESCAPE '\'`
+
 // notTestData — без include-test-data строки с is_test_data не отдаются (ни фиксации, ни номера).
 const notTestData = `NOT s.is_test_data AND NOT p.is_test_data`
 
@@ -127,7 +134,11 @@ func (r *repository) Search(ctx context.Context, tx db.Executor, q models.Search
 	var args []any
 	if q.Plate != "" {
 		args = append(args, q.Plate)
-		conds = append(conds, plateMatch) // $1
+		if q.Mask {
+			conds = append(conds, maskMatch) // $1
+		} else {
+			conds = append(conds, plateMatch) // $1
+		}
 	}
 	if c := marketCond(q.Market); c != "" {
 		conds = append(conds, c)

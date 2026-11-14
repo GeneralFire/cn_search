@@ -25,6 +25,7 @@ import {
 import { bindEmptyWatch, emptyWatchHtml, migrateGuestWatches, mountWatchStrip } from "./watch";
 import { activeCount, filtersRequest, mountFilters } from "./filters";
 import { registerPwa } from "./pwa";
+import { maskError, mountMask } from "./mask";
 
 registerPwa();
 
@@ -115,6 +116,12 @@ const $wl = app.querySelector<HTMLElement>(".wl")!;
 const refreshWatches = mountWatchStrip($wl);
 void migrateGuestWatches().then(refreshWatches);
 
+// Поиск по маске (mask.ts): кнопка рядом с полем; переключение — новая выдача.
+const mask = mountMask(app.querySelector<HTMLElement>(".searchbar")!, $plate, () => {
+  clearTimeout(debounce);
+  newSearch();
+});
+
 // Фильтры выдачи (filters.ts): любое изменение — новая выдача.
 const filters = mountFilters(app.querySelector<HTMLElement>("#filters")!, () => {
   clearTimeout(debounce);
@@ -191,7 +198,7 @@ async function loadMore(): Promise<void> {
     const page = await search(
       home
         ? { market: state.tab, ...filtersRequest(filters.get(), true), offset: state.nextOffset!, limit: PAGE_SIZE }
-        : { plate: $plate.value, ...filtersRequest(filters.get(), false), offset: state.nextOffset!, limit: PAGE_SIZE },
+        : { plate: $plate.value, ...(mask.on() ? { mask: true } : {}), ...filtersRequest(filters.get(), false), offset: state.nextOffset!, limit: PAGE_SIZE },
       ctrl.signal
     );
     if (gen !== state.generation) return; // пока грузили, запрос поменялся
@@ -229,7 +236,9 @@ function highlightCards(from: number, cars: Car[]): void {
   const cards = $grid.querySelectorAll<HTMLElement>(".card .card__plate");
   cars.forEach((c, i) => {
     const el = cards[from + i];
-    if (el) highlightPlate(el, c.plate, $plate.value, "dym-mark");
+    if (!el) return;
+    if (mask.on()) el.classList.add("mask-hit"); // маска: совпал весь номер
+    else highlightPlate(el, c.plate, $plate.value, "dym-mark");
   });
 }
 
@@ -277,6 +286,12 @@ function newSearch(): void {
   state.cars.clear();
   $grid.innerHTML = "";
   filters.setHome(!hasQuery());
+  mask.refresh($plate.value);
+  if (mask.on() && maskError($plate.value)) {
+    state.nextOffset = null; // маска короче 3 символов — ошибка под полем, запроса к бэку нет
+    render();
+    return;
+  }
   if (!hasQuery()) {
     loadForYou();
     setTabInUrl(state.tab);
@@ -456,6 +471,13 @@ let searchScroll = 0;
 const $viewAdmin = app.querySelector<HTMLElement>("#view-admin")!;
 void mountHomeAdmin(app.querySelector<HTMLElement>("#view-search .content")!); // админ-режим: полоса «Админ»
 
+/** Фильтры и режим маски из адреса; true — что-то изменилось. */
+function syncUrlState(): boolean {
+  const f = filters.syncFromUrl();
+  const m = mask.syncFromUrl();
+  return f || m;
+}
+
 const $viewAuth = app.querySelector<HTMLElement>("#view-auth")!;
 const $viewCameras = app.querySelector<HTMLElement>("#view-cameras")!;
 const $viewUpload = app.querySelector<HTMLElement>("#view-upload")!;
@@ -508,6 +530,7 @@ onRoute((route) => {
       // Enter в поиске шапки — полная выдача на главной с этим запросом.
       submit: (query) => {
         setQuery(query);
+        mask.set(false); // поиск из шапки страницы номера — обычный, не по маске
         searchStarted = true;
         searchScroll = 0;
         newSearch();
@@ -525,8 +548,8 @@ onRoute((route) => {
   if (!searchStarted) {
     searchStarted = true;
     newSearch();
-  } else if (filters.syncFromUrl()) {
-    // Адрес с другими фильтрами (переход по истории) — новая выдача с ними.
+  } else if (syncUrlState()) {
+    // Адрес с другими фильтрами или режимом маски (переход по истории) — новая выдача с ними.
     clearTimeout(debounce);
     setQuery(queryFromUrl());
     if (!hasQuery()) state.tab = tabFromUrl();

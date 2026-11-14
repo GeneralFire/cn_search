@@ -447,4 +447,9 @@ export const zh: Dict = {
   "watch.notFoundSubscribe": "未找到车牌——订阅其出现",
   "watch.subscribed": "已关注“{plate}”——车牌出现时会显示在这里",
   "watch.newTitle": "新记录：{n}",
+  // Поиск по маске (mask.ts).
+  "mask.button": "通配",
+  "mask.placeholder": "A*23BC 77*",
+  "mask.hint": "* — 任意一个字符",
+  "mask.tooShort": "通配符中至少要有 3 个已知字符",
 };

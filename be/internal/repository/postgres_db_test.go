@@ -133,3 +133,57 @@ func TestSearchFiltersDB(t *testing.T) {
 		}
 	}
 }
+
+// Поиск по маске: «*» — один любой символ, регистр и похожие символы не важны, % и _ — не подстановки.
+func TestSearchMaskDB(t *testing.T) {
+	search := searchDB(t)
+	plates := func(q string) []string {
+		var out []string
+		for _, it := range search(models.SearchOpts{Plate: q, Mask: true, Limit: 100}).Items {
+			out = append(out, it.Plate)
+		}
+		return out
+	}
+	has := func(q, want string) {
+		t.Helper()
+		for _, p := range plates(q) {
+			if p == want {
+				return
+			}
+		}
+		t.Errorf("маска %q: нет %q в %q", q, want, plates(q))
+	}
+	has("А*23ВС 77*", "А123ВС 777")
+	has("а*23вс 77*", "А123ВС 777") // нижний регистр, латиница A/B/C
+	has("A*23BC77*", "А123ВС 777")  // без пробела
+	has("А123ВС 77*", "А123ВС 777") // «*» на конце
+	has("*123*C*77", "А123ВС 777")  // несколько «*»
+
+	// «*» — ровно один символ: на 2 символа не растягивается, на 0 — тоже.
+	if got := plates("А*3ВС 777"); len(got) != 0 {
+		t.Errorf("«*» как 0 символов: %q", got)
+	}
+	if got := plates("А**23ВС 777"); len(got) != 0 {
+		t.Errorf("«*» как 2 символа: %q", got)
+	}
+	// % и _ — обычные символы, не подстановки.
+	for _, q := range []string{"%123%", "_123BC777", "A123BC77_", "A%23BC777", `\123BC777`} {
+		if got := plates(q); len(got) != 0 {
+			t.Errorf("%q: нашлось %q", q, got)
+		}
+	}
+	// Фильтры и total — как в обычном поиске.
+	all := search(models.SearchOpts{Plate: "*******", Mask: true, Limit: 1})
+	if all.Total < 2 {
+		t.Fatalf("******* : %d", all.Total)
+	}
+	if got := search(models.SearchOpts{Plate: "*******", Mask: true, Limit: 1, Since: time.Now().Add(time.Hour)}).Total; got != 0 {
+		t.Errorf("since в будущем: %d", got)
+	}
+	if got := search(models.SearchOpts{Plate: "*******", Mask: true, Limit: 1, Market: models.MarketCN}).Total; got == 0 || got >= all.Total {
+		t.Errorf("market cn: %d из %d", got, all.Total)
+	}
+	if page := search(models.SearchOpts{Plate: "*******", Mask: true, Limit: 1}); page.NextOffset == nil || len(page.Items) != 1 {
+		t.Errorf("пагинация: %+v", page)
+	}
+}

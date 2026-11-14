@@ -24,13 +24,20 @@ func (s *CarSearch) Search(ctx context.Context, req *pb.SearchRequest) (*pb.Sear
 	if err := validateSearch(req); err != nil {
 		return nil, err
 	}
+	plate, mask := req.GetPlate(), req.GetMask()
+	if mask {
+		var known int
+		if plate, known = models.CleanMask(plate); known < models.MaskMinKnown {
+			return nil, status.Errorf(codes.InvalidArgument, "в маске должно быть хотя бы %d известных символа", models.MaskMinKnown)
+		}
+	}
 	limit := int(req.GetLimit())
 	if limit == 0 {
 		limit = DefaultLimit
 	}
 
 	page, err := s.uc.Search(ctx, models.SearchOpts{
-		Plate:           req.GetPlate(),
+		Plate:           plate,
 		Offset:          int(req.GetOffset()),
 		Limit:           limit,
 		IncludeTestData: includeTestData(ctx),
@@ -39,6 +46,7 @@ func (s *CarSearch) Search(ctx context.Context, req *pb.SearchRequest) (*pb.Sear
 		Since:           tsOrZero(req.GetSince()),
 		Until:           tsOrZero(req.GetUntil()),
 		HasCoords:       req.GetHasCoords(),
+		Mask:            mask,
 	})
 	if err != nil {
 		return nil, internalErr(ctx, err, "не удалось выполнить поиск")

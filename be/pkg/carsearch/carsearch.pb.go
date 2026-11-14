@@ -568,7 +568,12 @@ type SearchRequest struct {
 	Since *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=since,proto3" json:"since,omitempty"`
 	Until *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=until,proto3" json:"until,omitempty"`
 	// Только фиксации с координатами (есть на карте).
-	HasCoords     bool `protobuf:"varint,7,opt,name=has_coords,json=hasCoords,proto3" json:"has_coords,omitempty"`
+	HasCoords bool `protobuf:"varint,7,opt,name=has_coords,json=hasCoords,proto3" json:"has_coords,omitempty"`
+	// Поиск по маске: plate — маска, где «*» заменяет ровно один любой символ; сравнение по всему
+	// номеру без пробелов (похожие символы сведены plate_search_key). Допустимы буквы, цифры, пробелы
+	// и «*» (остальное отбрасывается); известных символов — не меньше 3, иначе InvalidArgument.
+	// Вместо поиска по началу слов; без подсказок «возможно, вы искали».
+	Mask          bool `protobuf:"varint,8,opt,name=mask,proto3" json:"mask,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -648,6 +653,13 @@ func (x *SearchRequest) GetUntil() *timestamppb.Timestamp {
 func (x *SearchRequest) GetHasCoords() bool {
 	if x != nil {
 		return x.HasCoords
+	}
+	return false
+}
+
+func (x *SearchRequest) GetMask() bool {
+	if x != nil {
+		return x.Mask
 	}
 	return false
 }
@@ -4448,7 +4460,7 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\x06hidden\x18\f \x01(\bR\x06hidden\x12!\n" +
 	"\fphoto_hidden\x18\r \x01(\bR\vphotoHiddenB\x06\n" +
 	"\x04_latB\x06\n" +
-	"\x04_lon\"\xee\x01\n" +
+	"\x04_lon\"\x82\x02\n" +
 	"\rSearchRequest\x12\x14\n" +
 	"\x05plate\x18\x01 \x01(\tR\x05plate\x12\x16\n" +
 	"\x06offset\x18\x02 \x01(\x05R\x06offset\x12\x14\n" +
@@ -4457,7 +4469,8 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\x05since\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x05since\x120\n" +
 	"\x05until\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x05until\x12\x1d\n" +
 	"\n" +
-	"has_coords\x18\a \x01(\bR\thasCoords\"\xc8\x01\n" +
+	"has_coords\x18\a \x01(\bR\thasCoords\x12\x12\n" +
+	"\x04mask\x18\b \x01(\bR\x04mask\"\xc8\x01\n" +
 	"\x0eSearchResponse\x12.\n" +
 	"\x05items\x18\x01 \x03(\v2\x18.carsearch.PlateSightingR\x05items\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x05R\x05total\x12$\n" +

@@ -446,4 +446,9 @@ export const en: Dict = {
   "watch.notFoundSubscribe": "Plate not found — subscribe to its appearance",
   "watch.subscribed": "You follow “{plate}” — it will show up here when the plate appears",
   "watch.newTitle": "New sightings: {n}",
+  // Поиск по маске (mask.ts).
+  "mask.button": "Mask",
+  "mask.placeholder": "A*23BC 77*",
+  "mask.hint": "* — any single character",
+  "mask.tooShort": "The mask needs at least 3 known characters",
 };

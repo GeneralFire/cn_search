@@ -112,3 +112,14 @@ func TestSeeAlsoInReadTx(t *testing.T) {
 		t.Fatalf("SeeAlso: %v %v", items, err)
 	}
 }
+
+// Для маски подсказок нет, даже если ничего не нашлось (Suggest не вызывается — мок упадёт).
+func TestSearchMaskNoSuggestions(t *testing.T) {
+	tx := dbmocks.NewExecutorMock(t)
+	opts := models.SearchOpts{Plate: "А*23ВС 77*", Mask: true}
+	repo := mocks.NewRepositoryMock(t)
+	repo.SearchMock.Expect(minimock.AnyContext, tx, opts).Return(models.SearchPage{}, nil)
+	if page, err := New(readTx(t, tx), repo).Search(context.Background(), opts); err != nil || page.Suggestions != nil {
+		t.Fatalf("Search: %+v %v", page, err)
+	}
+}

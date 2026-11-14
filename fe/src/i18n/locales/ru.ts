@@ -446,4 +446,9 @@ export const ru = {
   "watch.notFoundSubscribe": "Номер не найден — подписаться на появление",
   "watch.subscribed": "Вы подписаны на «{plate}» — сообщим, когда номер появится",
   "watch.newTitle": "Новых фиксаций: {n}",
+  // Поиск по маске (mask.ts).
+  "mask.button": "Маска",
+  "mask.placeholder": "А*23ВС 77*",
+  "mask.hint": "* — любой один символ",
+  "mask.tooShort": "В маске должно быть хотя бы 3 известных символа",
 } as const;

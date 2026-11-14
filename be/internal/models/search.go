@@ -20,6 +20,7 @@ type SearchOpts struct {
 	Since           time.Time // фиксации не раньше (created_at >= Since); нулевое — без границы
 	Until           time.Time // фиксации раньше (created_at < Until); нулевое — без границы
 	HasCoords       bool      // только фиксации с координатами (lat/lon не NULL)
+	Mask            bool      // Plate — маска («*» = ровно один символ) вместо поиска по началу слов
 }
 
 // Market — «рынок» номеров для главной: страна по формату номера (plates.meta: type, region).

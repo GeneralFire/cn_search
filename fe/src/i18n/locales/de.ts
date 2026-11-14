@@ -446,4 +446,9 @@ export const de: Dict = {
   "watch.notFoundSubscribe": "Kennzeichen nicht gefunden – Auftauchen abonnieren",
   "watch.subscribed": "Du folgst „{plate}“ – es erscheint hier, sobald das Kennzeichen auftaucht",
   "watch.newTitle": "Neue Sichtungen: {n}",
+  // Поиск по маске (mask.ts).
+  "mask.button": "Maske",
+  "mask.placeholder": "A*23BC 77*",
+  "mask.hint": "* — ein beliebiges Zeichen",
+  "mask.tooShort": "Die Maske braucht mindestens 3 bekannte Zeichen",
 };

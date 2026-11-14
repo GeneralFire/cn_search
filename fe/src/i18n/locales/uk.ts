@@ -446,4 +446,9 @@ export const uk: Dict = {
   "watch.notFoundSubscribe": "Номер не знайдено — підписатися на появу",
   "watch.subscribed": "Ви підписані на «{plate}» — покажемо, коли номер з’явиться",
   "watch.newTitle": "Нових фіксацій: {n}",
+  // Поиск по маске (mask.ts).
+  "mask.button": "Маска",
+  "mask.placeholder": "А*23ВС 77*",
+  "mask.hint": "* — будь-який один символ",
+  "mask.tooShort": "У масці має бути щонайменше 3 відомі символи",
 };
