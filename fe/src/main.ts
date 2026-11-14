@@ -7,6 +7,7 @@ import { openClarify } from "./clarify";
 import { navigate, onRoute, plateHref } from "./router";
 import { renderPlatePage } from "./plate";
 import { renderAdminPage } from "./admin";
+import { renderNotFoundPage } from "./notfound";
 import { isAuthRoute, renderAuthPage } from "./auth";
 import { leaveCamerasPage, renderCamerasPage } from "./cameras";
 import { renderUploadPage } from "./upload";
@@ -83,6 +84,7 @@ app.innerHTML = `
   <div class="view" id="view-upload" hidden></div>
   ${footerHtml()}
   <div class="view" id="view-cameras" hidden></div>
+  <div class="view" id="view-notfound" hidden></div>
 
 `;
 
@@ -404,18 +406,20 @@ void mountHomeAdmin(app.querySelector<HTMLElement>("#view-search .content")!); /
 const $viewAuth = app.querySelector<HTMLElement>("#view-auth")!;
 const $viewCameras = app.querySelector<HTMLElement>("#view-cameras")!;
 const $viewUpload = app.querySelector<HTMLElement>("#view-upload")!;
+const $viewNotFound = app.querySelector<HTMLElement>("#view-notfound")!;
 
 onRoute((route) => {
   $viewAuth.hidden = !isAuthRoute(route);
   if (isAuthRoute(route)) {
     if (!$viewSearch.hidden) searchScroll = window.scrollY;
-    $viewSearch.hidden = $viewPlate.hidden = $viewAdmin.hidden = $viewCameras.hidden = true;
+    $viewSearch.hidden = $viewPlate.hidden = $viewAdmin.hidden = $viewCameras.hidden = $viewNotFound.hidden = true;
     leaveCamerasPage();
     renderAuthPage($viewAuth, route);
     return;
   }
   $viewAdmin.hidden = route.name !== "admin";
   $viewCameras.hidden = route.name !== "cameras";
+  $viewNotFound.hidden = route.name !== "notfound";
   if (route.name === "cameras") {
     if (!$viewSearch.hidden) searchScroll = window.scrollY;
     $viewSearch.hidden = $viewPlate.hidden = true;
@@ -428,6 +432,12 @@ onRoute((route) => {
     if (!$viewSearch.hidden) searchScroll = window.scrollY;
     $viewSearch.hidden = $viewPlate.hidden = true;
     renderUploadPage($viewUpload);
+    return;
+  }
+  if (route.name === "notfound") {
+    if (!$viewSearch.hidden) searchScroll = window.scrollY;
+    $viewSearch.hidden = $viewPlate.hidden = true;
+    renderNotFoundPage($viewNotFound);
     return;
   }
   if (route.name === "admin") {

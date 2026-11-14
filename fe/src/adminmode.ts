@@ -12,6 +12,7 @@
 import "./adminmode.css";
 import { checkAdmin, getAdminToken, setAdminHeader, setAdminToken } from "./api";
 import { t } from "./i18n/i18n";
+import { adminPath } from "./router";
 
 /** Режим выключен вручную (токен сохранён) — флаг в sessionStorage. */
 const MODE_OFF_KEY = "admin-mode-off";
@@ -87,7 +88,7 @@ export function adminSettingsHtml(): string {
       ${shieldIcon}<span class="adm-st__label">${t("adminMode.toggle")}</span>
       <span class="adm-st__state">${t(on ? "adminMode.on" : "adminMode.off")}</span>
     </button>
-    <a class="st__home" href="/admin" data-link>${t("admin.link")}</a>`;
+    <a class="st__home" href="${adminPath()}" data-link>${t("admin.link")}</a>`;
 }
 
 /** Переключатель в панели настроек: смена режима перезагружает страницу (выдача — с/без скрытых). */

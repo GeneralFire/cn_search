@@ -385,4 +385,8 @@ export const ru = {
   "autohide.badgeHint": "Скрыто автоматически по жалобам: пользователи видят «Нет фото»",
   "autohide.restore": "Вернуть фото",
   "autohide.restoreFailed": "Не удалось вернуть фото",
+  // 404 (notfound.ts)
+  "notFound.title": "Страница не найдена",
+  "notFound.text": "Такого адреса нет — возможно, ссылка устарела или в ней опечатка.",
+  "notFound.home": "← На главную",
 } as const;

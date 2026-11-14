@@ -16,6 +16,7 @@ import {
   type ComplaintStatus,
 } from "./api";
 import { enterAdminMode, exitAdminMode, shieldIcon } from "./adminmode";
+import { adminPath } from "./router";
 import { adminTabs, registerAdminTab } from "./admintabs";
 import "./adminclar";
 import "./admin-cameras";
@@ -189,7 +190,7 @@ async function showList(): Promise<void> {
   });
   $main.querySelector(".more__btn")!.addEventListener("click", () => void load(false));
   $main.querySelector("[data-reset-sighting]")?.addEventListener("click", () => {
-    history.replaceState(history.state, "", "/admin");
+    history.replaceState(history.state, "", adminPath());
     void showList();
   });
   $main.querySelector("tbody")!.addEventListener("click", (e) => {

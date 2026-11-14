@@ -385,4 +385,8 @@ export const en: Dict = {
   "autohide.badgeHint": "Hidden automatically after complaints: users see “No photo”",
   "autohide.restore": "Restore photo",
   "autohide.restoreFailed": "Failed to restore photo",
+  // 404 (notfound.ts)
+  "notFound.title": "Page not found",
+  "notFound.text": "This address doesn't exist — the link may be outdated or mistyped.",
+  "notFound.home": "← Home",
 };

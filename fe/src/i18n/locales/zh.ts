@@ -386,4 +386,8 @@ export const zh: Dict = {
   "autohide.badgeHint": "因投诉自动隐藏：用户看到“无照片”",
   "autohide.restore": "恢复照片",
   "autohide.restoreFailed": "无法恢复照片",
+  // 404 (notfound.ts)
+  "notFound.title": "页面未找到",
+  "notFound.text": "该地址不存在——链接可能已过期或输入有误。",
+  "notFound.home": "← 返回首页",
 };

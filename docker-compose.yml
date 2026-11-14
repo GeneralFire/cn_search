@@ -133,6 +133,7 @@ services:
     environment:
       VITE_USE_POLLING: "true" # надёжный hot-reload с bind-mount на macOS
       VITE_INCLUDE_TEST_DATA: "true" # фронт шлёт include-test-data: в базе пока только тестовые данные
+      VITE_ADMIN_PATH: ${ADMIN_PATH:-/ops-7f3a2c} # скрытый путь админки; сама админка всё равно требует admin-token
       API_URL: http://be:8080
       S3_URL: http://s3:9000
     ports:

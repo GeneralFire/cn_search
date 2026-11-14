@@ -1,7 +1,8 @@
 // Маршруты на History API: "/" — поиск, "/plate/<id фиксации>" — страница номера,
-// "/admin" — админ-панель (жалобы на фото; ссылки в интерфейсе нет — вход по прямому адресу),
+// adminPath() — админ-панель (жалобы на фото; путь скрытый, задаётся VITE_ADMIN_PATH),
 // "/cameras" — заявки на расположение камер.
 // "/upload" — загрузка фото (номер распознаёт OCR).
+// Любой другой адрес — страница 404 (notfound.ts), в том числе "/admin", если путь админки другой.
 // Vite (dev и preview) отдаёт index.html на любой путь, поэтому прямые ссылки работают.
 
 // Аккаунт (auth.ts): "/signup", "/pricing", "/account", "/pay/mock/<id платежа>" — демо-касса.
@@ -12,10 +13,18 @@ export type Route =
   | { name: "cameras" }
   | { name: "upload" }
   | { name: "signup" | "pricing" | "account" }
-  | { name: "pay"; id: string };
+  | { name: "pay"; id: string }
+  | { name: "notfound" };
+
+/** Путь админки: VITE_ADMIN_PATH (скрытый путь, см. docker-compose.yml); без переменной — "/admin". */
+export function adminPath(): string {
+  const raw = (import.meta.env.VITE_ADMIN_PATH ?? "").trim().replace(/\/+$/, "");
+  return raw ? `/${raw.replace(/^\/+/, "")}` : "/admin";
+}
 
 export function parseRoute(path = location.pathname): Route {
-  if (/^\/admin\/?$/.test(path)) return { name: "admin" };
+  if (path.replace(/\/+$/, "") === adminPath()) return { name: "admin" };
+  if (/^\/?$/.test(path)) return { name: "search" };
   if (/^\/cameras\/?$/.test(path)) return { name: "cameras" };
   if (/^\/upload\/?$/.test(path)) return { name: "upload" };
   const acc = path.match(/^\/(signup|pricing|account)\/?$/);
@@ -23,7 +32,7 @@ export function parseRoute(path = location.pathname): Route {
   const pay = path.match(/^\/pay\/mock\/([^/]+)\/?$/);
   if (pay) return { name: "pay", id: decodeURIComponent(pay[1]) };
   const m = path.match(/^\/plate\/([^/]+)\/?$/);
-  return m ? { name: "plate", id: decodeURIComponent(m[1]) } : { name: "search" };
+  return m ? { name: "plate", id: decodeURIComponent(m[1]) } : { name: "notfound" };
 }
 
 export const plateHref = (id: string) => `/plate/${encodeURIComponent(id)}`;

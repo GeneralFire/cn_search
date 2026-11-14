@@ -1,0 +1,17 @@
+/* ---------- Страница 404 (notfound.ts) ---------- */
+
+.nf {
+  max-width: 560px; margin: 0 auto; padding: 96px 24px 64px;
+  display: grid; justify-items: center; gap: 12px; text-align: center;
+}
+.nf__code {
+  margin: 0; font-size: clamp(5rem, 22vw, 9rem); font-weight: 800; line-height: 1;
+  letter-spacing: -0.04em; color: var(--accent);
+}
+.nf__title { margin: 0; font-size: 1.6rem; color: var(--text); }
+.nf__text { margin: 0 0 12px; color: var(--muted); line-height: 1.5; }
+.nf__home {
+  color: var(--accent); font-weight: 600; text-decoration: none; padding: 8px 14px;
+  border-radius: 8px; background: var(--accent-soft);
+}
+.nf__home:hover { text-decoration: underline; }

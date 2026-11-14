@@ -385,4 +385,8 @@ export const uk: Dict = {
   "autohide.badgeHint": "Приховано автоматично через скарги: користувачі бачать «Немає фото»",
   "autohide.restore": "Повернути фото",
   "autohide.restoreFailed": "Не вдалося повернути фото",
+  // 404 (notfound.ts)
+  "notFound.title": "Сторінку не знайдено",
+  "notFound.text": "Такої адреси немає — можливо, посилання застаріло або в ньому помилка.",
+  "notFound.home": "← На головну",
 };

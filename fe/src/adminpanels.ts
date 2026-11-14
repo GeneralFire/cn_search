@@ -15,6 +15,7 @@ import {
 } from "./api";
 import { adminReady, isAdminMode, shieldIcon } from "./adminmode";
 import { t } from "./i18n/i18n";
+import { adminPath } from "./router";
 import { escapeHtml, formatShortDate, formatTime, plateHtml } from "./ui";
 
 const errText = (e: unknown) => (e instanceof ApiError ? e.message : t("error.serverDown"));
@@ -69,7 +70,7 @@ function sightingRow(c: Car, current: boolean): string {
       <span class="adm-row__actions">
         <button class="btn btn--ghost" type="button" data-adm-hide="${c.hidden ? "0" : "1"}">
           ${t(c.hidden ? "adminMode.show" : "adminMode.hide")}</button>
-        <a class="adm-link" href="/admin?sighting=${encodeURIComponent(c.id)}" data-link>${t("adminMode.complaints")}</a>
+        <a class="adm-link" href="${adminPath()}?sighting=${encodeURIComponent(c.id)}" data-link>${t("adminMode.complaints")}</a>
       </span>
     </li>`;
 }
@@ -150,9 +151,9 @@ export async function mountHomeAdmin(container: HTMLElement): Promise<void> {
   $strip.setAttribute("aria-label", t("adminMode.title"));
   $strip.innerHTML = `
     ${shieldIcon}<strong class="adm-strip__title">${t("adminMode.title")}</strong>
-    <a class="adm-strip__item" href="/admin" data-link>${t("adminMode.newComplaints")}
+    <a class="adm-strip__item" href="${adminPath()}" data-link>${t("adminMode.newComplaints")}
       <span class="adm-strip__count" data-count="complaints">…</span></a>
-    <a class="adm-strip__item" href="/admin?tab=clarifications" data-link>${t("adminMode.newClarifications")}
+    <a class="adm-strip__item" href="${adminPath()}?tab=clarifications" data-link>${t("adminMode.newClarifications")}
       <span class="adm-strip__count" data-count="clarifications">…</span></a>`;
   container.prepend($strip);
   void refreshHomeAdmin();

@@ -96,7 +96,7 @@ car-search/
 │   ├── src/cameras.ts       # /cameras: camera placement requests on a map, voting
 │   ├── src/auth.ts          # /signup, /pricing, /pay/mock/<id>, /account; token login (cookie cs_token)
 │   ├── src/apitoken-settings.ts # API token balance in the settings panel
-│   ├── src/admin.ts         # /admin shell + Complaints tab; admintabs.ts (tab registry), adminclar.ts,
+│   ├── src/admin.ts         # admin shell (hidden path, VITE_ADMIN_PATH) + Complaints tab; admintabs.ts (tab registry), adminclar.ts,
 │   │                        #   admin-cameras.ts, admin-tokens.ts (other tabs)
 │   ├── src/adminmode.ts, adminpanels.ts # admin mode: hidden admin panels across the UI
 │   ├── src/nophoto.ts, footer.ts # "No photo" placeholder, language-dependent footer
@@ -281,7 +281,9 @@ Suggest the correct plate for a sighting ("the plate is actually this one", the 
 `ResolveComplaint` (`{ "id": "<complaint uuid>" }`) require the **`admin-token`** header equal to the
 backend's `ADMIN_TOKEN`; otherwise — `PermissionDenied`. An empty `ADMIN_TOKEN` disables the admin methods.
 
-The admin UI is at **`/admin`** (no link in the interface — open it directly). It asks for the token and
+The admin UI is at a hidden path set by **`VITE_ADMIN_PATH`** (compose sets it from `ADMIN_PATH`; default in dev —
+`/ops-7f3a2c`; without the variable — `/admin`). There is no link in the interface — open it directly. Any other
+address, `/admin` included when the path differs, shows the 404 page. It asks for the token and
 keeps it in `sessionStorage` of the tab only. Tabs (a registry in `fe/src/admintabs.ts`, active tab in `?tab=`):
 **Complaints** (status filter, **Load more**, **Resolved**), **Clarifications** (pending by default,
 **Accept / Reject** → `SetClarificationStatus`), **Camera requests** (with the author's contact, status change),
@@ -335,7 +337,7 @@ never returns `contact` — only with a valid `admin-token`. `SetCameraRequestSt
 
 ### API tokens
 
-Admins issue tokens for N plate page opens (`CreateApiToken`, tab **Tokens** in `/admin`):
+Admins issue tokens for N plate page opens (`CreateApiToken`, tab **Tokens** in the admin UI):
 `cst_` + base64url(`{"tid": id, "iat": unix}`) + `.` + base64url(HMAC-SHA256(payload, `TOKEN_SIGNING_KEY`))
 (`be/internal/apitoken`). The plain token is shown only once; the DB (`api_tokens`) keeps only the sha256 of the
 signature, the total and `requests_left`. Changing `TOKEN_SIGNING_KEY` invalidates every issued token.
