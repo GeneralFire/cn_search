@@ -44,6 +44,10 @@ export type CarSearchServiceListMyPaymentsData =
 export type CarSearchServiceListPlateViewsData =
   CarsearchListPlateViewsResponse;
 
+export type CarSearchServiceListWatchesData = CarsearchListWatchesResponse;
+
+export type CarSearchServiceMarkWatchSeenData = CarsearchMarkWatchSeenResponse;
+
 export type CarSearchServiceMeData = CarsearchMeResponse;
 
 export type CarSearchServicePlansData = CarsearchPlansResponse;
@@ -68,7 +72,11 @@ export type CarSearchServiceSubmitCameraRequestData = CarsearchCameraRequest;
 
 export type CarSearchServiceTokenInfoData = CarsearchApiToken;
 
+export type CarSearchServiceUnwatchData = CarsearchUnwatchResponse;
+
 export type CarSearchServiceVoteCameraRequestData = CarsearchCameraRequest;
+
+export type CarSearchServiceWatchData = CarsearchWatchResponse;
 
 /** ApiToken — API-токен без самого токена (он показывается один раз в CreateApiToken). */
 export interface CarsearchApiToken {
@@ -464,6 +472,19 @@ export interface CarsearchListPlateViewsResponse {
   total?: number;
 }
 
+export type CarsearchListWatchesRequest = object;
+
+export interface CarsearchListWatchesResponse {
+  /** Сначала номера с самой свежей фиксацией. */
+  items?: CarsearchWatchedPlate[];
+}
+
+export interface CarsearchMarkWatchSeenRequest {
+  plate?: string;
+}
+
+export type CarsearchMarkWatchSeenResponse = object;
+
 export type CarsearchMeRequest = object;
 
 export interface CarsearchMeResponse {
@@ -778,6 +799,12 @@ export interface CarsearchSubmitCameraRequestRequest {
 
 export type CarsearchTokenInfoRequest = object;
 
+export interface CarsearchUnwatchRequest {
+  plate?: string;
+}
+
+export type CarsearchUnwatchResponse = object;
+
 /** User — пользователь. */
 export interface CarsearchUser {
   /** @format date-time */
@@ -808,6 +835,28 @@ export enum CarsearchUserPlan {
 export interface CarsearchVoteCameraRequestRequest {
   /** uuid заявки. */
   id?: string;
+}
+
+export interface CarsearchWatchRequest {
+  /** Номер как есть: "А123ВС 777". */
+  plate?: string;
+}
+
+export type CarsearchWatchResponse = object;
+
+/** WatchedPlate — номер, на который подписан пользователь. */
+export interface CarsearchWatchedPlate {
+  /**
+   * Сколько фиксаций появилось после последнего просмотра (MarkWatchSeen).
+   * @format int32
+   */
+  newCount?: number;
+  /** Последняя фиксация номера (для отрисовки карточки); не задана, пока номер не появлялся. */
+  plate?: CarsearchPlateSighting;
+  /** Номер подписки, как его ввели или видели. */
+  plateDisplay?: string;
+  /** @format date-time */
+  watchedAt?: string;
 }
 
 export type QueryParamsType = Record<string | number, any>;
@@ -1371,6 +1420,48 @@ export class CarSearchApi<
      * No description
      *
      * @tags CarSearchService
+     * @name CarSearchServiceListWatches
+     * @summary ListWatches — подписки пользователя: последняя фиксация номера (нет — ещё не появлялся) и число новых. Нужен токен пользователя.
+     * @request POST:/carsearch.CarSearchService/ListWatches
+     */
+    carSearchServiceListWatches: (
+      body: CarsearchListWatchesRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceListWatchesData, any>({
+        path: `/carsearch.CarSearchService/ListWatches`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
+     * @name CarSearchServiceMarkWatchSeen
+     * @summary MarkWatchSeen — отметить, что пользователь увидел все фиксации номера plate (сбрасывает new_count). Нужен токен пользователя; нет подписки — NOT_FOUND.
+     * @request POST:/carsearch.CarSearchService/MarkWatchSeen
+     */
+    carSearchServiceMarkWatchSeen: (
+      body: CarsearchMarkWatchSeenRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceMarkWatchSeenData, any>({
+        path: `/carsearch.CarSearchService/MarkWatchSeen`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
      * @name CarSearchServiceMe
      * @summary Me — кто я: is_admin — верный заголовок admin-token; authenticated и user — по токену пользователя (cookie cs_token или Authorization: Bearer). Нет токена или он неверный — authenticated = false.
      * @request POST:/carsearch.CarSearchService/Me
@@ -1623,6 +1714,27 @@ export class CarSearchApi<
      * No description
      *
      * @tags CarSearchService
+     * @name CarSearchServiceUnwatch
+     * @summary Unwatch — отписаться от номера. Нужен токен пользователя.
+     * @request POST:/carsearch.CarSearchService/Unwatch
+     */
+    carSearchServiceUnwatch: (
+      body: CarsearchUnwatchRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceUnwatchData, any>({
+        path: `/carsearch.CarSearchService/Unwatch`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
      * @name CarSearchServiceVoteCameraRequest
      * @summary VoteCameraRequest — голос «+1» за заявку. Без авторизации; повторный голос с того же браузера отсекает фронт (localStorage).
      * @request POST:/carsearch.CarSearchService/VoteCameraRequest
@@ -1633,6 +1745,27 @@ export class CarSearchApi<
     ) =>
       this.request<CarSearchServiceVoteCameraRequestData, any>({
         path: `/carsearch.CarSearchService/VoteCameraRequest`,
+        method: "POST",
+        body: body,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags CarSearchService
+     * @name CarSearchServiceWatch
+     * @summary Watch — подписаться на появление номера plate (он может ещё не встречаться в базе). Номера сравниваются по ключу поиска (кириллица/латиница, О/0, регистр, пробелы). Повторная подписка — без ошибки. Нужен токен.
+     * @request POST:/carsearch.CarSearchService/Watch
+     */
+    carSearchServiceWatch: (
+      body: CarsearchWatchRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<CarSearchServiceWatchData, any>({
+        path: `/carsearch.CarSearchService/Watch`,
         method: "POST",
         body: body,
         type: ContentType.Json,

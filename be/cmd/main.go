@@ -118,6 +118,7 @@ func serve(ctx context.Context, log *slog.Logger, cfg config) error {
 			implementation.WithAdmin(usecase.NewAdmin(cluster, repo), cfg.AdminToken),
 			implementation.WithAccounts(usecase.NewAccounts(cluster, repo)),
 			implementation.WithCameraRequests(usecase.NewCameraRequests(cluster, repo)),
+			implementation.WithWatches(usecase.NewWatches(cluster, repo)),
 			implementation.WithApiTokens(usecase.NewApiTokens(cluster, repo, apitoken.NewSigner(cfg.SigningKey))),
 		}
 		// Готовность (/api/ready): БД и, если настроен, бакет S3.

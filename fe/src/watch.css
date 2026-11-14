@@ -1,0 +1,48 @@
+/* Подписки на номера (watch.ts): кнопка на странице номера и полоса «Отслеживаемые» на главной. */
+.pp-watch { display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; font: inherit; cursor: pointer; }
+.pp-watch svg { color: var(--accent); }
+.pp-watch.is-on { background: var(--accent-soft); border-color: var(--accent); }
+
+.wl { margin: 0 0 28px; }
+.wl[hidden] { display: none; }
+.wl__head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 12px; }
+.wl__title { margin: 0; font-size: 1.1rem; }
+.wl__sub { color: var(--muted); font-size: 0.9rem; }
+
+/* Горизонтальный ряд: прокрутка только внутри полосы. */
+.wl__row { display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 10px; scroll-snap-type: x proximity; }
+.wl__item { position: relative; flex: 0 0 172px; display: grid; scroll-snap-align: start; }
+.wl__item > .mini { min-width: 0; }
+
+.wl__badge {
+  position: absolute; top: 8px; right: 8px; z-index: 1;
+  padding: 2px 8px; border-radius: 999px; pointer-events: none;
+  background: var(--accent); color: #fff; font-size: 0.75rem; font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+.wl.is-off { display: none; }
+
+/* Крестик отписки на карточке полосы. */
+.wl__x {
+  position: absolute; top: 8px; left: 8px; z-index: 1; width: 22px; height: 22px; padding: 0;
+  border: 0; border-radius: 50%; cursor: pointer; line-height: 1; font-size: 1rem;
+  background: rgba(0, 0, 0, 0.55); color: #fff; opacity: 0; transition: opacity 0.15s;
+}
+.wl__item:hover .wl__x, .wl__x:focus-visible { opacity: 1; }
+@media (hover: none) { .wl__x { opacity: 1; } }
+
+/* Подписка на номер, которого ещё нет. */
+.wl__wait {
+  display: grid; align-content: center; justify-items: start; gap: 10px; padding: 12px;
+  min-height: 150px; border-style: dashed; animation: none;
+}
+.wl__waitplate { display: flex; min-width: 0; }
+.wl__waitplate > * { font-size: 0.78rem; }
+.wl__waittext { color: var(--muted); font-size: 0.85rem; }
+
+/* Пустая выдача поиска: подписка на появление номера. */
+.wl-empty { margin-top: 12px; }
+.wl-empty[hidden] { display: none; }
+.wl-empty__btn { display: inline-flex; align-items: center; gap: 6px; font: inherit; cursor: pointer; }
+.wl-empty__btn svg, .wl-empty__done svg { color: var(--accent); }
+.wl-empty__done { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 0.9rem; }

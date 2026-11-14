@@ -394,6 +394,60 @@
         ]
       }
     },
+    "/carsearch.CarSearchService/ListWatches": {
+      "post": {
+        "summary": "ListWatches — подписки пользователя: последняя фиксация номера (нет — ещё не появлялся) и число новых.\nНужен токен пользователя.",
+        "operationId": "CarSearchService_ListWatches",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchListWatchesResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchListWatchesRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/MarkWatchSeen": {
+      "post": {
+        "summary": "MarkWatchSeen — отметить, что пользователь увидел все фиксации номера plate (сбрасывает new_count).\nНужен токен пользователя; нет подписки — NOT_FOUND.",
+        "operationId": "CarSearchService_MarkWatchSeen",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchMarkWatchSeenResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchMarkWatchSeenRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
     "/carsearch.CarSearchService/Me": {
       "post": {
         "summary": "Me — кто я: is_admin — верный заголовок admin-token; authenticated и user — по токену пользователя\n(cookie cs_token или Authorization: Bearer). Нет токена или он неверный — authenticated = false.",
@@ -718,6 +772,33 @@
         ]
       }
     },
+    "/carsearch.CarSearchService/Unwatch": {
+      "post": {
+        "summary": "Unwatch — отписаться от номера. Нужен токен пользователя.",
+        "operationId": "CarSearchService_Unwatch",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchUnwatchResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchUnwatchRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
     "/carsearch.CarSearchService/VoteCameraRequest": {
       "post": {
         "summary": "VoteCameraRequest — голос «+1» за заявку. Без авторизации; повторный голос с того же браузера\nотсекает фронт (localStorage).",
@@ -737,6 +818,33 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/carsearchVoteCameraRequestRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CarSearchService"
+        ]
+      }
+    },
+    "/carsearch.CarSearchService/Watch": {
+      "post": {
+        "summary": "Watch — подписаться на появление номера plate (он может ещё не встречаться в базе). Номера сравниваются\nпо ключу поиска (кириллица/латиница, О/0, регистр, пробелы). Повторная подписка — без ошибки. Нужен токен.",
+        "operationId": "CarSearchService_Watch",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/carsearchWatchResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/carsearchWatchRequest"
             }
           }
         ],
@@ -1372,6 +1480,32 @@
         }
       }
     },
+    "carsearchListWatchesRequest": {
+      "type": "object"
+    },
+    "carsearchListWatchesResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/carsearchWatchedPlate"
+          },
+          "description": "Сначала номера с самой свежей фиксацией."
+        }
+      }
+    },
+    "carsearchMarkWatchSeenRequest": {
+      "type": "object",
+      "properties": {
+        "plate": {
+          "type": "string"
+        }
+      }
+    },
+    "carsearchMarkWatchSeenResponse": {
+      "type": "object"
+    },
     "carsearchMeRequest": {
       "type": "object"
     },
@@ -1862,6 +1996,17 @@
     "carsearchTokenInfoRequest": {
       "type": "object"
     },
+    "carsearchUnwatchRequest": {
+      "type": "object",
+      "properties": {
+        "plate": {
+          "type": "string"
+        }
+      }
+    },
+    "carsearchUnwatchResponse": {
+      "type": "object"
+    },
     "carsearchUser": {
       "type": "object",
       "properties": {
@@ -1907,6 +2052,41 @@
           "description": "uuid заявки."
         }
       }
+    },
+    "carsearchWatchRequest": {
+      "type": "object",
+      "properties": {
+        "plate": {
+          "type": "string",
+          "description": "Номер как есть: \"А123ВС 777\"."
+        }
+      }
+    },
+    "carsearchWatchResponse": {
+      "type": "object"
+    },
+    "carsearchWatchedPlate": {
+      "type": "object",
+      "properties": {
+        "plate": {
+          "$ref": "#/definitions/carsearchPlateSighting",
+          "description": "Последняя фиксация номера (для отрисовки карточки); не задана, пока номер не появлялся."
+        },
+        "newCount": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Сколько фиксаций появилось после последнего просмотра (MarkWatchSeen)."
+        },
+        "watchedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "plateDisplay": {
+          "type": "string",
+          "description": "Номер подписки, как его ввели или видели."
+        }
+      },
+      "description": "WatchedPlate — номер, на который подписан пользователь."
     }
   }
 }

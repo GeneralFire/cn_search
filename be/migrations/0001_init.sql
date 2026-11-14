@@ -188,7 +188,28 @@ ALTER TABLE plate_sightings
 -- Квота загрузок: число загрузок пользователя за последние сутки.
 CREATE INDEX plate_sightings_uploaded_by_idx ON plate_sightings (uploaded_by, uploaded_at) WHERE uploaded_by IS NOT NULL;
 
+-- Ключ подписки на номер: plate_search_key без регистра и пробелов — "А123ВС 777", "a123bc777" и
+-- "А123ВС777" дают один ключ. Подписка — на строку номера, а не на строку plates: номера может ещё не быть.
+CREATE FUNCTION plate_watch_key(s text) RETURNS text
+LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE
+RETURN regexp_replace(lower(plate_search_key(s)), '\s', '', 'g');
+
+CREATE INDEX plates_watch_key_idx ON plates (plate_watch_key(plate));
+
+-- Подписки на номера («Следить»): last_seen_at — время последней фиксации номера, которую пользователь
+-- видел; фиксации новее — «новые» (rpc ListWatches → new_count, сброс — rpc MarkWatchSeen).
+CREATE TABLE watches (
+    user_id       uuid        NOT NULL REFERENCES users (id),
+    plate_key     text        NOT NULL CHECK (plate_key <> ''), -- plate_watch_key(номер)
+    plate_display text        NOT NULL, -- номер, как его ввели или видели
+    last_seen_at  timestamptz NOT NULL,
+    created_at    timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, plate_key)
+);
+
 -- +goose Down
+DROP TABLE watches;
+DROP FUNCTION plate_watch_key(text);
 DROP TABLE plate_views;
 DROP TABLE api_tokens;
 DROP TABLE camera_requests;

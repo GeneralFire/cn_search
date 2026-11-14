@@ -436,4 +436,15 @@ export const zh: Dict = {
   // 摄像头申请页面的坐标地址查询（geocode.ts）。
   "cameras.addressLoading": "正在查询地址…",
   "cameras.osmCredit": "地址：© OpenStreetMap contributors",
+
+  // Подписки на номера (watch.ts).
+  "watch.watch": "关注",
+  "watch.unwatch": "取消关注",
+  "watch.title": "已关注的车牌",
+  "watch.hint": "你关注的车牌",
+  "watch.new": "新增 {n}",
+  "watch.waiting": "等待出现",
+  "watch.notFoundSubscribe": "未找到车牌——订阅其出现",
+  "watch.subscribed": "已关注“{plate}”——车牌出现时会显示在这里",
+  "watch.newTitle": "新记录：{n}",
 };

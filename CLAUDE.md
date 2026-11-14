@@ -74,6 +74,11 @@
 - `docker-compose.yml`: db (Postgres), s3 (RustFS — minio/minio больше нет на Docker Hub), ocr, be, fe.
   Запуск: `make run` (всё) или по частям `make etc` (db+s3+миграции), `make run-be`, `make run-fe`.
   Тестовые данные приходят миграцией при `make etc`.
+- Подписки на номера («Следить»): таблица `watches` (user_id, plate_key, plate_display, last_seen_at); подписка — на строку номера
+  (ключ `plate_watch_key()` = `plate_search_key` без регистра и пробелов), номера в базе может ещё не быть. rpc Watch/Unwatch/
+  ListWatches/MarkWatchSeen — только для вошедших (`currentUser`). `fe/src/watch.ts`: кнопка на странице номера, кнопка в пустой
+  выдаче поиска, полоса «Отслеживаемые» на главной («+N новых», заглушка «ждём появления»); гость хранит подписки в localStorage
+  (`cs_watches`), после входа они переносятся на бэк.
 - Порядок при изменении API: proto → `make gen` → `implementation` → `usecase` → `repository`
   → `fe/src/api/index.ts` → `make test`.
 - Подробности — в `README.md`, особенности локальной машины — в `CLAUDE.local.md`.

@@ -17,6 +17,7 @@ import { bindShare, shareButtonHtml } from "./share";
 import { bindExport, exportButtonHtml } from "./export";
 import { bindRetry, emptyStateHtml, errorStateHtml } from "./states";
 import { activityHtml } from "./activity";
+import { mountWatchButton } from "./watch";
 
 /** Сколько карточек показывать в «Свежих фиксациях» (ручка отдаёт не больше). */
 const SEE_ALSO_LIMIT = 21;
@@ -82,6 +83,8 @@ export async function renderPlatePage(root: HTMLElement, id: string, handlers: Q
     $main.querySelector("[data-pc-clarify]")?.addEventListener("click", () => openClarify(shown, () => void reload()));
     bindShare($main, items[0].plate, items.length);
     bindExport($main, items);
+
+    void mountWatchButton($main, items); // «Следить» рядом с «Поделиться»
     void loadSeeAlso($main, id, my.signal);
     void mountPlateMap($main, items, id, my.signal);
     void mountPlateAdmin($main, items, id, my.signal); // админ-режим: панель «Управление»

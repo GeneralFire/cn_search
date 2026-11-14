@@ -435,4 +435,15 @@ export const uk: Dict = {
   // Адреса за координатами на сторінці заявки на камеру (geocode.ts).
   "cameras.addressLoading": "визначаємо адресу…",
   "cameras.osmCredit": "Адреса: © OpenStreetMap contributors",
+
+  // Подписки на номера (watch.ts).
+  "watch.watch": "Стежити",
+  "watch.unwatch": "Не стежити",
+  "watch.title": "Відстежувані",
+  "watch.hint": "Номери, на які ви підписані",
+  "watch.new": "+{n} нових",
+  "watch.waiting": "Чекаємо на появу",
+  "watch.notFoundSubscribe": "Номер не знайдено — підписатися на появу",
+  "watch.subscribed": "Ви підписані на «{plate}» — покажемо, коли номер з’явиться",
+  "watch.newTitle": "Нових фіксацій: {n}",
 };

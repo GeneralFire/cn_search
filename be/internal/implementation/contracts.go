@@ -5,6 +5,7 @@ package implementation
 //go:generate minimock -i complaints -o ./mocks/complaints_mock.go -n ComplaintsMock -p mocks
 //go:generate minimock -i admin -o ./mocks/admin_mock.go -n AdminMock -p mocks
 //go:generate minimock -i cameraRequests -o ./mocks/camera_requests_mock.go -n CameraRequestsMock -p mocks
+//go:generate minimock -i watches -o ./mocks/watches_mock.go -n WatchesMock -p mocks
 //go:generate minimock -i apiTokens -o ./mocks/api_tokens_mock.go -n ApiTokensMock -p mocks
 //go:generate minimock -i ingest -o ./mocks/ingest_mock.go -n IngestMock -p mocks
 
@@ -53,6 +54,14 @@ type cameraRequests interface {
 	List(ctx context.Context, o models.ListCameraRequestsOpts) (models.CameraRequestsPage, error)
 	Vote(ctx context.Context, o models.VoteCameraRequestOpts) (models.CameraRequest, error)
 	SetStatus(ctx context.Context, id string, st models.CameraRequestStatus) (models.CameraRequest, error)
+}
+
+// watches — подписки на номера (реализация — usecase.Watches).
+type watches interface {
+	Watch(ctx context.Context, userID, plate string) error
+	Unwatch(ctx context.Context, userID, plate string) error
+	List(ctx context.Context, o models.ListWatchesOpts) ([]models.Watch, error)
+	MarkSeen(ctx context.Context, userID, plate string) error
 }
 
 // apiTokens — API-токены и журнал открытий страниц номеров (реализация — usecase.ApiTokens).

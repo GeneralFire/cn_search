@@ -435,4 +435,15 @@ export const de: Dict = {
   // Adresse anhand der Koordinaten auf der Kamera-Antragsseite (geocode.ts).
   "cameras.addressLoading": "Adresse wird ermittelt…",
   "cameras.osmCredit": "Adresse: © OpenStreetMap contributors",
+
+  // Подписки на номера (watch.ts).
+  "watch.watch": "Beobachten",
+  "watch.unwatch": "Nicht mehr beobachten",
+  "watch.title": "Beobachtete Kennzeichen",
+  "watch.hint": "Kennzeichen, denen du folgst",
+  "watch.new": "+{n} neu",
+  "watch.waiting": "Warten auf das erste Auftauchen",
+  "watch.notFoundSubscribe": "Kennzeichen nicht gefunden – Auftauchen abonnieren",
+  "watch.subscribed": "Du folgst „{plate}“ – es erscheint hier, sobald das Kennzeichen auftaucht",
+  "watch.newTitle": "Neue Sichtungen: {n}",
 };

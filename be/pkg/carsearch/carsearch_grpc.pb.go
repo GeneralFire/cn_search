@@ -40,6 +40,10 @@ const (
 	CarSearchService_ListCameraRequests_FullMethodName     = "/carsearch.CarSearchService/ListCameraRequests"
 	CarSearchService_VoteCameraRequest_FullMethodName      = "/carsearch.CarSearchService/VoteCameraRequest"
 	CarSearchService_SetCameraRequestStatus_FullMethodName = "/carsearch.CarSearchService/SetCameraRequestStatus"
+	CarSearchService_Watch_FullMethodName                  = "/carsearch.CarSearchService/Watch"
+	CarSearchService_Unwatch_FullMethodName                = "/carsearch.CarSearchService/Unwatch"
+	CarSearchService_ListWatches_FullMethodName            = "/carsearch.CarSearchService/ListWatches"
+	CarSearchService_MarkWatchSeen_FullMethodName          = "/carsearch.CarSearchService/MarkWatchSeen"
 	CarSearchService_CreateApiToken_FullMethodName         = "/carsearch.CarSearchService/CreateApiToken"
 	CarSearchService_ListApiTokens_FullMethodName          = "/carsearch.CarSearchService/ListApiTokens"
 	CarSearchService_RevokeApiToken_FullMethodName         = "/carsearch.CarSearchService/RevokeApiToken"
@@ -118,6 +122,17 @@ type CarSearchServiceClient interface {
 	VoteCameraRequest(ctx context.Context, in *VoteCameraRequestRequest, opts ...grpc.CallOption) (*CameraRequest, error)
 	// SetCameraRequestStatus — сменить статус заявки. Нужен заголовок admin-token.
 	SetCameraRequestStatus(ctx context.Context, in *SetCameraRequestStatusRequest, opts ...grpc.CallOption) (*CameraRequest, error)
+	// Watch — подписаться на появление номера plate (он может ещё не встречаться в базе). Номера сравниваются
+	// по ключу поиска (кириллица/латиница, О/0, регистр, пробелы). Повторная подписка — без ошибки. Нужен токен.
+	Watch(ctx context.Context, in *WatchRequest, opts ...grpc.CallOption) (*WatchResponse, error)
+	// Unwatch — отписаться от номера. Нужен токен пользователя.
+	Unwatch(ctx context.Context, in *UnwatchRequest, opts ...grpc.CallOption) (*UnwatchResponse, error)
+	// ListWatches — подписки пользователя: последняя фиксация номера (нет — ещё не появлялся) и число новых.
+	// Нужен токен пользователя.
+	ListWatches(ctx context.Context, in *ListWatchesRequest, opts ...grpc.CallOption) (*ListWatchesResponse, error)
+	// MarkWatchSeen — отметить, что пользователь увидел все фиксации номера plate (сбрасывает new_count).
+	// Нужен токен пользователя; нет подписки — NOT_FOUND.
+	MarkWatchSeen(ctx context.Context, in *MarkWatchSeenRequest, opts ...grpc.CallOption) (*MarkWatchSeenResponse, error)
 	// CreateApiToken — новый API-токен на requests запросов (админ). Токен в открытом виде
 	// возвращается только здесь, бэк хранит лишь sha256 его подписи.
 	CreateApiToken(ctx context.Context, in *CreateApiTokenRequest, opts ...grpc.CallOption) (*CreateApiTokenResponse, error)
@@ -356,6 +371,46 @@ func (c *carSearchServiceClient) SetCameraRequestStatus(ctx context.Context, in 
 	return out, nil
 }
 
+func (c *carSearchServiceClient) Watch(ctx context.Context, in *WatchRequest, opts ...grpc.CallOption) (*WatchResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(WatchResponse)
+	err := c.cc.Invoke(ctx, CarSearchService_Watch_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carSearchServiceClient) Unwatch(ctx context.Context, in *UnwatchRequest, opts ...grpc.CallOption) (*UnwatchResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UnwatchResponse)
+	err := c.cc.Invoke(ctx, CarSearchService_Unwatch_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carSearchServiceClient) ListWatches(ctx context.Context, in *ListWatchesRequest, opts ...grpc.CallOption) (*ListWatchesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListWatchesResponse)
+	err := c.cc.Invoke(ctx, CarSearchService_ListWatches_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *carSearchServiceClient) MarkWatchSeen(ctx context.Context, in *MarkWatchSeenRequest, opts ...grpc.CallOption) (*MarkWatchSeenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MarkWatchSeenResponse)
+	err := c.cc.Invoke(ctx, CarSearchService_MarkWatchSeen_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *carSearchServiceClient) CreateApiToken(ctx context.Context, in *CreateApiTokenRequest, opts ...grpc.CallOption) (*CreateApiTokenResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateApiTokenResponse)
@@ -486,6 +541,17 @@ type CarSearchServiceServer interface {
 	VoteCameraRequest(context.Context, *VoteCameraRequestRequest) (*CameraRequest, error)
 	// SetCameraRequestStatus — сменить статус заявки. Нужен заголовок admin-token.
 	SetCameraRequestStatus(context.Context, *SetCameraRequestStatusRequest) (*CameraRequest, error)
+	// Watch — подписаться на появление номера plate (он может ещё не встречаться в базе). Номера сравниваются
+	// по ключу поиска (кириллица/латиница, О/0, регистр, пробелы). Повторная подписка — без ошибки. Нужен токен.
+	Watch(context.Context, *WatchRequest) (*WatchResponse, error)
+	// Unwatch — отписаться от номера. Нужен токен пользователя.
+	Unwatch(context.Context, *UnwatchRequest) (*UnwatchResponse, error)
+	// ListWatches — подписки пользователя: последняя фиксация номера (нет — ещё не появлялся) и число новых.
+	// Нужен токен пользователя.
+	ListWatches(context.Context, *ListWatchesRequest) (*ListWatchesResponse, error)
+	// MarkWatchSeen — отметить, что пользователь увидел все фиксации номера plate (сбрасывает new_count).
+	// Нужен токен пользователя; нет подписки — NOT_FOUND.
+	MarkWatchSeen(context.Context, *MarkWatchSeenRequest) (*MarkWatchSeenResponse, error)
 	// CreateApiToken — новый API-токен на requests запросов (админ). Токен в открытом виде
 	// возвращается только здесь, бэк хранит лишь sha256 его подписи.
 	CreateApiToken(context.Context, *CreateApiTokenRequest) (*CreateApiTokenResponse, error)
@@ -576,6 +642,18 @@ func (UnimplementedCarSearchServiceServer) VoteCameraRequest(context.Context, *V
 }
 func (UnimplementedCarSearchServiceServer) SetCameraRequestStatus(context.Context, *SetCameraRequestStatusRequest) (*CameraRequest, error) {
 	return nil, status.Error(codes.Unimplemented, "method SetCameraRequestStatus not implemented")
+}
+func (UnimplementedCarSearchServiceServer) Watch(context.Context, *WatchRequest) (*WatchResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Watch not implemented")
+}
+func (UnimplementedCarSearchServiceServer) Unwatch(context.Context, *UnwatchRequest) (*UnwatchResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Unwatch not implemented")
+}
+func (UnimplementedCarSearchServiceServer) ListWatches(context.Context, *ListWatchesRequest) (*ListWatchesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListWatches not implemented")
+}
+func (UnimplementedCarSearchServiceServer) MarkWatchSeen(context.Context, *MarkWatchSeenRequest) (*MarkWatchSeenResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method MarkWatchSeen not implemented")
 }
 func (UnimplementedCarSearchServiceServer) CreateApiToken(context.Context, *CreateApiTokenRequest) (*CreateApiTokenResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateApiToken not implemented")
@@ -994,6 +1072,78 @@ func _CarSearchService_SetCameraRequestStatus_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CarSearchService_Watch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WatchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).Watch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_Watch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).Watch(ctx, req.(*WatchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarSearchService_Unwatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnwatchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).Unwatch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_Unwatch_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).Unwatch(ctx, req.(*UnwatchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarSearchService_ListWatches_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListWatchesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).ListWatches(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_ListWatches_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).ListWatches(ctx, req.(*ListWatchesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CarSearchService_MarkWatchSeen_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarkWatchSeenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CarSearchServiceServer).MarkWatchSeen(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CarSearchService_MarkWatchSeen_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CarSearchServiceServer).MarkWatchSeen(ctx, req.(*MarkWatchSeenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CarSearchService_CreateApiToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateApiTokenRequest)
 	if err := dec(in); err != nil {
@@ -1192,6 +1342,22 @@ var CarSearchService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetCameraRequestStatus",
 			Handler:    _CarSearchService_SetCameraRequestStatus_Handler,
+		},
+		{
+			MethodName: "Watch",
+			Handler:    _CarSearchService_Watch_Handler,
+		},
+		{
+			MethodName: "Unwatch",
+			Handler:    _CarSearchService_Unwatch_Handler,
+		},
+		{
+			MethodName: "ListWatches",
+			Handler:    _CarSearchService_ListWatches_Handler,
+		},
+		{
+			MethodName: "MarkWatchSeen",
+			Handler:    _CarSearchService_MarkWatchSeen_Handler,
 		},
 		{
 			MethodName: "CreateApiToken",

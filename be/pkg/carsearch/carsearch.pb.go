@@ -4031,6 +4031,400 @@ func (x *IngestResponse) GetUploadsLeft() int32 {
 	return 0
 }
 
+type WatchRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Номер как есть: "А123ВС 777".
+	Plate         string `protobuf:"bytes,1,opt,name=plate,proto3" json:"plate,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WatchRequest) Reset() {
+	*x = WatchRequest{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[55]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WatchRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WatchRequest) ProtoMessage() {}
+
+func (x *WatchRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[55]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WatchRequest.ProtoReflect.Descriptor instead.
+func (*WatchRequest) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{55}
+}
+
+func (x *WatchRequest) GetPlate() string {
+	if x != nil {
+		return x.Plate
+	}
+	return ""
+}
+
+type WatchResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WatchResponse) Reset() {
+	*x = WatchResponse{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[56]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WatchResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WatchResponse) ProtoMessage() {}
+
+func (x *WatchResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[56]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WatchResponse.ProtoReflect.Descriptor instead.
+func (*WatchResponse) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{56}
+}
+
+type UnwatchRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plate         string                 `protobuf:"bytes,1,opt,name=plate,proto3" json:"plate,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnwatchRequest) Reset() {
+	*x = UnwatchRequest{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[57]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnwatchRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnwatchRequest) ProtoMessage() {}
+
+func (x *UnwatchRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[57]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnwatchRequest.ProtoReflect.Descriptor instead.
+func (*UnwatchRequest) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{57}
+}
+
+func (x *UnwatchRequest) GetPlate() string {
+	if x != nil {
+		return x.Plate
+	}
+	return ""
+}
+
+type UnwatchResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnwatchResponse) Reset() {
+	*x = UnwatchResponse{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[58]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnwatchResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnwatchResponse) ProtoMessage() {}
+
+func (x *UnwatchResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[58]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnwatchResponse.ProtoReflect.Descriptor instead.
+func (*UnwatchResponse) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{58}
+}
+
+type ListWatchesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListWatchesRequest) Reset() {
+	*x = ListWatchesRequest{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[59]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListWatchesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListWatchesRequest) ProtoMessage() {}
+
+func (x *ListWatchesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[59]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListWatchesRequest.ProtoReflect.Descriptor instead.
+func (*ListWatchesRequest) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{59}
+}
+
+// WatchedPlate — номер, на который подписан пользователь.
+type WatchedPlate struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Последняя фиксация номера (для отрисовки карточки); не задана, пока номер не появлялся.
+	Plate *PlateSighting `protobuf:"bytes,1,opt,name=plate,proto3" json:"plate,omitempty"`
+	// Сколько фиксаций появилось после последнего просмотра (MarkWatchSeen).
+	NewCount  int32                  `protobuf:"varint,2,opt,name=new_count,json=newCount,proto3" json:"new_count,omitempty"`
+	WatchedAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=watched_at,json=watchedAt,proto3" json:"watched_at,omitempty"`
+	// Номер подписки, как его ввели или видели.
+	PlateDisplay  string `protobuf:"bytes,4,opt,name=plate_display,json=plateDisplay,proto3" json:"plate_display,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WatchedPlate) Reset() {
+	*x = WatchedPlate{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[60]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WatchedPlate) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WatchedPlate) ProtoMessage() {}
+
+func (x *WatchedPlate) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[60]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WatchedPlate.ProtoReflect.Descriptor instead.
+func (*WatchedPlate) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{60}
+}
+
+func (x *WatchedPlate) GetPlate() *PlateSighting {
+	if x != nil {
+		return x.Plate
+	}
+	return nil
+}
+
+func (x *WatchedPlate) GetNewCount() int32 {
+	if x != nil {
+		return x.NewCount
+	}
+	return 0
+}
+
+func (x *WatchedPlate) GetWatchedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.WatchedAt
+	}
+	return nil
+}
+
+func (x *WatchedPlate) GetPlateDisplay() string {
+	if x != nil {
+		return x.PlateDisplay
+	}
+	return ""
+}
+
+type ListWatchesResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Сначала номера с самой свежей фиксацией.
+	Items         []*WatchedPlate `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListWatchesResponse) Reset() {
+	*x = ListWatchesResponse{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[61]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListWatchesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListWatchesResponse) ProtoMessage() {}
+
+func (x *ListWatchesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[61]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListWatchesResponse.ProtoReflect.Descriptor instead.
+func (*ListWatchesResponse) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{61}
+}
+
+func (x *ListWatchesResponse) GetItems() []*WatchedPlate {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+type MarkWatchSeenRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plate         string                 `protobuf:"bytes,1,opt,name=plate,proto3" json:"plate,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkWatchSeenRequest) Reset() {
+	*x = MarkWatchSeenRequest{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[62]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkWatchSeenRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkWatchSeenRequest) ProtoMessage() {}
+
+func (x *MarkWatchSeenRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[62]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkWatchSeenRequest.ProtoReflect.Descriptor instead.
+func (*MarkWatchSeenRequest) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{62}
+}
+
+func (x *MarkWatchSeenRequest) GetPlate() string {
+	if x != nil {
+		return x.Plate
+	}
+	return ""
+}
+
+type MarkWatchSeenResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkWatchSeenResponse) Reset() {
+	*x = MarkWatchSeenResponse{}
+	mi := &file_carsearch_carsearch_proto_msgTypes[63]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkWatchSeenResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkWatchSeenResponse) ProtoMessage() {}
+
+func (x *MarkWatchSeenResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_carsearch_carsearch_proto_msgTypes[63]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkWatchSeenResponse.ProtoReflect.Descriptor instead.
+func (*MarkWatchSeenResponse) Descriptor() ([]byte, []int) {
+	return file_carsearch_carsearch_proto_rawDescGZIP(), []int{63}
+}
+
 var File_carsearch_carsearch_proto protoreflect.FileDescriptor
 
 const file_carsearch_carsearch_proto_rawDesc = "" +
@@ -4331,7 +4725,25 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"candidates\x18\x02 \x03(\v2\x19.carsearch.PlateCandidateR\n" +
 	"candidates\x12&\n" +
 	"\fuploads_left\x18\x03 \x01(\x05H\x00R\vuploadsLeft\x88\x01\x01B\x0f\n" +
-	"\r_uploads_left*\x82\x01\n" +
+	"\r_uploads_left\"$\n" +
+	"\fWatchRequest\x12\x14\n" +
+	"\x05plate\x18\x01 \x01(\tR\x05plate\"\x0f\n" +
+	"\rWatchResponse\"&\n" +
+	"\x0eUnwatchRequest\x12\x14\n" +
+	"\x05plate\x18\x01 \x01(\tR\x05plate\"\x11\n" +
+	"\x0fUnwatchResponse\"\x14\n" +
+	"\x12ListWatchesRequest\"\xbb\x01\n" +
+	"\fWatchedPlate\x12.\n" +
+	"\x05plate\x18\x01 \x01(\v2\x18.carsearch.PlateSightingR\x05plate\x12\x1b\n" +
+	"\tnew_count\x18\x02 \x01(\x05R\bnewCount\x129\n" +
+	"\n" +
+	"watched_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\twatchedAt\x12#\n" +
+	"\rplate_display\x18\x04 \x01(\tR\fplateDisplay\"D\n" +
+	"\x13ListWatchesResponse\x12-\n" +
+	"\x05items\x18\x01 \x03(\v2\x17.carsearch.WatchedPlateR\x05items\",\n" +
+	"\x14MarkWatchSeenRequest\x12\x14\n" +
+	"\x05plate\x18\x01 \x01(\tR\x05plate\"\x17\n" +
+	"\x15MarkWatchSeenResponse*\x82\x01\n" +
 	"\tPlateType\x12\x16\n" +
 	"\x12PLATE_TYPE_DEFAULT\x10\x00\x12\x11\n" +
 	"\rPLATE_TYPE_RU\x10\x01\x12\x11\n" +
@@ -4367,7 +4779,7 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\x19CAMERA_REQUEST_STATUS_NEW\x10\x01\x12\"\n" +
 	"\x1eCAMERA_REQUEST_STATUS_APPROVED\x10\x02\x12\"\n" +
 	"\x1eCAMERA_REQUEST_STATUS_REJECTED\x10\x03\x12#\n" +
-	"\x1fCAMERA_REQUEST_STATUS_INSTALLED\x10\x042\xb8\x10\n" +
+	"\x1fCAMERA_REQUEST_STATUS_INSTALLED\x10\x042\xd8\x12\n" +
 	"\x10CarSearchService\x12=\n" +
 	"\x06Search\x12\x18.carsearch.SearchRequest\x1a\x19.carsearch.SearchResponse\x124\n" +
 	"\x03Get\x12\x15.carsearch.GetRequest\x1a\x16.carsearch.GetResponse\x12@\n" +
@@ -4389,7 +4801,11 @@ const file_carsearch_carsearch_proto_rawDesc = "" +
 	"\x13SubmitCameraRequest\x12%.carsearch.SubmitCameraRequestRequest\x1a\x18.carsearch.CameraRequest\x12a\n" +
 	"\x12ListCameraRequests\x12$.carsearch.ListCameraRequestsRequest\x1a%.carsearch.ListCameraRequestsResponse\x12R\n" +
 	"\x11VoteCameraRequest\x12#.carsearch.VoteCameraRequestRequest\x1a\x18.carsearch.CameraRequest\x12\\\n" +
-	"\x16SetCameraRequestStatus\x12(.carsearch.SetCameraRequestStatusRequest\x1a\x18.carsearch.CameraRequest\x12U\n" +
+	"\x16SetCameraRequestStatus\x12(.carsearch.SetCameraRequestStatusRequest\x1a\x18.carsearch.CameraRequest\x12:\n" +
+	"\x05Watch\x12\x17.carsearch.WatchRequest\x1a\x18.carsearch.WatchResponse\x12@\n" +
+	"\aUnwatch\x12\x19.carsearch.UnwatchRequest\x1a\x1a.carsearch.UnwatchResponse\x12L\n" +
+	"\vListWatches\x12\x1d.carsearch.ListWatchesRequest\x1a\x1e.carsearch.ListWatchesResponse\x12R\n" +
+	"\rMarkWatchSeen\x12\x1f.carsearch.MarkWatchSeenRequest\x1a .carsearch.MarkWatchSeenResponse\x12U\n" +
 	"\x0eCreateApiToken\x12 .carsearch.CreateApiTokenRequest\x1a!.carsearch.CreateApiTokenResponse\x12R\n" +
 	"\rListApiTokens\x12\x1f.carsearch.ListApiTokensRequest\x1a .carsearch.ListApiTokensResponse\x12G\n" +
 	"\x0eRevokeApiToken\x12 .carsearch.RevokeApiTokenRequest\x1a\x13.carsearch.ApiToken\x12U\n" +
@@ -4410,7 +4826,7 @@ func file_carsearch_carsearch_proto_rawDescGZIP() []byte {
 }
 
 var file_carsearch_carsearch_proto_enumTypes = make([]protoimpl.EnumInfo, 7)
-var file_carsearch_carsearch_proto_msgTypes = make([]protoimpl.MessageInfo, 55)
+var file_carsearch_carsearch_proto_msgTypes = make([]protoimpl.MessageInfo, 64)
 var file_carsearch_carsearch_proto_goTypes = []any{
 	(PlateType)(0),                        // 0: carsearch.PlateType
 	(ClarificationStatus)(0),              // 1: carsearch.ClarificationStatus
@@ -4474,13 +4890,22 @@ var file_carsearch_carsearch_proto_goTypes = []any{
 	(*IngestRequest)(nil),                 // 59: carsearch.IngestRequest
 	(*PlateCandidate)(nil),                // 60: carsearch.PlateCandidate
 	(*IngestResponse)(nil),                // 61: carsearch.IngestResponse
-	(*timestamppb.Timestamp)(nil),         // 62: google.protobuf.Timestamp
+	(*WatchRequest)(nil),                  // 62: carsearch.WatchRequest
+	(*WatchResponse)(nil),                 // 63: carsearch.WatchResponse
+	(*UnwatchRequest)(nil),                // 64: carsearch.UnwatchRequest
+	(*UnwatchResponse)(nil),               // 65: carsearch.UnwatchResponse
+	(*ListWatchesRequest)(nil),            // 66: carsearch.ListWatchesRequest
+	(*WatchedPlate)(nil),                  // 67: carsearch.WatchedPlate
+	(*ListWatchesResponse)(nil),           // 68: carsearch.ListWatchesResponse
+	(*MarkWatchSeenRequest)(nil),          // 69: carsearch.MarkWatchSeenRequest
+	(*MarkWatchSeenResponse)(nil),         // 70: carsearch.MarkWatchSeenResponse
+	(*timestamppb.Timestamp)(nil),         // 71: google.protobuf.Timestamp
 }
 var file_carsearch_carsearch_proto_depIdxs = []int32{
-	62, // 0: carsearch.PlateSighting.created_at:type_name -> google.protobuf.Timestamp
+	71, // 0: carsearch.PlateSighting.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 1: carsearch.PlateSighting.plate_type:type_name -> carsearch.PlateType
-	62, // 2: carsearch.SearchRequest.since:type_name -> google.protobuf.Timestamp
-	62, // 3: carsearch.SearchRequest.until:type_name -> google.protobuf.Timestamp
+	71, // 2: carsearch.SearchRequest.since:type_name -> google.protobuf.Timestamp
+	71, // 3: carsearch.SearchRequest.until:type_name -> google.protobuf.Timestamp
 	7,  // 4: carsearch.SearchResponse.items:type_name -> carsearch.PlateSighting
 	7,  // 5: carsearch.SearchResponse.suggestions:type_name -> carsearch.PlateSighting
 	7,  // 6: carsearch.GetResponse.items:type_name -> carsearch.PlateSighting
@@ -4490,14 +4915,14 @@ var file_carsearch_carsearch_proto_depIdxs = []int32{
 	15, // 10: carsearch.PlateClarification.items:type_name -> carsearch.Clarification
 	7,  // 11: carsearch.SeeAlsoResponse.items:type_name -> carsearch.PlateSighting
 	1,  // 12: carsearch.Clarification.status:type_name -> carsearch.ClarificationStatus
-	62, // 13: carsearch.Clarification.created_at:type_name -> google.protobuf.Timestamp
+	71, // 13: carsearch.Clarification.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 14: carsearch.Clarification.plate_type:type_name -> carsearch.PlateType
 	7,  // 15: carsearch.Clarification.sighting:type_name -> carsearch.PlateSighting
 	0,  // 16: carsearch.ClarifyRequest.plate_type:type_name -> carsearch.PlateType
 	15, // 17: carsearch.ClarifyResponse.clarification:type_name -> carsearch.Clarification
 	2,  // 18: carsearch.Complaint.reason:type_name -> carsearch.ComplaintReason
 	3,  // 19: carsearch.Complaint.status:type_name -> carsearch.ComplaintStatus
-	62, // 20: carsearch.Complaint.created_at:type_name -> google.protobuf.Timestamp
+	71, // 20: carsearch.Complaint.created_at:type_name -> google.protobuf.Timestamp
 	7,  // 21: carsearch.Complaint.sighting:type_name -> carsearch.PlateSighting
 	2,  // 22: carsearch.ComplainRequest.reason:type_name -> carsearch.ComplaintReason
 	3,  // 23: carsearch.ListComplaintsRequest.status:type_name -> carsearch.ComplaintStatus
@@ -4506,95 +4931,106 @@ var file_carsearch_carsearch_proto_depIdxs = []int32{
 	1,  // 26: carsearch.ListClarificationsRequest.status:type_name -> carsearch.ClarificationStatus
 	15, // 27: carsearch.ListClarificationsResponse.items:type_name -> carsearch.Clarification
 	4,  // 28: carsearch.User.plan:type_name -> carsearch.UserPlan
-	62, // 29: carsearch.User.pro_until:type_name -> google.protobuf.Timestamp
-	62, // 30: carsearch.User.created_at:type_name -> google.protobuf.Timestamp
+	71, // 29: carsearch.User.pro_until:type_name -> google.protobuf.Timestamp
+	71, // 30: carsearch.User.created_at:type_name -> google.protobuf.Timestamp
 	28, // 31: carsearch.MeResponse.user:type_name -> carsearch.User
 	28, // 32: carsearch.RegisterResponse.user:type_name -> carsearch.User
 	4,  // 33: carsearch.PlanInfo.plan:type_name -> carsearch.UserPlan
 	34, // 34: carsearch.PlansResponse.items:type_name -> carsearch.PlanInfo
 	4,  // 35: carsearch.Payment.plan:type_name -> carsearch.UserPlan
 	5,  // 36: carsearch.Payment.status:type_name -> carsearch.PaymentStatus
-	62, // 37: carsearch.Payment.created_at:type_name -> google.protobuf.Timestamp
-	62, // 38: carsearch.Payment.confirmed_at:type_name -> google.protobuf.Timestamp
+	71, // 37: carsearch.Payment.created_at:type_name -> google.protobuf.Timestamp
+	71, // 38: carsearch.Payment.confirmed_at:type_name -> google.protobuf.Timestamp
 	4,  // 39: carsearch.CreatePaymentRequest.plan:type_name -> carsearch.UserPlan
 	36, // 40: carsearch.CreatePaymentResponse.payment:type_name -> carsearch.Payment
 	36, // 41: carsearch.ListMyPaymentsResponse.items:type_name -> carsearch.Payment
 	6,  // 42: carsearch.CameraRequest.status:type_name -> carsearch.CameraRequestStatus
-	62, // 43: carsearch.CameraRequest.created_at:type_name -> google.protobuf.Timestamp
+	71, // 43: carsearch.CameraRequest.created_at:type_name -> google.protobuf.Timestamp
 	44, // 44: carsearch.ListCameraRequestsRequest.bbox:type_name -> carsearch.GeoBox
 	6,  // 45: carsearch.ListCameraRequestsRequest.status:type_name -> carsearch.CameraRequestStatus
 	42, // 46: carsearch.ListCameraRequestsResponse.items:type_name -> carsearch.CameraRequest
 	6,  // 47: carsearch.SetCameraRequestStatusRequest.status:type_name -> carsearch.CameraRequestStatus
-	62, // 48: carsearch.ApiToken.created_at:type_name -> google.protobuf.Timestamp
-	62, // 49: carsearch.ApiToken.last_used_at:type_name -> google.protobuf.Timestamp
+	71, // 48: carsearch.ApiToken.created_at:type_name -> google.protobuf.Timestamp
+	71, // 49: carsearch.ApiToken.last_used_at:type_name -> google.protobuf.Timestamp
 	49, // 50: carsearch.CreateApiTokenResponse.info:type_name -> carsearch.ApiToken
 	49, // 51: carsearch.ListApiTokensResponse.items:type_name -> carsearch.ApiToken
-	62, // 52: carsearch.PlateView.created_at:type_name -> google.protobuf.Timestamp
+	71, // 52: carsearch.PlateView.created_at:type_name -> google.protobuf.Timestamp
 	7,  // 53: carsearch.PlateView.sighting:type_name -> carsearch.PlateSighting
 	55, // 54: carsearch.ListPlateViewsResponse.items:type_name -> carsearch.PlateView
-	62, // 55: carsearch.IngestRequest.taken_at:type_name -> google.protobuf.Timestamp
+	71, // 55: carsearch.IngestRequest.taken_at:type_name -> google.protobuf.Timestamp
 	0,  // 56: carsearch.PlateCandidate.plate_type:type_name -> carsearch.PlateType
 	7,  // 57: carsearch.IngestResponse.sighting:type_name -> carsearch.PlateSighting
 	60, // 58: carsearch.IngestResponse.candidates:type_name -> carsearch.PlateCandidate
-	8,  // 59: carsearch.CarSearchService.Search:input_type -> carsearch.SearchRequest
-	10, // 60: carsearch.CarSearchService.Get:input_type -> carsearch.GetRequest
-	13, // 61: carsearch.CarSearchService.SeeAlso:input_type -> carsearch.SeeAlsoRequest
-	16, // 62: carsearch.CarSearchService.Clarify:input_type -> carsearch.ClarifyRequest
-	19, // 63: carsearch.CarSearchService.Complain:input_type -> carsearch.ComplainRequest
-	20, // 64: carsearch.CarSearchService.ListComplaints:input_type -> carsearch.ListComplaintsRequest
-	22, // 65: carsearch.CarSearchService.ResolveComplaint:input_type -> carsearch.ResolveComplaintRequest
-	23, // 66: carsearch.CarSearchService.SetClarificationStatus:input_type -> carsearch.SetClarificationStatusRequest
-	24, // 67: carsearch.CarSearchService.HideSighting:input_type -> carsearch.HideSightingRequest
-	25, // 68: carsearch.CarSearchService.RestoreSightingPhoto:input_type -> carsearch.RestoreSightingPhotoRequest
-	26, // 69: carsearch.CarSearchService.ListClarifications:input_type -> carsearch.ListClarificationsRequest
-	29, // 70: carsearch.CarSearchService.Me:input_type -> carsearch.MeRequest
-	31, // 71: carsearch.CarSearchService.Register:input_type -> carsearch.RegisterRequest
-	33, // 72: carsearch.CarSearchService.Plans:input_type -> carsearch.PlansRequest
-	37, // 73: carsearch.CarSearchService.CreatePayment:input_type -> carsearch.CreatePaymentRequest
-	39, // 74: carsearch.CarSearchService.ConfirmMockPayment:input_type -> carsearch.ConfirmMockPaymentRequest
-	40, // 75: carsearch.CarSearchService.ListMyPayments:input_type -> carsearch.ListMyPaymentsRequest
-	43, // 76: carsearch.CarSearchService.SubmitCameraRequest:input_type -> carsearch.SubmitCameraRequestRequest
-	45, // 77: carsearch.CarSearchService.ListCameraRequests:input_type -> carsearch.ListCameraRequestsRequest
-	47, // 78: carsearch.CarSearchService.VoteCameraRequest:input_type -> carsearch.VoteCameraRequestRequest
-	48, // 79: carsearch.CarSearchService.SetCameraRequestStatus:input_type -> carsearch.SetCameraRequestStatusRequest
-	50, // 80: carsearch.CarSearchService.CreateApiToken:input_type -> carsearch.CreateApiTokenRequest
-	52, // 81: carsearch.CarSearchService.ListApiTokens:input_type -> carsearch.ListApiTokensRequest
-	54, // 82: carsearch.CarSearchService.RevokeApiToken:input_type -> carsearch.RevokeApiTokenRequest
-	56, // 83: carsearch.CarSearchService.ListPlateViews:input_type -> carsearch.ListPlateViewsRequest
-	58, // 84: carsearch.CarSearchService.TokenInfo:input_type -> carsearch.TokenInfoRequest
-	59, // 85: carsearch.CarSearchService.Ingest:input_type -> carsearch.IngestRequest
-	9,  // 86: carsearch.CarSearchService.Search:output_type -> carsearch.SearchResponse
-	11, // 87: carsearch.CarSearchService.Get:output_type -> carsearch.GetResponse
-	14, // 88: carsearch.CarSearchService.SeeAlso:output_type -> carsearch.SeeAlsoResponse
-	17, // 89: carsearch.CarSearchService.Clarify:output_type -> carsearch.ClarifyResponse
-	18, // 90: carsearch.CarSearchService.Complain:output_type -> carsearch.Complaint
-	21, // 91: carsearch.CarSearchService.ListComplaints:output_type -> carsearch.ListComplaintsResponse
-	18, // 92: carsearch.CarSearchService.ResolveComplaint:output_type -> carsearch.Complaint
-	15, // 93: carsearch.CarSearchService.SetClarificationStatus:output_type -> carsearch.Clarification
-	7,  // 94: carsearch.CarSearchService.HideSighting:output_type -> carsearch.PlateSighting
-	7,  // 95: carsearch.CarSearchService.RestoreSightingPhoto:output_type -> carsearch.PlateSighting
-	27, // 96: carsearch.CarSearchService.ListClarifications:output_type -> carsearch.ListClarificationsResponse
-	30, // 97: carsearch.CarSearchService.Me:output_type -> carsearch.MeResponse
-	32, // 98: carsearch.CarSearchService.Register:output_type -> carsearch.RegisterResponse
-	35, // 99: carsearch.CarSearchService.Plans:output_type -> carsearch.PlansResponse
-	38, // 100: carsearch.CarSearchService.CreatePayment:output_type -> carsearch.CreatePaymentResponse
-	36, // 101: carsearch.CarSearchService.ConfirmMockPayment:output_type -> carsearch.Payment
-	41, // 102: carsearch.CarSearchService.ListMyPayments:output_type -> carsearch.ListMyPaymentsResponse
-	42, // 103: carsearch.CarSearchService.SubmitCameraRequest:output_type -> carsearch.CameraRequest
-	46, // 104: carsearch.CarSearchService.ListCameraRequests:output_type -> carsearch.ListCameraRequestsResponse
-	42, // 105: carsearch.CarSearchService.VoteCameraRequest:output_type -> carsearch.CameraRequest
-	42, // 106: carsearch.CarSearchService.SetCameraRequestStatus:output_type -> carsearch.CameraRequest
-	51, // 107: carsearch.CarSearchService.CreateApiToken:output_type -> carsearch.CreateApiTokenResponse
-	53, // 108: carsearch.CarSearchService.ListApiTokens:output_type -> carsearch.ListApiTokensResponse
-	49, // 109: carsearch.CarSearchService.RevokeApiToken:output_type -> carsearch.ApiToken
-	57, // 110: carsearch.CarSearchService.ListPlateViews:output_type -> carsearch.ListPlateViewsResponse
-	49, // 111: carsearch.CarSearchService.TokenInfo:output_type -> carsearch.ApiToken
-	61, // 112: carsearch.CarSearchService.Ingest:output_type -> carsearch.IngestResponse
-	86, // [86:113] is the sub-list for method output_type
-	59, // [59:86] is the sub-list for method input_type
-	59, // [59:59] is the sub-list for extension type_name
-	59, // [59:59] is the sub-list for extension extendee
-	0,  // [0:59] is the sub-list for field type_name
+	7,  // 59: carsearch.WatchedPlate.plate:type_name -> carsearch.PlateSighting
+	71, // 60: carsearch.WatchedPlate.watched_at:type_name -> google.protobuf.Timestamp
+	67, // 61: carsearch.ListWatchesResponse.items:type_name -> carsearch.WatchedPlate
+	8,  // 62: carsearch.CarSearchService.Search:input_type -> carsearch.SearchRequest
+	10, // 63: carsearch.CarSearchService.Get:input_type -> carsearch.GetRequest
+	13, // 64: carsearch.CarSearchService.SeeAlso:input_type -> carsearch.SeeAlsoRequest
+	16, // 65: carsearch.CarSearchService.Clarify:input_type -> carsearch.ClarifyRequest
+	19, // 66: carsearch.CarSearchService.Complain:input_type -> carsearch.ComplainRequest
+	20, // 67: carsearch.CarSearchService.ListComplaints:input_type -> carsearch.ListComplaintsRequest
+	22, // 68: carsearch.CarSearchService.ResolveComplaint:input_type -> carsearch.ResolveComplaintRequest
+	23, // 69: carsearch.CarSearchService.SetClarificationStatus:input_type -> carsearch.SetClarificationStatusRequest
+	24, // 70: carsearch.CarSearchService.HideSighting:input_type -> carsearch.HideSightingRequest
+	25, // 71: carsearch.CarSearchService.RestoreSightingPhoto:input_type -> carsearch.RestoreSightingPhotoRequest
+	26, // 72: carsearch.CarSearchService.ListClarifications:input_type -> carsearch.ListClarificationsRequest
+	29, // 73: carsearch.CarSearchService.Me:input_type -> carsearch.MeRequest
+	31, // 74: carsearch.CarSearchService.Register:input_type -> carsearch.RegisterRequest
+	33, // 75: carsearch.CarSearchService.Plans:input_type -> carsearch.PlansRequest
+	37, // 76: carsearch.CarSearchService.CreatePayment:input_type -> carsearch.CreatePaymentRequest
+	39, // 77: carsearch.CarSearchService.ConfirmMockPayment:input_type -> carsearch.ConfirmMockPaymentRequest
+	40, // 78: carsearch.CarSearchService.ListMyPayments:input_type -> carsearch.ListMyPaymentsRequest
+	43, // 79: carsearch.CarSearchService.SubmitCameraRequest:input_type -> carsearch.SubmitCameraRequestRequest
+	45, // 80: carsearch.CarSearchService.ListCameraRequests:input_type -> carsearch.ListCameraRequestsRequest
+	47, // 81: carsearch.CarSearchService.VoteCameraRequest:input_type -> carsearch.VoteCameraRequestRequest
+	48, // 82: carsearch.CarSearchService.SetCameraRequestStatus:input_type -> carsearch.SetCameraRequestStatusRequest
+	62, // 83: carsearch.CarSearchService.Watch:input_type -> carsearch.WatchRequest
+	64, // 84: carsearch.CarSearchService.Unwatch:input_type -> carsearch.UnwatchRequest
+	66, // 85: carsearch.CarSearchService.ListWatches:input_type -> carsearch.ListWatchesRequest
+	69, // 86: carsearch.CarSearchService.MarkWatchSeen:input_type -> carsearch.MarkWatchSeenRequest
+	50, // 87: carsearch.CarSearchService.CreateApiToken:input_type -> carsearch.CreateApiTokenRequest
+	52, // 88: carsearch.CarSearchService.ListApiTokens:input_type -> carsearch.ListApiTokensRequest
+	54, // 89: carsearch.CarSearchService.RevokeApiToken:input_type -> carsearch.RevokeApiTokenRequest
+	56, // 90: carsearch.CarSearchService.ListPlateViews:input_type -> carsearch.ListPlateViewsRequest
+	58, // 91: carsearch.CarSearchService.TokenInfo:input_type -> carsearch.TokenInfoRequest
+	59, // 92: carsearch.CarSearchService.Ingest:input_type -> carsearch.IngestRequest
+	9,  // 93: carsearch.CarSearchService.Search:output_type -> carsearch.SearchResponse
+	11, // 94: carsearch.CarSearchService.Get:output_type -> carsearch.GetResponse
+	14, // 95: carsearch.CarSearchService.SeeAlso:output_type -> carsearch.SeeAlsoResponse
+	17, // 96: carsearch.CarSearchService.Clarify:output_type -> carsearch.ClarifyResponse
+	18, // 97: carsearch.CarSearchService.Complain:output_type -> carsearch.Complaint
+	21, // 98: carsearch.CarSearchService.ListComplaints:output_type -> carsearch.ListComplaintsResponse
+	18, // 99: carsearch.CarSearchService.ResolveComplaint:output_type -> carsearch.Complaint
+	15, // 100: carsearch.CarSearchService.SetClarificationStatus:output_type -> carsearch.Clarification
+	7,  // 101: carsearch.CarSearchService.HideSighting:output_type -> carsearch.PlateSighting
+	7,  // 102: carsearch.CarSearchService.RestoreSightingPhoto:output_type -> carsearch.PlateSighting
+	27, // 103: carsearch.CarSearchService.ListClarifications:output_type -> carsearch.ListClarificationsResponse
+	30, // 104: carsearch.CarSearchService.Me:output_type -> carsearch.MeResponse
+	32, // 105: carsearch.CarSearchService.Register:output_type -> carsearch.RegisterResponse
+	35, // 106: carsearch.CarSearchService.Plans:output_type -> carsearch.PlansResponse
+	38, // 107: carsearch.CarSearchService.CreatePayment:output_type -> carsearch.CreatePaymentResponse
+	36, // 108: carsearch.CarSearchService.ConfirmMockPayment:output_type -> carsearch.Payment
+	41, // 109: carsearch.CarSearchService.ListMyPayments:output_type -> carsearch.ListMyPaymentsResponse
+	42, // 110: carsearch.CarSearchService.SubmitCameraRequest:output_type -> carsearch.CameraRequest
+	46, // 111: carsearch.CarSearchService.ListCameraRequests:output_type -> carsearch.ListCameraRequestsResponse
+	42, // 112: carsearch.CarSearchService.VoteCameraRequest:output_type -> carsearch.CameraRequest
+	42, // 113: carsearch.CarSearchService.SetCameraRequestStatus:output_type -> carsearch.CameraRequest
+	63, // 114: carsearch.CarSearchService.Watch:output_type -> carsearch.WatchResponse
+	65, // 115: carsearch.CarSearchService.Unwatch:output_type -> carsearch.UnwatchResponse
+	68, // 116: carsearch.CarSearchService.ListWatches:output_type -> carsearch.ListWatchesResponse
+	70, // 117: carsearch.CarSearchService.MarkWatchSeen:output_type -> carsearch.MarkWatchSeenResponse
+	51, // 118: carsearch.CarSearchService.CreateApiToken:output_type -> carsearch.CreateApiTokenResponse
+	53, // 119: carsearch.CarSearchService.ListApiTokens:output_type -> carsearch.ListApiTokensResponse
+	49, // 120: carsearch.CarSearchService.RevokeApiToken:output_type -> carsearch.ApiToken
+	57, // 121: carsearch.CarSearchService.ListPlateViews:output_type -> carsearch.ListPlateViewsResponse
+	49, // 122: carsearch.CarSearchService.TokenInfo:output_type -> carsearch.ApiToken
+	61, // 123: carsearch.CarSearchService.Ingest:output_type -> carsearch.IngestResponse
+	93, // [93:124] is the sub-list for method output_type
+	62, // [62:93] is the sub-list for method input_type
+	62, // [62:62] is the sub-list for extension type_name
+	62, // [62:62] is the sub-list for extension extendee
+	0,  // [0:62] is the sub-list for field type_name
 }
 
 func init() { file_carsearch_carsearch_proto_init() }
@@ -4618,7 +5054,7 @@ func file_carsearch_carsearch_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_carsearch_carsearch_proto_rawDesc), len(file_carsearch_carsearch_proto_rawDesc)),
 			NumEnums:      7,
-			NumMessages:   55,
+			NumMessages:   64,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

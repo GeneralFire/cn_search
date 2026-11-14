@@ -93,6 +93,23 @@ service CarSearchService {
   // SetCameraRequestStatus — сменить статус заявки. Нужен заголовок admin-token.
   rpc SetCameraRequestStatus(SetCameraRequestStatusRequest) returns (CameraRequest);
 
+  // ---------------- Подписки на номера («Следить»)
+
+  // Watch — подписаться на появление номера plate (он может ещё не встречаться в базе). Номера сравниваются
+  // по ключу поиска (кириллица/латиница, О/0, регистр, пробелы). Повторная подписка — без ошибки. Нужен токен.
+  rpc Watch(WatchRequest) returns (WatchResponse);
+
+  // Unwatch — отписаться от номера. Нужен токен пользователя.
+  rpc Unwatch(UnwatchRequest) returns (UnwatchResponse);
+
+  // ListWatches — подписки пользователя: последняя фиксация номера (нет — ещё не появлялся) и число новых.
+  // Нужен токен пользователя.
+  rpc ListWatches(ListWatchesRequest) returns (ListWatchesResponse);
+
+  // MarkWatchSeen — отметить, что пользователь увидел все фиксации номера plate (сбрасывает new_count).
+  // Нужен токен пользователя; нет подписки — NOT_FOUND.
+  rpc MarkWatchSeen(MarkWatchSeenRequest) returns (MarkWatchSeenResponse);
+
   // ---------------- API-токены и журнал просмотров (админка, вкладки «Токены» и «Просмотры»)
 
   // CreateApiToken — новый API-токен на requests запросов (админ). Токен в открытом виде
@@ -671,3 +688,40 @@ message IngestResponse {
   // Сколько загрузок ещё можно за последние 24 часа (тариф Free); не задано — без ограничений (Pro).
   optional int32 uploads_left = 3;
 }
+
+message WatchRequest {
+  // Номер как есть: "А123ВС 777".
+  string plate = 1;
+}
+
+message WatchResponse {}
+
+message UnwatchRequest {
+  string plate = 1;
+}
+
+message UnwatchResponse {}
+
+message ListWatchesRequest {}
+
+// WatchedPlate — номер, на который подписан пользователь.
+message WatchedPlate {
+  // Последняя фиксация номера (для отрисовки карточки); не задана, пока номер не появлялся.
+  PlateSighting plate = 1;
+  // Сколько фиксаций появилось после последнего просмотра (MarkWatchSeen).
+  int32 new_count = 2;
+  google.protobuf.Timestamp watched_at = 3;
+  // Номер подписки, как его ввели или видели.
+  string plate_display = 4;
+}
+
+message ListWatchesResponse {
+  // Сначала номера с самой свежей фиксацией.
+  repeated WatchedPlate items = 1;
+}
+
+message MarkWatchSeenRequest {
+  string plate = 1;
+}
+
+message MarkWatchSeenResponse {}

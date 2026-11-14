@@ -6,6 +6,7 @@ package usecase
 //go:generate minimock -i complaintsRepository -o ./mocks/complaints_repository_mock.go -n ComplaintsRepositoryMock -p mocks
 //go:generate minimock -i adminRepository -o ./mocks/admin_repository_mock.go -n AdminRepositoryMock -p mocks
 //go:generate minimock -i cameraRequestsRepository -o ./mocks/camera_requests_repository_mock.go -n CameraRequestsRepositoryMock -p mocks
+//go:generate minimock -i watchesRepository -o ./mocks/watches_repository_mock.go -n WatchesRepositoryMock -p mocks
 //go:generate minimock -i apiTokensRepository -o ./mocks/api_tokens_repository_mock.go -n ApiTokensRepositoryMock -p mocks
 //go:generate minimock -i ingestRepository -o ./mocks/ingest_repository_mock.go -n IngestRepositoryMock -p mocks
 //go:generate minimock -i recognizer -o ./mocks/recognizer_mock.go -n RecognizerMock -p mocks
@@ -73,6 +74,14 @@ type cameraRequestsRepository interface {
 	ListCameraRequests(ctx context.Context, tx db.Executor, o models.ListCameraRequestsOpts) (models.CameraRequestsPage, error)
 	VoteCameraRequest(ctx context.Context, tx db.Executor, o models.VoteCameraRequestOpts) (models.CameraRequest, error)
 	SetCameraRequestStatus(ctx context.Context, tx db.Executor, id string, st models.CameraRequestStatus) (models.CameraRequest, error)
+}
+
+// watchesRepository — подписки на номера (реализация — repository.New()).
+type watchesRepository interface {
+	CreateWatch(ctx context.Context, tx db.Executor, userID, plate string) error
+	DeleteWatch(ctx context.Context, tx db.Executor, userID, plate string) error
+	ListWatches(ctx context.Context, tx db.Executor, o models.ListWatchesOpts) ([]models.Watch, error)
+	MarkWatchSeen(ctx context.Context, tx db.Executor, userID, plate string) error
 }
 
 // apiTokensRepository — API-токены и журнал открытий страниц номеров (реализация — repository.New()).

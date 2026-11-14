@@ -22,6 +22,7 @@ import { mountHomeAdmin, refreshHomeAdmin } from "./adminpanels";
 import {
   flagHtml, gridColumns, homeMarket, marketName, setTabInUrl, tabFromUrl, tabsHtml, visibleTabs, type Market,
 } from "./home";
+import { bindEmptyWatch, emptyWatchHtml, migrateGuestWatches, mountWatchStrip } from "./watch";
 import { activeCount, filtersRequest, mountFilters } from "./filters";
 import { registerPwa } from "./pwa";
 
@@ -64,6 +65,7 @@ app.innerHTML = `
 
   <main class="content">
     <div class="filters" id="filters"></div>
+    <section class="wl" aria-labelledby="wl-title" hidden></section>
     <section class="fy" aria-labelledby="fy-title" hidden>
       <div class="fy__head">
         <h2 class="fy__title" id="fy-title">${flagHtml(homeMarket())}${t("homeTabs.forYou")} · <span class="fy__market">${escapeHtml(marketName(homeMarket()))}</span></h2>
@@ -108,6 +110,11 @@ const $moreInfo = app.querySelector<HTMLElement>(".more__info")!;
 
 mountSettings(app.querySelector<HTMLElement>(".hero__logo")!);
 
+// Полоса «Отслеживаемые» (watch.ts); гостевые подписки после входа переносятся на бэк.
+const $wl = app.querySelector<HTMLElement>(".wl")!;
+const refreshWatches = mountWatchStrip($wl);
+void migrateGuestWatches().then(refreshWatches);
+
 // Фильтры выдачи (filters.ts): любое изменение — новая выдача.
 const filters = mountFilters(app.querySelector<HTMLElement>("#filters")!, () => {
   clearTimeout(debounce);
@@ -142,6 +149,7 @@ function render(): void {
   const shown = state.cars.size + state.skip;
   const home = !hasQuery();
   // «Для вас» скрыт, если пуст; при его ошибке — виден, пока лента не упала тоже (одна ошибка на экран).
+  $wl.classList.toggle("is-off", !home); // полоса — только на главной без запроса
   $fy.hidden = !home || (forYou.cars.length === 0 && !forYou.loading && !(forYou.failed && !state.failed));
   $tabs.hidden = !home;
   $title.textContent = home ? marketName(state.tab) : t("results.title");
@@ -242,7 +250,8 @@ const filtersHint = (home: boolean): string =>
 
 function renderEmpty(suggestions: Car[] = []): void {
   if (hasQuery()) {
-    $grid.innerHTML = emptyStateHtml(t("empty.title"), t("empty.hint"), filtersHint(false) + suggestionsHtml(suggestions));
+    $grid.innerHTML = emptyStateHtml(t("empty.title"), t("empty.hint"), filtersHint(false) + suggestionsHtml(suggestions) + emptyWatchHtml($plate.value));
+    void bindEmptyWatch($grid); // «подписаться на появление» (watch.ts)
   } else if (state.skip > 0) {
     $grid.innerHTML = `<p class="feed__note">${t("homeTabs.allAbove")}</p>`;
   } else {
@@ -512,6 +521,7 @@ onRoute((route) => {
   $viewSearch.hidden = false;
   document.title = t("app.title");
   void refreshHomeAdmin();
+  void refreshWatches(); // счётчики новых могли измениться
   if (!searchStarted) {
     searchStarted = true;
     newSearch();

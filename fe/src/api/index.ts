@@ -814,3 +814,37 @@ function blobToBase64(b: Blob): Promise<string> {
     r.readAsDataURL(b);
   });
 }
+
+// ---------------------------------------------------------------- подписки на номера (watch.ts); нужен вход
+
+/** Подписка на номер. car — последняя фиксация номера; null — номера ещё нет («ждём появления»). */
+export interface WatchedPlate {
+  plate: string;
+  car: Car | null;
+  newCount: number;
+  watchedAt: string;
+}
+
+/** Подписаться на появление номера (он может ещё не встречаться в базе). */
+export async function watchPlate(plate: string): Promise<void> {
+  await call(() => api.carsearchCarSearchService.carSearchServiceWatch({ plate }));
+}
+
+export async function unwatchPlate(plate: string): Promise<void> {
+  await call(() => api.carsearchCarSearchService.carSearchServiceUnwatch({ plate }));
+}
+
+export async function listWatches(signal?: AbortSignal): Promise<WatchedPlate[]> {
+  const d = await call(() => api.carsearchCarSearchService.carSearchServiceListWatches({}, { signal }));
+  return (d.items ?? []).map((w) => ({
+    plate: w.plateDisplay ?? "",
+    car: w.plate ? toCar(w.plate) : null,
+    newCount: w.newCount ?? 0,
+    watchedAt: w.watchedAt ?? "",
+  }));
+}
+
+/** Пользователь увидел все фиксации номера (сбрасывает счётчик новых). */
+export async function markWatchSeen(plate: string): Promise<void> {
+  await call(() => api.carsearchCarSearchService.carSearchServiceMarkWatchSeen({ plate }));
+}

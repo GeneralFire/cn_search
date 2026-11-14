@@ -435,4 +435,15 @@ export const ru = {
   // Адрес по координатам на странице заявки на камеру (geocode.ts).
   "cameras.addressLoading": "определяем адрес…",
   "cameras.osmCredit": "Адрес: © OpenStreetMap contributors",
+
+  // Подписки на номера (watch.ts).
+  "watch.watch": "Следить",
+  "watch.unwatch": "Не следить",
+  "watch.title": "Отслеживаемые",
+  "watch.hint": "Номера, на которые вы подписаны",
+  "watch.new": "+{n} новых",
+  "watch.waiting": "Ждём появления",
+  "watch.notFoundSubscribe": "Номер не найден — подписаться на появление",
+  "watch.subscribed": "Вы подписаны на «{plate}» — сообщим, когда номер появится",
+  "watch.newTitle": "Новых фиксаций: {n}",
 } as const;

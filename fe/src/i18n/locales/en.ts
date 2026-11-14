@@ -435,4 +435,15 @@ export const en: Dict = {
   // Address from coordinates on the camera request page (geocode.ts).
   "cameras.addressLoading": "looking up address…",
   "cameras.osmCredit": "Address: © OpenStreetMap contributors",
+
+  // Подписки на номера (watch.ts).
+  "watch.watch": "Watch",
+  "watch.unwatch": "Unwatch",
+  "watch.title": "Watched plates",
+  "watch.hint": "Plates you follow",
+  "watch.new": "+{n} new",
+  "watch.waiting": "Waiting for it to appear",
+  "watch.notFoundSubscribe": "Plate not found — subscribe to its appearance",
+  "watch.subscribed": "You follow “{plate}” — it will show up here when the plate appears",
+  "watch.newTitle": "New sightings: {n}",
 };
