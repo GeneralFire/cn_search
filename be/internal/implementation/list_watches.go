@@ -27,7 +27,7 @@ func (s *CarSearch) ListWatches(ctx context.Context, _ *pb.ListWatchesRequest) (
 			PlateDisplay: w.PlateDisplay, NewCount: int32(w.NewCount), WatchedAt: timestamppb.New(w.WatchedAt),
 		}
 		if w.Latest != nil {
-			resp.Items[i].Plate = s.toPB(*w.Latest)
+			resp.Items[i].Plate = s.toPB(*w.Latest, true) // только для вошедших
 		}
 	}
 	return resp, nil
