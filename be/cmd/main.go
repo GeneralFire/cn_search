@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -27,6 +28,7 @@ import (
 	"github.com/GeneralFire/cn_search/be/internal/db"
 	"github.com/GeneralFire/cn_search/be/internal/health"
 	"github.com/GeneralFire/cn_search/be/internal/implementation"
+	"github.com/GeneralFire/cn_search/be/internal/logging"
 	"github.com/GeneralFire/cn_search/be/internal/ocr"
 	"github.com/GeneralFire/cn_search/be/internal/ratelimit"
 	"github.com/GeneralFire/cn_search/be/internal/repository"
@@ -139,7 +141,12 @@ func serve(ctx context.Context, log *slog.Logger, cfg config) error {
 		// Ограничение частоты пишущих ручек — один интерсептор на оба транспорта: clay вызывает его
 		// из HTTP-ручек (HTTP-заголовки уже в metadata, retry-after уходит в заголовок ответа).
 		limit := ratelimit.Interceptor(ratelimit.New(), ratelimit.Limits, implementation.RateLimitKey, svc.IsAdmin)
-		desc.Apply(transport.WithUnaryInterceptor(limit))
+		// Порядок: request id и логгер → rate limit → обработчик (отказ лимитера тоже попадает в лог запроса).
+		interceptor := logging.Chain(
+			logging.Interceptor(log, logging.Options{UserID: svc.LogUserID, IP: implementation.ClientIP}),
+			limit,
+		)
+		desc.Apply(transport.WithUnaryInterceptor(interceptor))
 
 		// HTTP: ручки clay под /api + health + swagger.
 		api := chi.NewRouter()
@@ -156,7 +163,7 @@ func serve(ctx context.Context, log *slog.Logger, cfg config) error {
 
 		httpSrv := &http.Server{
 			Addr:              ":" + cfg.HTTPPort,
-			Handler:           logRequests(log, root),
+			Handler:           logging.HTTP(logRequests(log, root)),
 			ReadHeaderTimeout: 5 * time.Second,
 			ReadTimeout:       60 * time.Second, // загрузка фото (rpc Ingest) с телефона
 			WriteTimeout:      60 * time.Second,
@@ -165,7 +172,7 @@ func serve(ctx context.Context, log *slog.Logger, cfg config) error {
 
 		// gRPC — тот же сервис.
 		// Фото в rpc Ingest — до 8 МБ: стандартного предела gRPC (4 МБ) не хватает.
-		grpcSrv := grpc.NewServer(grpc.MaxRecvMsgSize(implementation.MaxPhotoBytes+1<<20), grpc.UnaryInterceptor(limit))
+		grpcSrv := grpc.NewServer(grpc.MaxRecvMsgSize(implementation.MaxPhotoBytes+1<<20), grpc.UnaryInterceptor(interceptor))
 		desc.RegisterGRPC(grpcSrv)
 		reflection.Register(grpcSrv)
 		grpcLis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
@@ -210,15 +217,22 @@ func (s *statusRecorder) WriteHeader(code int) {
 	s.ResponseWriter.WriteHeader(code)
 }
 
+// logRequests — строка на HTTP-запрос для не-RPC путей (health, swagger); RPC логирует интерсептор.
 func logRequests(log *slog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
 		next.ServeHTTP(rec, r)
-		log.Info("request", "method", r.Method, "uri", r.URL.RequestURI(), "status", rec.status,
+		if isRPCPath(r.URL.Path) {
+			return
+		}
+		log.Info("request", "request_id", logging.RequestID(r.Context()), "method", r.Method, "uri", r.URL.RequestURI(), "status", rec.status,
 			"duration_ms", time.Since(start).Milliseconds())
 	})
 }
+
+// isRPCPath — путь ручки clay (/api/carsearch.CarSearchService/...): её строку пишет logging.Interceptor.
+func isRPCPath(p string) bool { return strings.HasPrefix(p, apiPrefix+"/carsearch.") }
 
 func envOr(key, def string) string {
 	if v := os.Getenv(key); v != "" {

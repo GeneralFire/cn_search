@@ -46,7 +46,7 @@ func (s *CarSearch) Clarify(ctx context.Context, req *pb.ClarifyRequest) (*pb.Cl
 	case errors.Is(err, models.ErrNotFound):
 		return nil, status.Error(codes.NotFound, "фиксация не найдена")
 	case err != nil:
-		return nil, status.Error(codes.Internal, "не удалось сохранить уточнение")
+		return nil, internalErr(ctx, err, "не удалось сохранить уточнение")
 	}
 	return &pb.ClarifyResponse{Clarification: &pb.Clarification{
 		Id:          c.ID,

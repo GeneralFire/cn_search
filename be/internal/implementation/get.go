@@ -40,7 +40,7 @@ func (s *CarSearch) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespons
 	case errors.Is(err, models.ErrNotFound):
 		return nil, status.Error(codes.NotFound, "фиксация не найдена")
 	case err != nil:
-		return nil, status.Error(codes.Internal, "не удалось получить фиксации")
+		return nil, internalErr(ctx, err, "не удалось получить фиксации")
 	}
 	resp := &pb.GetResponse{
 		Items:          make([]*pb.PlateSighting, len(res.Items)),

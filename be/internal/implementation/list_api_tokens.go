@@ -3,9 +3,6 @@ package implementation
 import (
 	"context"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	"github.com/GeneralFire/cn_search/be/internal/models"
 	pb "github.com/GeneralFire/cn_search/be/pkg/carsearch"
 )
@@ -21,7 +18,7 @@ func (s *CarSearch) ListApiTokens(ctx context.Context, req *pb.ListApiTokensRequ
 	}
 	page, err := s.tokens.ListApiTokens(ctx, models.ListApiTokensOpts{Offset: offset, Limit: limit, IncludeTestData: includeTestData(ctx)})
 	if err != nil {
-		return nil, status.Error(codes.Internal, "не удалось получить токены")
+		return nil, internalErr(ctx, err, "не удалось получить токены")
 	}
 	resp := &pb.ListApiTokensResponse{Items: make([]*pb.ApiToken, len(page.Items)), Total: int32(page.Total), NextOffset: nextOffsetPB(page.NextOffset)}
 	for i, t := range page.Items {

@@ -23,7 +23,7 @@ func (s *CarSearch) TokenInfo(ctx context.Context, _ *pb.TokenInfoRequest) (*pb.
 		if e := apiTokenErr(err); e != nil {
 			return nil, e
 		}
-		return nil, status.Error(codes.Internal, "не удалось получить токен")
+		return nil, internalErr(ctx, err, "не удалось получить токен")
 	}
 	return apiTokenPB(t), nil
 }

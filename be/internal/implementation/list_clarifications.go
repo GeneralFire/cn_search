@@ -46,7 +46,7 @@ func (s *CarSearch) ListClarifications(ctx context.Context, req *pb.ListClarific
 		SightingID: req.GetSightingId(),
 	})
 	if err != nil {
-		return nil, status.Error(codes.Internal, "не удалось получить уточнения")
+		return nil, internalErr(ctx, err, "не удалось получить уточнения")
 	}
 	resp := &pb.ListClarificationsResponse{Items: make([]*pb.Clarification, len(page.Items)), Total: int32(page.Total)}
 	for i, it := range page.Items {

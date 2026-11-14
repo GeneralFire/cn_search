@@ -28,7 +28,7 @@ func (s *CarSearch) ResolveComplaint(ctx context.Context, req *pb.ResolveComplai
 	case errors.Is(err, models.ErrNotFound):
 		return nil, status.Error(codes.NotFound, "жалоба не найдена")
 	case err != nil:
-		return nil, status.Error(codes.Internal, "не удалось обновить жалобу")
+		return nil, internalErr(ctx, err, "не удалось обновить жалобу")
 	}
 	return complaintPB(c), nil
 }

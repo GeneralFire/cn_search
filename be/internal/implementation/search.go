@@ -41,7 +41,7 @@ func (s *CarSearch) Search(ctx context.Context, req *pb.SearchRequest) (*pb.Sear
 		HasCoords:       req.GetHasCoords(),
 	})
 	if err != nil {
-		return nil, status.Error(codes.Internal, "не удалось выполнить поиск")
+		return nil, internalErr(ctx, err, "не удалось выполнить поиск")
 	}
 
 	resp := &pb.SearchResponse{

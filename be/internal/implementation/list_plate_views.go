@@ -31,7 +31,7 @@ func (s *CarSearch) ListPlateViews(ctx context.Context, req *pb.ListPlateViewsRe
 		TokenID: req.GetTokenId(), PlateID: req.GetPlateId(), Offset: offset, Limit: limit,
 	})
 	if err != nil {
-		return nil, status.Error(codes.Internal, "не удалось получить журнал")
+		return nil, internalErr(ctx, err, "не удалось получить журнал")
 	}
 	resp := &pb.ListPlateViewsResponse{Items: make([]*pb.PlateView, len(page.Items)), Total: int32(page.Total), NextOffset: nextOffsetPB(page.NextOffset)}
 	for i, v := range page.Items {

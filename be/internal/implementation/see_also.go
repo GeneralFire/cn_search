@@ -35,7 +35,7 @@ func (s *CarSearch) SeeAlso(ctx context.Context, req *pb.SeeAlsoRequest) (*pb.Se
 		IncludeHidden:     s.isAdmin(ctx),
 	})
 	if err != nil {
-		return nil, status.Error(codes.Internal, "не удалось получить свежие фиксации")
+		return nil, internalErr(ctx, err, "не удалось получить свежие фиксации")
 	}
 	resp := &pb.SeeAlsoResponse{Items: make([]*pb.PlateSighting, len(items))}
 	for i, c := range items {

@@ -49,7 +49,7 @@ func (s *CarSearch) ListComplaints(ctx context.Context, req *pb.ListComplaintsRe
 		SightingID: req.GetSightingId(),
 	})
 	if err != nil {
-		return nil, status.Error(codes.Internal, "не удалось получить жалобы")
+		return nil, internalErr(ctx, err, "не удалось получить жалобы")
 	}
 	resp := &pb.ListComplaintsResponse{Items: make([]*pb.Complaint, len(page.Items)), Total: int32(page.Total)}
 	for i, it := range page.Items {

@@ -48,7 +48,7 @@ func (s *CarSearch) SubmitCameraRequest(ctx context.Context, req *pb.SubmitCamer
 	}
 	c, err := s.cameraRequests.Submit(ctx, o)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "не удалось сохранить заявку")
+		return nil, internalErr(ctx, err, "не удалось сохранить заявку")
 	}
 	return cameraRequestPB(c, false), nil
 }

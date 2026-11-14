@@ -58,7 +58,7 @@ func (s *CarSearch) ListCameraRequests(ctx context.Context, req *pb.ListCameraRe
 
 	page, err := s.cameraRequests.List(ctx, o)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "не удалось получить заявки")
+		return nil, internalErr(ctx, err, "не удалось получить заявки")
 	}
 	resp := &pb.ListCameraRequestsResponse{Items: make([]*pb.CameraRequest, len(page.Items)), Total: int32(page.Total)}
 	for i, c := range page.Items {

@@ -29,7 +29,7 @@ func (s *CarSearch) ConfirmMockPayment(ctx context.Context, req *pb.ConfirmMockP
 	case errors.Is(err, usecase.ErrPaymentFinal):
 		return nil, status.Error(codes.FailedPrecondition, "платёж уже завершён")
 	case err != nil:
-		return nil, status.Error(codes.Internal, "не удалось провести платёж")
+		return nil, internalErr(ctx, err, "не удалось провести платёж")
 	}
 	return paymentPB(p), nil
 }

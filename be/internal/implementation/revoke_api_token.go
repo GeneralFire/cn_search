@@ -25,7 +25,7 @@ func (s *CarSearch) RevokeApiToken(ctx context.Context, req *pb.RevokeApiTokenRe
 	case errors.Is(err, models.ErrNotFound):
 		return nil, status.Error(codes.NotFound, "токен не найден")
 	case err != nil:
-		return nil, status.Error(codes.Internal, "не удалось отозвать токен")
+		return nil, internalErr(ctx, err, "не удалось отозвать токен")
 	}
 	return apiTokenPB(t), nil
 }

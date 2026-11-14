@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 
+	"github.com/GeneralFire/cn_search/be/internal/logging"
 	"github.com/GeneralFire/cn_search/be/internal/models"
 )
 
@@ -102,7 +103,7 @@ func (s *CarSearch) currentUser(ctx context.Context) (models.User, error) {
 	case errors.Is(err, models.ErrNotFound):
 		return models.User{}, status.Error(codes.Unauthenticated, "неверный токен")
 	case err != nil:
-		return models.User{}, status.Error(codes.Internal, "не удалось проверить токен")
+		return models.User{}, internalErr(ctx, err, "не удалось проверить токен")
 	}
 	return u, nil
 }
@@ -153,4 +154,25 @@ func WithPeerFromRequest(next http.Handler) http.Handler {
 // IsAdmin — запрос с верным admin-token (ограничение частоты на него не действует).
 func (s *CarSearch) IsAdmin(ctx context.Context) bool {
 	return requireAdmin(ctx, s.adminToken) == nil
+}
+
+// LogUserID — id вошедшего пользователя для логов ("" — токена нет или он неверный). Сам токен не возвращается.
+func (s *CarSearch) LogUserID(ctx context.Context) string {
+	if s.accounts == nil || userToken(ctx) == "" {
+		return ""
+	}
+	u, err := s.currentUser(ctx)
+	if err != nil {
+		return ""
+	}
+	return u.ID
+}
+
+// ClientIP — IP клиента для логов (как для ограничения частоты).
+func ClientIP(ctx context.Context) string { return clientIP(ctx) }
+
+// internalErr — Internal для клиента с безликим сообщением; причина err пишется в лог запроса (с request_id).
+func internalErr(ctx context.Context, err error, msg string) error {
+	logging.From(ctx).Error(msg, "err", err)
+	return status.Error(codes.Internal, msg)
 }

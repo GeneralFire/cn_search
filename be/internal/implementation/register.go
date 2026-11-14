@@ -33,7 +33,7 @@ func (s *CarSearch) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.
 	case errors.Is(err, models.ErrEmailTaken):
 		return nil, status.Error(codes.AlreadyExists, "email: уже зарегистрирован")
 	case err != nil:
-		return nil, status.Error(codes.Internal, "не удалось зарегистрироваться")
+		return nil, internalErr(ctx, err, "не удалось зарегистрироваться")
 	}
 	return &pb.RegisterResponse{Token: token, User: userPB(u)}, nil
 }

@@ -28,7 +28,7 @@ func (s *CarSearch) CreateApiToken(ctx context.Context, req *pb.CreateApiTokenRe
 	}
 	token, t, err := s.tokens.CreateApiToken(ctx, name, int(req.GetRequests()))
 	if err != nil {
-		return nil, status.Error(codes.Internal, "не удалось создать токен")
+		return nil, internalErr(ctx, err, "не удалось создать токен")
 	}
 	return &pb.CreateApiTokenResponse{Token: token, Info: apiTokenPB(t)}, nil
 }

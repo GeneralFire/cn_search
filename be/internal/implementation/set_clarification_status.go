@@ -39,7 +39,7 @@ func (s *CarSearch) SetClarificationStatus(ctx context.Context, req *pb.SetClari
 	case errors.Is(err, models.ErrNotFound):
 		return nil, status.Error(codes.NotFound, "уточнение не найдено")
 	case err != nil:
-		return nil, status.Error(codes.Internal, "не удалось обновить уточнение")
+		return nil, internalErr(ctx, err, "не удалось обновить уточнение")
 	}
 	return clarificationPB(c), nil
 }

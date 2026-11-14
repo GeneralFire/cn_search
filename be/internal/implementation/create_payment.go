@@ -30,7 +30,7 @@ func (s *CarSearch) CreatePayment(ctx context.Context, req *pb.CreatePaymentRequ
 	case errors.Is(err, usecase.ErrUnknownPlan):
 		return nil, status.Error(codes.InvalidArgument, "plan: купить можно только PRO")
 	case err != nil:
-		return nil, status.Error(codes.Internal, "не удалось создать платёж")
+		return nil, internalErr(ctx, err, "не удалось создать платёж")
 	}
 	return &pb.CreatePaymentResponse{PaymentId: p.ID, CheckoutUrl: mockCheckoutPath + p.ID, Payment: paymentPB(p)}, nil
 }

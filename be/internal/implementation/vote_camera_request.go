@@ -25,7 +25,7 @@ func (s *CarSearch) VoteCameraRequest(ctx context.Context, req *pb.VoteCameraReq
 	case errors.Is(err, models.ErrNotFound):
 		return nil, status.Error(codes.NotFound, "заявка не найдена")
 	case err != nil:
-		return nil, status.Error(codes.Internal, "не удалось учесть голос")
+		return nil, internalErr(ctx, err, "не удалось учесть голос")
 	}
 	return cameraRequestPB(c, false), nil
 }

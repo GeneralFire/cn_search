@@ -32,7 +32,7 @@ func (s *CarSearch) SetCameraRequestStatus(ctx context.Context, req *pb.SetCamer
 	case errors.Is(err, models.ErrNotFound):
 		return nil, status.Error(codes.NotFound, "заявка не найдена")
 	case err != nil:
-		return nil, status.Error(codes.Internal, "не удалось обновить заявку")
+		return nil, internalErr(ctx, err, "не удалось обновить заявку")
 	}
 	return cameraRequestPB(c, true), nil
 }

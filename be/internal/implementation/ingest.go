@@ -64,7 +64,7 @@ func (s *CarSearch) Ingest(ctx context.Context, req *pb.IngestRequest) (*pb.Inge
 	case errors.Is(err, models.ErrRecognizerUnavailable):
 		return nil, status.Error(codes.Unavailable, "сервис распознавания недоступен, попробуйте позже")
 	case err != nil:
-		return nil, status.Error(codes.Internal, "не удалось сохранить фиксацию")
+		return nil, internalErr(ctx, err, "не удалось сохранить фиксацию")
 	}
 	out := &pb.IngestResponse{Sighting: s.toPB(res.Sighting)}
 	if res.UploadsLeft != nil {

@@ -28,7 +28,7 @@ func (s *CarSearch) HideSighting(ctx context.Context, req *pb.HideSightingReques
 	case errors.Is(err, models.ErrNotFound):
 		return nil, status.Error(codes.NotFound, "фиксация не найдена")
 	case err != nil:
-		return nil, status.Error(codes.Internal, "не удалось обновить фиксацию")
+		return nil, internalErr(ctx, err, "не удалось обновить фиксацию")
 	}
 	return s.toPB(c), nil
 }
